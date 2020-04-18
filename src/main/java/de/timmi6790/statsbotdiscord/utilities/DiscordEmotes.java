@@ -1,0 +1,52 @@
+package de.timmi6790.statsbotdiscord.utilities;
+
+import lombok.Getter;
+
+public enum DiscordEmotes {
+    ZERO("0️⃣"),
+    ONE("1️⃣"),
+    TWO("2️⃣"),
+    THREE("3️⃣"),
+    FOUR("4️⃣"),
+    FIVE("5️⃣"),
+    SIX("6️⃣"),
+    SEVEN("7️⃣"),
+    EIGHT("8️⃣"),
+    NINE("9️⃣"),
+    TEN("🔟"),
+    FOLDER("\uD83D\uDCC1");
+
+    @Getter
+    private final String emote;
+
+    public static DiscordEmotes getNumberEmote(final int number) {
+        switch (number) {
+            case 1:
+                return ONE;
+            case 2:
+                return TWO;
+            case 3:
+                return THREE;
+            case 4:
+                return FOUR;
+            case 5:
+                return FIVE;
+            case 6:
+                return SIX;
+            case 7:
+                return SEVEN;
+            case 8:
+                return EIGHT;
+            case 9:
+                return NINE;
+            case 10:
+                return TEN;
+            default:
+                return ZERO;
+        }
+    }
+
+    DiscordEmotes(final String emote) {
+        this.emote = emote;
+    }
+}
