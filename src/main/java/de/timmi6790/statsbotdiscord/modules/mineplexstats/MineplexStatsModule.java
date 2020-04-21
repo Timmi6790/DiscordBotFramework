@@ -3,13 +3,18 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats;
 import de.timmi6790.statsbotdiscord.AbstractModule;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaGamesCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaPlayerGroupCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.MpStatsRestApiClient;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGamesModel;
 import de.timmi6790.statsbotdiscord.utilities.DataUtilities;
 import lombok.Getter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MineplexStatsModule extends AbstractModule {
@@ -29,7 +34,8 @@ public class MineplexStatsModule extends AbstractModule {
         this.loadJavaGames();
 
         StatsBot.getCommandManager().registerCommands(
-                new JavaGamesCommand()
+                new JavaGamesCommand(),
+                new JavaPlayerGroupCommand()
         );
     }
 
@@ -44,40 +50,13 @@ public class MineplexStatsModule extends AbstractModule {
             return;
         }
 
-        final JavaGamesModel javaGamesModel = (JavaGamesModel) javaGames;
-        for (final JavaGamesModel.JavaGame game : javaGamesModel.getGames().values()) {
-            final String lowerGame = game.getGame().toLowerCase();
-            for (final String alias : game.getAliasNames()) {
-                this.javaGamesAlias.put(alias.toLowerCase(), lowerGame);
+        final JavaGamesModel gamesModel = (JavaGamesModel) javaGames;
+        for (final JavaGame javaGame : gamesModel.getGames().values()) {
+            this.javaGames.put(javaGame.getName().toLowerCase(), javaGame);
+
+            for (final String alias : javaGame.getAliasNames()) {
+                this.javaGamesAlias.put(alias.toLowerCase(), javaGame.getName().toLowerCase());
             }
-
-            final Map<String, JavaStat> stats = new HashMap<>();
-            final Map<String, String> statAlias = new HashMap<>();
-            for (final JavaGamesModel.JavaGameStat gameStat : game.getStats().values()) {
-                final String lowerStat = gameStat.getStat().toLowerCase();
-                for (final String alias : gameStat.getAliasNames()) {
-                    statAlias.put(alias.toLowerCase(), lowerStat);
-                }
-
-                final Map<String, String> boards = new HashMap<>();
-                final Map<String, String> boardAlias = new HashMap<>();
-                for (final JavaGamesModel.JavaGameBoard gameBoard : gameStat.getBoards().values()) {
-                    final String lowerBoard = gameBoard.getBoard().toLowerCase();
-                    for (final String alias : gameBoard.getAliasNames()) {
-                        boardAlias.put(lowerBoard, alias.toLowerCase());
-                    }
-
-                    boards.put(lowerBoard, gameBoard.getBoard());
-                }
-
-                gameStat.getAliasNames().sort(Comparator.naturalOrder());
-                final JavaStat stat = new JavaStat(gameStat.getStat(), gameStat.getAliasNames().toArray(new String[0]), gameStat.getPrettyStat(), gameStat.getDescription(), boards, boardAlias);
-                stats.put(lowerStat, stat);
-            }
-
-            game.getAliasNames().sort(Comparator.naturalOrder());
-            final JavaGame javaGame = new JavaGame(game.getGame(), game.getAliasNames().toArray(new String[0]), game.getCategory(), game.getWikiUrl(), game.getDescription(), stats, statAlias);
-            this.javaGames.put(lowerGame, javaGame);
         }
     }
 
@@ -90,8 +69,6 @@ public class MineplexStatsModule extends AbstractModule {
         final List<JavaGame> similarGames = new ArrayList<>();
 
         final String[] similarCommandNames = DataUtilities.getSimilarityList(name, this.javaGames.keySet(), similarity).toArray(new String[0]);
-        System.out.println(this.javaGames.keySet());
-
         for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
             similarGames.add(this.javaGames.get(similarCommandNames[index]));
         }

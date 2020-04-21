@@ -154,7 +154,7 @@ public abstract class AbstractCommand {
 
                 e.printStackTrace();
 
-                this.sendErrorMessage(commandParameters);
+                this.sendErrorMessage(commandParameters, "Unknown");
                 commandResult = CommandResult.ERROR;
             }
         }
@@ -198,13 +198,14 @@ public abstract class AbstractCommand {
         this.discordPermissions.addAll(Arrays.asList(permissions));
     }
 
-    protected void sendErrorMessage(final CommandParameters commandParameters) {
+    protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
         commandParameters.getDiscordChannel()
                 .sendMessage(
                         UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Something went wrong")
-                                .setDescription("Something went horrible wrong while executing this command.")
+                                .setDescription("Something went wrong while executing this command.")
                                 .addField("Command", this.getName(), false)
                                 .addField("Args", String.join(" ", commandParameters.getArgs()), false)
+                                .addField("Error", error, false)
                                 .build())
                 .delay(90, TimeUnit.SECONDS)
                 .flatMap(Message::delete)

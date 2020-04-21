@@ -6,40 +6,31 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaPlayerStats;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroupsPlayer;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
-import net.dv8tion.jda.api.Permission;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
+    public JavaPlayerGroupCommand() {
+        super("gplayer", "MineplexStats - Java", "Group players", "<player> <group> <stat> [board] [date]");
 
-public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
-    public JavaPlayerStatsCommand() {
-        super("player", "MineplexStats - Java", "Player stats", "<player> <game> [board] [date]", "pl");
-
-        this.addDiscordPermission(Permission.MESSAGE_ATTACH_FILES);
-        this.setMinArgs(2);
+        this.setMinArgs(3);
         this.setDefaultPerms(true);
     }
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         final String player = this.getPlayer(commandParameters, 0);
-        final JavaGame javaGame = this.getGame(commandParameters, 1);
-        final JavaBoard board = this.getBoard(javaGame, commandParameters, 2);
 
         final MineplexStatsModule module = ((MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class));
-        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerStats(player, javaGame.getName(), board.getName());
+        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerGroup(player, "MixedArcade", "Wins", "All");
 
-        if (!(responseModel instanceof JavaPlayerStats)) {
+        if (!(responseModel instanceof JavaGroupsPlayer)) {
             commandParameters.getEvent().getChannel().sendMessage(
                     UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                             .setTitle("No stats available")
@@ -49,36 +40,23 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
             return CommandResult.ERROR;
         }
 
-        final JavaPlayerStats playerStats = (JavaPlayerStats) responseModel;
-        final JavaPlayerStats.PlayerStatsInfo playerStatsInfo = playerStats.getInfo();
+        final JavaGroupsPlayer groupStats = (JavaGroupsPlayer) responseModel;
+        final JavaGroupsPlayer.JavaGroupsPlayerInfo playerStatsInfo = ((JavaGroupsPlayer) responseModel).getInfo();
 
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
-        final JavaGame game = module.getJavaGame(playerStatsInfo.getGame()).get();
-        final Map<String, JavaPlayerStats.PlayerStatsStats> stats = playerStats.getStats();
+        final String[][] leaderboard = new String[groupStats.getStats().size() + 1][3];
+        leaderboard[0] = new String[]{"Game", "Score", "Position"};
 
         int heighestUnixTime = 0;
-        final String[][] leaderboard = new String[game.getStats().size() + 1][3];
-        leaderboard[0] = new String[]{"Category", "Score", "Position"};
-
-        final Map<String, JavaStat> gameStats = game.getStats();
         int index = 1;
-        for (final String statName : game.getStatNames()) {
-            final JavaStat gameStat = gameStats.get(statName.toLowerCase());
-            String score = UNKNOWN_SCORE;
-            String position = UNKNOWN_POSITION;
-            if (stats.containsKey(gameStat.getName())) {
-                final JavaPlayerStats.PlayerStatsStats stat = stats.get(gameStat.getName());
+        for (final JavaGroupsPlayer.JavaGroupsPlayerStat stat : groupStats.getStats().values()) {
+            leaderboard[index] = new String[]{stat.getGame(), String.valueOf(stat.getScore()), String.valueOf(stat.getPosition())};
 
-                score = this.getFormattedScore(gameStat, stat.getScore());
-                position = String.valueOf(stat.getPosition());
-
-                if (stat.getUnix() > heighestUnixTime) {
-                    heighestUnixTime = stat.getUnix();
-                }
+            if (stat.getUnix() > heighestUnixTime) {
+                heighestUnixTime = stat.getUnix();
             }
 
-            leaderboard[index] = new String[]{gameStat.getPrettyStat(), score, position};
             index++;
         }
 
@@ -89,7 +67,7 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
             skin = null;
         }
 
-        final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard()};
+        final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGroup(), playerStatsInfo.getPrettyStat(), playerStatsInfo.getBoard()};
         final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(heighestUnixTime), leaderboard, skin);
         final Optional<InputStream> picture = statsPicture.getPlayerPicture();
 

@@ -11,26 +11,27 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
-public class PlayerStats extends ResponseModel {
-    private final PlayerStatsInfo info;
-    private final Map<String, PlayerStatsStats> stats;
+public class JavaGroupsPlayer extends ResponseModel {
+    private final JavaGroupsPlayerInfo info;
+    private final Map<String, JavaGroupsPlayerStat> stats;
 
 
     @Data
     @AllArgsConstructor
-    public static class PlayerStatsInfo {
+    public static class JavaGroupsPlayerInfo {
         private final UUID uuid;
         private final String name;
-        private final String game;
+        private final String group;
+        private final String stat;
+        private final String prettyStat;
         private final String board;
         private final boolean filter;
     }
 
     @Data
     @AllArgsConstructor
-    public static class PlayerStatsStats {
-        private final String stat;
-        private final String prettyStat;
+    public static class JavaGroupsPlayerStat {
+        private final String game;
         private final int position;
         private final int score;
         private final int unix;
