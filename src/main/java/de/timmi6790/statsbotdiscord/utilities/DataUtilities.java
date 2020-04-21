@@ -1,13 +1,13 @@
 package de.timmi6790.statsbotdiscord.utilities;
 
-import net.ricecode.similarity.DiceCoefficientStrategy;
+import net.ricecode.similarity.LevenshteinDistanceStrategy;
 import net.ricecode.similarity.SimilarityStrategy;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class DataUtilities {
-    private static final SimilarityStrategy SIMILARITY_STRATEGY = new DiceCoefficientStrategy();
+    private static final SimilarityStrategy SIMILARITY_STRATEGY = new LevenshteinDistanceStrategy();
 
     private static final Pattern INTEGER_PATTERN = Pattern.compile("^-?\\d+$");
     private static final Pattern FLOAT_PATTERN = Pattern.compile("[+-]?(\\d+|\\d+\\.\\d+|\\.\\d+|\\d+\\.)([eE]\\d+)?");

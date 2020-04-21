@@ -1,6 +1,8 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats;
 
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesArray;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -11,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+@ToString
+@EqualsAndHashCode
 public class PictureTable {
     private static final Font FONT_HEADER = new Font("Arial", Font.PLAIN, 42);
     private static final Font FONT_SUB_HEADER = new Font("Arial", Font.PLAIN, 33);

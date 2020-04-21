@@ -1,12 +1,10 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java;
 
 import de.timmi6790.statsbotdiscord.utilities.DataUtilities;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.*;
 
-@AllArgsConstructor
 @Data
 public class JavaGame {
     private static final List<String> STATS_ORDER = new ArrayList<>(Arrays.asList("Wins", "TimeInGame", "TimeInHub", "GamesPlayed", "DailyVote", "ClansDailyReward", "DailyReward",
@@ -23,8 +21,24 @@ public class JavaGame {
     private final String description;
 
     private final Map<String, JavaStat> stats;
-    private final Map<String, String> statAlias;
+    private final Map<String, String> statAlias = new HashMap<>();
     private final List<String> sortedStatsNames = new ArrayList<>();
+
+    public JavaGame(final String name, final String[] aliasNames, final String category, final String wikiUrl, final String description, final Map<String, JavaStat> stats) {
+        this.name = name;
+        this.aliasNames = aliasNames;
+        this.category = category;
+        this.wikiUrl = wikiUrl;
+        this.description = description;
+        this.stats = stats;
+
+        for (final JavaStat gameStat : stats.values()) {
+            final String lowerStat = gameStat.getName().toLowerCase();
+            for (final String alias : gameStat.getAliasNames()) {
+                this.statAlias.put(alias.toLowerCase(), lowerStat);
+            }
+        }
+    }
 
     public Optional<JavaStat> getStat(String name) {
         name = this.statAlias.getOrDefault(name.toLowerCase(), name.toLowerCase());
