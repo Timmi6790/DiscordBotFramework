@@ -4,17 +4,19 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
+import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.AbstractStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroup;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -50,8 +52,8 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         FORMAT_NUMBER.setDecimalFormatSymbols(symbols);
     }
 
-    public AbstractJavaStatsCommand(final String name, final String category, final String description, final String syntax, final String... aliasNames) {
-        super(name, category, description, syntax, aliasNames);
+    public AbstractJavaStatsCommand(final String name, final String description, final String syntax, final String... aliasNames) {
+        super(name, "MineplexStats - Java", description, syntax, aliasNames);
     }
 
     protected String getFormattedScore(final JavaStat stat, final long score) {
@@ -62,64 +64,55 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         return FORMAT_NUMBER.format(score);
     }
 
-    protected JavaGame getGame(final CommandParameters commandParameters, final int argPos) {
-        final String name = commandParameters.getArgs()[argPos];
-
-        final Optional<JavaGame> game = ((MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class)).getJavaGame(name);
-        if (game.isPresent()) {
-            return game.get();
-        }
-
-        final JavaGame[] similarGames = ((MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class)).getSimilarGames(name, 0.6, 3).toArray(new JavaGame[0]);
-
+    private void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
+                                 final AbstractCommand command, final String[] newArgs, final String[] similarNames) {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
         final StringBuilder description = new StringBuilder();
-        description.append(MarkdownUtil.monospace(name)).append(" is not a valid game.\n");
+        description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
-        if (similarGames.length == 0) {
-            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " games"))
-                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all games.");
+        if (similarNames.length == 0) {
+            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
+                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
             description.append("Is it possible that you wanted to write?\n\n");
 
-            for (int index = 0; similarGames.length > index; index++) {
-                final JavaGame similarGame = similarGames[index];
+            for (int index = 0; similarNames.length > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
 
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarGame.getName())).append(" | ").append(similarGame.getDescription()).append("\n");
+                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames[index])).append("\n");
 
                 final CommandParameters newCommandParameters = commandParameters.clone();
-                newCommandParameters.getArgs()[argPos] = similarGame.getName();
+                newCommandParameters.getArgs()[argPos] = similarNames[index];
+
                 emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
             }
 
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All games");
+            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
         }
 
-        StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).ifPresent(gamesCommand -> {
-                    final CommandParameters newCommandParameters = commandParameters.clone();
-                    newCommandParameters.setArgs(new String[0]);
+        final CommandParameters newCommandParameters = commandParameters.clone();
+        newCommandParameters.setArgs(newArgs);
+        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
 
-                    emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(gamesCommand, newCommandParameters));
-                }
-        );
+        this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
+    }
 
-        commandParameters.getEvent().getChannel().sendMessage(
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                        .setTitle("Invalid Game")
-                        .setDescription(description)
-                        .build())
-                .queue(message -> {
-                    if (!emotes.isEmpty()) {
-                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
-                                commandParameters.getEvent().getChannel().getIdLong());
-                        StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
-                    }
+    protected JavaGame getGame(final CommandParameters commandParameters, final int argPos) {
+        final String name = commandParameters.getArgs()[argPos];
 
-                    message.delete().queueAfter(90, TimeUnit.SECONDS);
-                });
+        final Optional<JavaGame> game = this.getStatsModule().getJavaGame(name);
+        if (game.isPresent()) {
+            return game.get();
+        }
 
+        final List<String> similarNames = new ArrayList<>();
+        for (final JavaGame similarGame : this.getStatsModule().getSimilarGames(name, 0.6, 3)) {
+            similarNames.add(similarGame.getName());
+        }
+
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarNames.toArray(new String[0]));
 
         throw new CommandReturnException();
     }
@@ -131,56 +124,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return stat.get();
         }
 
-        final JavaStat[] similarStats = game.getSimilarStats(name, 0.6, 3).toArray(new JavaStat[0]);
-
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-        final StringBuilder description = new StringBuilder();
-        description.append(MarkdownUtil.monospace(name)).append(" is not a valid stat for ").append(MarkdownUtil.bold(game.getName())).append(".\n");
-
-        if (similarStats.length == 0) {
-            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " games " + game.getName()))
-                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all stats.");
-
-        } else {
-            description.append("Is it possible that you wanted to write?\n\n");
-
-            for (int index = 0; similarStats.length > index; index++) {
-                final JavaStat similarStat = similarStats[index];
-                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarStat.getName())).append(" | ").append(similarStat.getDescription()).append("\n");
-
-                final CommandParameters newCommandParameters = commandParameters.clone();
-                newCommandParameters.getArgs()[argPos] = similarStat.getName();
-                emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
-            }
-
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All stats");
+        final List<String> similarNames = new ArrayList<>();
+        for (final JavaStat similarStat : game.getSimilarStats(name, 0.6, 3).toArray(new JavaStat[0])) {
+            similarNames.add(similarStat.getName());
         }
 
-        StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).ifPresent(gamesCommand -> {
-                    final CommandParameters newCommandParameters = commandParameters.clone();
-                    newCommandParameters.setArgs(new String[]{game.getName()});
-
-                    emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(gamesCommand, newCommandParameters));
-                }
-        );
-
-        commandParameters.getEvent().getChannel().sendMessage(
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                        .setTitle("Invalid Stat")
-                        .setDescription(description)
-                        .build())
-                .queue(message -> {
-                    if (!emotes.isEmpty()) {
-                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
-                                commandParameters.getEvent().getChannel().getIdLong());
-                        StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
-                    }
-
-                    message.delete().queueAfter(90, TimeUnit.SECONDS);
-                });
-
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "stat", command, new String[]{game.getName()}, similarNames.toArray(new String[0]));
 
         throw new CommandReturnException();
     }
@@ -199,6 +149,22 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             }
         }
 
+        final Set<String> boards = new HashSet<>();
+        JavaStat exampleStat = null;
+        for (final JavaStat stat : game.getStats().values()) {
+            boards.addAll(stat.getBoardNames());
+            exampleStat = stat;
+        }
+
+        final List<String> similarBoards = UtilitiesData.getSimilarityList(name, boards, 0.6);
+        final String[] similarNames = new String[Math.min(similarBoards.size(), 3)];
+        for (int index = 0; similarNames.length > index; index++) {
+            similarNames[index] = similarBoards.get(index);
+        }
+
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "board", command, new String[]{game.getName(), exampleStat != null ? exampleStat.getName() : ""}, similarNames);
+
         throw new CommandReturnException();
     }
 
@@ -214,8 +180,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return board.get();
         }
 
-        final List<JavaBoard> similarBoards = stat.getSimilarBoard(name, 0.6, 3);
+        final List<String> similarNames = new ArrayList<>();
+        for (final JavaBoard similar : stat.getSimilarBoard(name, 0.6, 3).toArray(new JavaBoard[0])) {
+            similarNames.add(similar.getName());
+        }
 
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "board", command, new String[]{game.getName(), stat.getName()}, similarNames.toArray(new String[0]));
 
         throw new CommandReturnException();
     }
@@ -232,6 +203,51 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                         .setTitle("Invalid Name")
                         .setDescription(MarkdownUtil.monospace(name) + " is not a minecraft name.")
         );
+    }
+
+    public JavaGroup getJavaGroup(final CommandParameters commandParameters, final int argPos) {
+        final String name = commandParameters.getArgs()[argPos];
+
+        final Optional<JavaGroup> group = this.getStatsModule().getJavaGroup(name);
+        if (group.isPresent()) {
+            return group.get();
+        }
+
+        final List<String> similarNames = new ArrayList<>();
+        for (final JavaGroup similar : this.getStatsModule().getSimilarGroups(name, 0.6, 3).toArray(new JavaGroup[0])) {
+            similarNames.add(similar.getName());
+        }
+
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "group", command, new String[]{}, similarNames.toArray(new String[0]));
+
+        throw new CommandReturnException();
+    }
+
+    public JavaStat getJavaStat(final JavaGroup group, final CommandParameters commandParameters, final int argPos) {
+        final String name = commandParameters.getArgs()[argPos];
+
+        for (final JavaGame game : group.getGames()) {
+            if (game.getStat(name).isPresent()) {
+                return game.getStat(name).get();
+            }
+        }
+
+        final Set<String> statNames = new HashSet<>();
+        for (final JavaStat stat : group.getStats()) {
+            statNames.add(stat.getName());
+        }
+
+        final List<String> similarBoards = UtilitiesData.getSimilarityList(name, statNames, 0.6);
+        final String[] similarNames = new String[Math.min(similarBoards.size(), 3)];
+        for (int index = 0; similarNames.length > index; index++) {
+            similarNames[index] = similarBoards.get(index);
+        }
+
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGroupsGroupsCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "stat", command, new String[]{group.getName()}, similarNames);
+
+        throw new CommandReturnException();
     }
 
     public CompletableFuture<BufferedImage> getPlayerSkin(final UUID uuid) {

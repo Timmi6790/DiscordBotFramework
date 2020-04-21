@@ -1,8 +1,14 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands;
 
+import de.timmi6790.statsbotdiscord.StatsBot;
+import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
+import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
+import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.errors.ErrorModel;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -26,6 +32,10 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
 
     public AbstractStatsCommand(final String name, final String category, final String description, final String syntax, final String... aliasNames) {
         super(name, category, description, syntax, aliasNames);
+    }
+
+    protected MineplexStatsModule getStatsModule() {
+        return (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
     }
 
     protected String getFormattedTime(long time) {
@@ -69,11 +79,17 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
         return FORMAT_DATE.format(Date.from(Instant.ofEpochSecond(unix))) + "UTC";
     }
 
-    protected String getApiErrorMessage(final ResponseModel responseModel) {
-        if (responseModel instanceof ErrorModel) {
-            return ((ErrorModel) responseModel).getErrorMessage();
-        }
+    public void checkApiResponse(final CommandParameters commandParameters, final ResponseModel response, final String errorTitle) {
+        if (response instanceof ErrorModel) {
+            commandParameters.getEvent().getChannel().sendMessage(
+                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                            .setTitle(errorTitle)
+                            .setDescription(((ErrorModel) response).getErrorMessage())
+                            .addField("Args", String.join(" ", commandParameters.getArgs()), false)
+                            .build())
+                    .queue();
 
-        return "Unknown Error";
+            throw new CommandReturnException(CommandResult.ERROR);
+        }
     }
 }

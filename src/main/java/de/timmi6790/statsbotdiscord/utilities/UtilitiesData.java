@@ -6,7 +6,7 @@ import net.ricecode.similarity.SimilarityStrategy;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class DataUtilities {
+public class UtilitiesData {
     private static final SimilarityStrategy SIMILARITY_STRATEGY = new LevenshteinDistanceStrategy();
 
     private static final Pattern INTEGER_PATTERN = Pattern.compile("^-?\\d+$");
@@ -17,7 +17,7 @@ public class DataUtilities {
     public static List<String> getSimilarityList(final String source, final Iterable<String> targets, final double minimumRate) {
         final Map<Double, String> values = new HashMap<>();
         for (final String target : targets) {
-            final double similarity = DataUtilities.SIMILARITY_STRATEGY.score(source.toLowerCase(), target.toLowerCase());
+            final double similarity = UtilitiesData.SIMILARITY_STRATEGY.score(source.toLowerCase(), target.toLowerCase());
 
             if (similarity >= minimumRate) {
                 values.put(similarity, target);
@@ -43,7 +43,7 @@ public class DataUtilities {
     }
 
     public static boolean isInt(final Object value) {
-        return DataUtilities.INTEGER_PATTERN.matcher(String.valueOf(value)).matches();
+        return UtilitiesData.INTEGER_PATTERN.matcher(String.valueOf(value)).matches();
     }
 
     public static boolean isLong(final Object value) {
@@ -56,14 +56,14 @@ public class DataUtilities {
     }
 
     public static boolean isDouble(final Object value) {
-        return DataUtilities.DOUBLE_PATTERN.matcher(String.valueOf(value)).matches();
+        return UtilitiesData.DOUBLE_PATTERN.matcher(String.valueOf(value)).matches();
     }
 
     public static boolean isFloat(final Object value) {
-        return DataUtilities.FLOAT_PATTERN.matcher(String.valueOf(value)).matches();
+        return UtilitiesData.FLOAT_PATTERN.matcher(String.valueOf(value)).matches();
     }
 
     public static boolean isBoolean(final Object value) {
-        return DataUtilities.BOOLEAN_PATTERN.matcher(String.valueOf(value)).matches();
+        return UtilitiesData.BOOLEAN_PATTERN.matcher(String.valueOf(value)).matches();
     }
 }

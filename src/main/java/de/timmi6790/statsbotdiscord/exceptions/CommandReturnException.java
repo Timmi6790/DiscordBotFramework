@@ -35,4 +35,11 @@ public class CommandReturnException extends RuntimeException {
         this.embedBuilder = Optional.empty();
         this.commandResult = CommandResult.INVALID_ARGS;
     }
+
+    public CommandReturnException(final CommandResult commandResult) {
+        super("");
+
+        this.embedBuilder = Optional.empty();
+        this.commandResult = commandResult;
+    }
 }

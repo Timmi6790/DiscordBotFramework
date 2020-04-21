@@ -1,6 +1,6 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java;
 
-import de.timmi6790.statsbotdiscord.utilities.DataUtilities;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import lombok.Data;
 
 import java.util.*;
@@ -48,7 +48,7 @@ public class JavaStat {
     public List<JavaBoard> getSimilarBoard(final String name, final double similarity, final int limit) {
         final List<JavaBoard> similarBoards = new ArrayList<>();
 
-        final String[] similarCommandNames = DataUtilities.getSimilarityList(name, this.boards.keySet(), similarity).toArray(new String[0]);
+        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.boards.keySet(), similarity).toArray(new String[0]);
         for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
             similarBoards.add(this.boards.get(similarCommandNames[index]));
         }

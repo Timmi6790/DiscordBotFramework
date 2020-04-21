@@ -1,23 +1,23 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
-import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroupsPlayer;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.*;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
     public JavaPlayerGroupCommand() {
-        super("gplayer", "MineplexStats - Java", "Group players", "<player> <group> <stat> [board] [date]");
+        super("gplayer", "Group players", "<player> <group> <stat> [board] [date]", "gpl");
 
         this.setMinArgs(3);
         this.setDefaultPerms(true);
@@ -25,38 +25,43 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
+        final MineplexStatsModule module = this.getStatsModule();
+
         final String player = this.getPlayer(commandParameters, 0);
+        final JavaGroup javaGroup = this.getJavaGroup(commandParameters, 1);
+        final JavaStat stat = this.getJavaStat(javaGroup, commandParameters, 2);
 
-        final MineplexStatsModule module = ((MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class));
-        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerGroup(player, "MixedArcade", "Wins", "All");
+        final List<JavaGame> statSpecificGames = javaGroup.getGames(stat);
+        final JavaBoard board = this.getBoard(statSpecificGames.get(0), stat, commandParameters, 3);
 
-        if (!(responseModel instanceof JavaGroupsPlayer)) {
-            commandParameters.getEvent().getChannel().sendMessage(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                            .setTitle("No stats available")
-                            .setDescription(this.getApiErrorMessage(responseModel))
-                            .build())
-                    .queue();
-            return CommandResult.ERROR;
-        }
+        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerGroup(player, javaGroup.getGroup(), stat.getName(), board.getName());
+        this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaGroupsPlayer groupStats = (JavaGroupsPlayer) responseModel;
         final JavaGroupsPlayer.JavaGroupsPlayerInfo playerStatsInfo = ((JavaGroupsPlayer) responseModel).getInfo();
+        final Map<String, JavaGroupsPlayer.JavaGroupsPlayerStat> playerStats = groupStats.getStats();
 
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
-        final String[][] leaderboard = new String[groupStats.getStats().size() + 1][3];
+        final String[][] leaderboard = new String[statSpecificGames.size() + 1][3];
         leaderboard[0] = new String[]{"Game", "Score", "Position"};
 
         int heighestUnixTime = 0;
         int index = 1;
-        for (final JavaGroupsPlayer.JavaGroupsPlayerStat stat : groupStats.getStats().values()) {
-            leaderboard[index] = new String[]{stat.getGame(), String.valueOf(stat.getScore()), String.valueOf(stat.getPosition())};
+        for (final JavaGame game : statSpecificGames) {
+            String score = UNKNOWN_SCORE;
+            String position = UNKNOWN_POSITION;
+            if (playerStats.containsKey(game.getName())) {
+                final JavaGroupsPlayer.JavaGroupsPlayerStat playerStat = playerStats.get(game.getName());
 
-            if (stat.getUnix() > heighestUnixTime) {
-                heighestUnixTime = stat.getUnix();
+                score = this.getFormattedScore(stat, playerStat.getScore());
+                position = String.valueOf(playerStat.getPosition());
+
+                if (playerStat.getUnix() > heighestUnixTime) {
+                    heighestUnixTime = playerStat.getUnix();
+                }
             }
-
+            leaderboard[index] = new String[]{game.getName(), score, position};
             index++;
         }
 

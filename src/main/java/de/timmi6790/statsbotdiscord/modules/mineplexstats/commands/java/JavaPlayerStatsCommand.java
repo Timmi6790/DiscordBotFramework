@@ -1,6 +1,5 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
-import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
@@ -10,7 +9,6 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaPlayerStats;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.Permission;
 
 import java.awt.image.BufferedImage;
@@ -23,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
     public JavaPlayerStatsCommand() {
-        super("player", "MineplexStats - Java", "Player stats", "<player> <game> [board] [date]", "pl");
+        super("player", "Player stats", "<player> <game> [board] [date]", "pl");
 
         this.addDiscordPermission(Permission.MESSAGE_ATTACH_FILES);
         this.setMinArgs(2);
@@ -36,18 +34,9 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         final JavaGame javaGame = this.getGame(commandParameters, 1);
         final JavaBoard board = this.getBoard(javaGame, commandParameters, 2);
 
-        final MineplexStatsModule module = ((MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class));
-        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerStats(player, javaGame.getName(), board.getName());
-
-        if (!(responseModel instanceof JavaPlayerStats)) {
-            commandParameters.getEvent().getChannel().sendMessage(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                            .setTitle("No stats available")
-                            .setDescription(this.getApiErrorMessage(responseModel))
-                            .build())
-                    .queue();
-            return CommandResult.ERROR;
-        }
+        final MineplexStatsModule module = this.getStatsModule();
+        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName());
+        this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaPlayerStats playerStats = (JavaPlayerStats) responseModel;
         final JavaPlayerStats.PlayerStatsInfo playerStatsInfo = playerStats.getInfo();
@@ -92,7 +81,6 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard()};
         final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(heighestUnixTime), leaderboard, skin);
         final Optional<InputStream> picture = statsPicture.getPlayerPicture();
-
         if (picture.isPresent()) {
             commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + heighestUnixTime + ".png").queue();
             return CommandResult.SUCCESS;

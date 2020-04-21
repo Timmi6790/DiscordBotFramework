@@ -10,8 +10,8 @@ import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.Abstrac
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.EventPriority;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.SubscribeEvent;
-import de.timmi6790.statsbotdiscord.utilities.DataUtilities;
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import lombok.Getter;
 import net.dv8tion.jda.api.Permission;
@@ -95,7 +95,7 @@ public class CommandManager {
     public List<AbstractCommand> getSimilarCommands(final String name, final double similarity, final int limit) {
         final List<AbstractCommand> similarCommands = new ArrayList<>();
 
-        final String[] similarCommandNames = DataUtilities.getSimilarityList(name, this.commands.keySet(), similarity).toArray(new String[0]);
+        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.commands.keySet(), similarity).toArray(new String[0]);
         for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
             similarCommands.add(this.commands.get(similarCommandNames[index]));
         }

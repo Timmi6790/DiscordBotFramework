@@ -4,6 +4,8 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.EventCommandExecution;
 import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
+import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
+import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
@@ -210,6 +212,23 @@ public abstract class AbstractCommand {
                 .delay(90, TimeUnit.SECONDS)
                 .flatMap(Message::delete)
                 .queue();
+    }
+
+    protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
+        commandParameters.getEvent().getChannel().sendMessage(
+                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                        .setTitle(title)
+                        .setDescription(description)
+                        .build())
+                .queue(message -> {
+                    if (!emotes.isEmpty()) {
+                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
+                                commandParameters.getEvent().getChannel().getIdLong());
+                        StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
+                    }
+
+                    message.delete().queueAfter(90, TimeUnit.SECONDS);
+                });
     }
 
     private MessageEmbed getMissingPermsMessage(final Permission permission, final EventMessageReceived event) {

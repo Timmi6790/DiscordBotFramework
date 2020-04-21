@@ -1,6 +1,5 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
-import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
@@ -15,14 +14,14 @@ import java.util.concurrent.TimeUnit;
 
 public class JavaGamesCommand extends AbstractJavaStatsCommand {
     public JavaGamesCommand() {
-        super("games", "MineplexStats - Java", "Shows all games", "[game] [stat]", "g");
+        super("games", "Shows all games", "[game] [stat]", "g");
 
         this.setDefaultPerms(true);
     }
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        final MineplexStatsModule module = (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
+        final MineplexStatsModule module = this.getStatsModule();
 
         // Show all games
         if (commandParameters.getArgs().length == 0) {
@@ -54,7 +53,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
             }
 
             commandParameters.getDiscordChannel().sendMessage(message.build())
-                    .delay(90, TimeUnit.SECONDS)
+                    .delay(150, TimeUnit.SECONDS)
                     .flatMap(Message::delete)
                     .queue();
 
@@ -101,7 +100,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
         message.addField("Boards", String.join(", ", stat.getBoardNames()), false);
 
         commandParameters.getDiscordChannel().sendMessage(message.build())
-                .delay(90, TimeUnit.SECONDS)
+                .delay(150, TimeUnit.SECONDS)
                 .flatMap(Message::delete)
                 .queue();
 

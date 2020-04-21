@@ -14,34 +14,40 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class MpStatsRestApiClient {
-    private static final String USER_AGENT = "MpStatsRestApiClient-Java";
     private static final String BASE_URL = "http://127.0.0.1:8001/"; // "https://mpstats2.timmi6790.de/";
 
-    public static void main(final String[] args) {
-        final MpStatsRestApiClient restApiClient = new MpStatsRestApiClient();
+    private static final int TIMEOUT = 6_000;
+    private static final String USER_AGENT = "MpStatsRestApiClient-Java";
+    private final static ErrorModel UNKNOWN_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "Unknown Error");
 
-        System.out.println(restApiClient.getPlayerStats("Timmi6790", "Globald", "all"));
-    }
+    private final Gson gson = new Gson();
 
-    public void getLeaderboardSaves(final String game, final String board) {
-        final String url = MpStatsRestApiClient.BASE_URL + "java/leaderboards/saves?" + "game=" + game + "&board=" + board;
+    public ResponseModel parseHttpResponse(final HttpResponse<JsonNode> response, final Class<? extends ResponseModel> clazz) {
+        if (!response.isSuccess()) {
+            return UNKNOWN_ERROR_RESPONSE_MODEL;
+        }
+
+        final JSONObject jsonObject = response.getBody().getObject();
+        if (!jsonObject.getBoolean("success")) {
+            return this.gson.fromJson(jsonObject.toString(), ErrorModel.class);
+        }
+
+        return this.gson.fromJson(jsonObject.toString(), clazz);
     }
 
     public ResponseModel getJavaGames() {
         final HttpResponse<JsonNode> response = Unirest.get(MpStatsRestApiClient.BASE_URL + "java/leaderboards/games")
                 .header("User-Agent", USER_AGENT)
-                .connectTimeout(6_000)
+                .connectTimeout(TIMEOUT)
                 .asJson();
 
         if (!response.isSuccess()) {
-            System.out.println("Error: " + response.getBody() + " " + response.getStatus());
-            return new ErrorModel(0, "Unknown Error");
+            return UNKNOWN_ERROR_RESPONSE_MODEL;
         }
 
-        final Gson gson = new Gson();
         final JSONObject jsonObject = response.getBody().getObject();
         if (!jsonObject.getBoolean("success")) {
-            return gson.fromJson(jsonObject.toString(), ErrorModel.class);
+            return this.gson.fromJson(jsonObject.toString(), ErrorModel.class);
         }
 
         final Map<String, JavaGame> parsedGames = new HashMap<>();
@@ -69,7 +75,7 @@ public class MpStatsRestApiClient {
                             boardName.toLowerCase(),
                             new JavaBoard(
                                     board.getString("board"),
-                                    gson.fromJson(board.getJSONArray("aliasNames").toString(), String[].class)
+                                    this.gson.fromJson(board.getJSONArray("aliasNames").toString(), String[].class)
                             )
                     );
 
@@ -79,7 +85,7 @@ public class MpStatsRestApiClient {
                         statName.toLowerCase(),
                         new JavaStat(
                                 stat.getString("stat"),
-                                gson.fromJson(stat.getJSONArray("aliasNames").toString(), String[].class),
+                                this.gson.fromJson(stat.getJSONArray("aliasNames").toString(), String[].class),
                                 stat.getString("prettyStat"),
                                 stat.getString("description"),
                                 boards
@@ -91,7 +97,7 @@ public class MpStatsRestApiClient {
                     gameName.toLowerCase(),
                     new JavaGame(
                             game.getString("game"),
-                            gson.fromJson(game.getJSONArray("aliasNames").toString(), String[].class),
+                            this.gson.fromJson(game.getJSONArray("aliasNames").toString(), String[].class),
                             game.getString("category"),
                             game.getString("wikiUrl"),
                             game.getString("description"),
@@ -103,31 +109,45 @@ public class MpStatsRestApiClient {
         return new JavaGamesModel(parsedGames);
     }
 
-    public ResponseModel getPlayerStats(final String player, final String game, final String board) {
+    public ResponseModel getJavaPlayerStats(final String player, final String game, final String board) {
         final HttpResponse<JsonNode> response = Unirest.get(MpStatsRestApiClient.BASE_URL + "java/leaderboards/player")
                 .queryString("player", player)
                 .queryString("game", game)
                 .queryString("board", board.toLowerCase())
                 .header("User-Agent", USER_AGENT)
-                .connectTimeout(6_000)
+                .connectTimeout(TIMEOUT)
+                .asJson();
+
+        return this.parseHttpResponse(response, JavaPlayerStats.class);
+    }
+
+    public ResponseModel getJavaLeaderboard(final String game, final String stat, final String board, final int startPos, final int endPos, final long time) {
+        final HttpResponse<JsonNode> response = Unirest.get(MpStatsRestApiClient.BASE_URL + "java/leaderboards/player")
+                .queryString("game", game)
+                .queryString("board", board.toLowerCase())
+                .header("User-Agent", USER_AGENT)
+                .connectTimeout(TIMEOUT)
+                .asJson();
+
+        return this.parseHttpResponse(response, JavaPlayerStats.class);
+    }
+
+    public ResponseModel getGroups() {
+        final HttpResponse<JsonNode> response = Unirest.get(MpStatsRestApiClient.BASE_URL + "java/leaderboards/group/groups")
+                .header("User-Agent", USER_AGENT)
+                .connectTimeout(TIMEOUT)
                 .asJson();
 
         if (!response.isSuccess()) {
-            System.out.println("Error: " + response.getBody() + " " + response.getStatus());
-            return new ErrorModel(0, "Unknown Error");
+            return UNKNOWN_ERROR_RESPONSE_MODEL;
         }
 
-        final Gson gson = new Gson();
         final JSONObject jsonObject = response.getBody().getObject();
         if (!jsonObject.getBoolean("success")) {
-            return gson.fromJson(jsonObject.toString(), ErrorModel.class);
+            return this.gson.fromJson(jsonObject.toString(), ErrorModel.class);
         }
 
-        return gson.fromJson(jsonObject.toString(), JavaPlayerStats.class);
-    }
-
-    public ResponseModel getLeaderboard(final String game, final String stat, final String board) {
-        return null;
+        return this.gson.fromJson(jsonObject.toString(), JavaGroupsGroups.class);
     }
 
     public ResponseModel getPlayerGroup(final String player, final String group, final String stat, final String board) {
@@ -137,20 +157,9 @@ public class MpStatsRestApiClient {
                 .queryString("stat", stat)
                 .queryString("board", board.toLowerCase())
                 .header("User-Agent", USER_AGENT)
-                .connectTimeout(6_000)
+                .connectTimeout(TIMEOUT)
                 .asJson();
 
-        if (!response.isSuccess()) {
-            System.out.println("Error: " + response.getBody() + " " + response.getStatus());
-            return new ErrorModel(0, "Unknown Error");
-        }
-
-        final Gson gson = new Gson();
-        final JSONObject jsonObject = response.getBody().getObject();
-        if (!jsonObject.getBoolean("success")) {
-            return gson.fromJson(jsonObject.toString(), ErrorModel.class);
-        }
-
-        return gson.fromJson(jsonObject.toString(), JavaGroupsPlayer.class);
+        return this.parseHttpResponse(response, JavaGroupsPlayer.class);
     }
 }
