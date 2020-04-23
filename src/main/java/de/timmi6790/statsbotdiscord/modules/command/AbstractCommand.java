@@ -19,16 +19,22 @@ import lombok.ToString;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Getter
 @EqualsAndHashCode
 @ToString
 @Setter
 public abstract class AbstractCommand {
+    private final static Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
+    private final static Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
+
     private final int dbId;
     private final String name;
     private final String category;
@@ -40,7 +46,7 @@ public abstract class AbstractCommand {
     private final String[] aliasNames;
 
     private boolean defaultPerms = false;
-    private final Set<String> permissionNodes = new HashSet<>();
+    private String permissionNode;
     private final Set<Permission> discordPermissions = new HashSet<>();
 
     public AbstractCommand(final String name, final String category, final String description, final String syntax, final String... aliasNames) {
@@ -84,13 +90,15 @@ public abstract class AbstractCommand {
 
     public void runCommand(final CommandParameters commandParameters) {
         // Check command specific permissions
-        for (final Permission permission : this.getDiscordPermissions()) {
-            if (!commandParameters.getDiscordChannelPermissions().contains(permission)) {
-                commandParameters.getDiscordChannel().sendMessage(this.getMissingPermsMessage(permission, commandParameters.getEvent()))
-                        .delay(150, TimeUnit.SECONDS)
-                        .flatMap(Message::delete)
-                        .queue();
-                return;
+        if (commandParameters.getEvent().isFromGuild()) {
+            for (final Permission permission : this.getDiscordPermissions()) {
+                if (!commandParameters.getDiscordChannelPermissions().contains(permission)) {
+                    commandParameters.getDiscordChannel().sendMessage(this.getMissingPermsMessage(permission, commandParameters.getEvent()))
+                            .delay(150, TimeUnit.SECONDS)
+                            .flatMap(Message::delete)
+                            .queue();
+                    return;
+                }
             }
         }
 
@@ -103,7 +111,7 @@ public abstract class AbstractCommand {
             commandParameters.getDiscordChannel().sendMessage(
                     UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                             .setTitle("Missing perms")
-                            .setDescription("You don't have the")
+                            .setDescription("You don't have the permissions to run this command.")
                             .build())
                     .delay(90, TimeUnit.SECONDS)
                     .flatMap(Message::delete)
@@ -114,9 +122,8 @@ public abstract class AbstractCommand {
             commandParameters.getDiscordChannel()
                     .sendMessage(
                             UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Missing args")
-                                    .setDescription("Something went horrible wrong while executing this command.")
-                                    .addField("Command", this.getName(), false)
-                                    .addField("Args", String.join(" ", commandParameters.getArgs()), false)
+                                    .setDescription("You are missing an argument.")
+                                    .addField("Syntax", this.getSyntax(), false)
                                     .build())
                     .delay(90, TimeUnit.SECONDS)
                     .flatMap(Message::delete)
@@ -168,10 +175,7 @@ public abstract class AbstractCommand {
 
         // Command post event
         final EventCommandExecution.Post commandExecutionPost = new EventCommandExecution.Post(this, commandParameters, commandResult);
-        StatsBot.getEventManager().
-
-                callEvent(commandExecutionPost);
-
+        StatsBot.getEventManager().callEvent(commandExecutionPost);
     }
 
     public final boolean hasPermission(final CommandParameters commandParameters) {
@@ -179,17 +183,15 @@ public abstract class AbstractCommand {
             return true;
         }
 
-        for (final String permission : commandParameters.getUser().getPermissionNodes()) {
-            if (this.permissionNodes.contains(permission)) {
-                return true;
-            }
+        if (commandParameters.getUserDb().getPermissionNodes().contains(this.permissionNode)) {
+            return true;
         }
 
         return this.onPermissionCheck(commandParameters);
     }
 
-    protected void addPermission(final String permission) {
-        this.permissionNodes.add(permission);
+    protected void setPermission(final String permission) {
+        this.permissionNode = permission;
     }
 
     protected void addDiscordPermission(final Permission permission) {
@@ -236,5 +238,29 @@ public abstract class AbstractCommand {
                 .setTitle("Missing Permission")
                 .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.")
                 .build();
+    }
+
+    protected User getDiscordUser(final CommandParameters commandParameters, final int argPos) {
+        final String name = commandParameters.getArgs()[argPos];
+        final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
+        if (userIdMatcher.find()) {
+            final User user = StatsBot.getDiscord().getUserById(userIdMatcher.group(2));
+            if (user != null) {
+                return user;
+            }
+        }
+
+        if (DISCORD_USER_TAG_PATTERN.matcher(name).find()) {
+            final User user = StatsBot.getDiscord().getUserByTag(name);
+            if (user != null) {
+                return user;
+            }
+        }
+
+        throw new CommandReturnException(
+                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                        .setTitle("Invalid User")
+                        .setDescription(MarkdownUtil.monospace(name) + " is not a valid discord user.")
+        );
     }
 }

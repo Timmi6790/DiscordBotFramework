@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.SubscribeEvent;
+import lombok.Getter;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
@@ -12,10 +13,20 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class EmoteReactionManager {
-    private final static Cache<Long, EmoteReactionMessage> EMOTE_MESSAGE_CACHE = Caffeine.newBuilder()
+    private final static int ACTIVE_EMOTES_LIMIT = 6;
+
+    @Getter
+    private final Map<Long, Integer> activeEmotesPerPlayer = new ConcurrentHashMap<>();
+
+    @Getter
+    private final Cache<Long, EmoteReactionMessage> emoteMessageCache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfter(new Expiry<Long, EmoteReactionMessage>() {
 
@@ -37,6 +48,21 @@ public class EmoteReactionManager {
             .removalListener((key, value, cause) -> {
                 if (key == null || value == null) {
                     return;
+                }
+
+                // Deduct the active emotes per player
+                for (long user : value.getUsers()) {
+                    if (!this.activeEmotesPerPlayer.containsKey(user)) {
+                        continue;
+                    }
+
+                    int currentCount = this.activeEmotesPerPlayer.get(user);
+                    if (1 >= currentCount) {
+                        this.activeEmotesPerPlayer.remove(user);
+
+                    } else {
+                        this.activeEmotesPerPlayer.replace(user, currentCount - 1);
+                    }
                 }
 
                 final MessageChannel channel = StatsBot.getDiscord().getTextChannelById(value.getChannelId());
@@ -63,7 +89,24 @@ public class EmoteReactionManager {
     }
 
     public void addEmoteReactionMessage(final Message message, final EmoteReactionMessage emoteReactionMessage) {
-        EMOTE_MESSAGE_CACHE.put(message.getIdLong(), emoteReactionMessage);
+        final Set<Long> playersAboveRate = new HashSet<>();
+        for (final long user : emoteReactionMessage.getUsers()) {
+            final int currentActive = this.activeEmotesPerPlayer.getOrDefault(user, 0);
+
+            if (currentActive >= ACTIVE_EMOTES_LIMIT) {
+                playersAboveRate.add(user);
+                continue;
+            }
+
+            this.activeEmotesPerPlayer.put(user, currentActive + 1);
+        }
+
+        if (emoteReactionMessage.getUsers().size() == playersAboveRate.size()) {
+            return;
+        }
+        emoteReactionMessage.getUsers().removeAll(playersAboveRate);
+
+        this.emoteMessageCache.put(message.getIdLong(), emoteReactionMessage);
 
         for (final String emote : emoteReactionMessage.getEmotes().keySet()) {
             message.addReaction(emote).queue((m) -> {
@@ -74,7 +117,7 @@ public class EmoteReactionManager {
 
     @SubscribeEvent
     public void onReactionAdd(final MessageReactionAddEvent event) {
-        final EmoteReactionMessage emoteReactionMessage = EMOTE_MESSAGE_CACHE.getIfPresent(event.getMessageIdLong());
+        final EmoteReactionMessage emoteReactionMessage = this.emoteMessageCache.getIfPresent(event.getMessageIdLong());
         if (emoteReactionMessage == null ||
                 !emoteReactionMessage.getUsers().contains(event.getUserIdLong()) ||
                 !emoteReactionMessage.getEmotes().containsKey(event.getReaction().getReactionEmote().getName())) {
@@ -88,7 +131,7 @@ public class EmoteReactionManager {
             }
 
         } else if (emoteReactionMessage.isOneTimeUse()) {
-            EMOTE_MESSAGE_CACHE.invalidate(event.getMessageIdLong());
+            this.emoteMessageCache.invalidate(event.getMessageIdLong());
         }
 
         emoteReactionMessage.getEmotes().get(event.getReaction().getReactionEmote().getName()).onEmote();
@@ -96,6 +139,6 @@ public class EmoteReactionManager {
 
     @SubscribeEvent
     public void onMessageDelete(final MessageDeleteEvent event) {
-        EMOTE_MESSAGE_CACHE.invalidate(event.getMessageIdLong());
+        this.emoteMessageCache.invalidate(event.getMessageIdLong());
     }
 }

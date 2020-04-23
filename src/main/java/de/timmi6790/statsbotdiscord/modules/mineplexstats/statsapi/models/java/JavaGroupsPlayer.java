@@ -12,13 +12,13 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class JavaGroupsPlayer extends ResponseModel {
-    private final JavaGroupsPlayerInfo info;
-    private final Map<String, JavaGroupsPlayerStat> stats;
+    private final Info info;
+    private final Map<String, Stats> stats;
 
 
     @Data
     @AllArgsConstructor
-    public static class JavaGroupsPlayerInfo {
+    public static class Info {
         private final UUID uuid;
         private final String name;
         private final String group;
@@ -30,7 +30,7 @@ public class JavaGroupsPlayer extends ResponseModel {
 
     @Data
     @AllArgsConstructor
-    public static class JavaGroupsPlayerStat {
+    public static class Stats {
         private final String game;
         private final int position;
         private final int score;

@@ -52,7 +52,6 @@ public class StatsBot {
         database = Jdbi.create(config.getString("db.url"), config.getString("db.name"), config.getString("db.password"));
 
         discord = new JDABuilder(AccountType.BOT)
-                .setGuildSubscriptionsEnabled(false)
                 .setToken(config.getString("discord.token"))
 
                 .setStatus(OnlineStatus.ONLINE)

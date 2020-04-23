@@ -2,12 +2,14 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats;
 
 import de.timmi6790.statsbotdiscord.AbstractModule;
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaGamesCommand;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaGroupsGroupsCommand;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaLeaderboardCommand;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaPlayerGroupCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockGamesCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockLeaderboardCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockPlayerCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.debug.ReloadDataCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.*;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.MpStatsRestApiClient;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGames;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGamesModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroup;
@@ -30,20 +32,37 @@ public class MineplexStatsModule extends AbstractModule {
     private final Map<String, JavaGroup> javaGroups = new ConcurrentHashMap<>();
     private final Map<String, String> javaGroupsAlias = new ConcurrentHashMap<>();
 
+    @Getter
+    private final Map<String, String> bedrockGames = new ConcurrentHashMap<>();
+
     public MineplexStatsModule() {
         super("MineplexStats");
     }
 
     @Override
     public void onEnable() {
-        this.loadJavaGames();
-        this.loadJavaGroups();
+        // Maybe I should handle the api downtime better
+        try {
+            this.loadJavaGames();
+            this.loadJavaGroups();
+
+            this.loadBedrockGames();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
 
         StatsBot.getCommandManager().registerCommands(
                 new JavaGamesCommand(),
+                new JavaPlayerStatsCommand(),
                 new JavaPlayerGroupCommand(),
                 new JavaGroupsGroupsCommand(),
-                new JavaLeaderboardCommand()
+                new JavaLeaderboardCommand(),
+
+                new BedrockGamesCommand(),
+                new BedrockPlayerCommand(),
+                new BedrockLeaderboardCommand(),
+
+                new ReloadDataCommand()
         );
     }
 
@@ -58,6 +77,8 @@ public class MineplexStatsModule extends AbstractModule {
             return;
         }
 
+        this.javaGames.clear();
+        this.javaGamesAlias.clear();
         for (final JavaGame javaGame : ((JavaGamesModel) responseModel).getGames().values()) {
             this.javaGames.put(javaGame.getName().toLowerCase(), javaGame);
 
@@ -73,6 +94,8 @@ public class MineplexStatsModule extends AbstractModule {
             return;
         }
 
+        this.javaGroups.clear();
+        this.javaGroupsAlias.clear();
         for (final JavaGroup javaGroup : ((JavaGroupsGroups) responseModel).getGroups().values()) {
             Arrays.sort(javaGroup.getAliasNames());
             javaGroup.getGameNames().sort(Comparator.naturalOrder());
@@ -85,12 +108,24 @@ public class MineplexStatsModule extends AbstractModule {
         }
     }
 
+    public void loadBedrockGames() {
+        final ResponseModel responseModel = this.mpStatsRestClient.getBedrockGames();
+        if (!(responseModel instanceof BedrockGames)) {
+            return;
+        }
+
+        this.bedrockGames.clear();
+        for (final String game : ((BedrockGames) responseModel).getGames()) {
+            this.bedrockGames.put(game.toLowerCase(), game);
+        }
+    }
+
     public Optional<JavaGame> getJavaGame(String name) {
         name = this.javaGamesAlias.getOrDefault(name.toLowerCase(), name.toLowerCase());
         return Optional.ofNullable(this.javaGames.get(name));
     }
 
-    public List<JavaGame> getSimilarGames(final String name, final double similarity, final int limit) {
+    public List<JavaGame> getSimilarJavaGames(final String name, final double similarity, final int limit) {
         final List<JavaGame> similarGames = new ArrayList<>();
 
         final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.javaGames.keySet(), similarity).toArray(new String[0]);
@@ -106,7 +141,7 @@ public class MineplexStatsModule extends AbstractModule {
         return Optional.ofNullable(this.javaGroups.get(name));
     }
 
-    public List<JavaGroup> getSimilarGroups(final String name, final double similarity, final int limit) {
+    public List<JavaGroup> getSimilarJavaGroups(final String name, final double similarity, final int limit) {
         final List<JavaGroup> similarGroups = new ArrayList<>();
 
         final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.javaGroups.keySet(), similarity).toArray(new String[0]);
@@ -116,4 +151,20 @@ public class MineplexStatsModule extends AbstractModule {
 
         return similarGroups;
     }
+
+    public Optional<String> getBedrockGame(final String name) {
+        return Optional.ofNullable(this.bedrockGames.get(name.toLowerCase()));
+    }
+
+    public List<String> getSimilarBedrockGames(final String name, final double similarity, final int limit) {
+        final List<String> similarGames = new ArrayList<>();
+
+        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.bedrockGames.keySet(), similarity).toArray(new String[0]);
+        for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
+            similarGames.add(this.bedrockGames.get(similarCommandNames[index]));
+        }
+
+        return similarGames;
+    }
+
 }

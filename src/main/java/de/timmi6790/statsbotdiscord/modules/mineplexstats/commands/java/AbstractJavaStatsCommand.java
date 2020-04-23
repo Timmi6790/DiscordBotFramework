@@ -6,17 +6,13 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.AbstractStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroup;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -26,9 +22,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -38,19 +31,12 @@ import java.util.regex.Pattern;
 public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
     private final static Pattern NAME_PATTERN = Pattern.compile("^\\w{3,16}$");
     private final static List<String> STATS_TIME = new ArrayList<>(Arrays.asList("TimeInGame", "TimeInHub", "TimePlaying"));
-    private final static DecimalFormat FORMAT_NUMBER = (DecimalFormat) NumberFormat.getInstance(Locale.US);
 
     private final static Cache<UUID, BufferedImage> SKIN_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(2, TimeUnit.MINUTES)
             .expireAfterAccess(2, TimeUnit.MINUTES)
             .build();
-
-    static {
-        final DecimalFormatSymbols symbols = FORMAT_NUMBER.getDecimalFormatSymbols();
-        symbols.setGroupingSeparator(',');
-        FORMAT_NUMBER.setDecimalFormatSymbols(symbols);
-    }
 
     public AbstractJavaStatsCommand(final String name, final String description, final String syntax, final String... aliasNames) {
         super(name, "MineplexStats - Java", description, syntax, aliasNames);
@@ -61,41 +47,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return this.getFormattedTime(score);
         }
 
-        return FORMAT_NUMBER.format(score);
-    }
-
-    private void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
-                                 final AbstractCommand command, final String[] newArgs, final String[] similarNames) {
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-        final StringBuilder description = new StringBuilder();
-        description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
-
-        if (similarNames.length == 0) {
-            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
-                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
-
-        } else {
-            description.append("Is it possible that you wanted to write?\n\n");
-
-            for (int index = 0; similarNames.length > index; index++) {
-                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames[index])).append("\n");
-
-                final CommandParameters newCommandParameters = commandParameters.clone();
-                newCommandParameters.getArgs()[argPos] = similarNames[index];
-
-                emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
-            }
-
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
-        }
-
-        final CommandParameters newCommandParameters = commandParameters.clone();
-        newCommandParameters.setArgs(newArgs);
-        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
-
-        this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
+        return this.getFormattedNumber(score);
     }
 
     protected JavaGame getGame(final CommandParameters commandParameters, final int argPos) {
@@ -107,7 +59,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaGame similarGame : this.getStatsModule().getSimilarGames(name, 0.6, 3)) {
+        for (final JavaGame similarGame : this.getStatsModule().getSimilarJavaGames(name, 0.6, 3)) {
             similarNames.add(similarGame.getName());
         }
 
@@ -156,8 +108,8 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             exampleStat = stat;
         }
 
-        final List<String> similarBoards = UtilitiesData.getSimilarityList(name, boards, 0.6);
-        final String[] similarNames = new String[Math.min(similarBoards.size(), 3)];
+        final List<String> similarBoards = UtilitiesData.getSimilarityList(name, boards, 0.0);
+        final String[] similarNames = new String[Math.min(similarBoards.size(), 6)];
         for (int index = 0; similarNames.length > index; index++) {
             similarNames[index] = similarBoards.get(index);
         }
@@ -181,7 +133,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaBoard similar : stat.getSimilarBoard(name, 0.6, 3).toArray(new JavaBoard[0])) {
+        for (final JavaBoard similar : stat.getSimilarBoard(name, 0.0, 6).toArray(new JavaBoard[0])) {
             similarNames.add(similar.getName());
         }
 
@@ -214,7 +166,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaGroup similar : this.getStatsModule().getSimilarGroups(name, 0.6, 3).toArray(new JavaGroup[0])) {
+        for (final JavaGroup similar : this.getStatsModule().getSimilarJavaGroups(name, 0.6, 3).toArray(new JavaGroup[0])) {
             similarNames.add(similar.getName());
         }
 
@@ -261,7 +213,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             }
 
             final HttpResponse<byte[]> response = Unirest.get("https://visage.surgeplay.com/frontfull/" + uuid.toString().replace("-", "") + ".png")
-                    .connectTimeout(6_000)
+                    .connectTimeout(10_000)
                     .asBytes();
 
             if (!response.isSuccess()) {

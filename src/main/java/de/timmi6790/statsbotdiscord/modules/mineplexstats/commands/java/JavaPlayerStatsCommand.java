@@ -39,14 +39,14 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaPlayerStats playerStats = (JavaPlayerStats) responseModel;
-        final JavaPlayerStats.PlayerStatsInfo playerStatsInfo = playerStats.getInfo();
+        final JavaPlayerStats.Info playerStatsInfo = playerStats.getInfo();
 
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
         final JavaGame game = module.getJavaGame(playerStatsInfo.getGame()).get();
-        final Map<String, JavaPlayerStats.PlayerStatsStats> stats = playerStats.getStats();
+        final Map<String, JavaPlayerStats.Stats> stats = playerStats.getStats();
 
-        int heighestUnixTime = 0;
+        int highestUnixTime = 0;
         final String[][] leaderboard = new String[game.getStats().size() + 1][3];
         leaderboard[0] = new String[]{"Category", "Score", "Position"};
 
@@ -57,13 +57,13 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
             String score = UNKNOWN_SCORE;
             String position = UNKNOWN_POSITION;
             if (stats.containsKey(gameStat.getName())) {
-                final JavaPlayerStats.PlayerStatsStats stat = stats.get(gameStat.getName());
+                final JavaPlayerStats.Stats stat = stats.get(gameStat.getName());
 
                 score = this.getFormattedScore(gameStat, stat.getScore());
                 position = String.valueOf(stat.getPosition());
 
-                if (stat.getUnix() > heighestUnixTime) {
-                    heighestUnixTime = stat.getUnix();
+                if (stat.getUnix() > highestUnixTime) {
+                    highestUnixTime = stat.getUnix();
                 }
             }
 
@@ -79,10 +79,10 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         }
 
         final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard()};
-        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(heighestUnixTime), leaderboard, skin);
+        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime), leaderboard, skin);
         final Optional<InputStream> picture = statsPicture.getPlayerPicture();
         if (picture.isPresent()) {
-            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + heighestUnixTime + ".png").queue();
+            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + highestUnixTime + ".png").queue();
             return CommandResult.SUCCESS;
         }
 

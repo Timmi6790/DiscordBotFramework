@@ -14,6 +14,10 @@ public enum DiscordEmotes {
     EIGHT("8️⃣"),
     NINE("9️⃣"),
     TEN("🔟"),
+    LEFT_ARROW("◀"),
+    FAR_LEFT_ARROW("⏪"),
+    RIGHT_ARROW("▶"),
+    FAR_RIGHT_ARROW("⏩"),
     FOLDER("\uD83D\uDCC1");
 
     @Getter

@@ -3,6 +3,7 @@ package de.timmi6790.statsbotdiscord.modules.core;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.statsbotdiscord.StatsBot;
+import de.timmi6790.statsbotdiscord.modules.setting.Setting;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -16,8 +17,9 @@ import java.util.concurrent.TimeUnit;
 @EqualsAndHashCode
 @Getter
 @AllArgsConstructor
-public class User {
-    private final static Cache<Long, User> USER_CACHE = Caffeine.newBuilder()
+public class UserDb {
+    @Getter
+    private final static Cache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
@@ -35,13 +37,13 @@ public class User {
     private final List<String> permissionNodes;
     private final List<Setting> settings;
 
-    public static Optional<User> get(final long discordId) {
-        final User user = USER_CACHE.getIfPresent(discordId);
-        if (user != null) {
-            return Optional.of(user);
+    public static Optional<UserDb> get(final long discordId) {
+        final UserDb userDb = USER_CACHE.getIfPresent(discordId);
+        if (userDb != null) {
+            return Optional.of(userDb);
         }
 
-        final Optional<User> userOpt = StatsBot.getDatabase().withHandle(handle ->
+        final Optional<UserDb> userOpt = StatsBot.getDatabase().withHandle(handle ->
                 handle.createQuery("SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, GROUP_CONCAT(DISTINCT permission.permission_node) AS perms " +
                         "FROM player " +
                         "LEFT JOIN player_rank p_rank ON p_rank.player_id = player.id " +
@@ -49,7 +51,7 @@ public class User {
                         "LEFT JOIN permission ON permission.default_permission = 1 OR permission.id = p_perm.permission_id " +
                         "WHERE player.discordId = :discordId LIMIT 1;")
                         .bind("discordId", discordId)
-                        .mapTo(User.class)
+                        .mapTo(UserDb.class)
                         .findOne()
         );
 
@@ -57,15 +59,15 @@ public class User {
         return userOpt;
     }
 
-    public static User getOrCreate(final long discordId) {
-        return User.get(discordId).orElseGet(() -> {
+    public static UserDb getOrCreate(final long discordId) {
+        return UserDb.get(discordId).orElseGet(() -> {
             StatsBot.getDatabase().useHandle(handle ->
                     handle.createUpdate("INSERT INTO player(discordId) VALUES (:discordId);")
                             .bind("discordId", discordId)
                             .execute()
             );
 
-            return User.get(discordId).orElseThrow(RuntimeException::new);
+            return UserDb.get(discordId).orElseThrow(RuntimeException::new);
         });
     }
 

@@ -92,9 +92,16 @@ public class PictureTable {
         this.gd.fillRect(0, 0, this.maxWidth, this.maxHeight);
         this.gd.setPaint(Color.WHITE);
 
-        // Header
-        final int distanceWord = Math.max(((Math.max(this.widthHeaderMax, this.widthLeaderboardMax) - UtilitiesArray.getSum(this.widthHeader)) / (this.header.length - 1)), GAP_WORD_MIN);
-        this.drawRow(this.header, this.widthHeader, FONT_HEADER, distanceWord, GAP_HEADER + FONT_SUB_HEADER.getSize());
+        // Header, center if only one entry
+        if (this.header.length <= 1) {
+            this.gd.setFont(FONT_HEADER);
+            this.gd.drawString(this.header[0], GAP_X_BORDER + (Math.max(this.widthDateMax, this.widthLeaderboardMax) - getTextWidth(this.header[0], FONT_HEADER)) / 2, this.currentHeightY);
+            this.currentHeightY += GAP_HEADER + FONT_HEADER.getSize();
+
+        } else {
+            final int distanceWord = Math.max(((Math.max(this.widthHeaderMax, this.widthLeaderboardMax) - UtilitiesArray.getSum(this.widthHeader)) / (this.header.length - 1)), GAP_WORD_MIN);
+            this.drawRow(this.header, this.widthHeader, FONT_HEADER, distanceWord, GAP_HEADER + FONT_SUB_HEADER.getSize());
+        }
 
         // Sub header
         this.gd.setFont(FONT_SUB_HEADER);

@@ -5,14 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor
 public class EmoteReactionMessage {
     private final Map<String, AbstractEmoteReaction> emotes;
-    private final List<Long> users;
+    private final Set<Long> users;
     private final long channelId;
     private final int deleteTime;
     private final boolean oneTimeUse;
@@ -20,7 +20,7 @@ public class EmoteReactionMessage {
 
     public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId, final int deleteTime, final boolean oneTimeUse, final boolean deleteMessage) {
         this.emotes = emotes;
-        this.users = Collections.singletonList(userId);
+        this.users = Collections.singleton(userId);
         this.channelId = channelId;
         this.deleteTime = deleteTime;
         this.oneTimeUse = oneTimeUse;
@@ -29,7 +29,7 @@ public class EmoteReactionMessage {
 
     public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId, final int deleteTime) {
         this.emotes = emotes;
-        this.users = Collections.singletonList(userId);
+        this.users = Collections.singleton(userId);
         this.channelId = channelId;
         this.deleteTime = deleteTime;
         this.oneTimeUse = true;
@@ -38,7 +38,7 @@ public class EmoteReactionMessage {
 
     public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId) {
         this.emotes = emotes;
-        this.users = Collections.singletonList(userId);
+        this.users = Collections.singleton(userId);
         this.channelId = channelId;
         this.deleteTime = 300;
         this.oneTimeUse = true;

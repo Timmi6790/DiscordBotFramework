@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock;
 
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import lombok.AllArgsConstructor;
@@ -6,12 +6,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.Map;
-import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@AllArgsConstructor
-public class JavaPlayerStats extends ResponseModel {
+public class BedrockPlayerStats extends ResponseModel {
     private final Info info;
     private final Map<String, Stats> stats;
 
@@ -19,18 +17,14 @@ public class JavaPlayerStats extends ResponseModel {
     @Data
     @AllArgsConstructor
     public static class Info {
-        private final UUID uuid;
         private final String name;
-        private final String game;
-        private final String board;
         private final boolean filter;
     }
 
     @Data
     @AllArgsConstructor
     public static class Stats {
-        private final String stat;
-        private final String prettyStat;
+        private final String game;
         private final int position;
         private final int score;
         private final int unix;

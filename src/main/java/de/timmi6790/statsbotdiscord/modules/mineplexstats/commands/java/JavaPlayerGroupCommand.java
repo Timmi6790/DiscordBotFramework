@@ -38,27 +38,27 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaGroupsPlayer groupStats = (JavaGroupsPlayer) responseModel;
-        final JavaGroupsPlayer.JavaGroupsPlayerInfo playerStatsInfo = ((JavaGroupsPlayer) responseModel).getInfo();
-        final Map<String, JavaGroupsPlayer.JavaGroupsPlayerStat> playerStats = groupStats.getStats();
+        final JavaGroupsPlayer.Info playerStatsInfo = groupStats.getInfo();
+        final Map<String, JavaGroupsPlayer.Stats> playerStats = groupStats.getStats();
 
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
         final String[][] leaderboard = new String[statSpecificGames.size() + 1][3];
         leaderboard[0] = new String[]{"Game", "Score", "Position"};
 
-        int heighestUnixTime = 0;
+        int highestUnixTime = 0;
         int index = 1;
         for (final JavaGame game : statSpecificGames) {
             String score = UNKNOWN_SCORE;
             String position = UNKNOWN_POSITION;
             if (playerStats.containsKey(game.getName())) {
-                final JavaGroupsPlayer.JavaGroupsPlayerStat playerStat = playerStats.get(game.getName());
+                final JavaGroupsPlayer.Stats playerStat = playerStats.get(game.getName());
 
                 score = this.getFormattedScore(stat, playerStat.getScore());
                 position = String.valueOf(playerStat.getPosition());
 
-                if (playerStat.getUnix() > heighestUnixTime) {
-                    heighestUnixTime = playerStat.getUnix();
+                if (playerStat.getUnix() > highestUnixTime) {
+                    highestUnixTime = playerStat.getUnix();
                 }
             }
             leaderboard[index] = new String[]{game.getName(), score, position};
@@ -73,11 +73,11 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
         }
 
         final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGroup(), playerStatsInfo.getPrettyStat(), playerStatsInfo.getBoard()};
-        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(heighestUnixTime), leaderboard, skin);
+        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime), leaderboard, skin);
         final Optional<InputStream> picture = statsPicture.getPlayerPicture();
 
         if (picture.isPresent()) {
-            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + heighestUnixTime + ".png").queue();
+            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + highestUnixTime + ".png").queue();
             return CommandResult.SUCCESS;
         }
 

@@ -1,10 +1,14 @@
 package de.timmi6790.statsbotdiscord.modules.command;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.sun.istack.internal.logging.Logger;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
-import de.timmi6790.statsbotdiscord.modules.core.Channel;
-import de.timmi6790.statsbotdiscord.modules.core.User;
-import de.timmi6790.statsbotdiscord.modules.core.commands.info.CommandHelp;
+import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
+import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
+import de.timmi6790.statsbotdiscord.modules.core.UserDb;
+import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
@@ -20,14 +24,26 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CommandManager {
-    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-            500L, TimeUnit.SECONDS,
-            new SynchronousQueue<>());
+    private final static int COMMAND_USER_RATE_LIMIT = 10;
+    private final static Permission[] MINIMUM_DISCORD_PERMISSIONS = new Permission[]{Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS};
+
+    private final Pattern mainCommandPattern;
+
+    @Getter
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+
+    @Getter
+    private final LoadingCache<Long, Short> commandSpamCache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .expireAfterWrite(30, TimeUnit.SECONDS)
+            .build(key -> (short) 0);
 
     @Getter
     private final String mainCommand;
@@ -38,6 +54,8 @@ public class CommandManager {
 
     public CommandManager(final String mainCommand) {
         this.botId = StatsBot.getDiscord().getSelfUser().getId();
+        this.mainCommandPattern = Pattern.compile("^((" + mainCommand + ")?(<@[!&]" + this.botId + ">)?)", Pattern.CASE_INSENSITIVE);
+
         this.mainCommand = mainCommand;
 
         StatsBot.getEventManager().addEventListener(this);
@@ -45,6 +63,7 @@ public class CommandManager {
 
     public boolean registerCommand(final AbstractCommand command) {
         if (this.commands.containsKey(command.getName())) {
+            System.out.println(command.getName() + " is already registered");
             return false;
         }
 
@@ -114,21 +133,21 @@ public class CommandManager {
         }
 
         final long serverId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
-        final Channel channel = Channel.getOrCreate(event.getChannel().getIdLong(), serverId);
-
-        final Set<String> startNames = new HashSet<>(channel.getGuild().getCommandAliasNames());
-        startNames.add(this.mainCommand);
-        startNames.add("<@!" + this.botId + ">");
+        final GuildDb guildDb = GuildDb.getOrCreate(serverId);
 
         String rawMessage = event.getMessage().getContentRaw();
-
-        // TODO: Compare this with a dynamic regex
         boolean validStart = false;
-        for (final String startName : startNames) {
-            if (rawMessage.startsWith(startName)) {
-                rawMessage = rawMessage.substring(startName.length());
+
+        final Matcher mainMatcher = this.mainCommandPattern.matcher(rawMessage);
+        if (mainMatcher.find()) {
+            validStart = true;
+            rawMessage = rawMessage.substring(mainMatcher.group(1).length());
+
+        } else {
+            final Matcher guildAliasMatcher = guildDb.getCommandAliasPattern().matcher(rawMessage);
+            if (guildAliasMatcher.find()) {
                 validStart = true;
-                break;
+                rawMessage = rawMessage.substring(guildAliasMatcher.group(1).length());
             }
         }
 
@@ -136,8 +155,14 @@ public class CommandManager {
             return;
         }
 
+        // Spam check
+        final short currentAmount = this.commandSpamCache.get(event.getAuthor().getIdLong());
+        if (currentAmount > COMMAND_USER_RATE_LIMIT) {
+            return;
+        }
+
         // Server ban check
-        if (channel.getGuild().isBanned()) {
+        if (guildDb.isBanned()) {
             event.getChannel().sendMessage(
                     UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
                             .setTitle("Banned Server")
@@ -149,9 +174,9 @@ public class CommandManager {
             return;
         }
 
-        final User user = User.getOrCreate(event.getAuthor().getIdLong());
+        final UserDb userDb = UserDb.getOrCreate(event.getAuthor().getIdLong());
         // User ban check
-        if (user.isBanned()) {
+        if (userDb.isBanned()) {
             event.getAuthor().openPrivateChannel()
                     .flatMap(privateChannel -> privateChannel.sendMessage(
                             UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
@@ -164,20 +189,28 @@ public class CommandManager {
             return;
         }
 
-        final EnumSet<Permission> permissions = event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel());
-        // I want to have write perms in all channels the commands should work in
-        if (!permissions.contains(Permission.MESSAGE_WRITE)) {
-            event.getAuthor().openPrivateChannel()
-                    .flatMap(privateChannel -> privateChannel.sendMessage(
-                            UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                                    .setTitle("Missing Permission")
-                                    .setDescription("The bot is missing the " + MarkdownUtil.monospace(Permission.MESSAGE_WRITE.getName()) + " permission.")
-                                    .build())
-                    )
-                    .delay(150, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
-            return;
+        final EnumSet<Permission> permissions;
+        if (event.isFromGuild()) {
+            permissions = event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel());
+            // I want to have write perms in all channels the commands should work in
+            for (final Permission permission : MINIMUM_DISCORD_PERMISSIONS) {
+                if (!permissions.contains(permission)) {
+                    event.getAuthor().openPrivateChannel()
+                            .flatMap(privateChannel -> privateChannel.sendMessage(
+                                    UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                                            .setTitle("Missing Permission")
+                                            .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.")
+                                            .build())
+                            )
+                            .delay(150, TimeUnit.SECONDS)
+                            .flatMap(Message::delete)
+                            .queue();
+                    return;
+                }
+            }
+
+        } else {
+            permissions = EnumSet.noneOf(Permission.class);
         }
 
         boolean emptyArgs = false;
@@ -187,9 +220,10 @@ public class CommandManager {
             emptyArgs = true;
         }
 
-        final CommandParameters commandParameters = new CommandParameters(permissions, channel, user, emptyArgs ? args : Arrays.copyOfRange(args, 1, args.length), event);
+        final ChannelDb channelDb = ChannelDb.getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId());
+        final CommandParameters commandParameters = new CommandParameters(permissions, channelDb, userDb, emptyArgs ? args : Arrays.copyOfRange(args, 1, args.length), event);
 
-        final Optional<AbstractCommand> command = emptyArgs ? this.getCommand(CommandHelp.class) : this.getCommand(args[0]);
+        final Optional<AbstractCommand> command = emptyArgs ? this.getCommand(HelpCommand.class) : this.getCommand(args[0]);
         if (!command.isPresent()) {
             final AbstractCommand[] similarCommands = this.getSimilarCommands(args[0], 0.6, 3).toArray(new AbstractCommand[0]);
 
@@ -215,7 +249,7 @@ public class CommandManager {
 
                 description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
             }
-            this.getCommand(CommandHelp.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
+            this.getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
 
             final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
             event.getChannel().sendMessage(
@@ -233,6 +267,8 @@ public class CommandManager {
         }
 
         // Run Command
+        this.commandSpamCache.put(event.getAuthor().getIdLong(), (short) (this.commandSpamCache.get(event.getAuthor().getIdLong()) + 1));
+        Logger.getLogger(this.getClass()).info("Run " + command.get().getName() + " " + Arrays.toString(args));
         this.executor.execute(() -> command.get().runCommand(commandParameters));
     }
 }

@@ -13,8 +13,8 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class CommandHelp extends AbstractCommand {
-    public CommandHelp() {
+public class HelpCommand extends AbstractCommand {
+    public HelpCommand() {
         super("help", "Info", "Info", "[command]", "h");
 
         this.setDefaultPerms(true);

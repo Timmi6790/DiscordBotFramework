@@ -3,7 +3,10 @@ package de.timmi6790.statsbotdiscord.utilities;
 import net.ricecode.similarity.LevenshteinDistanceStrategy;
 import net.ricecode.similarity.SimilarityStrategy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class UtilitiesData {
@@ -14,22 +17,12 @@ public class UtilitiesData {
     private static final Pattern DOUBLE_PATTERN = Pattern.compile("[\\x00-\\x20]*[+-]?(((((\\p{Digit}+)(\\.)?((\\p{Digit}+)?)([eE][+-]?(\\p{Digit}+))?)|(\\.((\\p{Digit}+))([eE][+-]?(\\p{Digit}+))?)|(((0[xX](\\p{XDigit}+)(\\.)?)|(0[xX](\\p{XDigit}+)?(\\.)(\\p{XDigit}+)))[pP][+-]?(\\p{Digit}+)))[fFdD]?))[\\x00-\\x20]*");
     private static final Pattern BOOLEAN_PATTERN = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
 
-    public static List<String> getSimilarityList(final String source, final Iterable<String> targets, final double minimumRate) {
-        final Map<Double, String> values = new HashMap<>();
-        for (final String target : targets) {
-            final double similarity = UtilitiesData.SIMILARITY_STRATEGY.score(source.toLowerCase(), target.toLowerCase());
+    public static List<String> getSimilarityList(final String source, final Collection<String> targets, final double minimumRate) {
+        final String sourceLower = source.toLowerCase();
 
-            if (similarity >= minimumRate) {
-                values.put(similarity, target);
-            }
-        }
-
-        final List<String> targetValues = new ArrayList<>();
-        for (final Double key : new LinkedList<>(values.keySet())) {
-            targetValues.add(values.get(key));
-        }
-
-        return targetValues;
+        final List<String> values = new ArrayList<>(targets);
+        values.sort(Comparator.comparingDouble((o1) -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, o1.toLowerCase()) * -1));
+        return values;
     }
 
     public static boolean hasArgInArgsEqualIgnoreCase(final String arg, final String... args) {
