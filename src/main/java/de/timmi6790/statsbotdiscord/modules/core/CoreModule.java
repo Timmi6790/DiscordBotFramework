@@ -8,10 +8,9 @@ import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.InviteCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.management.BotInfoCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.management.UserInfoCommand;
+import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 
 public class CoreModule extends AbstractModule {
     public CoreModule() {
@@ -28,6 +27,10 @@ public class CoreModule extends AbstractModule {
                 new UserInfoCommand(),
                 new InviteCommand(),
                 new AccountDeletionCommand()
+        );
+
+        StatsBot.getSettingManager().registerSettings(
+                new CommandAutoCorrectSetting()
         );
     }
 
@@ -64,9 +67,21 @@ public class CoreModule extends AbstractModule {
             final String perms = rs.getString("perms");
             final String[] permList = perms == null ? new String[]{} : perms.split(",");
 
+            final Map<Integer, String> settings = new HashMap<>();
+            if (rs.getString("settings") != null) {
+                for (final String setting : rs.getString("settings").split(";")) {
+                    final String[] values = setting.split(",");
+                    if (values.length != 2) {
+                        continue;
+                    }
+
+                    settings.put(Integer.parseInt(values[0]), values[1]);
+                }
+            }
             return new UserDb(rs.getInt("id"), rs.getLong("discordId"), null, new ArrayList<>(),
                     rs.getBoolean("banned"), rs.getLong("shopPoints"),
-                    new ArrayList<>(Arrays.asList(permList)), new ArrayList<>());
+                    new ArrayList<>(Arrays.asList(permList)), settings);
         });
     }
 }
+

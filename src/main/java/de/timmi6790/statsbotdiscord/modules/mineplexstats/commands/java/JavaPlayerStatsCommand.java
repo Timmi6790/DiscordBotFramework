@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
     public JavaPlayerStatsCommand() {
-        super("player", "Player stats", "<player> <game> [board] [date]", "pl");
+        super("player", "Java player stats", "<player> <game> [board] [date]", "pl");
 
         this.addDiscordPermission(Permission.MESSAGE_ATTACH_FILES);
         this.setMinArgs(2);
@@ -33,9 +33,10 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         final String player = this.getPlayer(commandParameters, 0);
         final JavaGame javaGame = this.getGame(commandParameters, 1);
         final JavaBoard board = this.getBoard(javaGame, commandParameters, 2);
+        final long unixTime = this.getUnixTime(commandParameters, 3);
 
         final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName());
+        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName(), unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaPlayerStats playerStats = (JavaPlayerStats) responseModel;

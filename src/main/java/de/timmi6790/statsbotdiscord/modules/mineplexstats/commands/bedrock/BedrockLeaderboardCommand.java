@@ -35,9 +35,10 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
         final String game = this.getGame(commandParameters, 0);
         final int startPos = this.getStartPosition(commandParameters, ARG_POS_START_POS, LEADERBOARD_UPPER_LIMIT);
         final int endPos = this.getEndPosition(startPos, commandParameters, ARG_POS_END_POS, LEADERBOARD_UPPER_LIMIT);
+        final long unixTime = this.getUnixTime(commandParameters, 3);
 
         final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getBedrockLeaderboard(game, startPos, endPos);
+        final ResponseModel responseModel = module.getMpStatsRestClient().getBedrockLeaderboard(game, startPos, endPos, unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final BedrockLeaderboard leaderboardResponse = (BedrockLeaderboard) responseModel;

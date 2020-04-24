@@ -30,6 +30,9 @@ public abstract class AbstractBedrockStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarNames = new ArrayList<>(this.getStatsModule().getSimilarBedrockGames(name, 0.6, 3));
+        if (!similarNames.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+            return similarNames.get(0);
+        }
 
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
         this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarNames.toArray(new String[0]));

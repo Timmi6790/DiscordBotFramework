@@ -8,10 +8,8 @@ import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
 import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
-import net.dv8tion.jda.api.entities.Message;
 
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class BotInfoCommand extends AbstractCommand {
     public BotInfoCommand() {
@@ -40,7 +38,7 @@ public class BotInfoCommand extends AbstractCommand {
         final long queuedCommands = commandExecutor.getQueue().size();
         final long totalCommands = commandExecutor.getTaskCount();
 
-        commandParameters.getDiscordChannel().sendMessage(
+        this.sendTimedMessage(commandParameters,
                 UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                         .setTitle("Bot Info")
                         .addField("Guilds", String.valueOf(guilds), true)
@@ -48,11 +46,9 @@ public class BotInfoCommand extends AbstractCommand {
                         .addField("Channel Cache", channelCacheSize + ";" + channelCacheMissRate, true)
                         .addField("Guild Cache", guildCacheSize + ";" + guildCacheMissRate, true)
                         .addField("Active Emotes", String.valueOf(emoteListenerSize), true)
-                        .addField("Commands", activeCommands + ";" + queuedCommands + ";" + totalCommands, true)
-                        .build())
-                .delay(90, TimeUnit.SECONDS)
-                .flatMap(Message::delete)
-                .queue();
+                        .addField("Commands", activeCommands + ";" + queuedCommands + ";" + totalCommands, true),
+                90
+        );
 
         return CommandResult.SUCCESS;
     }

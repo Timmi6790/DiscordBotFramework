@@ -27,3 +27,5 @@ target/
 .idea/
 
 src/main/resources/config.properties
+
+dependency-reduced-pom.xml

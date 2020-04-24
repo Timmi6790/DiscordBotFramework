@@ -11,7 +11,7 @@ import java.util.*;
 
 public class BedrockPlayerCommand extends AbstractBedrockStatsCommand {
     public BedrockPlayerCommand() {
-        super("bplayer", "Bedrock Player", "<player>", "bpl");
+        super("bplayer", "Bedrock player stats", "<player>", "bpl");
 
         this.setDefaultPerms(true);
         this.setMinArgs(1);

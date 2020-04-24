@@ -3,14 +3,17 @@ package de.timmi6790.statsbotdiscord.modules.core;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.modules.setting.Setting;
+import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
+import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
+import de.timmi6790.statsbotdiscord.modules.setting.settings.BooleanSetting;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @ToString
@@ -35,7 +38,7 @@ public class UserDb {
     private final long points;
 
     private final List<String> permissionNodes;
-    private final List<Setting> settings;
+    private final Map<Integer, String> settings;
 
     public static Optional<UserDb> get(final long discordId) {
         final UserDb userDb = USER_CACHE.getIfPresent(discordId);
@@ -44,11 +47,12 @@ public class UserDb {
         }
 
         final Optional<UserDb> userOpt = StatsBot.getDatabase().withHandle(handle ->
-                handle.createQuery("SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, GROUP_CONCAT(DISTINCT permission.permission_node) AS perms " +
+                handle.createQuery("SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, GROUP_CONCAT(DISTINCT permission.permission_node) AS perms, GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_setting.setting_id, p_setting.setting) SEPARATOR ';') settings " +
                         "FROM player " +
                         "LEFT JOIN player_rank p_rank ON p_rank.player_id = player.id " +
                         "LEFT JOIN player_permission p_perm ON p_perm.player_id = player.id " +
                         "LEFT JOIN permission ON permission.default_permission = 1 OR permission.id = p_perm.permission_id " +
+                        "LEFT JOIN player_setting p_setting ON p_setting.player_id = player.id " +
                         "WHERE player.discordId = :discordId LIMIT 1;")
                         .bind("discordId", discordId)
                         .mapTo(UserDb.class)
@@ -71,6 +75,18 @@ public class UserDb {
         });
     }
 
+    public void ban(final CommandParameters commandParameters, final String reason) {
+        this.setBanned(true);
+
+        commandParameters.getEvent().getAuthor().openPrivateChannel().flatMap(
+                channel -> channel.sendMessage(
+                        UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                                .setTitle("You are banned")
+                                .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
+                                .build()
+                )).queue();
+    }
+
     public boolean setBanned(final boolean banned) {
         if (this.banned == banned) {
             return false;
@@ -89,5 +105,39 @@ public class UserDb {
     public boolean addPoints(final long points) {
 
         return true;
+    }
+
+    public Object getStatValue(final String internalName) {
+        return StatsBot.getSettingManager().getSetting(internalName).map(abstractSetting -> this.settings.get(abstractSetting.getDbId()));
+    }
+
+    public List<AbstractSetting> getStats() {
+        final List<AbstractSetting> settings = new ArrayList<>();
+        for (final int dbId : this.settings.keySet()) {
+            StatsBot.getSettingManager().getSetting(dbId).ifPresent(settings::add);
+        }
+        return settings;
+    }
+
+    public Map<AbstractSetting, String> getStatsMap() {
+        final Map<AbstractSetting, String> settings = new HashMap<>();
+        for (final Map.Entry<Integer, String> entry : this.settings.entrySet()) {
+            StatsBot.getSettingManager().getSetting(entry.getKey()).ifPresent(setting -> settings.put(setting, entry.getValue()));
+
+        }
+        return settings;
+    }
+
+    public boolean hasSettingAndEqualsTrue(final String internalName) {
+        final Optional<AbstractSetting> setting = StatsBot.getSettingManager().getSetting(internalName);
+        if (!setting.isPresent() || !this.settings.containsKey(setting.get().getDbId())) {
+            return false;
+        }
+
+        if (!(setting.get() instanceof BooleanSetting)) {
+            return false;
+        }
+
+        return ((BooleanSetting) setting.get()).parseSetting(this.settings.get(setting.get().getDbId()));
     }
 }

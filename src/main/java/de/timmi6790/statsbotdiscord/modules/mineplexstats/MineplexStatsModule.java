@@ -41,15 +41,11 @@ public class MineplexStatsModule extends AbstractModule {
 
     @Override
     public void onEnable() {
-        // Maybe I should handle the api downtime better
-        try {
-            this.loadJavaGames();
-            this.loadJavaGroups();
+        // I should maybe handle the api downtime better
+        this.loadJavaGames();
+        this.loadJavaGroups();
 
-            this.loadBedrockGames();
-        } catch (final Exception e) {
-            e.printStackTrace();
-        }
+        this.loadBedrockGames();
 
         StatsBot.getCommandManager().registerCommands(
                 new JavaGamesCommand(),

@@ -3,11 +3,11 @@ package de.timmi6790.statsbotdiscord.utilities;
 import net.ricecode.similarity.LevenshteinDistanceStrategy;
 import net.ricecode.similarity.SimilarityStrategy;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class UtilitiesData {
     private static final SimilarityStrategy SIMILARITY_STRATEGY = new LevenshteinDistanceStrategy();
@@ -19,10 +19,10 @@ public class UtilitiesData {
 
     public static List<String> getSimilarityList(final String source, final Collection<String> targets, final double minimumRate) {
         final String sourceLower = source.toLowerCase();
-
-        final List<String> values = new ArrayList<>(targets);
-        values.sort(Comparator.comparingDouble((o1) -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, o1.toLowerCase()) * -1));
-        return values;
+        return targets.parallelStream()
+                .filter(value -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, value.toLowerCase()) >= minimumRate)
+                .sorted(Comparator.comparingDouble((value) -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, value.toLowerCase()) * -1))
+                .collect(Collectors.toList());
     }
 
     public static boolean hasArgInArgsEqualIgnoreCase(final String arg, final String... args) {

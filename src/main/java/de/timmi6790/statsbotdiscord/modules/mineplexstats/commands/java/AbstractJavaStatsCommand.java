@@ -58,8 +58,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return game.get();
         }
 
+        final List<JavaGame> similarGames = this.getStatsModule().getSimilarJavaGames(name, 0.6, 3);
+        if (!similarGames.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+            return similarGames.get(0);
+        }
+
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaGame similarGame : this.getStatsModule().getSimilarJavaGames(name, 0.6, 3)) {
+        for (final JavaGame similarGame : similarGames) {
             similarNames.add(similarGame.getName());
         }
 
@@ -76,8 +81,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return stat.get();
         }
 
+        final JavaStat[] similarStats = game.getSimilarStats(name, 0.6, 3).toArray(new JavaStat[0]);
+        if (similarStats.length != 0 && this.hasAutoCorrection(commandParameters)) {
+            return similarStats[0];
+        }
+
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaStat similarStat : game.getSimilarStats(name, 0.6, 3).toArray(new JavaStat[0])) {
+        for (final JavaStat similarStat : similarStats) {
             similarNames.add(similarStat.getName());
         }
 
@@ -88,12 +98,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
     }
 
     protected JavaBoard getBoard(final JavaGame game, final CommandParameters commandParameters, final int argPos) {
-        final String name;
-        if (argPos >= commandParameters.getArgs().length) {
-            name = "All";
-        } else {
-            name = commandParameters.getArgs()[argPos];
-        }
+        final String name = argPos >= commandParameters.getArgs().length ? "All" : commandParameters.getArgs()[argPos];
 
         for (final JavaStat stat : game.getStats().values()) {
             if (stat.getBoard(name).isPresent()) {
@@ -109,6 +114,17 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarBoards = UtilitiesData.getSimilarityList(name, boards, 0.0);
+        if (!similarBoards.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+            final String newBoard = similarBoards.get(0);
+            for (final JavaStat stat : game.getStats().values()) {
+                for (final JavaBoard board : stat.getBoards().values()) {
+                    if (board.getName().equalsIgnoreCase(newBoard)) {
+                        return board;
+                    }
+                }
+            }
+        }
+
         final String[] similarNames = new String[Math.min(similarBoards.size(), 6)];
         for (int index = 0; similarNames.length > index; index++) {
             similarNames[index] = similarBoards.get(index);
@@ -121,19 +137,20 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
     }
 
     protected JavaBoard getBoard(final JavaGame game, final JavaStat stat, final CommandParameters commandParameters, final int argPos) {
-        final String name;
-        if (argPos >= commandParameters.getArgs().length) {
-            name = "All";
-        } else {
-            name = commandParameters.getArgs()[argPos];
-        }
+        final String name = argPos >= commandParameters.getArgs().length ? "All" : commandParameters.getArgs()[argPos];
+
         final Optional<JavaBoard> board = stat.getBoard(name);
         if (board.isPresent()) {
             return board.get();
         }
 
+        final JavaBoard[] similarBoards = stat.getSimilarBoard(name, 0.0, 6).toArray(new JavaBoard[0]);
+        if (similarBoards.length != 0 && this.hasAutoCorrection(commandParameters)) {
+            return similarBoards[0];
+        }
+
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaBoard similar : stat.getSimilarBoard(name, 0.0, 6).toArray(new JavaBoard[0])) {
+        for (final JavaBoard similar : similarBoards) {
             similarNames.add(similar.getName());
         }
 
@@ -165,8 +182,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return group.get();
         }
 
+        final JavaGroup[] similarGroup = this.getStatsModule().getSimilarJavaGroups(name, 0.6, 3).toArray(new JavaGroup[0]);
+        if (similarGroup.length != 0 && this.hasAutoCorrection(commandParameters)) {
+            return similarGroup[0];
+        }
+
         final List<String> similarNames = new ArrayList<>();
-        for (final JavaGroup similar : this.getStatsModule().getSimilarJavaGroups(name, 0.6, 3).toArray(new JavaGroup[0])) {
+        for (final JavaGroup similar : similarGroup) {
             similarNames.add(similar.getName());
         }
 
@@ -190,10 +212,19 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             statNames.add(stat.getName());
         }
 
-        final List<String> similarBoards = UtilitiesData.getSimilarityList(name, statNames, 0.6);
-        final String[] similarNames = new String[Math.min(similarBoards.size(), 3)];
+        final List<String> similarStats = UtilitiesData.getSimilarityList(name, statNames, 0.6);
+        if (!similarStats.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+            final String newStat = similarStats.get(0);
+            for (final JavaStat stat : group.getStats()) {
+                if (stat.getName().equalsIgnoreCase(newStat)) {
+                    return stat;
+                }
+            }
+        }
+
+        final String[] similarNames = new String[Math.min(similarStats.size(), 3)];
         for (int index = 0; similarNames.length > index; index++) {
-            similarNames[index] = similarBoards.get(index);
+            similarNames[index] = similarStats.get(index);
         }
 
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGroupsGroupsCommand.class).orElse(null);
@@ -223,17 +254,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
 
             try {
                 final InputStream in = new ByteArrayInputStream(response.getBody());
-
                 final BufferedImage image = ImageIO.read(in);
-                SKIN_CACHE.put(uuid, image);
-
                 completableFuture.complete(image);
-                return;
+                SKIN_CACHE.put(uuid, image);
             } catch (final IOException e) {
                 e.printStackTrace();
+                completableFuture.complete(null);
             }
-
-            completableFuture.complete(null);
         });
 
         return completableFuture;

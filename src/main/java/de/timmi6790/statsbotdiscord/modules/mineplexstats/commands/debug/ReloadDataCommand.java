@@ -1,7 +1,6 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.debug;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
@@ -36,24 +35,24 @@ public class ReloadDataCommand extends AbstractCommand {
                 break;
 
             default:
-                throw new CommandReturnException(
+                this.sendTimedMessage(
+                        commandParameters,
                         UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                                 .setTitle("Incorrect data type")
                                 .setDescription(MarkdownUtil.monospace(data) + " is not a valid type.\n" +
-                                        "[javaGame, javaGroup, bedrockGame]")
+                                        "[javaGame, javaGroup, bedrockGame]"),
+                        90
                 );
+                return CommandResult.INVALID_ARGS;
         }
 
-        this.sendSuccessMessage(commandParameters, data);
-        return CommandResult.SUCCESS;
-    }
-
-    private void sendSuccessMessage(final CommandParameters commandParameters, final String data) {
-        throw new CommandReturnException(
+        this.sendTimedMessage(
+                commandParameters,
                 UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                         .setTitle("Reloaded data")
                         .setDescription("Reloaded " + MarkdownUtil.monospace(data)),
-                CommandResult.SUCCESS
+                90
         );
+        return CommandResult.SUCCESS;
     }
 }

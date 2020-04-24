@@ -1,22 +1,21 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
+import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroup;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.concurrent.TimeUnit;
 
 public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
     public JavaGroupsGroupsCommand() {
-        super("groups", "Groups", "[group]");
+        super("groups", "Java Groups", "[group]");
 
         this.setDefaultPerms(true);
     }
@@ -38,13 +37,9 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
                 fieldGroups.add(group.getName());
             }
             message.addField("Groups", fieldGroups.toString(), false);
+            message.setFooter("TIP: Run " + StatsBot.getCommandManager().getMainCommand() + " groups <group> to see more details");
 
-            commandParameters.getDiscordChannel().sendMessage(
-                    message.build())
-                    .delay(150, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
-
+            this.sendTimedMessage(commandParameters, message, 150);
             return CommandResult.SUCCESS;
         }
 
@@ -60,12 +55,9 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
 
         message.addField("Games", String.join(", ", group.getGameNames()), false);
         message.addField("Stats", String.join(", ", group.getStatNames()), false);
+        message.setFooter("TIP: Run " + StatsBot.getCommandManager().getMainCommand() + " groups " + group.getName() + " to see more details");
 
-        commandParameters.getDiscordChannel().sendMessage(message.build())
-                .delay(150, TimeUnit.SECONDS)
-                .flatMap(Message::delete)
-                .queue();
-
+        this.sendTimedMessage(commandParameters, message, 150);
         return CommandResult.SUCCESS;
     }
 }

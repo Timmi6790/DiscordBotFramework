@@ -3,7 +3,7 @@ package de.timmi6790.statsbotdiscord.modules.core;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.modules.setting.Setting;
+import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,6 +11,7 @@ import lombok.ToString;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -32,9 +33,9 @@ public class GuildDb {
     private final Set<String> commandAliasNames;
     private final Pattern commandAliasPattern;
 
-    private final Map<String, Setting> properties;
+    private final Map<String, AbstractSetting> properties;
 
-    public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames, final Map<String, Setting> properties) {
+    public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames, final Map<String, AbstractSetting> properties) {
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.banned = banned;
@@ -42,14 +43,17 @@ public class GuildDb {
         this.properties = properties;
 
         // TODO: Escape the alias names or limit the alias names
-        final StringBuilder pattern = new StringBuilder();
-        pattern.append("^(");
-        for (final String alias : commandAliasNames) {
-            pattern.append("(").append(alias).append(")?");
-        }
-        pattern.append(")");
+        if (commandAliasNames.isEmpty()) {
+            this.commandAliasPattern = null;
 
-        this.commandAliasPattern = Pattern.compile(pattern.toString(), Pattern.CASE_INSENSITIVE);
+        } else {
+            final StringJoiner aliasPattern = new StringJoiner("|");
+            for (final String alias : commandAliasNames) {
+                aliasPattern.add("(" + alias + ")");
+            }
+
+            this.commandAliasPattern = Pattern.compile("^(" + aliasPattern.toString() + ")", Pattern.CASE_INSENSITIVE);
+        }
     }
 
     public static Optional<GuildDb> get(final long discordId) {

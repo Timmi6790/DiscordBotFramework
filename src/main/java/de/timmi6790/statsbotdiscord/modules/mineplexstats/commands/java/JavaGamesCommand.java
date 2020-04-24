@@ -1,5 +1,6 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
+import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 public class JavaGamesCommand extends AbstractJavaStatsCommand {
     public JavaGamesCommand() {
-        super("games", "Shows all games", "[game] [stat]", "g");
+        super("games", "Java Games", "[game] [stat]", "g");
 
         this.setDefaultPerms(true);
     }
@@ -51,12 +52,9 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
                 }
                 message.addField(entry.getKey(), categoryGames.toString(), false);
             }
+            message.setFooter("TIP: Run " + StatsBot.getCommandManager().getMainCommand() + " games <game> to see more details");
 
-            commandParameters.getDiscordChannel().sendMessage(message.build())
-                    .delay(150, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
-
+            this.sendTimedMessage(commandParameters, message, 150);
             return CommandResult.SUCCESS;
         }
 
@@ -77,6 +75,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
             }
 
             message.addField("Stats", String.join(", ", game.getStatNames()), false);
+            message.setFooter("TIP: Run " + StatsBot.getCommandManager().getMainCommand() + " games " + game.getName() + " to see more details");
 
             commandParameters.getDiscordChannel().sendMessage(message.build())
                     .delay(90, TimeUnit.SECONDS)
@@ -96,14 +95,9 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
         if (stat.getAliasNames().length > 0) {
             message.addField("Alias names", String.join(", ", stat.getAliasNames()), false);
         }
-
         message.addField("Boards", String.join(", ", stat.getBoardNames()), false);
 
-        commandParameters.getDiscordChannel().sendMessage(message.build())
-                .delay(150, TimeUnit.SECONDS)
-                .flatMap(Message::delete)
-                .queue();
-
+        this.sendTimedMessage(commandParameters, message, 150);
         return CommandResult.SUCCESS;
     }
 }

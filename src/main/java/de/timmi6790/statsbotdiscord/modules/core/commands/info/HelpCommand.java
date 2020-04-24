@@ -5,17 +5,16 @@ import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class HelpCommand extends AbstractCommand {
     public HelpCommand() {
-        super("help", "Info", "Info", "[command]", "h");
+        super("help", "Info", "In need of help", "[command]", "h");
 
         this.setDefaultPerms(true);
     }
@@ -37,7 +36,7 @@ public class HelpCommand extends AbstractCommand {
                 }
 
                 final String upperCaseName = command.getName().substring(0, 1).toUpperCase() + command.getName().substring(1);
-                categories.get(command.getCategory()).add(upperCaseName + ": " + MarkdownUtil.monospace(mainCommand + command.getName() + (command.getSyntax().length() == 0 ? "" : " " + command.getSyntax())) + " | " + command.getDescription());
+                categories.get(command.getCategory()).add(upperCaseName + ": " + MarkdownUtil.monospace(mainCommand + command.getName() + (command.getSyntax().length() == 0 ? "" : " " + command.getSyntax())));
             }
 
 
@@ -53,16 +52,21 @@ public class HelpCommand extends AbstractCommand {
 
                 message.addField(entry.getKey(), commands.toString(), false);
             }
+            message.setFooter("TIP: Use " + StatsBot.getCommandManager().getMainCommand() + " help <command> to see more details");
 
-            commandParameters.getDiscordChannel().sendMessage(message.build())
-                    .delay(90, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
-
+            sendTimedMessage(commandParameters, message, 90);
             return CommandResult.SUCCESS;
         }
 
         // Command specific
+        final AbstractCommand command = this.getCommand(commandParameters, 0);
+        final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                .setTitle("Commands " + UtilitiesString.capitalize(command.getName()))
+                .addField("Description", command.getDescription(), false)
+                .addField("Alias Names", String.join(", ", command.getAliasNames()), false)
+                .addField("Syntax", command.getSyntax(), false);
+
+        sendTimedMessage(commandParameters, message, 90);
         return CommandResult.SUCCESS;
     }
 }

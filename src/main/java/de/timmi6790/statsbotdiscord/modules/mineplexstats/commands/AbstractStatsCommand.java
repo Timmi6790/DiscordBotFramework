@@ -5,23 +5,24 @@ import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.errors.ErrorModel;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
+import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStatsCommand extends AbstractCommand {
@@ -101,50 +102,24 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
         return FORMAT_DATE.format(Date.from(Instant.ofEpochSecond(unix)));
     }
 
-    public void checkApiResponse(final CommandParameters commandParameters, final ResponseModel response, final String errorTitle) {
+    public void checkApiResponse(final CommandParameters commandParameters, final ResponseModel response, final String arguments) {
         if (response instanceof ErrorModel) {
-            throw new CommandReturnException(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                            .setTitle(errorTitle)
-                            .setDescription(((ErrorModel) response).getErrorMessage())
-                            .addField("Args", String.join(" ", commandParameters.getArgs()), false),
-                    CommandResult.ERROR
-            );
-        }
-    }
-
-    protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
-                                   final AbstractCommand command, final String[] newArgs, final String[] similarNames) {
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-        final StringBuilder description = new StringBuilder();
-        description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
-
-        if (similarNames.length == 0) {
-            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
-                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
-
-        } else {
-            description.append("Is it possible that you wanted to write?\n\n");
-
-            for (int index = 0; similarNames.length > index; index++) {
-                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames[index])).append("\n");
-
-                final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
-                newCommandParameters.getArgs()[argPos] = similarNames[index];
-
-                emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
+            final ErrorModel errorModel = (ErrorModel) response;
+            final EmbedBuilder embedBuilder = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters);
+            // No stats found
+            if (errorModel.getErrorCode() == 1) {
+                embedBuilder.setTitle("No stats found")
+                        .setDescription("There are no collected stats.\n WIP")
+                        .addField("Arguments", arguments, false);
+            } else {
+                embedBuilder.setTitle("Error")
+                        .setDescription("Something went wrong while requesting your data.")
+                        .addField("Api Response", errorModel.getErrorMessage(), false)
+                        .setImage("https://media1.tenor.com/images/981ee5030a18a779e899b2c307e65f7a/tenor.gif?itemid=13159552");
             }
 
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
+            throw new CommandReturnException(embedBuilder, CommandResult.ERROR);
         }
-
-        final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
-        newCommandParameters.setArgs(newArgs);
-        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
-
-        this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
     }
 
     protected int getStartPosition(final CommandParameters commandParameters, final int argPos, final int upperLimit) {
@@ -190,5 +165,26 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
         }
 
         return Math.min(Math.max(1, endPos), upperLimit);
+    }
+
+    protected long getUnixTime(final CommandParameters commandParameters, final int startArgPos) {
+        if (startArgPos >= commandParameters.getArgs().length) {
+            return Instant.now().getEpochSecond();
+        }
+
+        final String[] dateArgs = new String[commandParameters.getArgs().length - startArgPos];
+        System.arraycopy(commandParameters.getArgs(), startArgPos, dateArgs, 0, dateArgs.length);
+        final String name = String.join(" ", dateArgs);
+
+        // TODO: Better date parsing :/
+        final List<Date> dates = new PrettyTimeParser().parse(name);
+        if (!dates.isEmpty()) {
+            return dates.get(0).getTime() / 1_000;
+        }
+
+        throw new CommandReturnException(UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                .setTitle("Invalid Date")
+                .setDescription(MarkdownUtil.monospace(name) + " is not a valid date.")
+        );
     }
 }

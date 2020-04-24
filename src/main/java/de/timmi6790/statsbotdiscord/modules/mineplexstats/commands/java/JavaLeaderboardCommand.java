@@ -28,7 +28,7 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
     private final static int LEADERBOARD_UPPER_LIMIT = 1_000;
 
     public JavaLeaderboardCommand() {
-        super("leaderboard", "leaderboards", "<game> <stat> [board] [start] [end] [date]", "lb");
+        super("leaderboard", "Java Leaderboard", "<game> <stat> [board] [start] [end] [date]", "lb");
 
         this.setDefaultPerms(true);
         this.setMinArgs(2);
@@ -41,9 +41,10 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
         final JavaBoard board = this.getBoard(game, commandParameters, ARG_POS_BOARD_POS);
         final int startPos = this.getStartPosition(commandParameters, ARG_POS_START_POS, LEADERBOARD_UPPER_LIMIT);
         final int endPos = this.getEndPosition(startPos, commandParameters, ARG_POS_END_POS, LEADERBOARD_UPPER_LIMIT);
+        final long unixTime = this.getUnixTime(commandParameters, 5);
 
         final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos);
+        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos, unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaLeaderboard leaderboardResponse = (JavaLeaderboard) responseModel;

@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 
 public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
     public JavaPlayerGroupCommand() {
-        super("gplayer", "Group players", "<player> <group> <stat> [board] [date]", "gpl");
+        super("gplayer", "Java player group stats", "<player> <group> <stat> [board] [date]", "gpl");
 
         this.setMinArgs(3);
         this.setDefaultPerms(true);
@@ -33,8 +33,9 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
 
         final List<JavaGame> statSpecificGames = javaGroup.getGames(stat);
         final JavaBoard board = this.getBoard(statSpecificGames.get(0), stat, commandParameters, 3);
+        final long unixTime = this.getUnixTime(commandParameters, 4);
 
-        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerGroup(player, javaGroup.getGroup(), stat.getName(), board.getName());
+        final ResponseModel responseModel = module.getMpStatsRestClient().getPlayerGroup(player, javaGroup.getGroup(), stat.getName(), board.getName(), unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaGroupsPlayer groupStats = (JavaGroupsPlayer) responseModel;

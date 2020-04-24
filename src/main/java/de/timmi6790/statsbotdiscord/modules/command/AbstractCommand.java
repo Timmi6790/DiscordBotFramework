@@ -4,9 +4,14 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.EventCommandExecution;
 import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
+import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
+import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
+import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
+import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.Event;
@@ -16,9 +21,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -35,7 +40,6 @@ public abstract class AbstractCommand {
     private final static Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
     private final static Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
 
-    private final int dbId;
     private final String name;
     private final String category;
     private final String description;
@@ -55,31 +59,6 @@ public abstract class AbstractCommand {
         this.description = description;
         this.syntax = syntax;
         this.aliasNames = aliasNames;
-
-        this.dbId = StatsBot.getDatabase().withHandle(handle -> {
-            final Optional<Integer> dbId = handle.createQuery("SELECT id FROM command " +
-                    "WHERE command.command_name = :commandName " +
-                    "LIMIT 1;")
-                    .bind("commandName", this.name)
-                    .mapTo(Integer.class)
-                    .findFirst();
-
-            if (dbId.isPresent()) {
-                return dbId.get();
-            }
-
-            handle.createUpdate("INSERT INTO command(command_name) VALUES(:commandName)")
-                    .bind("commandName", this.name)
-                    .execute();
-
-            // Should always return the id
-            return handle.createQuery("SELECT id FROM command " +
-                    "WHERE command.command_name = :commandName " +
-                    "LIMIT 1;")
-                    .bind("commandName", this.name)
-                    .mapTo(Integer.class)
-                    .first();
-        });
     }
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
@@ -93,10 +72,7 @@ public abstract class AbstractCommand {
         if (commandParameters.getEvent().isFromGuild()) {
             for (final Permission permission : this.getDiscordPermissions()) {
                 if (!commandParameters.getDiscordChannelPermissions().contains(permission)) {
-                    commandParameters.getDiscordChannel().sendMessage(this.getMissingPermsMessage(permission, commandParameters.getEvent()))
-                            .delay(150, TimeUnit.SECONDS)
-                            .flatMap(Message::delete)
-                            .queue();
+                    this.sendTimedMessage(commandParameters, this.getMissingPermsMessage(permission, commandParameters.getEvent()), 150);
                     return;
                 }
             }
@@ -108,26 +84,32 @@ public abstract class AbstractCommand {
 
         CommandResult commandResult = null;
         if (!this.hasPermission(commandParameters)) {
-            commandParameters.getDiscordChannel().sendMessage(
+            this.sendTimedMessage(
+                    commandParameters,
                     UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                             .setTitle("Missing perms")
-                            .setDescription("You don't have the permissions to run this command.")
-                            .build())
-                    .delay(90, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
+                            .setDescription("You don't have the permissions to run this command."),
+                    90
+            );
             commandResult = CommandResult.NO_PERMS;
 
         } else if (this.minArgs > commandParameters.getArgs().length) {
-            commandParameters.getDiscordChannel()
-                    .sendMessage(
-                            UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Missing args")
-                                    .setDescription("You are missing an argument.")
-                                    .addField("Syntax", this.getSyntax(), false)
-                                    .build())
-                    .delay(90, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
+            final String[] args = commandParameters.getArgs();
+            final String[] syntax = this.syntax.split(" ");
+
+            final StringJoiner requiredSyntax = new StringJoiner(" ");
+            for (int index = 0; Math.min(this.minArgs, syntax.length) > index; index++) {
+                requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(syntax[index]));
+            }
+
+            this.sendTimedMessage(
+                    commandParameters,
+                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Missing Args")
+                            .setDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
+                            .addField("Required Syntax", requiredSyntax.toString(), false)
+                            .addField("Command Syntax", this.getSyntax(), false),
+                    90
+            );
             commandResult = CommandResult.ERROR;
         }
 
@@ -136,17 +118,13 @@ public abstract class AbstractCommand {
             try {
                 commandResult = this.onCommand(commandParameters);
             } catch (final CommandReturnException e) {
-                e.getEmbedBuilder().ifPresent(embedBuilder -> commandParameters.getDiscordChannel()
-                        .sendMessage(embedBuilder.build())
-                        .delay(90, TimeUnit.SECONDS)
-                        .flatMap(Message::delete)
-                        .queue());
+                e.getEmbedBuilder().ifPresent(embedBuilder -> this.sendTimedMessage(commandParameters, embedBuilder, 90));
                 commandResult = e.getCommandResult();
 
             } catch (final Exception e) {
                 // Sentry error
                 final Map<String, String> data = commandParameters.getSentryMap();
-                data.put("commandId", String.valueOf(this.dbId));
+                data.put("command", this.name);
 
                 final Breadcrumb breadcrumb = new BreadcrumbBuilder()
                         .setCategory("Command")
@@ -203,17 +181,13 @@ public abstract class AbstractCommand {
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
-        commandParameters.getDiscordChannel()
-                .sendMessage(
-                        UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Something went wrong")
-                                .setDescription("Something went wrong while executing this command.")
-                                .addField("Command", this.getName(), false)
-                                .addField("Args", String.join(" ", commandParameters.getArgs()), false)
-                                .addField("Error", error, false)
-                                .build())
-                .delay(90, TimeUnit.SECONDS)
-                .flatMap(Message::delete)
-                .queue();
+        this.sendTimedMessage(commandParameters,
+                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Something went wrong")
+                        .setDescription("Something went wrong while executing this command.")
+                        .addField("Command", this.getName(), false)
+                        .addField("Args", String.join(" ", commandParameters.getArgs()), false)
+                        .addField("Error", error, false),
+                90);
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
@@ -221,6 +195,7 @@ public abstract class AbstractCommand {
                 UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                         .setTitle(title)
                         .setDescription(description)
+                        .setFooter("↓ Click Me!")
                         .build())
                 .queue(message -> {
                     if (!emotes.isEmpty()) {
@@ -233,11 +208,52 @@ public abstract class AbstractCommand {
                 });
     }
 
-    private MessageEmbed getMissingPermsMessage(final Permission permission, final EventMessageReceived event) {
+    protected void sendTimedMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final int deleteTime) {
+        commandParameters.getDiscordChannel()
+                .sendMessage(embedBuilder.build())
+                .delay(deleteTime, TimeUnit.SECONDS)
+                .flatMap(Message::delete)
+                .queue();
+    }
+
+    protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
+                                   final AbstractCommand command, final String[] newArgs, final String[] similarNames) {
+        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
+        final StringBuilder description = new StringBuilder();
+        description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
+
+        if (similarNames.length == 0) {
+            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
+                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
+
+        } else {
+            description.append("Is it possible that you wanted to write?\n\n");
+
+            for (int index = 0; similarNames.length > index; index++) {
+                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+
+                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames[index])).append("\n");
+
+                final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
+                newCommandParameters.getArgs()[argPos] = similarNames[index];
+
+                emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
+            }
+
+            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
+        }
+
+        final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
+        newCommandParameters.setArgs(newArgs);
+        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
+
+        this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
+    }
+
+    private EmbedBuilder getMissingPermsMessage(final Permission permission, final EventMessageReceived event) {
         return UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
                 .setTitle("Missing Permission")
-                .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.")
-                .build();
+                .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.");
     }
 
     protected User getDiscordUser(final CommandParameters commandParameters, final int argPos) {
@@ -262,5 +278,31 @@ public abstract class AbstractCommand {
                         .setTitle("Invalid User")
                         .setDescription(MarkdownUtil.monospace(name) + " is not a valid discord user.")
         );
+    }
+
+    protected boolean hasAutoCorrection(final CommandParameters commandParameters) {
+        return commandParameters.getUserDb().hasSettingAndEqualsTrue(CommandAutoCorrectSetting.INTERNAL_NAME);
+    }
+
+    protected AbstractCommand getCommand(final CommandParameters commandParameters, final int argPos) {
+        final String name = commandParameters.getArgs()[argPos];
+        final Optional<AbstractCommand> command = StatsBot.getCommandManager().getCommand(name);
+        if (command.isPresent()) {
+            return command.get();
+        }
+
+        final AbstractCommand[] similarCommands = StatsBot.getCommandManager().getSimilarCommands(commandParameters, name, 0.6, 3).toArray(new AbstractCommand[0]);
+        if (similarCommands.length != 0 && this.hasAutoCorrection(commandParameters)) {
+            return similarCommands[0];
+        }
+
+        final List<String> similarNames = new ArrayList<>();
+        for (final AbstractCommand similarCommand : similarCommands) {
+            similarNames.add(similarCommand.getName());
+        }
+
+        final AbstractCommand helpCommand = StatsBot.getCommandManager().getCommand(HelpCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "command", helpCommand, new String[0], similarNames.toArray(new String[0]));
+        throw new CommandReturnException();
     }
 }

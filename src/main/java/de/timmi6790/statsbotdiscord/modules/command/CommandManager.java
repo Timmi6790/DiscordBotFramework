@@ -2,13 +2,13 @@ package de.timmi6790.statsbotdiscord.modules.command;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.sun.istack.internal.logging.Logger;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
 import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
 import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
+import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
@@ -54,7 +54,7 @@ public class CommandManager {
 
     public CommandManager(final String mainCommand) {
         this.botId = StatsBot.getDiscord().getSelfUser().getId();
-        this.mainCommandPattern = Pattern.compile("^((" + mainCommand + ")?(<@[!&]" + this.botId + ">)?)", Pattern.CASE_INSENSITIVE);
+        this.mainCommandPattern = Pattern.compile("^((" + mainCommand + ")|(<@[!&]" + this.botId + ">))", Pattern.CASE_INSENSITIVE);
 
         this.mainCommand = mainCommand;
 
@@ -111,10 +111,19 @@ public class CommandManager {
         return Optional.of(this.commands.get(commandAlias));
     }
 
-    public List<AbstractCommand> getSimilarCommands(final String name, final double similarity, final int limit) {
+    public List<AbstractCommand> getSimilarCommands(final CommandParameters commandParameters, final String name, final double similarity, final int limit) {
         final List<AbstractCommand> similarCommands = new ArrayList<>();
 
-        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.commands.keySet(), similarity).toArray(new String[0]);
+        final List<String> commandNames = new ArrayList<>();
+        for (final AbstractCommand command : this.commands.values()) {
+            if (!command.hasPermission(commandParameters)) {
+                continue;
+            }
+
+            commandNames.add(command.getName().toLowerCase());
+        }
+
+        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, commandNames, similarity).toArray(new String[0]);
         for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
             similarCommands.add(this.commands.get(similarCommandNames[index]));
         }
@@ -132,8 +141,7 @@ public class CommandManager {
             return;
         }
 
-        final long serverId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
-        final GuildDb guildDb = GuildDb.getOrCreate(serverId);
+        final GuildDb guildDb = GuildDb.getOrCreate(event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0);
 
         String rawMessage = event.getMessage().getContentRaw();
         boolean validStart = false;
@@ -143,7 +151,7 @@ public class CommandManager {
             validStart = true;
             rawMessage = rawMessage.substring(mainMatcher.group(1).length());
 
-        } else {
+        } else if (guildDb.getCommandAliasPattern() != null) {
             final Matcher guildAliasMatcher = guildDb.getCommandAliasPattern().matcher(rawMessage);
             if (guildAliasMatcher.find()) {
                 validStart = true;
@@ -223,52 +231,59 @@ public class CommandManager {
         final ChannelDb channelDb = ChannelDb.getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId());
         final CommandParameters commandParameters = new CommandParameters(permissions, channelDb, userDb, emptyArgs ? args : Arrays.copyOfRange(args, 1, args.length), event);
 
-        final Optional<AbstractCommand> command = emptyArgs ? this.getCommand(HelpCommand.class) : this.getCommand(args[0]);
-        if (!command.isPresent()) {
-            final AbstractCommand[] similarCommands = this.getSimilarCommands(args[0], 0.6, 3).toArray(new AbstractCommand[0]);
+        final Optional<AbstractCommand> commandOpt = emptyArgs ? this.getCommand(HelpCommand.class) : this.getCommand(args[0]);
+        final AbstractCommand command;
+        if (!commandOpt.isPresent()) {
+            final AbstractCommand[] similarCommands = this.getSimilarCommands(commandParameters, args[0], 0.6, 3).toArray(new AbstractCommand[0]);
 
-            final StringBuilder description = new StringBuilder();
-            final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-
-            if (similarCommands.length == 0) {
-                description.append(MarkdownUtil.monospace(args[0])).append(" is not a valid command.\n");
-                description.append("Use the ").append(MarkdownUtil.bold(this.getMainCommand() + " help")).append(" command or click the ")
-                        .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
+            if (similarCommands.length != 0 && userDb.hasSettingAndEqualsTrue(CommandAutoCorrectSetting.INTERNAL_NAME)) {
+                command = similarCommands[0];
 
             } else {
-                description.append(MarkdownUtil.monospace(args[0])).append(" is not a valid command.\n");
-                description.append("Is it possible that you wanted to write?\n\n");
+                final StringBuilder description = new StringBuilder();
+                final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-                for (int index = 0; similarCommands.length > index; index++) {
-                    final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-                    final AbstractCommand similarCommand = similarCommands[index];
+                if (similarCommands.length == 0) {
+                    description.append(MarkdownUtil.monospace(args[0])).append(" is not a valid command.\n");
+                    description.append("Use the ").append(MarkdownUtil.bold(this.getMainCommand() + " help")).append(" command or click the ")
+                            .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
 
-                    description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
-                    emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
+                } else {
+                    description.append(MarkdownUtil.monospace(args[0])).append(" is not a valid command.\n");
+                    description.append("Is it possible that you wanted to write?\n\n");
+
+                    for (int index = 0; similarCommands.length > index; index++) {
+                        final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+                        final AbstractCommand similarCommand = similarCommands[index];
+
+                        description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
+                        emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
+                    }
+
+                    description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
                 }
+                this.getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
 
-                description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
+                final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
+                event.getChannel().sendMessage(
+                        UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                                .setTitle("Invalid Command")
+                                .setDescription(description)
+                                .setFooter("↓ Click Me!")
+                                .build())
+                        .queue(sendMessage -> {
+                                    StatsBot.getEmoteReactionManager().addEmoteReactionMessage(sendMessage, emoteReactionMessage);
+                                    sendMessage.delete().queueAfter(90, TimeUnit.SECONDS);
+                                }
+                        );
+                return;
             }
-            this.getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
-
-            final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
-            event.getChannel().sendMessage(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                            .setTitle("Invalid Command")
-                            .setDescription(description)
-                            .setFooter("Click Me!")
-                            .build())
-                    .queue(sendMessage -> {
-                                StatsBot.getEmoteReactionManager().addEmoteReactionMessage(sendMessage, emoteReactionMessage);
-                                sendMessage.delete().queueAfter(90, TimeUnit.SECONDS);
-                            }
-                    );
-            return;
+        } else {
+            command = commandOpt.get();
         }
 
         // Run Command
         this.commandSpamCache.put(event.getAuthor().getIdLong(), (short) (this.commandSpamCache.get(event.getAuthor().getIdLong()) + 1));
-        Logger.getLogger(this.getClass()).info("Run " + command.get().getName() + " " + Arrays.toString(args));
-        this.executor.execute(() -> command.get().runCommand(commandParameters));
+        this.executor.execute(() -> command.runCommand(commandParameters));
     }
 }

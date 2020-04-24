@@ -6,6 +6,7 @@ import de.timmi6790.statsbotdiscord.modules.core.CoreModule;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionManager;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.EventManager;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
+import de.timmi6790.statsbotdiscord.modules.setting.SettingManager;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
@@ -23,6 +24,8 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 
 public class StatsBot {
+    public final static String BOT_VERSION = "3.0.0";
+
     @Getter
     private static SentryClient sentry;
     @Getter
@@ -40,6 +43,8 @@ public class StatsBot {
     private static final AchievementManager achievementManager = new AchievementManager();
     @Getter
     private static EmoteReactionManager emoteReactionManager;
+    @Getter
+    private static final SettingManager settingManager = new SettingManager();
 
     public static void main(final String[] args) throws LoginException, ConfigurationException {
         final Configuration config;
@@ -47,7 +52,7 @@ public class StatsBot {
         config = configs.properties(new File("config.properties"));
 
         sentry = SentryClientFactory.sentryClient(config.getString("sentry.dsn"));
-        sentry.setRelease("3.0.0");
+        sentry.setRelease(BOT_VERSION);
 
         database = Jdbi.create(config.getString("db.url"), config.getString("db.name"), config.getString("db.password"));
 
