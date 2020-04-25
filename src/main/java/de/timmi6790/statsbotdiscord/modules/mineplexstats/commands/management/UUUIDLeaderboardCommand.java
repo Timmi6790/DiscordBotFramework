@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.management;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
@@ -8,62 +8,86 @@ import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.Abstrac
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaLeaderboard;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
+import net.dv8tion.jda.api.Permission;
 
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
-    private final static int ARG_POS_START_POS = 1;
-    private final static int ARG_POS_END_POS = 2;
+public class UUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
+    private final static int ARG_POS_BOARD_POS = 2;
+    private final static int ARG_POS_START_POS = 3;
+    private final static int ARG_POS_END_POS = 4;
 
-    private final static int LEADERBOARD_UPPER_LIMIT = 100;
+    private final static int LEADERBOARD_UPPER_LIMIT = 1_000;
 
-    public BedrockLeaderboardCommand() {
-        super("bleaderboard", "Bedrock Leaderboard", "<game> [start] [end] [date]", "bl", "blb");
+    public UUUIDLeaderboardCommand() {
+        super("uuidLeaderboard", "Java UUID Leaderboard", "<game> <stat> [board] [start] [end] [date]", "ul");
 
-        this.setDefaultPerms(true);
-        this.setMinArgs(1);
+        this.setMinArgs(2);
+        this.setPermission("mineplexstats.management.filter");
+        this.addDiscordPermissions(Permission.MANAGE_EMOTES);
     }
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        final String game = this.getGame(commandParameters, 0);
+        final JavaGame game = this.getGame(commandParameters, 0);
+        final JavaStat stat = this.getStat(game, commandParameters, 1);
+        final JavaBoard board = this.getBoard(game, commandParameters, ARG_POS_BOARD_POS);
         final int startPos = this.getStartPosition(commandParameters, ARG_POS_START_POS, LEADERBOARD_UPPER_LIMIT);
-        final int endPos = this.getEndPosition(startPos, commandParameters, ARG_POS_END_POS, LEADERBOARD_UPPER_LIMIT);
-        final long unixTime = this.getUnixTime(commandParameters, 3);
+        final int endPos = this.getEndPosition(startPos, commandParameters, ARG_POS_END_POS, LEADERBOARD_UPPER_LIMIT, 5);
+        final long unixTime = this.getUnixTime(commandParameters, 5);
 
         final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getBedrockLeaderboard(game, startPos, endPos, unixTime);
+        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos, unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
-        final BedrockLeaderboard leaderboardResponse = (BedrockLeaderboard) responseModel;
-        final BedrockLeaderboard.Info leaderboardInfo = leaderboardResponse.getInfo();
+        final JavaLeaderboard leaderboardResponse = (JavaLeaderboard) responseModel;
+        final JavaLeaderboard.Info leaderboardInfo = leaderboardResponse.getInfo();
 
         final String[][] leaderboard = new String[leaderboardResponse.getLeaderboard().size() + 1][3];
-        leaderboard[0] = new String[]{"Player", "Score", "Position"};
+        leaderboard[0] = new String[]{"Emote", "UUID", "Player", "Score", "Position"};
 
         int index = 1;
-        for (final BedrockLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
-            leaderboard[index] = new String[]{data.getName(), this.getFormattedNumber(data.getScore()), String.valueOf(data.getPosition())};
+        for (final JavaLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
+            leaderboard[index] = new String[]{String.valueOf(index), data.getUuid().toString(), data.getName(), this.getFormattedScore(stat, data.getScore()), String.valueOf(data.getPosition())};
             index++;
         }
 
-        final String[] header = {"Bedrock " + leaderboardInfo.getGame()};
+        final String[] header = {leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()};
         final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard);
         final Optional<InputStream> picture = statsPicture.getPlayerPicture();
         if (picture.isPresent()) {
             final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-            final int rowDistance = endPos - startPos;
-            final int fastRowDistance = leaderboardInfo.getTotalLength() * 50 / 100;
+            StatsBot.getCommandManager().getCommand(PlayerFilterCommand.class).ifPresent(filterCommand -> {
+                int emoteIndex = 1;
+                for (final JavaLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
+                    final CommandParameters newParameters = new CommandParameters(commandParameters);
+                    newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
+                    emotes.put(DiscordEmotes.getNumberEmote(emoteIndex).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
 
+                    emoteIndex++;
+                }
+            });
+
+            // Leaderboard default responses
+            final int rowDistance = endPos - startPos;
+            final int fastRowDistance = leaderboardInfo.getTotalLength() * 10 / 100;
+
+            // Create a new args array if the old array has no positions
             if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
                 final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
+                newArgs[ARG_POS_BOARD_POS] = board.getName();
+
                 System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
                 commandParameters.setArgs(newArgs);
             }
@@ -112,4 +136,3 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
         emotes.put(emote.getEmote(), new CommandEmoteReaction(this, newParameters));
     }
 }
-

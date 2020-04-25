@@ -1,6 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi;
 
 import com.google.gson.Gson;
+import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGames;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
@@ -16,6 +17,7 @@ import kong.unirest.json.JSONObject;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 public class MpStatsRestApiClient {
     private static final String BASE_URL = "https://mpstats.timmi6790.de/";
@@ -25,10 +27,16 @@ public class MpStatsRestApiClient {
 
     private final Gson gson = new Gson();
 
+    private final String authName;
+    private final String authPassword;
+
     public MpStatsRestApiClient() {
         Unirest.config().defaultBaseUrl(BASE_URL);
         Unirest.config().connectTimeout(6_000);
         Unirest.config().addDefaultHeader("User-Agent", "MpStatsRestApiClient-Java");
+
+        this.authName = StatsBot.getConfig().getString("mpStatsApi.name");
+        this.authPassword = StatsBot.getConfig().getString("mpStatsApi.password");
     }
 
     public ResponseModel parseHttpResponse(final HttpResponse<JsonNode> response, final Class<? extends ResponseModel> clazz) {
@@ -249,5 +257,19 @@ public class MpStatsRestApiClient {
             e.printStackTrace();
             return UNKNOWN_ERROR_RESPONSE_MODEL;
         }
+    }
+
+    public void addJavaPlayerFilter(final UUID uuid, final String game, final String stat, final String board) {
+        if (this.authName == null || this.authPassword == null) {
+            return;
+        }
+
+        Unirest.post("java/leaderboards/filter")
+                .basicAuth(this.authName, this.authPassword)
+                .queryString("game", game)
+                .queryString("stat", stat)
+                .queryString("board", board.toLowerCase())
+                .queryString("uuid", uuid.toString())
+                .asEmpty();
     }
 }

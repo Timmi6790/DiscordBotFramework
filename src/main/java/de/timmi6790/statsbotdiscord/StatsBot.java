@@ -18,10 +18,13 @@ import net.dv8tion.jda.api.entities.Activity;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.discordbots.api.client.DiscordBotListAPI;
 import org.jdbi.v3.core.Jdbi;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class StatsBot {
     public final static String BOT_VERSION = "3.0.0";
@@ -47,12 +50,13 @@ public class StatsBot {
     private static final SettingManager settingManager = new SettingManager();
 
     public static void main(final String[] args) throws LoginException, ConfigurationException {
-        final Configuration config;
         final Configurations configs = new Configurations();
-        config = configs.properties(new File("config.properties"));
+        final Configuration config = configs.properties(new File("config.properties"));
 
-        sentry = SentryClientFactory.sentryClient(config.getString("sentry.dsn"));
-        sentry.setRelease(BOT_VERSION);
+        if (!config.getString("sentry.dsn").isEmpty()) {
+            sentry = SentryClientFactory.sentryClient(config.getString("sentry.dsn"));
+            sentry.setRelease(BOT_VERSION);
+        }
 
         database = Jdbi.create(config.getString("db.url"), config.getString("db.name"), config.getString("db.password"));
 
@@ -73,5 +77,29 @@ public class StatsBot {
                 new CoreModule()
         );
         moduleManager.startAll();
+
+        // Bot list server count update task
+        if (!config.getString("discord.discordListToken").isEmpty()) {
+            final DiscordBotListAPI botListAPI = new DiscordBotListAPI.Builder()
+                    .token(config.getString("discord.discordListToken"))
+                    .botId(discord.getSelfUser().getId())
+                    .build();
+
+            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> botListAPI.setStats(discord.getGuilds().size()), 0, 30, TimeUnit.MINUTES);
+        }
+    }
+
+    public static Configuration getConfig() {
+        final Configurations configs = new Configurations();
+        try {
+            final Configuration config = configs.properties(new File("devConfig.properties"));
+            config.setProperty("discord.token", null);
+            config.setProperty("db.name", null);
+            config.setProperty("db.password", null);
+            config.setProperty("db.url", null);
+            return config;
+        } catch (final ConfigurationException ignore) {
+        }
+        return null;
     }
 }

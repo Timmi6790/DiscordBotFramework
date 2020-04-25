@@ -7,6 +7,8 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.Bedro
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockPlayerCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.debug.ReloadDataCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.*;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.management.PlayerFilterCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.management.UUUIDLeaderboardCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.MpStatsRestApiClient;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGames;
@@ -58,7 +60,10 @@ public class MineplexStatsModule extends AbstractModule {
                 new BedrockPlayerCommand(),
                 new BedrockLeaderboardCommand(),
 
-                new ReloadDataCommand()
+                new ReloadDataCommand(),
+
+                new UUUIDLeaderboardCommand(),
+                new PlayerFilterCommand()
         );
     }
 

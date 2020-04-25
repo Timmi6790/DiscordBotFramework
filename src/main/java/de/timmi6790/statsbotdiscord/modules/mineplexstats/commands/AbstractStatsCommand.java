@@ -19,10 +19,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStatsCommand extends AbstractCommand {
@@ -143,6 +140,11 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
     }
 
     protected int getEndPosition(final int startPos, final CommandParameters commandParameters, final int argPos, final int upperLimit) {
+        return this.getEndPosition(startPos, commandParameters, argPos, upperLimit, MAX_LEADERBOARD_POSITION_DISTANCE);
+    }
+
+
+    protected int getEndPosition(final int startPos, final CommandParameters commandParameters, final int argPos, final int upperLimit, final int maxDistance) {
         final String name;
         if (argPos >= commandParameters.getArgs().length) {
             name = String.valueOf(upperLimit);
@@ -160,8 +162,8 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
         }
 
         int endPos = Integer.parseInt(name);
-        if (startPos > endPos || endPos - startPos > MAX_LEADERBOARD_POSITION_DISTANCE) {
-            endPos = startPos + MAX_LEADERBOARD_POSITION_DISTANCE;
+        if (startPos > endPos || endPos - startPos > maxDistance) {
+            endPos = startPos + maxDistance;
         }
 
         return Math.min(Math.max(1, endPos), upperLimit);
@@ -186,5 +188,17 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
                 .setTitle("Invalid Date")
                 .setDescription(MarkdownUtil.monospace(name) + " is not a valid date.")
         );
+    }
+
+    protected UUID getUUID(final CommandParameters commandParameters, final int argPos) {
+        try {
+            return UUID.fromString(commandParameters.getArgs()[argPos]);
+        } catch (final IllegalArgumentException ignore) {
+            throw new CommandReturnException(
+                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                            .setTitle("Invalid UUID")
+                            .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid UUID")
+            );
+        }
     }
 }

@@ -13,7 +13,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class JavaPlayerStats extends ResponseModel {
     private final Info info;
-    private final Map<String, Stats> stats;
+    private final Map<String, WebsiteStat> websiteStats;
+    private final Map<String, Stat> stats;
 
 
     @Data
@@ -28,11 +29,19 @@ public class JavaPlayerStats extends ResponseModel {
 
     @Data
     @AllArgsConstructor
-    public static class Stats {
+    public static class Stat {
         private final String stat;
         private final String prettyStat;
         private final int position;
         private final int score;
         private final int unix;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class WebsiteStat {
+        private final String stat;
+        private final String prettyStat;
+        private final int score;
     }
 }

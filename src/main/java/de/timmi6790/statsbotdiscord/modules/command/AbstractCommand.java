@@ -191,21 +191,28 @@ public abstract class AbstractCommand {
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getEvent().getChannel().sendMessage(
+        this.sendEmoteMessage(
+                commandParameters,
                 UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                         .setTitle(title)
                         .setDescription(description)
-                        .setFooter("↓ Click Me!")
-                        .build())
-                .queue(message -> {
-                    if (!emotes.isEmpty()) {
-                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
-                                commandParameters.getEvent().getChannel().getIdLong());
-                        StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
-                    }
+                        .setFooter("↓ Click Me!"),
+                emotes);
+    }
 
-                    message.delete().queueAfter(90, TimeUnit.SECONDS);
-                });
+    protected void sendEmoteMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
+        commandParameters.getEvent().getChannel().sendMessage(
+                embedBuilder.setFooter("↓ Click Me!").build())
+                .queue(message -> {
+                            if (!emotes.isEmpty()) {
+                                final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
+                                        commandParameters.getEvent().getChannel().getIdLong());
+                                StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
+                            }
+
+                            message.delete().queueAfter(90, TimeUnit.SECONDS);
+                        }
+                );
     }
 
     protected void sendTimedMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final int deleteTime) {

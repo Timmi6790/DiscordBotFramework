@@ -18,6 +18,8 @@ public enum DiscordEmotes {
     FAR_LEFT_ARROW("⏪"),
     RIGHT_ARROW("▶"),
     FAR_RIGHT_ARROW("⏩"),
+    CHECK_MARK("✅"),
+    RED_CROSS_MARK("❌"),
     FOLDER("\uD83D\uDCC1");
 
     @Getter

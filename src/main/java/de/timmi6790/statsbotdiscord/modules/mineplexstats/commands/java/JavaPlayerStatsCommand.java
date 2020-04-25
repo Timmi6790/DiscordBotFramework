@@ -45,27 +45,38 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
         final JavaGame game = module.getJavaGame(playerStatsInfo.getGame()).get();
-        final Map<String, JavaPlayerStats.Stats> stats = playerStats.getStats();
+        final Map<String, JavaPlayerStats.Stat> stats = playerStats.getStats();
 
-        int highestUnixTime = 0;
-        final String[][] leaderboard = new String[game.getStats().size() + 1][3];
+        long highestUnixTime = 0;
+        final String[][] leaderboard = new String[playerStats.getWebsiteStats().size() + game.getStats().size() + 1][3];
         leaderboard[0] = new String[]{"Category", "Score", "Position"};
 
-        final Map<String, JavaStat> gameStats = game.getStats();
         int index = 1;
+        for (final JavaPlayerStats.WebsiteStat websiteStat : playerStats.getWebsiteStats().values()) {
+            leaderboard[index] = new String[]{websiteStat.getPrettyStat(), this.getFormattedNumber(websiteStat.getScore()), ""};
+            index++;
+        }
+
+        final Map<String, JavaStat> gameStats = game.getStats();
         for (final String statName : game.getStatNames()) {
             final JavaStat gameStat = gameStats.get(statName.toLowerCase());
             String score = UNKNOWN_SCORE;
             String position = UNKNOWN_POSITION;
             if (stats.containsKey(gameStat.getName())) {
-                final JavaPlayerStats.Stats stat = stats.get(gameStat.getName());
+                final JavaPlayerStats.Stat stat = stats.get(gameStat.getName());
 
                 score = this.getFormattedScore(gameStat, stat.getScore());
-                position = String.valueOf(stat.getPosition());
+                if (stat.getPosition() != -1) {
+                    position = String.valueOf(stat.getPosition());
+                }
 
                 if (stat.getUnix() > highestUnixTime) {
                     highestUnixTime = stat.getUnix();
                 }
+            }
+
+            if (highestUnixTime == 0) {
+                highestUnixTime = System.currentTimeMillis() / 1_000;
             }
 
             leaderboard[index] = new String[]{gameStat.getPrettyStat(), score, position};
