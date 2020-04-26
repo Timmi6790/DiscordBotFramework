@@ -92,7 +92,7 @@ public class StatsBot {
     public static Configuration getConfig() {
         final Configurations configs = new Configurations();
         try {
-            final Configuration config = configs.properties(new File("devConfig.properties"));
+            final Configuration config = configs.properties(new File("config.properties"));
             config.setProperty("discord.token", null);
             config.setProperty("db.name", null);
             config.setProperty("db.password", null);

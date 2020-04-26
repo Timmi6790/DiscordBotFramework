@@ -23,8 +23,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStatsCommand extends AbstractCommand {
-    protected final static String UNKNOWN_POSITION = "Unknown";
-    protected final static String UNKNOWN_SCORE = ">1000";
+    protected final static String UNKNOWN_POSITION = ">1000";
+    protected final static String UNKNOWN_SCORE = "Unknown";
 
     private final static int MAX_LEADERBOARD_POSITION_DISTANCE = 15;
 

@@ -75,12 +75,12 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
                 }
             }
 
-            if (highestUnixTime == 0) {
-                highestUnixTime = System.currentTimeMillis() / 1_000;
-            }
-
             leaderboard[index] = new String[]{gameStat.getPrettyStat(), score, position};
             index++;
+        }
+
+        if (highestUnixTime == 0) {
+            highestUnixTime = System.currentTimeMillis() / 1_000;
         }
 
         BufferedImage skin;
