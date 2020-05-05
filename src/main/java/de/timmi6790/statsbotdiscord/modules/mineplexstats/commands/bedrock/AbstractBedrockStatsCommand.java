@@ -5,7 +5,6 @@ import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.AbstractStatsCommand;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.JavaGamesCommand;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -15,7 +14,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 public abstract class AbstractBedrockStatsCommand extends AbstractStatsCommand {
-    private final static Pattern NAME_PATTERN = Pattern.compile("^.{3,32}$");
+    private static final Pattern NAME_PATTERN = Pattern.compile("^.{3,32}$");
 
     public AbstractBedrockStatsCommand(final String name, final String description, final String syntax, final String... aliasNames) {
         super(name, "MineplexStats - Bedrock", description, syntax, aliasNames);
@@ -30,11 +29,11 @@ public abstract class AbstractBedrockStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarNames = new ArrayList<>(this.getStatsModule().getSimilarBedrockGames(name, 0.6, 3));
-        if (!similarNames.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+        if (!similarNames.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarNames.get(0);
         }
 
-        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(BedrockGamesCommand.class).orElse(null);
         this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarNames.toArray(new String[0]));
 
         throw new CommandReturnException();

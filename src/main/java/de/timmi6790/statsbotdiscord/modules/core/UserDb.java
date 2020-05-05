@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
+import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
 import de.timmi6790.statsbotdiscord.modules.setting.settings.BooleanSetting;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
@@ -78,13 +79,12 @@ public class UserDb {
     public void ban(final CommandParameters commandParameters, final String reason) {
         this.setBanned(true);
 
-        commandParameters.getEvent().getAuthor().openPrivateChannel().flatMap(
-                channel -> channel.sendMessage(
-                        UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                                .setTitle("You are banned")
-                                .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
-                                .build()
-                )).queue();
+        UtilitiesDiscord.sendPrivateMessage(
+                commandParameters.getEvent().getAuthor(),
+                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                        .setTitle("You are banned")
+                        .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
+        );
     }
 
     public boolean setBanned(final boolean banned) {
@@ -139,5 +139,9 @@ public class UserDb {
         }
 
         return ((BooleanSetting) setting.get()).parseSetting(this.settings.get(setting.get().getDbId()));
+    }
+
+    public boolean hasAutoCorrection() {
+        return this.hasSettingAndEqualsTrue(CommandAutoCorrectSetting.INTERNAL_NAME);
     }
 }

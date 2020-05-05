@@ -23,7 +23,6 @@ public class JavaGroupsPlayer extends ResponseModel {
         private final String name;
         private final String group;
         private final String stat;
-        private final String prettyStat;
         private final String board;
         private final boolean filter;
     }

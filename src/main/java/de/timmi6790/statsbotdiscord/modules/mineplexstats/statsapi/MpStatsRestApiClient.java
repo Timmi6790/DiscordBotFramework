@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class MpStatsRestApiClient {
-    private static final String BASE_URL = "https://mpstats.timmi6790.de/";
+    private static final String BASE_URL = "http://127.0.0.1:8000/";
 
     private final static ErrorModel UNKNOWN_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "Unknown Error");
     private final static ErrorModel TIMEOUT_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "API Timeout Exception");
@@ -106,11 +106,11 @@ public class MpStatsRestApiClient {
                 }
 
                 stats.put(
-                        statName.toLowerCase(),
+                        JavaGame.getCleanStat(statName).toLowerCase(),
                         new JavaStat(
                                 stat.getString("stat"),
                                 this.gson.fromJson(stat.getJSONArray("aliasNames").toString(), String[].class),
-                                stat.getString("prettyStat"),
+                                stat.getBoolean("achievement"),
                                 stat.getString("description"),
                                 boards
                         )
@@ -270,6 +270,43 @@ public class MpStatsRestApiClient {
                 .queryString("stat", stat)
                 .queryString("board", board.toLowerCase())
                 .queryString("uuid", uuid.toString())
+                .asEmpty();
+    }
+
+    public void addJavaBoardAlias(final String board, final String alias) {
+        if (this.authName == null || this.authPassword == null) {
+            return;
+        }
+
+        Unirest.post("java/leaderboards/alias/board")
+                .basicAuth(this.authName, this.authPassword)
+                .queryString("board", board.toLowerCase())
+                .queryString("alias", alias)
+                .asEmpty();
+    }
+
+    public void addJavaGameAlias(final String game, final String alias) {
+        if (this.authName == null || this.authPassword == null) {
+            return;
+        }
+
+        Unirest.post("java/leaderboards/alias/game")
+                .basicAuth(this.authName, this.authPassword)
+                .queryString("game", game)
+                .queryString("alias", alias)
+                .asEmpty();
+    }
+
+    public void addJavaStatAlias(final String game, final String stat, final String alias) {
+        if (this.authName == null || this.authPassword == null) {
+            return;
+        }
+
+        Unirest.post("java/leaderboards/alias/game")
+                .basicAuth(this.authName, this.authPassword)
+                .queryString("game", game)
+                .queryString("stat", stat)
+                .queryString("alias", alias)
                 .asEmpty();
     }
 }

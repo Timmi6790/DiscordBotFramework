@@ -31,7 +31,6 @@ public class JavaPlayerStats extends ResponseModel {
     @AllArgsConstructor
     public static class Stat {
         private final String stat;
-        private final String prettyStat;
         private final int position;
         private final int score;
         private final int unix;
@@ -41,7 +40,6 @@ public class JavaPlayerStats extends ResponseModel {
     @AllArgsConstructor
     public static class WebsiteStat {
         private final String stat;
-        private final String prettyStat;
         private final int score;
     }
 }

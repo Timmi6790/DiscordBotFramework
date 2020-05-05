@@ -1,0 +1,36 @@
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.management;
+
+import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
+import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
+
+public class JavaStatAliasCommand extends AbstractJavaStatsCommand {
+    public JavaStatAliasCommand() {
+        super("aliasStat", "Stat Alias", "<game> <stat> <alias>", "as");
+
+        this.setPermission("mineplexstats.management.aliasStat");
+        this.setMinArgs(3);
+    }
+
+    @Override
+    protected CommandResult onCommand(final CommandParameters commandParameters) {
+        final JavaGame game = this.getGame(commandParameters, 0);
+        final JavaStat stat = this.getStat(game, commandParameters, 1);
+
+        this.getStatsModule().getMpStatsRestClient().addJavaStatAlias(game.getName(), stat.getName(), commandParameters.getArgs()[1]);
+        this.getStatsModule().loadJavaGames();
+        this.sendTimedMessage(
+                commandParameters,
+                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                        .setTitle("Added Stat Alias")
+                        .setDescription("Added new stat alias " + MarkdownUtil.monospace(commandParameters.getArgs()[0])),
+                90
+        );
+
+        return CommandResult.SUCCESS;
+    }
+}

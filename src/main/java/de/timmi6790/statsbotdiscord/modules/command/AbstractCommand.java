@@ -5,7 +5,6 @@ import de.timmi6790.statsbotdiscord.events.EventCommandExecution;
 import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
-import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
@@ -43,6 +42,8 @@ public abstract class AbstractCommand {
     private final String name;
     private final String category;
     private final String description;
+
+    private final List<String> exampleCommands = new ArrayList<>();
 
     private final String syntax;
     private int minArgs = 0;
@@ -137,8 +138,8 @@ public abstract class AbstractCommand {
                         .withBreadcrumbs(Collections.singletonList(breadcrumb))
                         .withLogger(AbstractCommand.class.getName())
                         .withSentryInterface(new ExceptionInterface(e));
-                StatsBot.getSentry().sendEvent(eventBuilder);
 
+                StatsBot.getSentry().sendEvent(eventBuilder);
                 e.printStackTrace();
 
                 this.sendErrorMessage(commandParameters, "Unknown");
@@ -178,6 +179,10 @@ public abstract class AbstractCommand {
 
     protected void addDiscordPermissions(final Permission... permissions) {
         this.discordPermissions.addAll(Arrays.asList(permissions));
+    }
+
+    protected void addExampleCommands(final String... exampleCommands) {
+        this.exampleCommands.addAll(Arrays.asList(exampleCommands));
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
@@ -287,10 +292,6 @@ public abstract class AbstractCommand {
         );
     }
 
-    protected boolean hasAutoCorrection(final CommandParameters commandParameters) {
-        return commandParameters.getUserDb().hasSettingAndEqualsTrue(CommandAutoCorrectSetting.INTERNAL_NAME);
-    }
-
     protected AbstractCommand getCommand(final CommandParameters commandParameters, final int argPos) {
         final String name = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> command = StatsBot.getCommandManager().getCommand(name);
@@ -299,7 +300,7 @@ public abstract class AbstractCommand {
         }
 
         final AbstractCommand[] similarCommands = StatsBot.getCommandManager().getSimilarCommands(commandParameters, name, 0.6, 3).toArray(new AbstractCommand[0]);
-        if (similarCommands.length != 0 && this.hasAutoCorrection(commandParameters)) {
+        if (similarCommands.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarCommands[0];
         }
 

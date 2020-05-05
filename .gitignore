@@ -29,3 +29,5 @@ target/
 src/main/resources/config.properties
 
 dependency-reduced-pom.xml
+
+StatsBot.iml

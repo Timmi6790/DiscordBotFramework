@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
-    private final static Pattern NAME_PATTERN = Pattern.compile("^\\w{3,16}$");
-    private final static List<String> STATS_TIME = new ArrayList<>(Arrays.asList("TimeInGame", "TimeInHub", "TimePlaying"));
+    private final static Pattern NAME_PATTERN = Pattern.compile("^\\w{1,16}$");
+    private final static List<String> STATS_TIME = new ArrayList<>(Arrays.asList("Ingame Time", "Hub Time", "Time Playing"));
 
     private final static Cache<UUID, BufferedImage> SKIN_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
@@ -59,7 +59,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final List<JavaGame> similarGames = this.getStatsModule().getSimilarJavaGames(name, 0.6, 3);
-        if (!similarGames.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+        if (!similarGames.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarGames.get(0);
         }
 
@@ -81,8 +81,8 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return stat.get();
         }
 
-        final JavaStat[] similarStats = game.getSimilarStats(name, 0.6, 3).toArray(new JavaStat[0]);
-        if (similarStats.length != 0 && this.hasAutoCorrection(commandParameters)) {
+        final JavaStat[] similarStats = game.getSimilarStats(JavaGame.getCleanStat(name), 0.6, 3).toArray(new JavaStat[0]);
+        if (similarStats.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarStats[0];
         }
 
@@ -114,7 +114,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final List<String> similarBoards = UtilitiesData.getSimilarityList(name, boards, 0.0);
-        if (!similarBoards.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+        if (!similarBoards.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             final String newBoard = similarBoards.get(0);
             for (final JavaStat stat : game.getStats().values()) {
                 for (final JavaBoard board : stat.getBoards().values()) {
@@ -145,7 +145,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final JavaBoard[] similarBoards = stat.getSimilarBoard(name, 0.0, 6).toArray(new JavaBoard[0]);
-        if (similarBoards.length != 0 && this.hasAutoCorrection(commandParameters)) {
+        if (similarBoards.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarBoards[0];
         }
 
@@ -183,7 +183,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         final JavaGroup[] similarGroup = this.getStatsModule().getSimilarJavaGroups(name, 0.6, 3).toArray(new JavaGroup[0]);
-        if (similarGroup.length != 0 && this.hasAutoCorrection(commandParameters)) {
+        if (similarGroup.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarGroup[0];
         }
 
@@ -212,8 +212,8 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             statNames.add(stat.getName());
         }
 
-        final List<String> similarStats = UtilitiesData.getSimilarityList(name, statNames, 0.6);
-        if (!similarStats.isEmpty() && this.hasAutoCorrection(commandParameters)) {
+        final List<String> similarStats = UtilitiesData.getSimilarityList(JavaGame.getCleanStat(name), statNames, 0.6);
+        if (!similarStats.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             final String newStat = similarStats.get(0);
             for (final JavaStat stat : group.getStats()) {
                 if (stat.getName().equalsIgnoreCase(newStat)) {

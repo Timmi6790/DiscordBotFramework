@@ -1,11 +1,12 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.utilities;
 
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
 
 import java.util.*;
 
 public class StatsComparator implements Comparator<JavaStat> {
-    private static final List<String> STATS_ORDER = new ArrayList<>(Arrays.asList("Wins", "TimeInGame", "TimeInHub", "GamesPlayed", "DailyVote", "ClansDailyReward", "DailyReward",
+    private static final List<String> STATS_ORDER = new ArrayList<>(Arrays.asList("Hider Wins", "Hunter Wins", "Wins", "TimeInGame", "TimeInHub", "GamesPlayed", "DailyVote", "ClansDailyReward", "DailyReward",
             "CrownsEarned", "BestWinStreak", "SecondPlace", "ThirdPlace", "Losses", "Kills", "FinalKills", "Assists", "Deaths"));
 
     static {
@@ -18,18 +19,18 @@ public class StatsComparator implements Comparator<JavaStat> {
             return 0;
         }
 
-        final int firstIndex = STATS_ORDER.indexOf(o1.getName());
-        final int secondIndex = STATS_ORDER.indexOf(o2.getName());
+        final int firstIndex = STATS_ORDER.indexOf(JavaGame.getCleanStat(o1.getPrintName()));
+        final int secondIndex = STATS_ORDER.indexOf(JavaGame.getCleanStat(o2.getPrintName()));
         if (Math.max(secondIndex, firstIndex) != -1) {
             return Integer.compare(secondIndex, firstIndex);
         }
 
-        final boolean firstAchievement = o1.getPrettyStat().startsWith("Achievement");
-        final boolean secondAchievement = o2.getPrettyStat().startsWith("Achievement");
+        final boolean firstAchievement = o1.getPrintName().startsWith("Achievement");
+        final boolean secondAchievement = o2.getPrintName().startsWith("Achievement");
         if (!(firstAchievement && secondAchievement)) {
             return firstAchievement ? 1 : -1;
         }
 
-        return o1.getPrettyStat().compareTo(o2.getPrettyStat());
+        return o1.getPrintName().compareTo(o2.getPrintName());
     }
 }

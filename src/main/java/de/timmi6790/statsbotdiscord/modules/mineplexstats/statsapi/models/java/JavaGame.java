@@ -5,9 +5,12 @@ import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import lombok.Data;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Data
 public class JavaGame {
+    private static final Pattern ILLEGAL_STAT_CHARACTERS = Pattern.compile("([ !<,\\.?`'])|(Achievement)", Pattern.CASE_INSENSITIVE);
+
     private final String name;
     private final String[] aliasNames;
     private final String category;
@@ -27,14 +30,19 @@ public class JavaGame {
         this.stats = stats;
 
         for (final JavaStat gameStat : stats.values()) {
-            final String lowerStat = gameStat.getName().toLowerCase();
+            final String cleanStat = getCleanStat(gameStat.getName()).toLowerCase();
             for (final String alias : gameStat.getAliasNames()) {
-                this.statAlias.put(alias.toLowerCase(), lowerStat);
+                this.statAlias.put(alias.toLowerCase(), cleanStat);
             }
         }
     }
 
+    public static String getCleanStat(final String name) {
+        return ILLEGAL_STAT_CHARACTERS.matcher(name).replaceAll("");
+    }
+
     public Optional<JavaStat> getStat(String name) {
+        name = JavaGame.getCleanStat(name);
         name = this.statAlias.getOrDefault(name.toLowerCase(), name.toLowerCase());
         return Optional.ofNullable(this.stats.get(name));
     }
@@ -45,7 +53,7 @@ public class JavaGame {
             stats.sort(new StatsComparator());
 
             for (final JavaStat stat : stats) {
-                this.sortedStatsNames.add(stat.getName());
+                this.sortedStatsNames.add(stat.getPrintName());
             }
         }
 

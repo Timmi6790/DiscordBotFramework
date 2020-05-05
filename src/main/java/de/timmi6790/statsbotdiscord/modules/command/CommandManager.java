@@ -8,7 +8,6 @@ import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
 import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
-import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
@@ -185,15 +184,12 @@ public class CommandManager {
         final UserDb userDb = UserDb.getOrCreate(event.getAuthor().getIdLong());
         // User ban check
         if (userDb.isBanned()) {
-            event.getAuthor().openPrivateChannel()
-                    .flatMap(privateChannel -> privateChannel.sendMessage(
-                            UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                                    .setTitle("You are banned")
-                                    .setDescription("You are banned from using this service.")
-                                    .build()
-                            )
-                    )
-                    .queue();
+            UtilitiesDiscord.sendPrivateMessage(
+                    event.getAuthor(),
+                    UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                            .setTitle("You are banned")
+                            .setDescription("You are banned from using this service.")
+            );
             return;
         }
 
@@ -203,16 +199,12 @@ public class CommandManager {
             // I want to have write perms in all channels the commands should work in
             for (final Permission permission : MINIMUM_DISCORD_PERMISSIONS) {
                 if (!permissions.contains(permission)) {
-                    event.getAuthor().openPrivateChannel()
-                            .flatMap(privateChannel -> privateChannel.sendMessage(
-                                    UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                                            .setTitle("Missing Permission")
-                                            .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.")
-                                            .build())
-                            )
-                            .delay(150, TimeUnit.SECONDS)
-                            .flatMap(Message::delete)
-                            .queue();
+                    UtilitiesDiscord.sendPrivateMessage(
+                            event.getAuthor(),
+                            UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                                    .setTitle("Missing Permission")
+                                    .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.")
+                    );
                     return;
                 }
             }
@@ -236,7 +228,7 @@ public class CommandManager {
         if (!commandOpt.isPresent()) {
             final AbstractCommand[] similarCommands = this.getSimilarCommands(commandParameters, args[0], 0.6, 3).toArray(new AbstractCommand[0]);
 
-            if (similarCommands.length != 0 && userDb.hasSettingAndEqualsTrue(CommandAutoCorrectSetting.INTERNAL_NAME)) {
+            if (similarCommands.length != 0 && userDb.hasAutoCorrection()) {
                 command = similarCommands[0];
 
             } else {

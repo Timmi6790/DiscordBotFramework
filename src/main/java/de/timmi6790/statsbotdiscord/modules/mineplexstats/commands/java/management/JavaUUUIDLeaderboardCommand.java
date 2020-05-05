@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.management;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.management;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
@@ -22,19 +22,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class UUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
+public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
     private final static int ARG_POS_BOARD_POS = 2;
     private final static int ARG_POS_START_POS = 3;
     private final static int ARG_POS_END_POS = 4;
 
     private final static int LEADERBOARD_UPPER_LIMIT = 1_000;
 
-    public UUUIDLeaderboardCommand() {
+    public JavaUUUIDLeaderboardCommand() {
         super("uuidLeaderboard", "Java UUID Leaderboard", "<game> <stat> [board] [start] [end] [date]", "ul");
 
         this.setMinArgs(2);
         this.setPermission("mineplexstats.management.filter");
-        this.addDiscordPermissions(Permission.MANAGE_EMOTES);
+        this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class UUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
         if (picture.isPresent()) {
             final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-            StatsBot.getCommandManager().getCommand(PlayerFilterCommand.class).ifPresent(filterCommand -> {
+            StatsBot.getCommandManager().getCommand(JavaPlayerFilterCommand.class).ifPresent(filterCommand -> {
                 int emoteIndex = 1;
                 for (final JavaLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
                     final CommandParameters newParameters = new CommandParameters(commandParameters);

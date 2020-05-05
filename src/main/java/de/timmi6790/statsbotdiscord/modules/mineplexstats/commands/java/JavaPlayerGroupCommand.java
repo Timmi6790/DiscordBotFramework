@@ -73,7 +73,7 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
             skin = null;
         }
 
-        final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGroup(), playerStatsInfo.getPrettyStat(), playerStatsInfo.getBoard()};
+        final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGroup(), playerStatsInfo.getStat(), playerStatsInfo.getBoard()};
         final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime), leaderboard, skin);
         final Optional<InputStream> picture = statsPicture.getPlayerPicture();
 

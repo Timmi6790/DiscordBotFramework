@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.Message;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class JavaGamesCommand extends AbstractJavaStatsCommand {
     public JavaGamesCommand() {
@@ -74,8 +75,9 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
                 message.addField("Alias names", String.join(", ", game.getAliasNames()), false);
             }
 
-            message.addField("Stats", String.join(", ", game.getStatNames()), false);
-            message.setFooter("TIP: Run " + StatsBot.getCommandManager().getMainCommand() + " games " + game.getName() + " to see more details");
+            message.addField("Stats (You don't need to type Achievement in front of it)",
+                    game.getStatNames().stream().map(stat -> stat.replace(" ", "")).collect(Collectors.joining(", ")), false);
+            message.setFooter("TIP: Run " + StatsBot.getCommandManager().getMainCommand() + " games " + game.getName() + " <stat> to see more details");
 
             commandParameters.getDiscordChannel().sendMessage(message.build())
                     .delay(90, TimeUnit.SECONDS)
@@ -88,8 +90,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
         // Stat info
         final JavaStat stat = this.getStat(game, commandParameters, 1);
         final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                .setTitle("Java Games - " + game.getName() + " - " + stat.getName())
-                .addField("Pretty name", stat.getPrettyStat(), false)
+                .setTitle("Java Games - " + game.getName() + " - " + stat.getPrintName())
                 .addField("Description", stat.getDescription(), false);
 
         if (stat.getAliasNames().length > 0) {

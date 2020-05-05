@@ -25,4 +25,15 @@ public class UtilitiesDiscord {
     public static String escapeMentions(final String string) {
         return UtilitiesDiscord.PATTERN_MENTION.matcher(string).replaceAll("@\\u200b\\\\1");
     }
+
+    public static void sendPrivateMessage(final User user, final EmbedBuilder embedBuilder) {
+        // We can't send private messages to other bots
+        if (user.isBot()) {
+            return;
+        }
+
+        user.openPrivateChannel()
+                .flatMap(privateChannel -> privateChannel.sendMessage(embedBuilder.build()))
+                .queue();
+    }
 }

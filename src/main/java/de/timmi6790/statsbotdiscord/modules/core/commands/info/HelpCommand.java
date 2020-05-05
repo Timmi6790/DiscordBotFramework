@@ -6,7 +6,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
-import lombok.SneakyThrows;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -19,7 +18,6 @@ public class HelpCommand extends AbstractCommand {
         this.setDefaultPerms(true);
     }
 
-    @SneakyThrows
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All info
@@ -54,7 +52,7 @@ public class HelpCommand extends AbstractCommand {
             }
             message.setFooter("TIP: Use " + StatsBot.getCommandManager().getMainCommand() + " help <command> to see more details");
 
-            sendTimedMessage(commandParameters, message, 90);
+            this.sendTimedMessage(commandParameters, message, 90);
             return CommandResult.SUCCESS;
         }
 
@@ -66,7 +64,7 @@ public class HelpCommand extends AbstractCommand {
                 .addField("Alias Names", String.join(", ", command.getAliasNames()), false)
                 .addField("Syntax", command.getSyntax(), false);
 
-        sendTimedMessage(commandParameters, message, 90);
+        this.sendTimedMessage(commandParameters, message, 90);
         return CommandResult.SUCCESS;
     }
 }

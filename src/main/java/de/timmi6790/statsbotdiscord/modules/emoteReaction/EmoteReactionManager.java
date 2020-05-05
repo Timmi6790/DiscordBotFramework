@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class EmoteReactionManager {
-    private final static int ACTIVE_EMOTES_LIMIT = 6;
+    private static final int ACTIVE_EMOTES_LIMIT = 6;
 
     @Getter
     private final Map<Long, Integer> activeEmotesPerPlayer = new ConcurrentHashMap<>();
@@ -118,9 +118,9 @@ public class EmoteReactionManager {
     @SubscribeEvent
     public void onReactionAdd(final MessageReactionAddEvent event) {
         final EmoteReactionMessage emoteReactionMessage = this.emoteMessageCache.getIfPresent(event.getMessageIdLong());
-        if (emoteReactionMessage == null ||
-                !emoteReactionMessage.getUsers().contains(event.getUserIdLong()) ||
-                !emoteReactionMessage.getEmotes().containsKey(event.getReaction().getReactionEmote().getName())) {
+        if (emoteReactionMessage == null
+                || !emoteReactionMessage.getUsers().contains(event.getUserIdLong())
+                || !emoteReactionMessage.getEmotes().containsKey(event.getReaction().getReactionEmote().getName())) {
             return;
         }
 

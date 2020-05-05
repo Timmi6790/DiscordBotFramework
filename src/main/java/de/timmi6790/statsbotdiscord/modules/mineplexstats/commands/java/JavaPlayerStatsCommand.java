@@ -53,13 +53,18 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
 
         int index = 1;
         for (final JavaPlayerStats.WebsiteStat websiteStat : playerStats.getWebsiteStats().values()) {
-            leaderboard[index] = new String[]{websiteStat.getPrettyStat(), this.getFormattedNumber(websiteStat.getScore()), ""};
+            leaderboard[index] = new String[]{websiteStat.getStat(), this.getFormattedNumber(websiteStat.getScore()), ""};
             index++;
         }
 
         final Map<String, JavaStat> gameStats = game.getStats();
         for (final String statName : game.getStatNames()) {
-            final JavaStat gameStat = gameStats.get(statName.toLowerCase());
+            final Optional<JavaStat> gameStatOpt = game.getStat(statName);
+            if (!gameStatOpt.isPresent()) {
+                continue;
+            }
+
+            final JavaStat gameStat = gameStatOpt.get();
             String score = UNKNOWN_SCORE;
             String position = UNKNOWN_POSITION;
             if (stats.containsKey(gameStat.getName())) {
@@ -75,7 +80,7 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
                 }
             }
 
-            leaderboard[index] = new String[]{gameStat.getPrettyStat(), score, position};
+            leaderboard[index] = new String[]{gameStat.getPrintName(), score, position};
             index++;
         }
 

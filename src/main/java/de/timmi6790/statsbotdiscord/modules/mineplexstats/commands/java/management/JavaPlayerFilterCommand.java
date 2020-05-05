@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.management;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.management;
 
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
@@ -17,13 +17,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class PlayerFilterCommand extends AbstractJavaStatsCommand {
-    public PlayerFilterCommand() {
+public class JavaPlayerFilterCommand extends AbstractJavaStatsCommand {
+    public JavaPlayerFilterCommand() {
         super("filter", "Filter Players", "<uuid> <game> <stat> <board>");
 
         this.setMinArgs(4);
         this.setPermission("mineplexstats.management.filter");
-        this.addDiscordPermissions(Permission.MANAGE_EMOTES);
+        this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);
     }
 
     @Override
@@ -44,9 +44,9 @@ public class PlayerFilterCommand extends AbstractJavaStatsCommand {
         emotes.put(DiscordEmotes.CHECK_MARK.getEmote(), new AbstractEmoteReaction() {
             @Override
             public void onEmote() {
-                PlayerFilterCommand.this.getStatsModule().getMpStatsRestClient().addJavaPlayerFilter(uuid, game.getName(), stat.getName(), board.getName());
+                JavaPlayerFilterCommand.this.getStatsModule().getMpStatsRestClient().addJavaPlayerFilter(uuid, game.getName(), stat.getName(), board.getName());
 
-                PlayerFilterCommand.this.sendTimedMessage(
+                JavaPlayerFilterCommand.this.sendTimedMessage(
                         commandParameters,
                         embedBuilder.setTitle("Successfully Filtered"),
                         90

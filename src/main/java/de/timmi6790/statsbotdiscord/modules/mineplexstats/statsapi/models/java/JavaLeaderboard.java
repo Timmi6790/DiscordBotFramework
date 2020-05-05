@@ -20,7 +20,6 @@ public class JavaLeaderboard extends ResponseModel {
     public static class Info {
         private final String game;
         private final String stat;
-        private final String prettyStat;
         private final String board;
         private final boolean filter;
         private final int startPosition;

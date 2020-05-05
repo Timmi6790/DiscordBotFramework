@@ -19,12 +19,12 @@ public class AboutCommand extends AbstractCommand {
                 commandParameters,
                 UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
                         .setTitle("About")
-                        .setDescription("This bot is themed around a minecraft server called [Mineplex](https://www.mineplex.com/home/).\n" +
-                                "You can use it to show the game leaderboards or player stats based on the leaderboards.")
-                        .addField("Data Collection", "The bot is only saving the minimal data to work, like the number of used commands, but not the actual command. " +
-                                "If you want a copy of your data, you can request one in the contact formula. You can always delete all your saved data with the "
+                        .setDescription("This bot is themed around a minecraft server called [Mineplex](https://www.mineplex.com/home/).\n"
+                                + "You can use it to show the game leaderboards or player stats based on the leaderboards.")
+                        .addField("Data Collection", "The bot is only saving the minimal data to work, like the number of used commands, but not the actual command. "
+                                + "If you want a copy of your data, you can request one in the contact formula. You can always delete all your saved data with the "
                                 + MarkdownUtil.monospace(StatsBot.getCommandManager().getMainCommand() + " deleteMyAccount") + " command. Abuse of this command could result in a ban, be warned.", false)
-                        .addField("Contact Formula(Bugs, Exploits, Your Data)", "[Click Me!](https://forms.gle/18pKz6VhQvD5PDAH7)", false)
+                        .addField("Contact Formula(Bugs, Exploits, Your Data)", "WIP", false)
                         .addField("SourceCode", "[StatsBotDiscord Github](https://github.com/Timmi6790/StatsBotDiscord)", false)
                         .addField("Version", StatsBot.BOT_VERSION, false),
                 150

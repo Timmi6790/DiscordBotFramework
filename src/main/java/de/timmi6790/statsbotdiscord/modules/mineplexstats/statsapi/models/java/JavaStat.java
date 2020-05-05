@@ -9,16 +9,16 @@ import java.util.*;
 public class JavaStat {
     private final String name;
     private final String[] aliasNames;
-    private final String prettyStat;
+    private final boolean achievement;
     private final String description;
 
     private final Map<String, JavaBoard> boards;
     private final Map<String, String> boardAlias = new HashMap<>();
 
-    public JavaStat(final String name, final String[] aliasNames, final String prettyStat, final String description, final Map<String, JavaBoard> boards) {
+    public JavaStat(final String name, final String[] aliasNames, final boolean achievement, final String description, final Map<String, JavaBoard> boards) {
         this.name = name;
         this.aliasNames = aliasNames;
-        this.prettyStat = prettyStat;
+        this.achievement = achievement;
         this.description = description;
         this.boards = boards;
 
@@ -28,6 +28,14 @@ public class JavaStat {
                 this.boardAlias.put(alias, boardLower);
             }
         }
+    }
+
+    public String getPrintName() {
+        if (this.achievement) {
+            return "Achievement " + this.name;
+        }
+
+        return this.name;
     }
 
     public List<String> getBoardNames() {
