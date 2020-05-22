@@ -4,7 +4,6 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class AboutCommand extends AbstractCommand {
@@ -17,7 +16,7 @@ public class AboutCommand extends AbstractCommand {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         this.sendTimedMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("About")
                         .setDescription("This bot is themed around a minecraft server called [Mineplex](https://www.mineplex.com/home/).\n"
                                 + "You can use it to show the game leaderboards or player stats based on the leaderboards.")

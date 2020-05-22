@@ -5,7 +5,6 @@ import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class ReloadDataCommand extends AbstractCommand {
@@ -37,7 +36,7 @@ public class ReloadDataCommand extends AbstractCommand {
             default:
                 this.sendTimedMessage(
                         commandParameters,
-                        UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                        this.getEmbedBuilder(commandParameters)
                                 .setTitle("Incorrect data type")
                                 .setDescription(MarkdownUtil.monospace(data) + " is not a valid type.\n" +
                                         "[javaGame, javaGroup, bedrockGame]"),
@@ -48,7 +47,7 @@ public class ReloadDataCommand extends AbstractCommand {
 
         this.sendTimedMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Reloaded data")
                         .setDescription("Reloaded " + MarkdownUtil.monospace(data)),
                 90

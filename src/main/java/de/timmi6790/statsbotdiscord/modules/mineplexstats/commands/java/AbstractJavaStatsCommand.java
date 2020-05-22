@@ -12,7 +12,6 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroup;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -168,7 +167,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
         }
 
         throw new CommandReturnException(
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Invalid Name")
                         .setDescription(MarkdownUtil.monospace(name) + " is not a minecraft name.")
         );

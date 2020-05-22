@@ -7,7 +7,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.core.Rank;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
 import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.entities.User;
 
 import java.util.Map;
@@ -36,7 +35,7 @@ public class UserInfoCommand extends AbstractCommand {
         }
 
         this.sendTimedMessage(commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)

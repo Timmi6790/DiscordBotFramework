@@ -302,7 +302,7 @@ public class MpStatsRestApiClient {
             return;
         }
 
-        Unirest.post("java/leaderboards/alias/game")
+        Unirest.post("java/leaderboards/alias/stat")
                 .basicAuth(this.authName, this.authPassword)
                 .queryString("game", game)
                 .queryString("stat", stat)

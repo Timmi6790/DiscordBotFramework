@@ -5,7 +5,6 @@ import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.AbstractStatsCommand;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public abstract class AbstractBedrockStatsCommand extends AbstractStatsCommand {
         }
 
         throw new CommandReturnException(
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Invalid Name")
                         .setDescription(MarkdownUtil.monospace(name) + " is not a minecraft name.")
         );

@@ -4,7 +4,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class JavaGameAliasCommand extends AbstractJavaStatsCommand {
@@ -22,7 +21,7 @@ public class JavaGameAliasCommand extends AbstractJavaStatsCommand {
         this.getStatsModule().loadJavaGames();
         this.sendTimedMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Added Game Alias")
                         .setDescription("Added new board alias " + MarkdownUtil.monospace(commandParameters.getArgs()[0])),
                 90

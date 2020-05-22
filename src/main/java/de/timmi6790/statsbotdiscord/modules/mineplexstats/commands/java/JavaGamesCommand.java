@@ -6,7 +6,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 
@@ -40,7 +39,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
             }
 
 
-            final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+            final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Java Games");
 
             for (final Map.Entry<String, List<String>> entry : categories.entrySet()) {
@@ -62,7 +61,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
         // Game info
         final JavaGame game = this.getGame(commandParameters, 0);
         if (commandParameters.getArgs().length == 1) {
-            final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+            final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Java Games - " + game.getName());
 
             if (!game.getWikiUrl().isEmpty()) {
@@ -89,7 +88,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
 
         // Stat info
         final JavaStat stat = this.getStat(game, commandParameters, 1);
-        final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+        final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Java Games - " + game.getName() + " - " + stat.getPrintName())
                 .addField("Description", stat.getDescription(), false);
 

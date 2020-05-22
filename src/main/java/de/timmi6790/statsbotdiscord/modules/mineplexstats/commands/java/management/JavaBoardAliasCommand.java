@@ -4,7 +4,6 @@ import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -22,7 +21,7 @@ public class JavaBoardAliasCommand extends AbstractJavaStatsCommand {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         if (!ArrayUtils.contains(JAVA_BOARDS, commandParameters.getArgs()[0])) {
             throw new CommandReturnException(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Invalid Board")
                             .addField("Boards", String.join(", ", JAVA_BOARDS), false)
             );
@@ -32,7 +31,7 @@ public class JavaBoardAliasCommand extends AbstractJavaStatsCommand {
         this.getStatsModule().loadJavaGames();
         this.sendTimedMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Added Board Alias")
                         .setDescription("Added new board alias " + MarkdownUtil.monospace(commandParameters.getArgs()[0])),
                 90

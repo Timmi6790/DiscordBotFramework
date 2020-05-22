@@ -4,7 +4,6 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -38,7 +37,7 @@ public class HelpCommand extends AbstractCommand {
             }
 
 
-            final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+            final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Commands")
                     .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"));
 
@@ -58,7 +57,7 @@ public class HelpCommand extends AbstractCommand {
 
         // Command specific
         final AbstractCommand command = this.getCommand(commandParameters, 0);
-        final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+        final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Commands " + UtilitiesString.capitalize(command.getName()))
                 .addField("Description", command.getDescription(), false)
                 .addField("Alias Names", String.join(", ", command.getAliasNames()), false)

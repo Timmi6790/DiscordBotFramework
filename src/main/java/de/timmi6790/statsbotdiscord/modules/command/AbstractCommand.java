@@ -52,7 +52,11 @@ public abstract class AbstractCommand {
 
     private boolean defaultPerms = false;
     private String permissionNode;
-    private final Set<Permission> discordPermissions = new HashSet<>();
+    private final List<Permission> userDiscordPermissions = new ArrayList<>();
+
+    private final Set<Permission> requiredBotDiscordPermissions = new HashSet<>();
+    private boolean allowBots = true;
+    private boolean allowPrivateMessages = true;
 
     public AbstractCommand(final String name, final String category, final String description, final String syntax, final String... aliasNames) {
         this.name = name;
@@ -69,9 +73,9 @@ public abstract class AbstractCommand {
     }
 
     public void runCommand(final CommandParameters commandParameters) {
-        // Check command specific permissions
+        // Check command specific permissions discord bot perms
         if (commandParameters.getEvent().isFromGuild()) {
-            for (final Permission permission : this.getDiscordPermissions()) {
+            for (final Permission permission : this.getRequiredBotDiscordPermissions()) {
                 if (!commandParameters.getDiscordChannelPermissions().contains(permission)) {
                     this.sendTimedMessage(commandParameters, this.getMissingPermsMessage(permission, commandParameters.getEvent()), 150);
                     return;
@@ -87,7 +91,7 @@ public abstract class AbstractCommand {
         if (!this.hasPermission(commandParameters)) {
             this.sendTimedMessage(
                     commandParameters,
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Missing perms")
                             .setDescription("You don't have the permissions to run this command."),
                     90
@@ -105,7 +109,7 @@ public abstract class AbstractCommand {
 
             this.sendTimedMessage(
                     commandParameters,
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Missing Args")
+                    this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
                             .setDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
                             .addField("Required Syntax", requiredSyntax.toString(), false)
                             .addField("Command Syntax", this.getSyntax(), false),
@@ -158,12 +162,23 @@ public abstract class AbstractCommand {
     }
 
     public final boolean hasPermission(final CommandParameters commandParameters) {
-        if (this.defaultPerms) {
-            return true;
+        // Check for other bots
+        if (!this.allowBots && commandParameters.getEvent().getAuthor().isBot()) {
+            return false;
         }
 
-        if (commandParameters.getUserDb().getPermissionNodes().contains(this.permissionNode)) {
-            return true;
+        if (this.defaultPerms || commandParameters.getUserDb().getPermissionNodes().contains(this.permissionNode)) {
+            if (this.userDiscordPermissions.isEmpty() || !commandParameters.getEvent().isFromGuild()) {
+                return true;
+            }
+
+            for (final Permission permission : commandParameters.getEvent().getGuild().getMember(commandParameters.getEvent().getAuthor()).getPermissions()) {
+                if (this.userDiscordPermissions.contains(permission)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         return this.onPermissionCheck(commandParameters);
@@ -174,20 +189,24 @@ public abstract class AbstractCommand {
     }
 
     protected void addDiscordPermission(final Permission permission) {
-        this.discordPermissions.add(permission);
+        this.requiredBotDiscordPermissions.add(permission);
     }
 
     protected void addDiscordPermissions(final Permission... permissions) {
-        this.discordPermissions.addAll(Arrays.asList(permissions));
+        this.requiredBotDiscordPermissions.addAll(Arrays.asList(permissions));
     }
 
     protected void addExampleCommands(final String... exampleCommands) {
         this.exampleCommands.addAll(Arrays.asList(exampleCommands));
     }
 
+    public EmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
+        return UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters);
+    }
+
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
         this.sendTimedMessage(commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters).setTitle("Something went wrong")
+                this.getEmbedBuilder(commandParameters).setTitle("Something went wrong")
                         .setDescription("Something went wrong while executing this command.")
                         .addField("Command", this.getName(), false)
                         .addField("Args", String.join(" ", commandParameters.getArgs()), false)
@@ -198,7 +217,7 @@ public abstract class AbstractCommand {
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
         this.sendEmoteMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle(title)
                         .setDescription(description)
                         .setFooter("↓ Click Me!"),
@@ -286,7 +305,7 @@ public abstract class AbstractCommand {
         }
 
         throw new CommandReturnException(
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Invalid User")
                         .setDescription(MarkdownUtil.monospace(name) + " is not a valid discord user.")
         );

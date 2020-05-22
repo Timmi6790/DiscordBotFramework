@@ -2,7 +2,6 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock;
 
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,7 +27,7 @@ public class BedrockGamesCommand extends AbstractBedrockStatsCommand {
 
         this.sendTimedMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Bedrock Games")
                         .setDescription(description.toString()),
                 150

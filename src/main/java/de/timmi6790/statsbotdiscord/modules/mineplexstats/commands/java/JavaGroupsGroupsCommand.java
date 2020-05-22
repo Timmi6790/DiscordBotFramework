@@ -5,7 +5,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGroup;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.EmbedBuilder;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
 
         // Show all groups
         if (commandParameters.getArgs().length == 0) {
-            final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+            final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Java Groups");
 
             final List<JavaGroup> groups = new ArrayList<>(module.getJavaGroups().values());
@@ -45,7 +44,7 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
 
         // Group info
         final JavaGroup group = this.getJavaGroup(commandParameters, 0);
-        final EmbedBuilder message = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+        final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Java Groups - " + group.getName())
                 .addField("Description", group.getDescription(), false);
 

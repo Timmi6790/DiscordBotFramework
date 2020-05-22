@@ -7,7 +7,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
 import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -39,7 +38,7 @@ public class BotInfoCommand extends AbstractCommand {
         final long totalCommands = commandExecutor.getTaskCount();
 
         this.sendTimedMessage(commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Bot Info")
                         .addField("Guilds", String.valueOf(guilds), true)
                         .addField("User Cache", userCacheSize + ";" + userCacheMissRate, true)

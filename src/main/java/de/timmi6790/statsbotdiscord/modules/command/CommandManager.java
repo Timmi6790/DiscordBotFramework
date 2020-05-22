@@ -130,8 +130,8 @@ public class CommandManager {
         return similarCommands;
     }
 
-    public AbstractCommand[] getCommands() {
-        return this.commands.values().toArray(new AbstractCommand[0]);
+    public Collection<AbstractCommand> getCommands() {
+        return this.commands.values();
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

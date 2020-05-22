@@ -5,7 +5,6 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 public class JavaStatAliasCommand extends AbstractJavaStatsCommand {
@@ -21,13 +20,13 @@ public class JavaStatAliasCommand extends AbstractJavaStatsCommand {
         final JavaGame game = this.getGame(commandParameters, 0);
         final JavaStat stat = this.getStat(game, commandParameters, 1);
 
-        this.getStatsModule().getMpStatsRestClient().addJavaStatAlias(game.getName(), stat.getName(), commandParameters.getArgs()[1]);
+        this.getStatsModule().getMpStatsRestClient().addJavaStatAlias(game.getName(), stat.getName(), commandParameters.getArgs()[2]);
         this.getStatsModule().loadJavaGames();
         this.sendTimedMessage(
                 commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Added Stat Alias")
-                        .setDescription("Added new stat alias " + MarkdownUtil.monospace(commandParameters.getArgs()[0])),
+                        .setDescription("Added new stat alias " + MarkdownUtil.monospace(commandParameters.getArgs()[2]) + " for " + MarkdownUtil.bold(game.getName() + " " + stat.getPrintName())),
                 90
         );
 

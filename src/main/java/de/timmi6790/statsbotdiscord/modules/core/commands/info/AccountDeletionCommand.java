@@ -8,7 +8,6 @@ import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -45,7 +44,7 @@ public class AccountDeletionCommand extends AbstractCommand {
 
             this.userDeleteConfirmCache.put(commandParameters.getUserDb().getDiscordId(), phraseId);
             this.sendTimedMessage(commandParameters,
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("How to delete my account")
                             .setDescription("If you really wish to delete your account, write the " + MarkdownUtil.monospace("Confirm Command") + " in the next 5 minutes.\n" +
                                     MarkdownUtil.bold("THERE IS NO WAY TO REVERT THIS ACTION"))
@@ -60,7 +59,7 @@ public class AccountDeletionCommand extends AbstractCommand {
         final String arg = commandParameters.getArgs().length != 0 ? commandParameters.getArgs()[0] : " ";
         if (!arg.equalsIgnoreCase(phrase)) {
             this.sendTimedMessage(commandParameters,
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Incorrect confirm phrase")
                             .setDescription(MarkdownUtil.monospace(arg) + " is not your confirm phrase!\n" +
                                     "Please use the command in " + MarkdownUtil.monospace("Confirm Command") + " to delete your account")
@@ -79,7 +78,7 @@ public class AccountDeletionCommand extends AbstractCommand {
         }
 
         this.sendTimedMessage(commandParameters,
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Bye")
                         .setDescription("It is sad to see you go USER_NAME, your data should be deleted in the next few seconds!"),
                 90

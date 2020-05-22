@@ -9,8 +9,6 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.errors.ErrorModel;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
@@ -101,35 +99,33 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
 
     public void checkApiResponse(final CommandParameters commandParameters, final ResponseModel response, final String arguments) {
         if (response instanceof ErrorModel) {
-            final ErrorModel errorModel = (ErrorModel) response;
-            final EmbedBuilder embedBuilder = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters);
             // No stats found
-            if (errorModel.getErrorCode() == 1) {
-                embedBuilder.setTitle("No stats found")
-                        .setDescription("There are no collected stats.\n WIP")
-                        .addField("Arguments", arguments, false);
-            } else {
-                embedBuilder.setTitle("Error")
-                        .setDescription("Something went wrong while requesting your data.")
-                        .addField("Api Response", errorModel.getErrorMessage(), false)
-                        .setImage("https://media1.tenor.com/images/981ee5030a18a779e899b2c307e65f7a/tenor.gif?itemid=13159552");
+            if (((ErrorModel) response).getErrorCode() == 1) {
+                throw new CommandReturnException(
+                        this.getEmbedBuilder(commandParameters)
+                                .setTitle("No stats found")
+                                .setDescription("There are no collected stats.\n WIP")
+                                .addField("Arguments", arguments, false),
+                        CommandResult.SUCCESS
+                );
             }
 
-            throw new CommandReturnException(embedBuilder, CommandResult.ERROR);
+            throw new CommandReturnException(
+                    this.getEmbedBuilder(commandParameters)
+                            .setTitle("Error")
+                            .setDescription("Something went wrong while requesting your data.")
+                            .addField("Api Response", ((ErrorModel) response).getErrorMessage(), false)
+                            .setImage("https://media1.tenor.com/images/981ee5030a18a779e899b2c307e65f7a/tenor.gif?itemid=13159552"),
+                    CommandResult.ERROR
+            );
         }
     }
 
     protected int getStartPosition(final CommandParameters commandParameters, final int argPos, final int upperLimit) {
-        final String name;
-        if (argPos >= commandParameters.getArgs().length) {
-            name = "1";
-        } else {
-            name = commandParameters.getArgs()[argPos];
-        }
-
+        final String name = argPos >= commandParameters.getArgs().length ? "1" : commandParameters.getArgs()[argPos];
         if (!UtilitiesData.isInt(name)) {
             throw new CommandReturnException(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Invalid start position")
                             .setDescription(MarkdownUtil.monospace(name) + " is not a valid start position for the leaderboard.\n" +
                                     "Use a number between " + MarkdownUtil.bold("1") + " and " + MarkdownUtil.bold(String.valueOf(upperLimit)))
@@ -143,25 +139,17 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
         return this.getEndPosition(startPos, commandParameters, argPos, upperLimit, MAX_LEADERBOARD_POSITION_DISTANCE);
     }
 
-
     protected int getEndPosition(final int startPos, final CommandParameters commandParameters, final int argPos, final int upperLimit, final int maxDistance) {
-        final String name;
-        if (argPos >= commandParameters.getArgs().length) {
-            name = String.valueOf(upperLimit);
-        } else {
-            name = commandParameters.getArgs()[argPos];
-        }
-
-        if (!UtilitiesData.isInt(name)) {
+        if (commandParameters.getArgs().length > argPos && !UtilitiesData.isInt(commandParameters.getArgs()[argPos])) {
             throw new CommandReturnException(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Invalid end position")
-                            .setDescription(MarkdownUtil.monospace(name) + " is not a valid end position for the leaderboard.\n" +
+                            .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid end position for the leaderboard.\n" +
                                     "Use a number between " + MarkdownUtil.bold("1") + " and " + MarkdownUtil.bold(String.valueOf(upperLimit)))
             );
         }
 
-        int endPos = Integer.parseInt(name);
+        int endPos = argPos >= commandParameters.getArgs().length ? upperLimit : Integer.parseInt(commandParameters.getArgs()[argPos]);
         if (startPos > endPos || endPos - startPos > maxDistance) {
             endPos = startPos + maxDistance;
         }
@@ -184,9 +172,10 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
             return dates.get(0).getTime() / 1_000;
         }
 
-        throw new CommandReturnException(UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
-                .setTitle("Invalid Date")
-                .setDescription(MarkdownUtil.monospace(name) + " is not a valid date.")
+        throw new CommandReturnException(
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle("Invalid Date")
+                        .setDescription(MarkdownUtil.monospace(name) + " is not a valid date.")
         );
     }
 
@@ -195,7 +184,7 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
             return UUID.fromString(commandParameters.getArgs()[argPos]);
         } catch (final IllegalArgumentException ignore) {
             throw new CommandReturnException(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Invalid UUID")
                             .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid UUID")
             );

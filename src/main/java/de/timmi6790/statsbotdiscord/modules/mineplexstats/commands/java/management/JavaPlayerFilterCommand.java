@@ -9,7 +9,6 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 
@@ -35,7 +34,7 @@ public class JavaPlayerFilterCommand extends AbstractJavaStatsCommand {
 
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-        final EmbedBuilder embedBuilder = UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+        final EmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
                 .addField("Player UUID", uuid.toString(), false)
                 .addField("Game", game.getName(), false)
                 .addField("Stat", stat.getName(), false)
