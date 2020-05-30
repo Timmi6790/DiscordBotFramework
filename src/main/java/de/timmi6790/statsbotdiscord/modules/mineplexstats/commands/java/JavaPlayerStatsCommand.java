@@ -1,5 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
+import de.timmi6790.statsbotdiscord.datatypes.BiggestLong;
+import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
@@ -13,7 +15,7 @@ import net.dv8tion.jda.api.Permission;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +32,7 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
+        // Parse args
         final String player = this.getPlayer(commandParameters, 0);
         final JavaGame javaGame = this.getGame(commandParameters, 1);
         final JavaBoard board = this.getBoard(javaGame, commandParameters, 2);
@@ -44,49 +47,30 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
 
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
-        final JavaGame game = module.getJavaGame(playerStatsInfo.getGame()).get();
-        final Map<String, JavaPlayerStats.Stat> stats = playerStats.getStats();
-
-        long highestUnixTime = 0;
-        final String[][] leaderboard = new String[playerStats.getWebsiteStats().size() + game.getStats().size() + 1][3];
-        leaderboard[0] = new String[]{"Category", "Score", "Position"};
-
-        int index = 1;
-        for (final JavaPlayerStats.WebsiteStat websiteStat : playerStats.getWebsiteStats().values()) {
-            leaderboard[index] = new String[]{websiteStat.getStat(), this.getFormattedNumber(websiteStat.getScore()), ""};
-            index++;
-        }
-
-        final Map<String, JavaStat> gameStats = game.getStats();
-        for (final String statName : game.getStatNames()) {
-            final Optional<JavaStat> gameStatOpt = game.getStat(statName);
-            if (!gameStatOpt.isPresent()) {
-                continue;
-            }
-
-            final JavaStat gameStat = gameStatOpt.get();
-            String score = UNKNOWN_SCORE;
-            String position = UNKNOWN_POSITION;
-            if (stats.containsKey(gameStat.getName())) {
-                final JavaPlayerStats.Stat stat = stats.get(gameStat.getName());
-
-                score = this.getFormattedScore(gameStat, stat.getScore());
-                if (stat.getPosition() != -1) {
-                    position = String.valueOf(stat.getPosition());
-                }
-
-                if (stat.getUnix() > highestUnixTime) {
-                    highestUnixTime = stat.getUnix();
-                }
-            }
-
-            leaderboard[index] = new String[]{gameStat.getPrintName(), score, position};
-            index++;
-        }
-
-        if (highestUnixTime == 0) {
-            highestUnixTime = System.currentTimeMillis() / 1_000;
-        }
+        final JavaGame game = module.getJavaGame(playerStatsInfo.getGame()).orElseThrow(RuntimeException::new);
+        final BiggestLong highestUnixTime = new BiggestLong(0);
+        final String[][] leaderboard = new ListBuilder<String[]>(() -> new ArrayList<>(playerStats.getWebsiteStats().size() + game.getStats().size() + 1))
+                .add(new String[]{"Category", "Score", "Position"})
+                .addAll(playerStats.getWebsiteStats().values()
+                        .stream()
+                        .map(websiteStat -> new String[]{websiteStat.getStat(), this.getFormattedNumber(websiteStat.getScore()), ""}))
+                .addAll(game.getStatNames()
+                        .stream()
+                        .map(game::getStat)
+                        .filter(Optional::isPresent)
+                        .map(statOptional -> {
+                            final JavaStat gameStat = statOptional.get();
+                            return Optional.ofNullable(playerStats.getStats().get(gameStat.getName()))
+                                    .map(stat -> {
+                                        highestUnixTime.tryNumber(stat.getUnix());
+                                        
+                                        String position = stat.getPosition() == -1 ? UNKNOWN_POSITION : String.valueOf(stat.getPosition());
+                                        return new String[]{gameStat.getPrintName(), this.getFormattedScore(gameStat, stat.getScore()), position};
+                                    })
+                                    .orElse(new String[]{gameStat.getPrintName(), UNKNOWN_SCORE, UNKNOWN_POSITION});
+                        }))
+                .build()
+                .toArray(new String[0][3]);
 
         BufferedImage skin;
         try {
@@ -96,8 +80,7 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         }
 
         final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard()};
-        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime), leaderboard, skin);
-        final Optional<InputStream> picture = statsPicture.getPlayerPicture();
+        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard, skin).getPlayerPicture();
         if (picture.isPresent()) {
             commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + highestUnixTime + ".png").queue();
             return CommandResult.SUCCESS;

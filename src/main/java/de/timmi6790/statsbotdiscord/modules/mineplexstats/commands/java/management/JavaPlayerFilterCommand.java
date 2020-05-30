@@ -1,5 +1,6 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.management;
 
+import de.timmi6790.statsbotdiscord.datatypes.MapBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
@@ -13,7 +14,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class JavaPlayerFilterCommand extends AbstractJavaStatsCommand {
@@ -32,33 +32,31 @@ public class JavaPlayerFilterCommand extends AbstractJavaStatsCommand {
         final JavaStat stat = this.getStat(game, commandParameters, 2);
         final JavaBoard board = this.getBoard(game, stat, commandParameters, 3);
 
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-
         final EmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
                 .addField("Player UUID", uuid.toString(), false)
                 .addField("Game", game.getName(), false)
                 .addField("Stat", stat.getName(), false)
                 .addField("Board", board.getName(), false);
 
-        emotes.put(DiscordEmotes.CHECK_MARK.getEmote(), new AbstractEmoteReaction() {
-            @Override
-            public void onEmote() {
-                JavaPlayerFilterCommand.this.getStatsModule().getMpStatsRestClient().addJavaPlayerFilter(uuid, game.getName(), stat.getName(), board.getName());
-
-                JavaPlayerFilterCommand.this.sendTimedMessage(
-                        commandParameters,
-                        embedBuilder.setTitle("Successfully Filtered"),
-                        90
-                );
-            }
-        });
-        emotes.put(DiscordEmotes.RED_CROSS_MARK.getEmote(), new EmptyEmoteReaction());
-
         this.sendEmoteMessage(
                 commandParameters,
                 embedBuilder.setTitle("Filter Confirm")
                         .setDescription("Are you sure that you want to filter this person?"),
-                emotes
+                new MapBuilder<String, AbstractEmoteReaction>(() -> new LinkedHashMap<>(2))
+                        .put(DiscordEmotes.CHECK_MARK.getEmote(), new AbstractEmoteReaction() {
+                            @Override
+                            public void onEmote() {
+                                JavaPlayerFilterCommand.this.getStatsModule().getMpStatsRestClient().addJavaPlayerFilter(uuid, game.getName(), stat.getName(), board.getName());
+
+                                JavaPlayerFilterCommand.this.sendTimedMessage(
+                                        commandParameters,
+                                        embedBuilder.setTitle("Successfully Filtered"),
+                                        90
+                                );
+                            }
+                        })
+                        .put(DiscordEmotes.RED_CROSS_MARK.getEmote(), new EmptyEmoteReaction())
+                        .build()
         );
 
         return CommandResult.SUCCESS;

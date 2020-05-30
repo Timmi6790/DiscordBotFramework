@@ -26,7 +26,8 @@ public class JavaStatAliasCommand extends AbstractJavaStatsCommand {
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Added Stat Alias")
-                        .setDescription("Added new stat alias " + MarkdownUtil.monospace(commandParameters.getArgs()[2]) + " for " + MarkdownUtil.bold(game.getName() + " " + stat.getPrintName())),
+                        .setDescription("Added new stat alias " + MarkdownUtil.monospace(commandParameters.getArgs()[2]) + " for " +
+                                MarkdownUtil.bold(game.getName() + " " + stat.getPrintName())),
                 90
         );
 

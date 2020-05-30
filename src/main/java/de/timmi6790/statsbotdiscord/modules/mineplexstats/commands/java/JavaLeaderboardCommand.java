@@ -1,12 +1,12 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
+import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
@@ -16,9 +16,11 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
     private final static int ARG_POS_BOARD_POS = 2;
@@ -34,8 +36,18 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
         this.setMinArgs(2);
     }
 
+    private void addMessageEmote(final CommandParameters commandParameters, final Map<String, AbstractEmoteReaction> emotes, final DiscordEmotes emote, final int newStart, final int rowDistance) {
+        final CommandParameters newParameters = new CommandParameters(commandParameters);
+
+        newParameters.getArgs()[ARG_POS_START_POS] = String.valueOf(newStart);
+        newParameters.getArgs()[ARG_POS_END_POS] = String.valueOf(newStart + rowDistance);
+
+        emotes.put(emote.getEmote(), new CommandEmoteReaction(this, newParameters));
+    }
+
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
+        // Parse args
         final JavaGame game = this.getGame(commandParameters, 0);
         final JavaStat stat = this.getStat(game, commandParameters, 1);
         final JavaBoard board = this.getBoard(game, commandParameters, ARG_POS_BOARD_POS);
@@ -43,25 +55,23 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
         final int endPos = this.getEndPosition(startPos, commandParameters, ARG_POS_END_POS, LEADERBOARD_UPPER_LIMIT);
         final long unixTime = this.getUnixTime(commandParameters, 5);
 
-        final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos, unixTime);
+        final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos, unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
+        // Parse data to image generator
         final JavaLeaderboard leaderboardResponse = (JavaLeaderboard) responseModel;
+        final String[][] leaderboard = new ListBuilder<String[]>(() -> new ArrayList<>(leaderboardResponse.getLeaderboard().size() + 1))
+                .add(new String[]{"Player", "Score", "Position"})
+                .addAll(leaderboardResponse.getLeaderboard()
+                        .stream()
+                        .map(data -> new String[]{data.getName(), this.getFormattedScore(stat, data.getScore()), String.valueOf(data.getPosition())})
+                        .collect(Collectors.toList()))
+                .build()
+                .toArray(new String[0][3]);
+
         final JavaLeaderboard.Info leaderboardInfo = leaderboardResponse.getInfo();
-
-        final String[][] leaderboard = new String[leaderboardResponse.getLeaderboard().size() + 1][3];
-        leaderboard[0] = new String[]{"Player", "Score", "Position"};
-
-        int index = 1;
-        for (final JavaLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
-            leaderboard[index] = new String[]{data.getName(), this.getFormattedScore(stat, data.getScore()), String.valueOf(data.getPosition())};
-            index++;
-        }
-
         final String[] header = {leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()};
-        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard);
-        final Optional<InputStream> picture = statsPicture.getPlayerPicture();
+        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture();
         if (picture.isPresent()) {
             final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
@@ -110,14 +120,5 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
 
         this.sendErrorMessage(commandParameters, "Error while creating picture.");
         return CommandResult.ERROR;
-    }
-
-    private void addMessageEmote(final CommandParameters commandParameters, final Map<String, AbstractEmoteReaction> emotes, final DiscordEmotes emote, final int newStart, final int rowDistance) {
-        final CommandParameters newParameters = new CommandParameters(commandParameters);
-
-        newParameters.getArgs()[ARG_POS_START_POS] = String.valueOf(newStart);
-        newParameters.getArgs()[ARG_POS_END_POS] = String.valueOf(newStart + rowDistance);
-
-        emotes.put(emote.getEmote(), new CommandEmoteReaction(this, newParameters));
     }
 }

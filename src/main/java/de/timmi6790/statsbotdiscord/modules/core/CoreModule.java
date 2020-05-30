@@ -1,7 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.core;
 
-import de.timmi6790.statsbotdiscord.AbstractModule;
 import de.timmi6790.statsbotdiscord.StatsBot;
+import de.timmi6790.statsbotdiscord.modules.AbstractModule;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.AboutCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.AccountDeletionCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
@@ -11,6 +11,7 @@ import de.timmi6790.statsbotdiscord.modules.core.commands.management.UserInfoCom
 import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CoreModule extends AbstractModule {
     public CoreModule() {
@@ -54,7 +55,7 @@ public class CoreModule extends AbstractModule {
             }
 
             final String aliases = rs.getString("aliases");
-            String[] aliasList = aliases == null ? new String[]{} : aliases.split(",");
+            final String[] aliasList = aliases == null ? new String[]{} : aliases.split(",");
 
             return new GuildDb(rs.getInt("id"), rs.getLong("discordId"), rs.getBoolean("banned"),
                     new HashSet<>(Arrays.asList(aliasList)), null);
@@ -65,22 +66,17 @@ public class CoreModule extends AbstractModule {
             }
 
             final String perms = rs.getString("perms");
-            final String[] permList = perms == null ? new String[]{} : perms.split(",");
+            final List<String> permList = perms == null ? new ArrayList<>() : Arrays.asList(perms.split(","));
 
-            final Map<Integer, String> settings = new HashMap<>();
-            if (rs.getString("settings") != null) {
-                for (final String setting : rs.getString("settings").split(";")) {
-                    final String[] values = setting.split(",");
-                    if (values.length != 2) {
-                        continue;
-                    }
+            final Map<Integer, String> settings = Optional.ofNullable(rs.getString("settings"))
+                    .map(value -> Arrays.stream(value.split(";"))
+                            .map(setting -> setting.split(","))
+                            .filter(values -> values.length != 2)
+                            .collect(Collectors.toMap(values -> Integer.parseInt(values[0]), values -> values[1])))
+                    .orElse(new HashMap<>());
 
-                    settings.put(Integer.parseInt(values[0]), values[1]);
-                }
-            }
             return new UserDb(rs.getInt("id"), rs.getLong("discordId"), null, new ArrayList<>(),
-                    rs.getBoolean("banned"), rs.getLong("shopPoints"),
-                    new ArrayList<>(Arrays.asList(permList)), settings);
+                    rs.getBoolean("banned"), rs.getLong("shopPoints"), permList, settings);
         });
     }
 }

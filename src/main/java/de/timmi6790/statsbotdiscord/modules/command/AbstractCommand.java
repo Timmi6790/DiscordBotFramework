@@ -1,8 +1,9 @@
 package de.timmi6790.statsbotdiscord.modules.command;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.events.EventCommandExecution;
-import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
+import de.timmi6790.statsbotdiscord.datatypes.StatEmbedBuilder;
+import de.timmi6790.statsbotdiscord.events.CommandExecutionEvent;
+import de.timmi6790.statsbotdiscord.events.MessageReceivedIntEvent;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
@@ -84,7 +85,7 @@ public abstract class AbstractCommand {
         }
 
         // Command pre event
-        final EventCommandExecution.Pre commandExecutionPre = new EventCommandExecution.Pre(this, commandParameters);
+        final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
         StatsBot.getEventManager().callEvent(commandExecutionPre);
 
         CommandResult commandResult = null;
@@ -127,6 +128,8 @@ public abstract class AbstractCommand {
                 commandResult = e.getCommandResult();
 
             } catch (final Exception e) {
+                e.printStackTrace();
+
                 // Sentry error
                 final Map<String, String> data = commandParameters.getSentryMap();
                 data.put("command", this.name);
@@ -144,20 +147,15 @@ public abstract class AbstractCommand {
                         .withSentryInterface(new ExceptionInterface(e));
 
                 StatsBot.getSentry().sendEvent(eventBuilder);
-                e.printStackTrace();
 
                 this.sendErrorMessage(commandParameters, "Unknown");
                 commandResult = CommandResult.ERROR;
             }
         }
-
         commandResult = commandResult != null ? commandResult : CommandResult.MISSING;
 
-        // Log in db
-        // TODO: Add logging
-
         // Command post event
-        final EventCommandExecution.Post commandExecutionPost = new EventCommandExecution.Post(this, commandParameters, commandResult);
+        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, commandResult);
         StatsBot.getEventManager().callEvent(commandExecutionPost);
     }
 
@@ -200,7 +198,7 @@ public abstract class AbstractCommand {
         this.exampleCommands.addAll(Arrays.asList(exampleCommands));
     }
 
-    public EmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
+    public StatEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
         return UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters);
     }
 
@@ -219,8 +217,7 @@ public abstract class AbstractCommand {
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle(title)
-                        .setDescription(description)
-                        .setFooter("↓ Click Me!"),
+                        .setDescription(description),
                 emotes);
     }
 
@@ -248,25 +245,25 @@ public abstract class AbstractCommand {
     }
 
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
-                                   final AbstractCommand command, final String[] newArgs, final String[] similarNames) {
+                                   final AbstractCommand command, final String[] newArgs, final List<String> similarNames) {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
         final StringBuilder description = new StringBuilder();
         description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
-        if (similarNames.length == 0) {
+        if (similarNames.isEmpty()) {
             description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
             description.append("Is it possible that you wanted to write?\n\n");
 
-            for (int index = 0; similarNames.length > index; index++) {
+            for (int index = 0; similarNames.size() > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
 
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames[index])).append("\n");
+                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames.get(index))).append("\n");
 
                 final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
-                newCommandParameters.getArgs()[argPos] = similarNames[index];
+                newCommandParameters.getArgs()[argPos] = similarNames.get(index);
 
                 emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
             }
@@ -281,7 +278,7 @@ public abstract class AbstractCommand {
         this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
     }
 
-    private EmbedBuilder getMissingPermsMessage(final Permission permission, final EventMessageReceived event) {
+    private EmbedBuilder getMissingPermsMessage(final Permission permission, final MessageReceivedIntEvent event) {
         return UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
                 .setTitle("Missing Permission")
                 .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.");
@@ -329,7 +326,7 @@ public abstract class AbstractCommand {
         }
 
         final AbstractCommand helpCommand = StatsBot.getCommandManager().getCommand(HelpCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "command", helpCommand, new String[0], similarNames.toArray(new String[0]));
+        this.sendHelpMessage(commandParameters, name, argPos, "command", helpCommand, new String[0], similarNames);
         throw new CommandReturnException();
     }
 }

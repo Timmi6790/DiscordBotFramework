@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @ToString
 @EqualsAndHashCode
@@ -112,20 +113,19 @@ public class UserDb {
     }
 
     public List<AbstractSetting> getStats() {
-        final List<AbstractSetting> settings = new ArrayList<>();
-        for (final int dbId : this.settings.keySet()) {
-            StatsBot.getSettingManager().getSetting(dbId).ifPresent(settings::add);
-        }
-        return settings;
+        return this.settings.keySet()
+                .stream()
+                .map(settingDbId -> StatsBot.getSettingManager().getSettings().get(settingDbId))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public Map<AbstractSetting, String> getStatsMap() {
-        final Map<AbstractSetting, String> settings = new HashMap<>();
-        for (final Map.Entry<Integer, String> entry : this.settings.entrySet()) {
-            StatsBot.getSettingManager().getSetting(entry.getKey()).ifPresent(setting -> settings.put(setting, entry.getValue()));
-
-        }
-        return settings;
+        return this.settings.entrySet()
+                .stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(StatsBot.getSettingManager().getSettings().get(entry.getKey()), entry.getValue()))
+                .filter(entry -> entry.getKey() != null)
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
     }
 
     public boolean hasSettingAndEqualsTrue(final String internalName) {

@@ -1,9 +1,8 @@
 package de.timmi6790.statsbotdiscord.modules.eventhandler;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
+import de.timmi6790.statsbotdiscord.events.MessageReceivedIntEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -12,9 +11,9 @@ import javax.annotation.Nonnull;
 
 public class DiscordEventListener extends ListenerAdapter {
     @Override
-    public void onMessageReceived(@Nonnull final MessageReceivedEvent event) {
-        final EventMessageReceived eventMessageReceived = new EventMessageReceived(event.getResponseNumber(), event.getMessage());
-        StatsBot.getEventManager().callEvent(eventMessageReceived);
+    public void onMessageReceived(@Nonnull final net.dv8tion.jda.api.events.message.MessageReceivedEvent event) {
+        final MessageReceivedIntEvent messageReceivedIntEvent = new MessageReceivedIntEvent(event.getResponseNumber(), event.getMessage());
+        StatsBot.getEventManager().callEvent(messageReceivedIntEvent);
     }
 
     @Override

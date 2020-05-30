@@ -19,8 +19,8 @@ public class ReloadDataCommand extends AbstractCommand {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         final MineplexStatsModule module = (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
 
-        final String data = commandParameters.getArgs()[0];
-        switch (data.toLowerCase()) {
+        final String firstArg = commandParameters.getArgs()[0];
+        switch (firstArg.toLowerCase()) {
             case "javagame":
                 module.loadJavaGames();
                 break;
@@ -38,7 +38,7 @@ public class ReloadDataCommand extends AbstractCommand {
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
                                 .setTitle("Incorrect data type")
-                                .setDescription(MarkdownUtil.monospace(data) + " is not a valid type.\n" +
+                                .setDescription(MarkdownUtil.monospace(firstArg) + " is not a valid type.\n" +
                                         "[javaGame, javaGroup, bedrockGame]"),
                         90
                 );
@@ -49,7 +49,7 @@ public class ReloadDataCommand extends AbstractCommand {
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Reloaded data")
-                        .setDescription("Reloaded " + MarkdownUtil.monospace(data)),
+                        .setDescription("Reloaded " + MarkdownUtil.monospace(firstArg)),
                 90
         );
         return CommandResult.SUCCESS;

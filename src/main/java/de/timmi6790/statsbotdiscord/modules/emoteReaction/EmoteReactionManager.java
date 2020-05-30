@@ -18,18 +18,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EmoteReactionManager {
     private static final int ACTIVE_EMOTES_LIMIT = 6;
 
     @Getter
-    private final Map<Long, Integer> activeEmotesPerPlayer = new ConcurrentHashMap<>();
+    private final Map<Long, AtomicInteger> activeEmotesPerPlayer = new ConcurrentHashMap<>();
 
     @Getter
     private final Cache<Long, EmoteReactionMessage> emoteMessageCache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfter(new Expiry<Long, EmoteReactionMessage>() {
-
                 @Override
                 public long expireAfterCreate(@NonNull final Long key, @NonNull final EmoteReactionMessage value, final long currentTime) {
                     return TimeUnit.SECONDS.toNanos(value.getDeleteTime());
@@ -51,19 +51,18 @@ public class EmoteReactionManager {
                 }
 
                 // Deduct the active emotes per player
-                for (long user : value.getUsers()) {
-                    if (!this.activeEmotesPerPlayer.containsKey(user)) {
-                        continue;
-                    }
+                value.getUsers()
+                        .stream()
+                        .filter(this.activeEmotesPerPlayer::containsKey)
+                        .forEach(user -> {
+                            AtomicInteger currentCount = this.activeEmotesPerPlayer.get(user);
+                            if (1 >= currentCount.get()) {
+                                this.activeEmotesPerPlayer.remove(user);
 
-                    int currentCount = this.activeEmotesPerPlayer.get(user);
-                    if (1 >= currentCount) {
-                        this.activeEmotesPerPlayer.remove(user);
-
-                    } else {
-                        this.activeEmotesPerPlayer.replace(user, currentCount - 1);
-                    }
-                }
+                            } else {
+                                currentCount.decrementAndGet();
+                            }
+                        });
 
                 final MessageChannel channel = StatsBot.getDiscord().getTextChannelById(value.getChannelId());
                 if (channel == null) {
@@ -91,14 +90,13 @@ public class EmoteReactionManager {
     public void addEmoteReactionMessage(final Message message, final EmoteReactionMessage emoteReactionMessage) {
         final Set<Long> playersAboveRate = new HashSet<>();
         for (final long user : emoteReactionMessage.getUsers()) {
-            final int currentActive = this.activeEmotesPerPlayer.getOrDefault(user, 0);
-
-            if (currentActive >= ACTIVE_EMOTES_LIMIT) {
+            final AtomicInteger currentActive = this.activeEmotesPerPlayer.getOrDefault(user, new AtomicInteger(0));
+            if (currentActive.getAndIncrement() >= ACTIVE_EMOTES_LIMIT) {
                 playersAboveRate.add(user);
                 continue;
             }
 
-            this.activeEmotesPerPlayer.put(user, currentActive + 1);
+            this.activeEmotesPerPlayer.put(user, currentActive);
         }
 
         if (emoteReactionMessage.getUsers().size() == playersAboveRate.size()) {

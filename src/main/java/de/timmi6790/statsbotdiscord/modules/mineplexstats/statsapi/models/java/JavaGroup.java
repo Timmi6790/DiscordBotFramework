@@ -5,10 +5,11 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.utilities.StatsComparator;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 public class JavaGroup {
@@ -16,6 +17,7 @@ public class JavaGroup {
     private final String description;
     private final String[] aliasNames;
     private final List<String> games;
+    private List<JavaStat> groupStats;
 
     public String getName() {
         return this.group;
@@ -23,26 +25,20 @@ public class JavaGroup {
 
     public List<JavaGame> getGames() {
         final MineplexStatsModule module = (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
-
-        final List<JavaGame> games = new ArrayList<>();
-        for (final String name : this.games) {
-            module.getJavaGame(name).ifPresent(games::add);
-        }
-
-        return games;
+        return this.games.stream()
+                .map(module::getJavaGame)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     public List<JavaGame> getGames(final JavaStat stat) {
         final MineplexStatsModule module = (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
-
-        final List<JavaGame> games = new ArrayList<>();
-        for (final String name : this.games) {
-            module.getJavaGame(name).ifPresent(game -> {
-                game.getStat(stat.getName()).ifPresent(stat1 -> games.add(game));
-            });
-        }
-
-        return games;
+        return this.games.stream()
+                .map(module::getJavaGame)
+                .filter(gameOpt -> gameOpt.map(game -> game.getStat(stat.getName()).isPresent()).orElse(false))
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     public List<String> getGameNames() {
@@ -50,23 +46,22 @@ public class JavaGroup {
     }
 
     public List<JavaStat> getStats() {
-        // TODO: Think about making a save after running it once, it really depends on the use
-        final Set<JavaStat> stats = new HashSet<>();
-        for (final JavaGame game : this.getGames()) {
-            stats.addAll(game.getStats().values());
+        if (this.groupStats == null) {
+            this.groupStats = this.getGames()
+                    .stream()
+                    .flatMap(game -> game.getStats().values().stream())
+                    .sorted(new StatsComparator())
+                    .distinct()
+                    .collect(Collectors.toList());
         }
 
-        final List<JavaStat> statsList = new ArrayList<>(stats);
-        statsList.sort(new StatsComparator());
-        return statsList;
+        return this.groupStats;
     }
 
-    public List<String> getStatNames() {
-        final List<String> stats = new ArrayList<>();
-        for (final JavaStat stat : this.getStats()) {
-            stats.add(stat.getName());
-        }
-
-        return stats;
+    public Set<String> getStatNames() {
+        return this.getStats()
+                .stream()
+                .map(JavaStat::getPrintName)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 }

@@ -4,6 +4,7 @@ import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import lombok.Data;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 public class JavaStat {
@@ -22,12 +23,10 @@ public class JavaStat {
         this.description = description;
         this.boards = boards;
 
-        for (final JavaBoard board : boards.values()) {
+        boards.values().forEach(board -> {
             final String boardLower = board.getName().toLowerCase();
-            for (final String alias : board.getAliasNames()) {
-                this.boardAlias.put(alias, boardLower);
-            }
-        }
+            Arrays.stream(board.getAliasNames()).forEach(alias -> this.boardAlias.put(alias, boardLower));
+        });
     }
 
     public String getPrintName() {
@@ -39,13 +38,11 @@ public class JavaStat {
     }
 
     public List<String> getBoardNames() {
-        final List<String> names = new ArrayList<>();
-        for (final JavaBoard board : this.boards.values()) {
-            names.add(board.getName());
-        }
-        names.sort(Comparator.naturalOrder());
-
-        return names;
+        return this.boards.values()
+                .stream()
+                .map(JavaBoard::getName)
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
     }
 
     public Optional<JavaBoard> getBoard(String name) {
@@ -54,13 +51,9 @@ public class JavaStat {
     }
 
     public List<JavaBoard> getSimilarBoard(final String name, final double similarity, final int limit) {
-        final List<JavaBoard> similarBoards = new ArrayList<>();
-
-        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.boards.keySet(), similarity).toArray(new String[0]);
-        for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
-            similarBoards.add(this.boards.get(similarCommandNames[index]));
-        }
-
-        return similarBoards;
+        return UtilitiesData.getSimilarityList(name, this.boards.keySet(), similarity, limit)
+                .stream()
+                .map(this.boards::get)
+                .collect(Collectors.toList());
     }
 }

@@ -1,5 +1,6 @@
 package de.timmi6790.statsbotdiscord.utilities;
 
+import de.timmi6790.statsbotdiscord.datatypes.StatEmbedBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -12,12 +13,12 @@ import java.util.regex.Pattern;
 public class UtilitiesDiscord {
     private static final Pattern PATTERN_MENTION = Pattern.compile("@(everyone|here|[!&]?[0-9]{17,21})");
 
-    public static EmbedBuilder getDefaultEmbedBuilder(final CommandParameters commandParameters) {
+    public static StatEmbedBuilder getDefaultEmbedBuilder(final CommandParameters commandParameters) {
         return getDefaultEmbedBuilder(commandParameters.getEvent().getAuthor(), commandParameters.getEvent().getMemberOptional());
     }
 
-    public static EmbedBuilder getDefaultEmbedBuilder(final User user, final Optional<Member> member) {
-        return new EmbedBuilder()
+    public static StatEmbedBuilder getDefaultEmbedBuilder(final User user, final Optional<Member> member) {
+        return new StatEmbedBuilder()
                 .setAuthor(user.getName(), null, user.getEffectiveAvatarUrl())
                 .setColor(member.isPresent() ? member.get().getColor() : Color.MAGENTA);
     }

@@ -23,7 +23,7 @@ public class JavaGameAliasCommand extends AbstractJavaStatsCommand {
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Added Game Alias")
-                        .setDescription("Added new board alias " + MarkdownUtil.monospace(commandParameters.getArgs()[0])),
+                        .setDescription("Added new game alias " + MarkdownUtil.monospace(commandParameters.getArgs()[0])),
                 90
         );
 

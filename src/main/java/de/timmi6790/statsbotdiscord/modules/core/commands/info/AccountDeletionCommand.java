@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AccountDeletionCommand extends AbstractCommand {
     private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"TakeMeBackToParadiseCity"};
@@ -24,10 +25,10 @@ public class AccountDeletionCommand extends AbstractCommand {
     // Ban the player from the bot when he is using more than 5 deletes per month/Bot uptime.
     // I think it is ok to give everyone the chance to delete their data without a long process,
     // but I hate it when people would abuse it, because it is incrementing the user ids
-    private final LoadingCache<Long, Byte> deletionAbuseCache = Caffeine.newBuilder()
+    private final LoadingCache<Long, AtomicInteger> deletionAbuseCache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(30, TimeUnit.DAYS)
-            .build(id -> (byte) 0);
+            .build(key -> new AtomicInteger(0));
 
     public AccountDeletionCommand() {
         super("deleteMyAccount", "Info", "Wipe all my data!", "");
@@ -71,8 +72,7 @@ public class AccountDeletionCommand extends AbstractCommand {
         }
 
         final long userId = commandParameters.getUserDb().getDiscordId();
-        byte abuseCounter = this.deletionAbuseCache.get(userId);
-        if (abuseCounter >= 5) {
+        if (this.deletionAbuseCache.get(userId).getAndIncrement() >= 5) {
             commandParameters.getUserDb().ban(commandParameters, "AccountDeletionCommand abuse.");
             return CommandResult.SUCCESS;
         }
@@ -83,9 +83,6 @@ public class AccountDeletionCommand extends AbstractCommand {
                         .setDescription("It is sad to see you go USER_NAME, your data should be deleted in the next few seconds!"),
                 90
         );
-
-        abuseCounter++;
-        this.deletionAbuseCache.put(commandParameters.getUserDb().getDiscordId(), abuseCounter);
 
         this.userDeleteConfirmCache.invalidate(userId);
         UserDb.getUSER_CACHE().invalidate(userId);

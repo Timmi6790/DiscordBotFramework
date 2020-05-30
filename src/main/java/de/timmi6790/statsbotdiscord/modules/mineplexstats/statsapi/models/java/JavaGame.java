@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Data
 public class JavaGame {
@@ -29,12 +30,12 @@ public class JavaGame {
         this.description = description;
         this.stats = stats;
 
-        for (final JavaStat gameStat : stats.values()) {
-            final String cleanStat = getCleanStat(gameStat.getName()).toLowerCase();
-            for (final String alias : gameStat.getAliasNames()) {
+        stats.values().forEach(stat -> {
+            final String cleanStat = getCleanStat(stat.getName()).toLowerCase();
+            for (final String alias : stat.getAliasNames()) {
                 this.statAlias.put(alias.toLowerCase(), cleanStat);
             }
-        }
+        });
     }
 
     public static String getCleanStat(final String name) {
@@ -49,25 +50,22 @@ public class JavaGame {
 
     public List<String> getStatNames() {
         if (this.sortedStatsNames.isEmpty()) {
-            final List<JavaStat> stats = new ArrayList<>(this.stats.values());
-            stats.sort(new StatsComparator());
-
-            for (final JavaStat stat : stats) {
-                this.sortedStatsNames.add(stat.getPrintName());
-            }
+            this.sortedStatsNames.addAll(this.stats
+                    .values()
+                    .stream()
+                    .sorted(new StatsComparator())
+                    .map(JavaStat::getPrintName)
+                    .collect(Collectors.toList())
+            );
         }
 
         return this.sortedStatsNames;
     }
 
     public List<JavaStat> getSimilarStats(final String name, final double similarity, final int limit) {
-        final List<JavaStat> similarGames = new ArrayList<>();
-
-        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, this.stats.keySet(), similarity).toArray(new String[0]);
-        for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
-            similarGames.add(this.stats.get(similarCommandNames[index]));
-        }
-
-        return similarGames;
+        return UtilitiesData.getSimilarityList(name, this.stats.keySet(), similarity, limit)
+                .stream()
+                .map(this.stats::get)
+                .collect(Collectors.toList());
     }
 }

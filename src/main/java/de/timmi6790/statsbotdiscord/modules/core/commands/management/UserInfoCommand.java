@@ -6,11 +6,9 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.core.Rank;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
-import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
 import net.dv8tion.jda.api.entities.User;
 
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class UserInfoCommand extends AbstractCommand {
@@ -26,13 +24,19 @@ public class UserInfoCommand extends AbstractCommand {
         final User user = this.getDiscordUser(commandParameters, 0);
         final UserDb userDb = UserDb.getOrCreate(user.getIdLong());
 
-        final short commandSpamCache = StatsBot.getCommandManager().getCommandSpamCache().get(user.getIdLong());
-        final int activeEmotes = StatsBot.getEmoteReactionManager().getActiveEmotesPerPlayer().getOrDefault(user.getIdLong(), 0);
+        final int commandSpamCache = StatsBot.getCommandManager().getCommandSpamCache().get(user.getIdLong()).get();
+        final int activeEmotes = StatsBot.getEmoteReactionManager().getActiveEmotesPerPlayer().getOrDefault(user.getIdLong(), new AtomicInteger(0)).get();
 
-        final StringJoiner settings = new StringJoiner("\n");
-        for (final Map.Entry<AbstractSetting, String> setting : userDb.getStatsMap().entrySet()) {
-            settings.add(setting.getKey().getInternalName() + ": " + setting.getKey().parseSetting(setting.getValue()));
-        }
+        final String settings = userDb.getStatsMap()
+                .entrySet()
+                .stream()
+                .map(setting -> setting.getKey().getInternalName() + ": " + setting.getKey().parseSetting(setting.getValue()))
+                .collect(Collectors.joining("\n"));
+
+        final String subRanks = userDb.getRanks()
+                .stream()
+                .map(Rank::getName)
+                .collect(Collectors.joining("; "));
 
         this.sendTimedMessage(commandParameters,
                 this.getEmbedBuilder(commandParameters)
@@ -40,8 +44,8 @@ public class UserInfoCommand extends AbstractCommand {
                         .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
                         .addField("Shop Points", String.valueOf(userDb.getPoints()), false)
-                        .addField("Ranks", userDb.getPrimaryRank() + "[" + userDb.getRanks().stream().map(Rank::getName).collect(Collectors.joining("; ")) + "]", true)
-                        .addField("Settings", settings.toString(), false)
+                        .addField("Ranks", userDb.getPrimaryRank() + "[" + subRanks + "]", true)
+                        .addField("Settings", settings, false)
                         .addField("User Perms", String.join("\n", userDb.getPermissionNodes()), false),
                 90
         );

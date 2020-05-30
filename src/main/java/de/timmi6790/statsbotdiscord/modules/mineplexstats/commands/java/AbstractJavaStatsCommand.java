@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
     private final static Pattern NAME_PATTERN = Pattern.compile("^\\w{1,16}$");
@@ -62,13 +63,8 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return similarGames.get(0);
         }
 
-        final List<String> similarNames = new ArrayList<>();
-        for (final JavaGame similarGame : similarGames) {
-            similarNames.add(similarGame.getName());
-        }
-
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarNames.toArray(new String[0]));
+        this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarGames.stream().map(JavaGame::getName).collect(Collectors.toList()));
 
         throw new CommandReturnException();
     }
@@ -80,18 +76,13 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return stat.get();
         }
 
-        final JavaStat[] similarStats = game.getSimilarStats(JavaGame.getCleanStat(name), 0.6, 3).toArray(new JavaStat[0]);
-        if (similarStats.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
-            return similarStats[0];
-        }
-
-        final List<String> similarNames = new ArrayList<>();
-        for (final JavaStat similarStat : similarStats) {
-            similarNames.add(similarStat.getName());
+        final List<JavaStat> similarStats = game.getSimilarStats(JavaGame.getCleanStat(name), 0.6, 3);
+        if (!similarStats.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
+            return similarStats.get(0);
         }
 
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "stat", command, new String[]{game.getName()}, similarNames.toArray(new String[0]));
+        this.sendHelpMessage(commandParameters, name, argPos, "stat", command, new String[]{game.getName()}, similarStats.stream().map(JavaStat::getName).collect(Collectors.toList()));
 
         throw new CommandReturnException();
     }
@@ -105,32 +96,31 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             }
         }
 
-        final Set<String> boards = new HashSet<>();
-        JavaStat exampleStat = null;
-        for (final JavaStat stat : game.getStats().values()) {
-            boards.addAll(stat.getBoardNames());
-            exampleStat = stat;
-        }
+        final List<String> similarBoards = UtilitiesData.getSimilarityList(
+                name,
+                game.getStats().values()
+                        .stream()
+                        .flatMap(stat -> stat.getBoardNames().stream())
+                        .collect(Collectors.toSet()),
+                0.0,
+                6
+        );
 
-        final List<String> similarBoards = UtilitiesData.getSimilarityList(name, boards, 0.0);
         if (!similarBoards.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             final String newBoard = similarBoards.get(0);
-            for (final JavaStat stat : game.getStats().values()) {
-                for (final JavaBoard board : stat.getBoards().values()) {
-                    if (board.getName().equalsIgnoreCase(newBoard)) {
-                        return board;
-                    }
-                }
+            final Optional<JavaBoard> similarBoard = game.getStats().values().stream()
+                    .flatMap(stat -> stat.getBoards().values().stream())
+                    .filter(board -> board.getName().equalsIgnoreCase(newBoard))
+                    .findAny();
+
+            if (similarBoard.isPresent()) {
+                return similarBoard.get();
             }
         }
 
-        final String[] similarNames = new String[Math.min(similarBoards.size(), 6)];
-        for (int index = 0; similarNames.length > index; index++) {
-            similarNames[index] = similarBoards.get(index);
-        }
-
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "board", command, new String[]{game.getName(), exampleStat != null ? exampleStat.getName() : ""}, similarNames);
+        final String exampleStat = game.getStats().values().stream().findFirst().map(JavaStat::getName).orElse("");
+        this.sendHelpMessage(commandParameters, name, argPos, "board", command, new String[]{game.getName(), exampleStat}, similarBoards);
 
         throw new CommandReturnException();
     }
@@ -143,18 +133,14 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return board.get();
         }
 
-        final JavaBoard[] similarBoards = stat.getSimilarBoard(name, 0.0, 6).toArray(new JavaBoard[0]);
-        if (similarBoards.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
-            return similarBoards[0];
-        }
-
-        final List<String> similarNames = new ArrayList<>();
-        for (final JavaBoard similar : similarBoards) {
-            similarNames.add(similar.getName());
+        final List<JavaBoard> similarBoards = stat.getSimilarBoard(name, 0.0, 6);
+        if (!similarBoards.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
+            return similarBoards.get(0);
         }
 
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "board", command, new String[]{game.getName(), stat.getName()}, similarNames.toArray(new String[0]));
+        this.sendHelpMessage(commandParameters, name, argPos, "board", command, new String[]{game.getName(), stat.getName()},
+                similarBoards.stream().map(JavaBoard::getName).collect(Collectors.toList()));
 
         throw new CommandReturnException();
     }
@@ -181,18 +167,14 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             return group.get();
         }
 
-        final JavaGroup[] similarGroup = this.getStatsModule().getSimilarJavaGroups(name, 0.6, 3).toArray(new JavaGroup[0]);
-        if (similarGroup.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
-            return similarGroup[0];
+        final List<JavaGroup> similarGroup = this.getStatsModule().getSimilarJavaGroups(name, 0.6, 3);
+        if (!similarGroup.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
+            return similarGroup.get(0);
         }
 
-        final List<String> similarNames = new ArrayList<>();
-        for (final JavaGroup similar : similarGroup) {
-            similarNames.add(similar.getName());
-        }
-
-        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGamesCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "group", command, new String[]{}, similarNames.toArray(new String[0]));
+        final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGroupsGroupsCommand.class).orElse(null);
+        this.sendHelpMessage(commandParameters, name, argPos, "group", command, new String[]{},
+                similarGroup.stream().map(JavaGroup::getName).collect(Collectors.toList()));
 
         throw new CommandReturnException();
     }
@@ -206,28 +188,26 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
             }
         }
 
-        final Set<String> statNames = new HashSet<>();
-        for (final JavaStat stat : group.getStats()) {
-            statNames.add(stat.getName());
-        }
-
-        final List<String> similarStats = UtilitiesData.getSimilarityList(JavaGame.getCleanStat(name), statNames, 0.6);
+        final List<String> similarStats = UtilitiesData.getSimilarityList(
+                JavaGame.getCleanStat(name),
+                group.getStats()
+                        .stream()
+                        .map(JavaStat::getName)
+                        .collect(Collectors.toSet()),
+                0.6,
+                3
+        );
+        
         if (!similarStats.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             final String newStat = similarStats.get(0);
-            for (final JavaStat stat : group.getStats()) {
-                if (stat.getName().equalsIgnoreCase(newStat)) {
-                    return stat;
-                }
+            final Optional<JavaStat> autoStat = group.getStats().stream().filter(stat -> stat.getName().equalsIgnoreCase(newStat)).findAny();
+            if (autoStat.isPresent()) {
+                return autoStat.get();
             }
         }
 
-        final String[] similarNames = new String[Math.min(similarStats.size(), 3)];
-        for (int index = 0; similarNames.length > index; index++) {
-            similarNames[index] = similarStats.get(index);
-        }
-
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(JavaGroupsGroupsCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "stat", command, new String[]{group.getName()}, similarNames);
+        this.sendHelpMessage(commandParameters, name, argPos, "stat", command, new String[]{group.getName()}, similarStats);
 
         throw new CommandReturnException();
     }
@@ -251,9 +231,9 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 return;
             }
 
-            try {
-                final InputStream in = new ByteArrayInputStream(response.getBody());
+            try (final InputStream in = new ByteArrayInputStream(response.getBody())) {
                 final BufferedImage image = ImageIO.read(in);
+
                 completableFuture.complete(image);
                 SKIN_CACHE.put(uuid, image);
             } catch (final IOException e) {

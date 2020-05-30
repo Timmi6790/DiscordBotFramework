@@ -1,5 +1,6 @@
 package de.timmi6790.statsbotdiscord;
 
+import de.timmi6790.statsbotdiscord.modules.ModuleManager;
 import de.timmi6790.statsbotdiscord.modules.achievement.AchievementManager;
 import de.timmi6790.statsbotdiscord.modules.command.CommandManager;
 import de.timmi6790.statsbotdiscord.modules.core.CoreModule;

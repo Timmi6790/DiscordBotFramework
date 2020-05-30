@@ -3,10 +3,8 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class BedrockGamesCommand extends AbstractBedrockStatsCommand {
     public BedrockGamesCommand() {
@@ -17,19 +15,14 @@ public class BedrockGamesCommand extends AbstractBedrockStatsCommand {
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        final List<String> games = new ArrayList<>(this.getStatsModule().getBedrockGames().values());
-        games.sort(Comparator.naturalOrder());
-
-        final StringJoiner description = new StringJoiner("\n");
-        for (final String game : games) {
-            description.add(game);
-        }
-
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Bedrock Games")
-                        .setDescription(description.toString()),
+                        .setDescription(this.getStatsModule().getBedrockGames().values()
+                                .stream()
+                                .sorted(Comparator.naturalOrder())
+                                .collect(Collectors.joining("\n"))),
                 150
         );
         return CommandResult.SUCCESS;

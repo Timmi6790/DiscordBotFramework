@@ -3,7 +3,7 @@ package de.timmi6790.statsbotdiscord.modules.command;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.statsbotdiscord.StatsBot;
-import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
+import de.timmi6790.statsbotdiscord.events.MessageReceivedIntEvent;
 import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
 import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
@@ -26,12 +26,15 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class CommandManager {
     private final static int COMMAND_USER_RATE_LIMIT = 10;
-    private final static Permission[] MINIMUM_DISCORD_PERMISSIONS = new Permission[]{Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS};
+    private final static List<Permission> MINIMUM_DISCORD_PERMISSIONS = Arrays.asList(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
 
     private final Pattern mainCommandPattern;
 
@@ -39,10 +42,10 @@ public class CommandManager {
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
     @Getter
-    private final LoadingCache<Long, Short> commandSpamCache = Caffeine.newBuilder()
+    private final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(30, TimeUnit.SECONDS)
-            .build(key -> (short) 0);
+            .build(key -> new AtomicInteger(0));
 
     @Getter
     private final String mainCommand;
@@ -60,6 +63,79 @@ public class CommandManager {
         StatsBot.getEventManager().addEventListener(this);
     }
 
+    private void sendMissingPermsMessage(final MessageReceivedIntEvent event, final List<Permission> missingPerms) {
+        final String perms = missingPerms.stream()
+                .map(perm -> MarkdownUtil.monospace(perm.getName()))
+                .collect(Collectors.joining(","));
+
+        UtilitiesDiscord.sendPrivateMessage(
+                event.getAuthor(),
+                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                        .setTitle("Missing Permission")
+                        .setDescription("The bot is missing " + perms + " permission(s).")
+        );
+    }
+
+    private void sendUserBanMessage(final MessageReceivedIntEvent event) {
+        UtilitiesDiscord.sendPrivateMessage(
+                event.getAuthor(),
+                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                        .setTitle("You are banned")
+                        .setDescription("You are banned from using this service.")
+        );
+    }
+
+    private void sendGuildBanMessage(final MessageReceivedIntEvent event) {
+        event.getChannel().sendMessage(
+                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                        .setTitle("Banned Server")
+                        .setDescription("This server is banned from using this service.")
+                        .build())
+                .delay(90, TimeUnit.SECONDS)
+                .flatMap(Message::delete)
+                .queue();
+    }
+
+    private void sendInvalidCommandMessage(final MessageReceivedIntEvent event, final List<AbstractCommand> similarCommands, final String firstArg, final CommandParameters commandParameters) {
+        final StringBuilder description = new StringBuilder();
+        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
+
+        if (similarCommands.isEmpty()) {
+            description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
+                    .append("Use the ").append(MarkdownUtil.bold(this.getMainCommand() + " help")).append(" command or click the ")
+                    .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
+
+        } else {
+            description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
+                    .append("Is it possible that you wanted to write?\n\n");
+
+            IntStream.range(0, similarCommands.size())
+                    .forEach(index -> {
+                        final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+                        final AbstractCommand similarCommand = similarCommands.get(index);
+
+                        description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
+                        emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
+                    });
+
+            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
+        }
+        this.getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
+
+        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
+        event.getChannel().sendMessage(
+                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                        .setTitle("Invalid Command")
+                        .setDescription(description)
+                        .setFooter("↓ Click Me!")
+                        .build())
+                .queue(sendMessage -> {
+                            StatsBot.getEmoteReactionManager().addEmoteReactionMessage(sendMessage, emoteReactionMessage);
+                            sendMessage.delete().queueAfter(90, TimeUnit.SECONDS);
+                        }
+                );
+    }
+
     public boolean registerCommand(final AbstractCommand command) {
         if (this.commands.containsKey(command.getName())) {
             System.out.println(command.getName() + " is already registered");
@@ -67,32 +143,20 @@ public class CommandManager {
         }
 
         this.commands.put(command.getName().toLowerCase(), command);
-
-        for (final String alias : command.getAliasNames()) {
-            if (this.commandAliases.containsKey(alias)) {
-                continue;
-            }
-
-            this.commandAliases.put(alias.toLowerCase(), command.getName().toLowerCase());
-        }
-
+        Arrays.stream(command.getAliasNames())
+                .filter(alias -> !this.commandAliases.containsKey(alias))
+                .forEach(alias -> this.commandAliases.put(alias.toLowerCase(), command.getName().toLowerCase()));
         return true;
     }
 
     public void registerCommands(final AbstractCommand... commands) {
-        for (final AbstractCommand command : commands) {
-            this.registerCommand(command);
-        }
+        Arrays.stream(commands).forEach(this::registerCommand);
     }
 
     public Optional<AbstractCommand> getCommand(final Class<? extends AbstractCommand> clazz) {
-        for (final AbstractCommand command : this.commands.values()) {
-            if (command.getClass().equals(clazz)) {
-                return Optional.of(command);
-            }
-        }
-
-        return Optional.empty();
+        return this.commands.values().stream()
+                .filter(command -> command.getClass().equals(clazz))
+                .findAny();
     }
 
 
@@ -111,23 +175,18 @@ public class CommandManager {
     }
 
     public List<AbstractCommand> getSimilarCommands(final CommandParameters commandParameters, final String name, final double similarity, final int limit) {
-        final List<AbstractCommand> similarCommands = new ArrayList<>();
-
-        final List<String> commandNames = new ArrayList<>();
-        for (final AbstractCommand command : this.commands.values()) {
-            if (!command.hasPermission(commandParameters)) {
-                continue;
-            }
-
-            commandNames.add(command.getName().toLowerCase());
-        }
-
-        final String[] similarCommandNames = UtilitiesData.getSimilarityList(name, commandNames, similarity).toArray(new String[0]);
-        for (int index = 0; Math.min(limit, similarCommandNames.length) > index; index++) {
-            similarCommands.add(this.commands.get(similarCommandNames[index]));
-        }
-
-        return similarCommands;
+        return UtilitiesData.getSimilarityList(
+                name,
+                this.commands.values()
+                        .stream()
+                        .filter(command -> command.hasPermission(commandParameters))
+                        .map(command -> command.getName().toLowerCase())
+                        .collect(Collectors.toList()),
+                similarity,
+                limit)
+                .stream()
+                .map(this.commands::get)
+                .collect(Collectors.toList());
     }
 
     public Collection<AbstractCommand> getCommands() {
@@ -135,7 +194,8 @@ public class CommandManager {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public void onMessage(final EventMessageReceived event) {
+    public void onMessage(final MessageReceivedIntEvent event) {
+        // Ignore yourself
         if (this.botId.equals(event.getAuthor().getId())) {
             return;
         }
@@ -145,6 +205,7 @@ public class CommandManager {
         String rawMessage = event.getMessage().getContentRaw();
         boolean validStart = false;
 
+        // Check if the message matches the main or guild specific start regex
         final Matcher mainMatcher = this.mainCommandPattern.matcher(rawMessage);
         if (mainMatcher.find()) {
             validStart = true;
@@ -158,58 +219,38 @@ public class CommandManager {
             }
         }
 
-        if (!validStart) {
-            return;
-        }
-
-        // Spam check
-        final short currentAmount = this.commandSpamCache.get(event.getAuthor().getIdLong());
-        if (currentAmount > COMMAND_USER_RATE_LIMIT) {
+        // Invalid start or spam protection
+        if (!validStart || this.commandSpamCache.get(event.getAuthor().getIdLong()).get() > COMMAND_USER_RATE_LIMIT) {
             return;
         }
 
         // Server ban check
         if (guildDb.isBanned()) {
-            event.getChannel().sendMessage(
-                    UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                            .setTitle("Banned Server")
-                            .setDescription("This server is banned from using this service.")
-                            .build())
-                    .delay(90, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue();
+            this.sendGuildBanMessage(event);
             return;
         }
 
         final UserDb userDb = UserDb.getOrCreate(event.getAuthor().getIdLong());
         // User ban check
         if (userDb.isBanned()) {
-            UtilitiesDiscord.sendPrivateMessage(
-                    event.getAuthor(),
-                    UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                            .setTitle("You are banned")
-                            .setDescription("You are banned from using this service.")
-            );
+            this.sendUserBanMessage(event);
             return;
         }
 
         final EnumSet<Permission> permissions;
         if (event.isFromGuild()) {
-            permissions = event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel());
             // I want to have write perms in all channels the commands should work in
-            for (final Permission permission : MINIMUM_DISCORD_PERMISSIONS) {
-                if (!permissions.contains(permission)) {
-                    UtilitiesDiscord.sendPrivateMessage(
-                            event.getAuthor(),
-                            UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                                    .setTitle("Missing Permission")
-                                    .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.")
-                    );
-                    return;
-                }
+            permissions = event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel());
+            final List<Permission> missingPerms = MINIMUM_DISCORD_PERMISSIONS.stream()
+                    .filter(perm -> !permissions.contains(perm))
+                    .collect(Collectors.toList());
+            if (!missingPerms.isEmpty()) {
+                this.sendMissingPermsMessage(event, missingPerms);
+                return;
             }
 
         } else {
+            // Private chat
             permissions = EnumSet.noneOf(Permission.class);
         }
 
@@ -220,54 +261,23 @@ public class CommandManager {
             emptyArgs = true;
         }
 
-        final ChannelDb channelDb = ChannelDb.getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId());
-        final CommandParameters commandParameters = new CommandParameters(permissions, channelDb, userDb, emptyArgs ? args : Arrays.copyOfRange(args, 1, args.length), event);
+        final CommandParameters commandParameters = new CommandParameters(
+                permissions,
+                ChannelDb.getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
+                userDb,
+                emptyArgs ? args : Arrays.copyOfRange(args, 1, args.length),
+                event
+        );
 
         final Optional<AbstractCommand> commandOpt = emptyArgs ? this.getCommand(HelpCommand.class) : this.getCommand(args[0]);
         final AbstractCommand command;
         if (!commandOpt.isPresent()) {
-            final AbstractCommand[] similarCommands = this.getSimilarCommands(commandParameters, args[0], 0.6, 3).toArray(new AbstractCommand[0]);
-
-            if (similarCommands.length != 0 && userDb.hasAutoCorrection()) {
-                command = similarCommands[0];
+            final List<AbstractCommand> similarCommands = this.getSimilarCommands(commandParameters, args[0], 0.6, 3);
+            if (!similarCommands.isEmpty() && userDb.hasAutoCorrection()) {
+                command = similarCommands.get(0);
 
             } else {
-                final StringBuilder description = new StringBuilder();
-                final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-
-                if (similarCommands.length == 0) {
-                    description.append(MarkdownUtil.monospace(args[0])).append(" is not a valid command.\n");
-                    description.append("Use the ").append(MarkdownUtil.bold(this.getMainCommand() + " help")).append(" command or click the ")
-                            .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
-
-                } else {
-                    description.append(MarkdownUtil.monospace(args[0])).append(" is not a valid command.\n");
-                    description.append("Is it possible that you wanted to write?\n\n");
-
-                    for (int index = 0; similarCommands.length > index; index++) {
-                        final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-                        final AbstractCommand similarCommand = similarCommands[index];
-
-                        description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
-                        emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
-                    }
-
-                    description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
-                }
-                this.getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
-
-                final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
-                event.getChannel().sendMessage(
-                        UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                                .setTitle("Invalid Command")
-                                .setDescription(description)
-                                .setFooter("↓ Click Me!")
-                                .build())
-                        .queue(sendMessage -> {
-                                    StatsBot.getEmoteReactionManager().addEmoteReactionMessage(sendMessage, emoteReactionMessage);
-                                    sendMessage.delete().queueAfter(90, TimeUnit.SECONDS);
-                                }
-                        );
+                this.sendInvalidCommandMessage(event, similarCommands, args[0], commandParameters);
                 return;
             }
         } else {
@@ -275,7 +285,7 @@ public class CommandManager {
         }
 
         // Run Command
-        this.commandSpamCache.put(event.getAuthor().getIdLong(), (short) (this.commandSpamCache.get(event.getAuthor().getIdLong()) + 1));
+        this.commandSpamCache.get(event.getAuthor().getIdLong()).incrementAndGet();
         this.executor.execute(() -> command.runCommand(commandParameters));
     }
 }

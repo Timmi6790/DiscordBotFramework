@@ -1,12 +1,14 @@
 package de.timmi6790.statsbotdiscord.modules.setting;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
+import lombok.Getter;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SettingManager {
+    @Getter
     private final Map<Integer, AbstractSetting> settings = new ConcurrentHashMap<>();
     private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
 

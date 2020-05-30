@@ -33,7 +33,7 @@ public abstract class AbstractBedrockStatsCommand extends AbstractStatsCommand {
         }
 
         final AbstractCommand command = StatsBot.getCommandManager().getCommand(BedrockGamesCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarNames.toArray(new String[0]));
+        this.sendHelpMessage(commandParameters, name, argPos, "game", command, new String[0], similarNames);
 
         throw new CommandReturnException();
     }

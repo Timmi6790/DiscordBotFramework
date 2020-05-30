@@ -2,13 +2,13 @@ package de.timmi6790.statsbotdiscord.modules.emoteReaction;
 
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-@Getter
+@Data
 @AllArgsConstructor
 public class EmoteReactionMessage {
     private final Map<String, AbstractEmoteReaction> emotes;

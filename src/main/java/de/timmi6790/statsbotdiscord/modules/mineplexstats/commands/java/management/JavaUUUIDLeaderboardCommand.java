@@ -1,6 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.management;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
+import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
@@ -18,9 +19,11 @@ import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import net.dv8tion.jda.api.Permission;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
     private final static int ARG_POS_BOARD_POS = 2;
@@ -53,30 +56,28 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
         final JavaLeaderboard leaderboardResponse = (JavaLeaderboard) responseModel;
         final JavaLeaderboard.Info leaderboardInfo = leaderboardResponse.getInfo();
 
-        final String[][] leaderboard = new String[leaderboardResponse.getLeaderboard().size() + 1][3];
-        leaderboard[0] = new String[]{"Emote", "UUID", "Player", "Score", "Position"};
-
-        int index = 1;
-        for (final JavaLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
-            leaderboard[index] = new String[]{String.valueOf(index), data.getUuid().toString(), data.getName(), this.getFormattedScore(stat, data.getScore()), String.valueOf(data.getPosition())};
-            index++;
-        }
+        final AtomicInteger index = new AtomicInteger(1);
+        final String[][] leaderboard = new ListBuilder<String[]>(() -> new ArrayList<>(leaderboardResponse.getLeaderboard().size() + 1))
+                .add(new String[]{"Emote", "UUID", "Player", "Score", "Position"})
+                .addAll(leaderboardResponse.getLeaderboard()
+                        .stream()
+                        .map(data -> new String[]{String.valueOf(index.getAndIncrement()), data.getUuid().toString(), data.getName(),
+                                this.getFormattedScore(stat, data.getScore()), String.valueOf(data.getPosition())}))
+                .build()
+                .toArray(new String[0][3]);
 
         final String[] header = {leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()};
-        final PictureTable statsPicture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard);
-        final Optional<InputStream> picture = statsPicture.getPlayerPicture();
+        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture();
         if (picture.isPresent()) {
             final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
             StatsBot.getCommandManager().getCommand(JavaPlayerFilterCommand.class).ifPresent(filterCommand -> {
-                int emoteIndex = 1;
-                for (final JavaLeaderboard.Leaderboard data : leaderboardResponse.getLeaderboard()) {
+                final AtomicInteger emoteIndex = new AtomicInteger(1);
+                leaderboardResponse.getLeaderboard().forEach(data -> {
                     final CommandParameters newParameters = new CommandParameters(commandParameters);
                     newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
-                    emotes.put(DiscordEmotes.getNumberEmote(emoteIndex).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
-
-                    emoteIndex++;
-                }
+                    emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
+                });
             });
 
             // Leaderboard default responses
@@ -117,9 +118,9 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
             }
 
             final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(), commandParameters.getEvent().getChannel().getIdLong());
-            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + leaderboardInfo.getUnix() + ".png").queue(message -> {
-                StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
-            });
+            commandParameters.getDiscordChannel()
+                    .sendFile(picture.get(), String.join("-", header) + "-" + leaderboardInfo.getUnix() + ".png")
+                    .queue(message -> StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage));
             return CommandResult.SUCCESS;
         }
 

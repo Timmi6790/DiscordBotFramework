@@ -1,6 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.command;
 
-import de.timmi6790.statsbotdiscord.events.EventMessageReceived;
+import de.timmi6790.statsbotdiscord.datatypes.MapBuilder;
+import de.timmi6790.statsbotdiscord.events.MessageReceivedIntEvent;
 import de.timmi6790.statsbotdiscord.modules.core.ChannelDb;
 import de.timmi6790.statsbotdiscord.modules.core.GuildDb;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
@@ -8,10 +9,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import org.apache.commons.collections.map.HashedMap;
 
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Map;
 
 @Data
@@ -21,7 +22,7 @@ public class CommandParameters {
     private final ChannelDb channelDb;
     private final UserDb userDb;
     private String[] args;
-    private final EventMessageReceived event;
+    private final MessageReceivedIntEvent event;
 
     public CommandParameters(final CommandParameters commandParameters) {
         this.discordChannelPermissions = commandParameters.discordChannelPermissions;
@@ -42,12 +43,10 @@ public class CommandParameters {
     }
 
     public Map<String, String> getSentryMap() {
-        final Map<String, String> sentryMap = new HashMap<>();
-
-        sentryMap.put("channelId", String.valueOf(this.channelDb.getDatabaseId()));
-        sentryMap.put("userId", String.valueOf(this.userDb.getDatabaseId()));
-        sentryMap.put("args", Arrays.toString(this.args));
-
-        return sentryMap;
+        return new MapBuilder<String, String>(HashedMap::new)
+                .put("channelId", String.valueOf(this.channelDb.getDatabaseId()))
+                .put("userId", String.valueOf(this.userDb.getDatabaseId()))
+                .put("args", Arrays.toString(this.args))
+                .build();
     }
 }
