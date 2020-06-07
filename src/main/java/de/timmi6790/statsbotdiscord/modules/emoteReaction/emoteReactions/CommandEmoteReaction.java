@@ -1,6 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions;
 
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
+import de.timmi6790.statsbotdiscord.modules.command.CommandCause;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,6 @@ public class CommandEmoteReaction extends AbstractEmoteReaction {
 
     @Override
     public void onEmote() {
-        this.command.runCommand(this.commandParameters);
+        this.command.runCommand(this.commandParameters, CommandCause.EMOTES);
     }
 }

@@ -27,10 +27,16 @@ public class UserInfoCommand extends AbstractCommand {
         final int commandSpamCache = StatsBot.getCommandManager().getCommandSpamCache().get(user.getIdLong()).get();
         final int activeEmotes = StatsBot.getEmoteReactionManager().getActiveEmotesPerPlayer().getOrDefault(user.getIdLong(), new AtomicInteger(0)).get();
 
-        final String settings = userDb.getStatsMap()
+        final String settings = userDb.getSettingsMap()
                 .entrySet()
                 .stream()
                 .map(setting -> setting.getKey().getInternalName() + ": " + setting.getKey().parseSetting(setting.getValue()))
+                .collect(Collectors.joining("\n"));
+
+        final String stats = userDb.getStatsMap()
+                .entrySet()
+                .stream()
+                .map(setting -> setting.getKey().getInternalName() + ": " + setting.getValue())
                 .collect(Collectors.joining("\n"));
 
         final String subRanks = userDb.getRanks()
@@ -46,6 +52,7 @@ public class UserInfoCommand extends AbstractCommand {
                         .addField("Shop Points", String.valueOf(userDb.getPoints()), false)
                         .addField("Ranks", userDb.getPrimaryRank() + "[" + subRanks + "]", true)
                         .addField("Settings", settings, false)
+                        .addField("Stats", stats, false)
                         .addField("User Perms", String.join("\n", userDb.getPermissionNodes()), false),
                 90
         );

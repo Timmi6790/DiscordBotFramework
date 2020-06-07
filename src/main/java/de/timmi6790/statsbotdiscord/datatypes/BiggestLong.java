@@ -20,4 +20,9 @@ public class BiggestLong {
     public long get() {
         return this.number.get();
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(this.get());
+    }
 }

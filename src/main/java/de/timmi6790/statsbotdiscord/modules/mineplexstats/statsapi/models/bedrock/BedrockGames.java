@@ -11,5 +11,5 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class BedrockGames extends ResponseModel {
-    private final List<String> games;
+    private final List<BedrockGame> games;
 }

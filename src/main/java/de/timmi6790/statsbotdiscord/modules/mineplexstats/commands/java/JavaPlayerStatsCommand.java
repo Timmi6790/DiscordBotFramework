@@ -4,7 +4,6 @@ import de.timmi6790.statsbotdiscord.datatypes.BiggestLong;
 import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
@@ -14,7 +13,6 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import net.dv8tion.jda.api.Permission;
 
 import java.awt.image.BufferedImage;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -38,8 +36,8 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         final JavaBoard board = this.getBoard(javaGame, commandParameters, 2);
         final long unixTime = this.getUnixTime(commandParameters, 3);
 
-        final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName(), unixTime);
+        // Web Requests
+        final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName(), unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaPlayerStats playerStats = (JavaPlayerStats) responseModel;
@@ -47,7 +45,8 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
 
         final CompletableFuture<BufferedImage> skinFuture = this.getPlayerSkin(playerStatsInfo.getUuid());
 
-        final JavaGame game = module.getJavaGame(playerStatsInfo.getGame()).orElseThrow(RuntimeException::new);
+        // Parse data into image generator
+        final JavaGame game = this.getStatsModule().getJavaGame(playerStatsInfo.getGame()).orElseThrow(RuntimeException::new);
         final BiggestLong highestUnixTime = new BiggestLong(0);
         final String[][] leaderboard = new ListBuilder<String[]>(() -> new ArrayList<>(playerStats.getWebsiteStats().size() + game.getStats().size() + 1))
                 .add(new String[]{"Category", "Score", "Position"})
@@ -63,8 +62,8 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
                             return Optional.ofNullable(playerStats.getStats().get(gameStat.getName()))
                                     .map(stat -> {
                                         highestUnixTime.tryNumber(stat.getUnix());
-                                        
-                                        String position = stat.getPosition() == -1 ? UNKNOWN_POSITION : String.valueOf(stat.getPosition());
+
+                                        final String position = stat.getPosition() == -1 ? UNKNOWN_POSITION : String.valueOf(stat.getPosition());
                                         return new String[]{gameStat.getPrintName(), this.getFormattedScore(gameStat, stat.getScore()), position};
                                     })
                                     .orElse(new String[]{gameStat.getPrintName(), UNKNOWN_SCORE, UNKNOWN_POSITION});
@@ -80,13 +79,10 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         }
 
         final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard()};
-        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard, skin).getPlayerPicture();
-        if (picture.isPresent()) {
-            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + highestUnixTime + ".png").queue();
-            return CommandResult.SUCCESS;
-        }
-
-        this.sendErrorMessage(commandParameters, "Error while creating picture.");
-        return CommandResult.ERROR;
+        return this.sendPicture(
+                commandParameters,
+                new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard, skin).getPlayerPicture(),
+                String.join("-", header) + "-" + highestUnixTime
+        );
     }
 }

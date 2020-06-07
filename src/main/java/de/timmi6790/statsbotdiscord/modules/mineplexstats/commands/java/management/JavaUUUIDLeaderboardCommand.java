@@ -18,11 +18,9 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import net.dv8tion.jda.api.Permission;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
@@ -67,73 +65,44 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
                 .toArray(new String[0][3]);
 
         final String[] header = {leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()};
-        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture();
-        if (picture.isPresent()) {
-            final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-            StatsBot.getCommandManager().getCommand(JavaPlayerFilterCommand.class).ifPresent(filterCommand -> {
-                final AtomicInteger emoteIndex = new AtomicInteger(1);
-                leaderboardResponse.getLeaderboard().forEach(data -> {
-                    final CommandParameters newParameters = new CommandParameters(commandParameters);
-                    newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
-                    emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
-                });
+        // Emotes
+        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
+
+        StatsBot.getCommandManager().getCommand(JavaPlayerFilterCommand.class).ifPresent(filterCommand -> {
+            final AtomicInteger emoteIndex = new AtomicInteger(1);
+            leaderboardResponse.getLeaderboard().forEach(data -> {
+                final CommandParameters newParameters = new CommandParameters(commandParameters);
+                newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
+                emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
             });
+        });
 
-            // Leaderboard default responses
-            final int rowDistance = endPos - startPos;
-            final int fastRowDistance = leaderboardInfo.getTotalLength() * 10 / 100;
+        // Leaderboard default responses
+        final int rowDistance = endPos - startPos;
+        final int fastRowDistance = leaderboardInfo.getTotalLength() * 10 / 100;
 
-            // Create a new args array if the old array has no positions
-            if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
-                final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
-                newArgs[ARG_POS_BOARD_POS] = board.getName();
+        // Create a new args array if the old array has no positions
+        if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
+            final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
+            newArgs[ARG_POS_BOARD_POS] = board.getName();
 
-                System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
-                commandParameters.setArgs(newArgs);
-            }
-
-            // Far Left Arrow
-            if (startPos - rowDistance > 2) {
-                final int newStart = Math.max(1, (startPos - fastRowDistance));
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.FAR_LEFT_ARROW, newStart, rowDistance);
-            }
-
-            // Left Arrow
-            if (startPos > 1) {
-                final int newStart = Math.max(1, (startPos - rowDistance - 1));
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.LEFT_ARROW, newStart, rowDistance);
-            }
-
-            // Right Arrow
-            if (leaderboardInfo.getTotalLength() > endPos) {
-                final int newStart = Math.min(leaderboardInfo.getTotalLength(), (endPos + rowDistance + 1)) - rowDistance;
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.RIGHT_ARROW, newStart, rowDistance);
-            }
-
-            // Far Right Arrow
-            if (leaderboardInfo.getTotalLength() - rowDistance - 1 > endPos) {
-                final int newStart = Math.min(leaderboardInfo.getTotalLength(), (endPos + fastRowDistance)) - rowDistance;
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.FAR_RIGHT_ARROW, newStart, rowDistance);
-            }
-
-            final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(), commandParameters.getEvent().getChannel().getIdLong());
-            commandParameters.getDiscordChannel()
-                    .sendFile(picture.get(), String.join("-", header) + "-" + leaderboardInfo.getUnix() + ".png")
-                    .queue(message -> StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage));
-            return CommandResult.SUCCESS;
+            System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
+            commandParameters.setArgs(newArgs);
         }
 
-        this.sendErrorMessage(commandParameters, "Error while creating picture.");
-        return CommandResult.ERROR;
-    }
-
-    private void addMessageEmote(final CommandParameters commandParameters, final Map<String, AbstractEmoteReaction> emotes, final DiscordEmotes emote, final int newStart, final int rowDistance) {
-        final CommandParameters newParameters = new CommandParameters(commandParameters);
-
-        newParameters.getArgs()[ARG_POS_START_POS] = String.valueOf(newStart);
-        newParameters.getArgs()[ARG_POS_END_POS] = String.valueOf(newStart + rowDistance);
-
-        emotes.put(emote.getEmote(), new CommandEmoteReaction(this, newParameters));
+        emotes.putAll(this.getLeaderboardEmotes(commandParameters, rowDistance, fastRowDistance, startPos, endPos,
+                leaderboardInfo.getTotalLength(), ARG_POS_START_POS, ARG_POS_END_POS));
+        
+        return this.sendPicture(
+                commandParameters,
+                new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),
+                String.join("-", header) + "-" + leaderboardInfo.getUnix(),
+                new EmoteReactionMessage(
+                        emotes,
+                        commandParameters.getEvent().getAuthor().getIdLong(),
+                        commandParameters.getEvent().getChannel().getIdLong()
+                )
+        );
     }
 }

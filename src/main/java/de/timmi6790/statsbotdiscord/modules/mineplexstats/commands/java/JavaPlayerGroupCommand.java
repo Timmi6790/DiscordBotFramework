@@ -9,7 +9,6 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.Respon
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.*;
 
 import java.awt.image.BufferedImage;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -66,13 +65,10 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
         }
 
         final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGroup(), playerStatsInfo.getStat(), playerStatsInfo.getBoard()};
-        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard, skin).getPlayerPicture();
-        if (picture.isPresent()) {
-            commandParameters.getDiscordChannel().sendFile(picture.get(), String.join("-", header) + "-" + highestUnixTime + ".png").queue();
-            return CommandResult.SUCCESS;
-        }
-
-        this.sendErrorMessage(commandParameters, "Error while creating picture.");
-        return CommandResult.ERROR;
+        return this.sendPicture(
+                commandParameters,
+                new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard, skin).getPlayerPicture(),
+                String.join("-", header) + "-" + highestUnixTime
+        );
     }
 }

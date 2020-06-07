@@ -43,6 +43,7 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
                 .stream()
                 .map(stat -> stat.replace(" ", "").replace("Achievement", ""))
                 .collect(Collectors.joining(", "));
+
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)

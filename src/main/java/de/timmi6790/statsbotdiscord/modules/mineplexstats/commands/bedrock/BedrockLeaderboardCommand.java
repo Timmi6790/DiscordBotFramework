@@ -1,6 +1,5 @@
 package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock;
 
-import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
@@ -9,11 +8,13 @@ import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.Abstrac
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
 import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 
-import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
     private final static int ARG_POS_START_POS = 1;
@@ -40,12 +41,12 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // Parse args
-        final String game = this.getGame(commandParameters, 0);
+        final BedrockGame game = this.getGame(commandParameters, 0);
         final int startPos = this.getStartPosition(commandParameters, ARG_POS_START_POS, LEADERBOARD_UPPER_LIMIT);
         final int endPos = this.getEndPosition(startPos, commandParameters, ARG_POS_END_POS, LEADERBOARD_UPPER_LIMIT);
         final long unixTime = this.getUnixTime(commandParameters, 3);
 
-        final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getBedrockLeaderboard(game, startPos, endPos, unixTime);
+        final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getBedrockLeaderboard(game.getName(), startPos, endPos, unixTime);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         // Parse the data into the image maker format
@@ -60,56 +61,28 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
         final BedrockLeaderboard.Info leaderboardInfo = ((BedrockLeaderboard) responseModel).getInfo();
 
         final String[] header = {"Bedrock " + leaderboardInfo.getGame()};
-        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture();
-        if (picture.isPresent()) {
-            final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-            final int rowDistance = endPos - startPos;
-            final int fastRowDistance = leaderboardInfo.getTotalLength() * 50 / 100;
+        // Emotes
+        final int rowDistance = endPos - startPos;
+        final int fastRowDistance = leaderboardInfo.getTotalLength() * 50 / 100;
 
-            if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
-                final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
-                System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
-                commandParameters.setArgs(newArgs);
-            }
-
-            // Far Left Arrow
-            if (startPos - rowDistance > 2) {
-                final int newStart = Math.max(1, (startPos - fastRowDistance));
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.FAR_LEFT_ARROW, newStart, rowDistance);
-            }
-
-            // Left Arrow
-            if (startPos > 1) {
-                final int newStart = Math.max(1, (startPos - rowDistance - 1));
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.LEFT_ARROW, newStart, rowDistance);
-            }
-
-            // Right Arrow
-            if (leaderboardInfo.getTotalLength() > endPos) {
-                final int newStart = Math.min(leaderboardInfo.getTotalLength(), (endPos + rowDistance + 1)) - rowDistance;
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.RIGHT_ARROW, newStart, rowDistance);
-            }
-
-            // Far Right Arrow
-            if (leaderboardInfo.getTotalLength() - rowDistance - 1 > endPos) {
-                final int newStart = Math.min(leaderboardInfo.getTotalLength(), (endPos + fastRowDistance)) - rowDistance;
-                this.addMessageEmote(commandParameters, emotes, DiscordEmotes.FAR_RIGHT_ARROW, newStart, rowDistance);
-            }
-
-            commandParameters.getDiscordChannel()
-                    .sendFile(picture.get(), String.join("-", header) + "-" + leaderboardInfo.getUnix() + ".png")
-                    .queue(message ->
-                            StatsBot.getEmoteReactionManager().addEmoteReactionMessage(
-                                    message,
-                                    new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(), commandParameters.getEvent().getChannel().getIdLong())
-                            )
-                    );
-            return CommandResult.SUCCESS;
+        if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
+            final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
+            System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
+            commandParameters.setArgs(newArgs);
         }
-
-        this.sendErrorMessage(commandParameters, "Error while creating picture.");
-        return CommandResult.ERROR;
+        
+        return this.sendPicture(
+                commandParameters,
+                new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),
+                String.join("-", header) + "-" + leaderboardInfo.getUnix(),
+                new EmoteReactionMessage(
+                        this.getLeaderboardEmotes(commandParameters, rowDistance, fastRowDistance, startPos, endPos,
+                                leaderboardInfo.getTotalLength(), ARG_POS_START_POS, ARG_POS_END_POS),
+                        commandParameters.getEvent().getAuthor().getIdLong(),
+                        commandParameters.getEvent().getChannel().getIdLong()
+                )
+        );
     }
 }
 

@@ -17,10 +17,7 @@ import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.Event;
 import io.sentry.event.EventBuilder;
 import io.sentry.event.interfaces.ExceptionInterface;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
@@ -32,16 +29,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Getter
-@EqualsAndHashCode
-@ToString
-@Setter
+@Data
 public abstract class AbstractCommand {
     private final static Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
     private final static Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
 
+    private final static String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :command_name LIMIT 1;";
+    private final static String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:command_name);";
+
+    private final static String INSERT_COMMAND_LOG = "INSERT INTO command_log(command_id, command_cause_id, command_status_id, in_guild) VALUES(:commandId, " +
+            "(SELECT id FROM command_cause WHERE cause_name = :causeName LIMIT 1), (SELECT id FROM command_status WHERE status_name = :statusName LIMIT 1), :inGuild);";
+
+    private final int dbId;
     private final String name;
-    private final String category;
+    private String category;
     private final String description;
 
     private final List<String> exampleCommands = new ArrayList<>();
@@ -65,6 +66,26 @@ public abstract class AbstractCommand {
         this.description = description;
         this.syntax = syntax;
         this.aliasNames = aliasNames;
+        this.dbId = this.getCommandDbId();
+    }
+
+    private int getCommandDbId() {
+        return StatsBot.getDatabase().withHandle(handle ->
+                handle.createQuery(GET_COMMAND_ID)
+                        .bind("command_name", this.name)
+                        .mapTo(int.class)
+                        .findFirst()
+                        .orElseGet(() -> {
+                            handle.createUpdate(INSERT_NEW_COMMAND)
+                                    .bind("command_name", this.name)
+                                    .execute();
+
+                            return handle.createQuery(GET_COMMAND_ID)
+                                    .bind("command_name", this.name)
+                                    .mapTo(int.class)
+                                    .first();
+                        })
+        );
     }
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
@@ -73,7 +94,7 @@ public abstract class AbstractCommand {
         return false;
     }
 
-    public void runCommand(final CommandParameters commandParameters) {
+    public void runCommand(final CommandParameters commandParameters, final CommandCause commandCause) {
         // Check command specific permissions discord bot perms
         if (commandParameters.getEvent().isFromGuild()) {
             for (final Permission permission : this.getRequiredBotDiscordPermissions()) {
@@ -116,7 +137,7 @@ public abstract class AbstractCommand {
                             .addField("Command Syntax", this.getSyntax(), false),
                     90
             );
-            commandResult = CommandResult.ERROR;
+            commandResult = CommandResult.MISSING_ARGS;
         }
 
         // Run the command if all other checks failed
@@ -152,10 +173,19 @@ public abstract class AbstractCommand {
                 commandResult = CommandResult.ERROR;
             }
         }
-        commandResult = commandResult != null ? commandResult : CommandResult.MISSING;
+        final CommandResult finalCommandResult = commandResult != null ? commandResult : CommandResult.MISSING;
+
+        // Log commands
+        StatsBot.getDatabase().useHandle(handle ->
+                handle.createUpdate(INSERT_COMMAND_LOG)
+                        .bind("commandId", this.dbId)
+                        .bind("causeName", commandCause.name().toLowerCase())
+                        .bind("statusName", finalCommandResult.name().toLowerCase())
+                        .bind("inGuild", commandParameters.getEvent().isFromGuild())
+                        .execute());
 
         // Command post event
-        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, commandResult);
+        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, finalCommandResult);
         StatsBot.getEventManager().callEvent(commandExecutionPost);
     }
 

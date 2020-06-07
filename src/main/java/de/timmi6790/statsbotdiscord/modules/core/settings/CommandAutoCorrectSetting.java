@@ -6,6 +6,6 @@ public class CommandAutoCorrectSetting extends BooleanSetting {
     public final static String INTERNAL_NAME = "core.settings.autocorrect";
 
     public CommandAutoCorrectSetting() {
-        super(INTERNAL_NAME, "Command Autocorrect", true, "core.settings.autocorrect", "false");
+        super(INTERNAL_NAME, "AutoCorrection", "false");
     }
 }

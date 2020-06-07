@@ -14,12 +14,4 @@ public class UtilitiesArray {
 
         return true;
     }
-
-    public static int getSum(final int[] array) {
-        int sum = 0;
-        for (final int num : array) {
-            sum += num;
-        }
-        return sum;
-    }
 }

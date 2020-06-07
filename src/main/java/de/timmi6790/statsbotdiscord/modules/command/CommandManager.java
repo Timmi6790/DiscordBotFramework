@@ -36,6 +36,12 @@ public class CommandManager {
     private final static int COMMAND_USER_RATE_LIMIT = 10;
     private final static List<Permission> MINIMUM_DISCORD_PERMISSIONS = Arrays.asList(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
 
+    private final static String GET_COMMAND_CAUSE_COUNT = "SELECT COUNT(*) FROM `command_cause` WHERE cause_name = :cause_name LIMIT 1;";
+    private final static String INSERT_COMMAND_CAUSE = "INSERT INTO command_cause(cause_name) VALUES(:cause_name);";
+
+    private final static String GET_COMMAND_STATUS_COUNT = "SELECT COUNT(*) FROM `command_status` WHERE status_name = :status_name LIMIT 1;";
+    private final static String INSERT_COMMAND_STATUS = "INSERT INTO command_status(status_name) VALUES(:status_name);";
+
     private final Pattern mainCommandPattern;
 
     @Getter
@@ -61,6 +67,43 @@ public class CommandManager {
         this.mainCommand = mainCommand;
 
         StatsBot.getEventManager().addEventListener(this);
+
+        // Db
+        // CommandCause
+        StatsBot.getDatabase().useHandle(handle -> {
+            for (final CommandCause commandCause : CommandCause.values()) {
+                final String nameLower = commandCause.name().toLowerCase();
+                final int count = handle.createQuery(GET_COMMAND_CAUSE_COUNT)
+                        .bind("cause_name", nameLower)
+                        .mapTo(int.class)
+                        .first();
+
+                // Insert new causes
+                if (count == 0) {
+                    handle.createUpdate(INSERT_COMMAND_CAUSE)
+                            .bind("cause_name", nameLower)
+                            .execute();
+                }
+            }
+        });
+
+        // CommandStatus
+        StatsBot.getDatabase().useHandle(handle -> {
+            for (final CommandResult commandResult : CommandResult.values()) {
+                final String nameLower = commandResult.name().toLowerCase();
+                final int count = handle.createQuery(GET_COMMAND_STATUS_COUNT)
+                        .bind("status_name", nameLower)
+                        .mapTo(int.class)
+                        .first();
+
+                // Insert new results
+                if (count == 0) {
+                    handle.createUpdate(INSERT_COMMAND_STATUS)
+                            .bind("status_name", nameLower)
+                            .execute();
+                }
+            }
+        });
     }
 
     private void sendMissingPermsMessage(final MessageReceivedIntEvent event, final List<Permission> missingPerms) {
@@ -286,6 +329,6 @@ public class CommandManager {
 
         // Run Command
         this.commandSpamCache.get(event.getAuthor().getIdLong()).incrementAndGet();
-        this.executor.execute(() -> command.runCommand(commandParameters));
+        this.executor.execute(() -> command.runCommand(commandParameters, CommandCause.USER));
     }
 }

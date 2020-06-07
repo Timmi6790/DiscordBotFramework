@@ -8,6 +8,7 @@ import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionManager;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.EventManager;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.setting.SettingManager;
+import de.timmi6790.statsbotdiscord.modules.stat.StatManager;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
@@ -28,7 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class StatsBot {
-    public final static String BOT_VERSION = "3.0.0";
+    public final static String BOT_VERSION = "3.0.1";
 
     @Getter
     private static SentryClient sentry;
@@ -42,9 +43,11 @@ public class StatsBot {
     @Getter
     private static CommandManager commandManager;
     @Getter
+    private static StatManager statManager;
+    @Getter
     private static EventManager eventManager;
     @Getter
-    private static final AchievementManager achievementManager = new AchievementManager();
+    private static AchievementManager achievementManager;
     @Getter
     private static EmoteReactionManager emoteReactionManager;
     @Getter
@@ -72,6 +75,8 @@ public class StatsBot {
         eventManager = new EventManager();
         commandManager = new CommandManager(config.getString("discord.mainCommand"));
         emoteReactionManager = new EmoteReactionManager();
+        statManager = new StatManager();
+        achievementManager = new AchievementManager();
 
         moduleManager.registerModules(
                 new MineplexStatsModule(),

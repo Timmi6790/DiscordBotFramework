@@ -98,7 +98,7 @@ public class EmoteReactionManager {
 
             this.activeEmotesPerPlayer.put(user, currentActive);
         }
-
+        
         if (emoteReactionMessage.getUsers().size() == playersAboveRate.size()) {
             return;
         }

@@ -8,11 +8,9 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockPlayerStats;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Optional;
 
 public class BedrockPlayerCommand extends AbstractBedrockStatsCommand {
     public BedrockPlayerCommand() {
@@ -50,15 +48,10 @@ public class BedrockPlayerCommand extends AbstractBedrockStatsCommand {
                 .toArray(new String[0][3]);
 
         final String[] header = {playerStatsInfo.getName() + " Bedrock"};
-        final Optional<InputStream> picture = new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard).getPlayerPicture();
-        if (picture.isPresent()) {
-            commandParameters.getDiscordChannel()
-                    .sendFile(picture.get(), String.join("-", header) + "-" + highestUnixTime + ".png")
-                    .queue();
-            return CommandResult.SUCCESS;
-        }
-
-        this.sendErrorMessage(commandParameters, "Error while creating picture.");
-        return CommandResult.ERROR;
+        return this.sendPicture(
+                commandParameters,
+                new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard).getPlayerPicture(),
+                String.join("-", header) + "-" + highestUnixTime
+        );
     }
 }

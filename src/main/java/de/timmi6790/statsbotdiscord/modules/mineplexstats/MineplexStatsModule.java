@@ -10,6 +10,7 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.*;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.management.*;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.MpStatsRestApiClient;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGames;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGamesModel;
@@ -35,7 +36,7 @@ public class MineplexStatsModule extends AbstractModule {
     private final Map<String, String> javaGroupsAlias = new ConcurrentHashMap<>();
 
     @Getter
-    private final Map<String, String> bedrockGames = new ConcurrentHashMap<>();
+    private final Map<String, BedrockGame> bedrockGames = new ConcurrentHashMap<>();
 
     public MineplexStatsModule() {
         super("MineplexStats");
@@ -55,6 +56,7 @@ public class MineplexStatsModule extends AbstractModule {
                 new JavaPlayerGroupCommand(),
                 new JavaGroupsGroupsCommand(),
                 new JavaLeaderboardCommand(),
+                new JavaPlayerStatsRatioCommand(),
 
                 new BedrockGamesCommand(),
                 new BedrockPlayerCommand(),
@@ -83,13 +85,10 @@ public class MineplexStatsModule extends AbstractModule {
 
         this.javaGames.clear();
         this.javaGamesAlias.clear();
-        for (final JavaGame javaGame : ((JavaGamesModel) responseModel).getGames().values()) {
+        ((JavaGamesModel) responseModel).getGames().values().forEach(javaGame -> {
             this.javaGames.put(javaGame.getName().toLowerCase(), javaGame);
-
-            for (final String alias : javaGame.getAliasNames()) {
-                this.javaGamesAlias.put(alias.toLowerCase(), javaGame.getName().toLowerCase());
-            }
-        }
+            Arrays.stream(javaGame.getAliasNames()).forEach(alias -> this.javaGamesAlias.put(alias.toLowerCase(), javaGame.getName().toLowerCase()));
+        });
     }
 
     public void loadJavaGroups() {
@@ -100,16 +99,13 @@ public class MineplexStatsModule extends AbstractModule {
 
         this.javaGroups.clear();
         this.javaGroupsAlias.clear();
-        for (final JavaGroup javaGroup : ((JavaGroupsGroups) responseModel).getGroups().values()) {
+        ((JavaGroupsGroups) responseModel).getGroups().values().forEach(javaGroup -> {
             Arrays.sort(javaGroup.getAliasNames());
             javaGroup.getGameNames().sort(Comparator.naturalOrder());
 
             this.javaGroups.put(javaGroup.getName().toLowerCase(), javaGroup);
-
-            for (final String alias : javaGroup.getAliasNames()) {
-                this.javaGroupsAlias.put(alias.toLowerCase(), javaGroup.getName().toLowerCase());
-            }
-        }
+            Arrays.stream(javaGroup.getAliasNames()).forEach(alias -> this.javaGroupsAlias.put(alias.toLowerCase(), javaGroup.getName().toLowerCase()));
+        });
     }
 
     public void loadBedrockGames() {
@@ -119,9 +115,10 @@ public class MineplexStatsModule extends AbstractModule {
         }
 
         this.bedrockGames.clear();
-        ((BedrockGames) responseModel).getGames().forEach(game -> this.bedrockGames.put(game.toLowerCase(), game));
+        ((BedrockGames) responseModel).getGames().forEach(game -> this.bedrockGames.put(game.getName().toLowerCase(), game));
     }
 
+    // Get Data
     public Optional<JavaGame> getJavaGame(String name) {
         name = this.javaGamesAlias.getOrDefault(name.toLowerCase(), name.toLowerCase());
         return Optional.ofNullable(this.javaGames.get(name));
@@ -146,12 +143,16 @@ public class MineplexStatsModule extends AbstractModule {
                 .collect(Collectors.toList());
     }
 
-    public Optional<String> getBedrockGame(final String name) {
+    public Optional<BedrockGame> getBedrockGame(final String name) {
         return Optional.ofNullable(this.bedrockGames.get(name.toLowerCase()));
     }
 
-    public List<String> getSimilarBedrockGames(final String name, final double similarity, final int limit) {
-        return UtilitiesData.getSimilarityList(name, this.bedrockGames.keySet(), similarity, limit)
+    public List<BedrockGame> getSimilarBedrockGames(final String name, final double similarity, final int limit) {
+        return UtilitiesData.getSimilarityList(
+                name,
+                this.bedrockGames.keySet(),
+                similarity,
+                limit)
                 .stream()
                 .map(this.bedrockGames::get)
                 .collect(Collectors.toList());

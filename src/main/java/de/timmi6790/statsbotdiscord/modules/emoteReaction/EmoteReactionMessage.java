@@ -18,6 +18,14 @@ public class EmoteReactionMessage {
     private final boolean oneTimeUse;
     private final boolean deleteMessage;
 
+    public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId, final int deleteTime) {
+        this(emotes, userId, channelId, deleteTime, true, true);
+    }
+
+    public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId) {
+        this(emotes, userId, channelId, 300, true, true);
+    }
+    
     public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId, final int deleteTime, final boolean oneTimeUse, final boolean deleteMessage) {
         this.emotes = emotes;
         this.users = Collections.singleton(userId);
@@ -25,23 +33,5 @@ public class EmoteReactionMessage {
         this.deleteTime = deleteTime;
         this.oneTimeUse = oneTimeUse;
         this.deleteMessage = deleteMessage;
-    }
-
-    public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId, final int deleteTime) {
-        this.emotes = emotes;
-        this.users = Collections.singleton(userId);
-        this.channelId = channelId;
-        this.deleteTime = deleteTime;
-        this.oneTimeUse = true;
-        this.deleteMessage = true;
-    }
-
-    public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId) {
-        this.emotes = emotes;
-        this.users = Collections.singleton(userId);
-        this.channelId = channelId;
-        this.deleteTime = 300;
-        this.oneTimeUse = true;
-        this.deleteMessage = true;
     }
 }

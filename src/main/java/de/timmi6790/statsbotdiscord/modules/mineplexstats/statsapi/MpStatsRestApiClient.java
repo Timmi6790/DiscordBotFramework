@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class MpStatsRestApiClient {
-    private static final String BASE_URL = "https://mpstats.timmi6790.de/"; // "http://127.0.0.1:8000/";
+    private static final String BASE_URL = "https://mpstats.timmi6790.de/";//  "http://127.0.0.1:8000/"
 
     private final static ErrorModel UNKNOWN_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "Unknown Error");
     private final static ErrorModel TIMEOUT_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "API Timeout Exception");
@@ -43,6 +43,8 @@ public class MpStatsRestApiClient {
 
         this.authName = StatsBot.getConfig().getString("mpStatsApi.name");
         this.authPassword = StatsBot.getConfig().getString("mpStatsApi.password");
+
+        Unirest.config().setDefaultBasicAuth(this.authName, this.authPassword);
     }
 
     private ResponseModel makeRequest(final String url, final Map<String, Object> params, final Class<? extends ResponseModel> wantedClazz) {
@@ -117,6 +119,19 @@ public class MpStatsRestApiClient {
                         .put("date", unixTime)
                         .build(),
                 JavaGroupsPlayer.class
+        );
+    }
+
+    public ResponseModel getPlayerStatsRatio(final String player, final String stat, final String board, final long unixTime) {
+        return this.makeRequest(
+                "java/leaderboards/ratio/player",
+                new MapBuilder<String, Object>(() -> new HashMap<>(4))
+                        .put("player", player)
+                        .put("stat", stat)
+                        .put("board", board.toLowerCase())
+                        .put("date", unixTime)
+                        .build(),
+                JavaRatioPlayer.class
         );
     }
 

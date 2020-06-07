@@ -6,8 +6,9 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import java.util.*;
 
 public class StatsComparator implements Comparator<JavaStat> {
-    private static final List<String> STATS_ORDER = new ArrayList<>(Arrays.asList("Hider Wins", "Hunter Wins", "Wins", "TimeInGame", "TimeInHub", "GamesPlayed",
-            "DailyVote", "ClansDailyReward", "DailyReward", "CrownsEarned", "BestWinStreak", "SecondPlace", "ThirdPlace", "Losses", "Kills", "FinalKills", "Assists", "Deaths"));
+    private static final List<String> STATS_ORDER = new ArrayList<>(Arrays.asList("HiderWins", "HunterWins", "Wins", "IngameTime", "HubTime", "GamesPlayed",
+            "DailyVotes", "ClansDailyRewards", "DailyRewards", "CrownsEarned", "BestWinStreak", "SecondPlace", "ThirdPlace", "Losses", "Kills", "FinalKills",
+            "Assists", "Deaths", "ExpEarned", "GemsEarned", "DailyMissions", "WeeklyMissions", "EventMissions"));
 
     static {
         Collections.reverse(STATS_ORDER);
@@ -18,7 +19,7 @@ public class StatsComparator implements Comparator<JavaStat> {
         if (object1.equals(object2)) {
             return 0;
         }
-
+        
         final int firstIndex = STATS_ORDER.indexOf(JavaGame.getCleanStat(object1.getPrintName()));
         final int secondIndex = STATS_ORDER.indexOf(JavaGame.getCleanStat(object2.getPrintName()));
         if (Math.max(secondIndex, firstIndex) != -1) {

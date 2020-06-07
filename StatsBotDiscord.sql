@@ -27,8 +27,8 @@ UNIQUE INDEX `channel_discordId` (`discordId` ASC) USING HASH
 );
 CREATE TABLE `achievement` (
 `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-`achievement_name` varchar(11) NOT NULL,
-`hidden` bit(1) NOT NULL,
+`achievement_name` varchar(50) NOT NULL,
+`hidden` bit(1) NOT NULL DEFAULT 1,
 PRIMARY KEY (`id`) ,
 UNIQUE INDEX `achievement_achievement_name` (`achievement_name` ASC) USING BTREE
 );
@@ -75,7 +75,9 @@ CREATE TABLE `player_achievement` (
 `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
 `player_id` int(11) UNSIGNED NOT NULL,
 `achievement_id` int(11) UNSIGNED NOT NULL,
-PRIMARY KEY (`id`) 
+`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`) ,
+UNIQUE INDEX `player_achievement_player_id_achievement_id` (`player_id` ASC, `achievement_id` ASC) USING BTREE
 );
 CREATE TABLE `rank_permission` (
 `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -105,25 +107,46 @@ CREATE TABLE `setting_log` (
 `date` datetime NULL DEFAULT CURRENT_TIMESTAMP,
 PRIMARY KEY (`id`) 
 );
-CREATE TABLE `achievement_log` (
-`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-`achievement_id` int(11) UNSIGNED NOT NULL,
-`player_id` int(11) UNSIGNED NOT NULL,
-`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (`id`) 
-);
 CREATE TABLE `player_stat` (
 `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
 `player_id` int(11) UNSIGNED NOT NULL,
 `stat_id` int(11) UNSIGNED NOT NULL,
 `value` bigint(64) UNSIGNED NOT NULL,
-PRIMARY KEY (`id`) 
+PRIMARY KEY (`id`) ,
+UNIQUE INDEX `player_stat_player_id_stat_id` (`player_id` ASC, `stat_id` ASC) USING BTREE
 );
 CREATE TABLE `stat` (
 `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
 `stat_name` varchar(50) NOT NULL,
 PRIMARY KEY (`id`) ,
 UNIQUE INDEX `stat_stat_stat_name` (`stat_name` ASC) USING HASH
+);
+CREATE TABLE `command` (
+`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+`command_name` varchar(50) NOT NULL,
+PRIMARY KEY (`id`) ,
+UNIQUE INDEX `command_command_name` (`command_name` ASC) USING HASH
+);
+CREATE TABLE `command_status` (
+`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+`status_name` varchar(50) NOT NULL,
+PRIMARY KEY (`id`) ,
+UNIQUE INDEX `command_status_status_name` (`status_name` ASC) USING HASH
+);
+CREATE TABLE `command_log` (
+`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+`command_id` int(11) UNSIGNED NOT NULL,
+`command_cause_id` int(11) UNSIGNED NOT NULL,
+`command_status_id` int(11) UNSIGNED NOT NULL,
+`in_guild` bit(1) NOT NULL,
+`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`) 
+);
+CREATE TABLE `command_cause` (
+`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+`cause_name` varchar(50) NOT NULL,
+PRIMARY KEY (`id`) ,
+UNIQUE INDEX `command_cause_command_name` (`cause_name` ASC) USING BTREE
 );
 
 ALTER TABLE `player_setting` ADD CONSTRAINT `player_setting_player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -144,8 +167,9 @@ ALTER TABLE `guild_setting` ADD CONSTRAINT `guild_setting_setting_id` FOREIGN KE
 ALTER TABLE `setting_log` ADD CONSTRAINT `setting_log_setting_id` FOREIGN KEY (`setting_id`) REFERENCES `setting` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 ALTER TABLE `setting_log` ADD CONSTRAINT `setting_log_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `guild` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 ALTER TABLE `setting_log` ADD CONSTRAINT `setting_log_player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
-ALTER TABLE `achievement_log` ADD CONSTRAINT `achievement_log_achievement_id` FOREIGN KEY (`achievement_id`) REFERENCES `achievement` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
-ALTER TABLE `achievement_log` ADD CONSTRAINT `achievement_log_player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE `player_stat` ADD CONSTRAINT `player_stat_player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 ALTER TABLE `player_stat` ADD CONSTRAINT `player_stat_stat_id` FOREIGN KEY (`stat_id`) REFERENCES `stat` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `command_log` ADD CONSTRAINT `command_log_command_status_id` FOREIGN KEY (`command_status_id`) REFERENCES `command_status` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE `command_log` ADD CONSTRAINT `command_log_command_id` FOREIGN KEY (`command_status_id`) REFERENCES `command` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE `command_log` ADD CONSTRAINT `command_log_command_cause` FOREIGN KEY (`command_cause_id`) REFERENCES `command_cause` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 

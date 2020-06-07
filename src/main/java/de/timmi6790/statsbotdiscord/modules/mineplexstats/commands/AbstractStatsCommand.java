@@ -5,13 +5,18 @@ import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
+import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
+import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
+import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.errors.ErrorModel;
+import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
+import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -46,6 +51,16 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
 
     public AbstractStatsCommand(final String name, final String category, final String description, final String syntax, final String... aliasNames) {
         super(name, category, description, syntax, aliasNames);
+    }
+
+    private CommandParameters getLeaderboardNewCommandParameters(final CommandParameters commandParameters, final int argPosStart, final int argPosEnd, final int newStart,
+                                                                 final int rowDistance) {
+        final CommandParameters newParameters = new CommandParameters(commandParameters);
+
+        newParameters.getArgs()[argPosStart] = String.valueOf(newStart);
+        newParameters.getArgs()[argPosEnd] = String.valueOf(newStart + rowDistance);
+
+        return newParameters;
     }
 
     protected MineplexStatsModule getStatsModule() {
@@ -189,5 +204,63 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
                             .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid UUID")
             );
         }
+    }
+
+    protected Map<String, AbstractEmoteReaction> getLeaderboardEmotes(final CommandParameters commandParameters, final int rowDistance, final int fastRowDistance,
+                                                                      final int startPos, final int endPos, final int totalLength, final int argPosStart, final int argPosEnd) {
+        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>(4);
+
+        // Far Left Arrow
+        if (startPos - rowDistance > 2) {
+            final int newStart = Math.max(1, (startPos - fastRowDistance));
+            emotes.put(DiscordEmotes.FAR_LEFT_ARROW.getEmote(), new CommandEmoteReaction(this, this.getLeaderboardNewCommandParameters(commandParameters, argPosStart,
+                    argPosEnd, newStart, rowDistance)));
+        }
+
+        // Left Arrow
+        if (startPos > 1) {
+            final int newStart = Math.max(1, (startPos - rowDistance - 1));
+            emotes.put(DiscordEmotes.LEFT_ARROW.getEmote(), new CommandEmoteReaction(this, this.getLeaderboardNewCommandParameters(commandParameters, argPosStart,
+                    argPosEnd, newStart, rowDistance)));
+        }
+
+        // Right Arrow
+        if (totalLength > endPos) {
+            final int newStart = Math.min(totalLength, (endPos + rowDistance + 1)) - rowDistance;
+            emotes.put(DiscordEmotes.RIGHT_ARROW.getEmote(), new CommandEmoteReaction(this, this.getLeaderboardNewCommandParameters(commandParameters, argPosStart,
+                    argPosEnd, newStart, rowDistance)));
+        }
+
+        // Far Right Arrow
+        if (totalLength - rowDistance - 1 > endPos) {
+            final int newStart = Math.min(totalLength, (endPos + fastRowDistance)) - rowDistance;
+            emotes.put(DiscordEmotes.FAR_RIGHT_ARROW.getEmote(), new CommandEmoteReaction(this, this.getLeaderboardNewCommandParameters(commandParameters, argPosStart,
+                    argPosEnd, newStart, rowDistance)));
+        }
+
+        return emotes;
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    protected CommandResult sendPicture(final CommandParameters commandParameters, final Optional<InputStream> inputStreamOpt, final String pictureName) {
+        return this.sendPicture(commandParameters, inputStreamOpt, pictureName, null);
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    protected CommandResult sendPicture(final CommandParameters commandParameters, final Optional<InputStream> inputStreamOpt, final String pictureName,
+                                        final EmoteReactionMessage emoteReactionMessage) {
+        return inputStreamOpt.map(inputStream -> {
+            commandParameters.getDiscordChannel()
+                    .sendFile(inputStream, pictureName + ".png")
+                    .queue(message -> {
+                        if (emoteReactionMessage != null) {
+                            StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
+                        }
+                    });
+            return CommandResult.SUCCESS;
+        }).orElseGet(() -> {
+            this.sendErrorMessage(commandParameters, "Error while creating picture.");
+            return CommandResult.ERROR;
+        });
     }
 }
