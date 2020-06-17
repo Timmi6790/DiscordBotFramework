@@ -3,13 +3,14 @@ package de.timmi6790.statsbotdiscord.modules.eventhandler;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import lombok.Data;
 import net.dv8tion.jda.api.events.Event;
+import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Collections;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -24,23 +25,17 @@ public class EventManager {
     }
 
     public void addEventListener(final Object listener) {
-        for (final Method method : listener.getClass().getMethods()) {
-            final boolean found = Arrays.stream(method.getDeclaredAnnotations()).anyMatch(annotation -> annotation instanceof SubscribeEvent);
-            if (!found || method.getParameterCount() != 1) {
-                continue;
+        Arrays.stream(listener.getClass().getMethods()).forEach(method -> {
+            final boolean annotationFound = Arrays.stream(method.getDeclaredAnnotations()).anyMatch(annotation -> annotation instanceof SubscribeEvent);
+            if (!annotationFound || method.getParameterCount() != 1) {
+                return;
             }
 
             final Class<?> parameter = method.getParameterTypes()[0];
-            if (!Event.class.isAssignableFrom(parameter)) {
-                continue;
+            if (Event.class.isAssignableFrom(parameter)) {
+                this.eventListeners.computeIfAbsent((Class<Event>) parameter, key -> Collections.synchronizedList(new ArrayList())).add(new EventObject(listener, method));
             }
-
-            if (!this.eventListeners.containsKey(parameter)) {
-                this.eventListeners.put((Class<Event>) parameter, new CopyOnWriteArrayList<>());
-            }
-
-            this.eventListeners.get(parameter).add(new EventObject(listener, method));
-        }
+        });
     }
 
     public void addEventListeners(final Object... listeners) {
@@ -48,12 +43,11 @@ public class EventManager {
     }
 
     public void removeEventListener(final Object listener) {
-        this.eventListeners.values().forEach(listeners -> {
-            listeners.removeAll(listeners.stream()
-                    .filter(pair -> pair.getObject().equals(listener))
-                    .collect(Collectors.toList())
-            );
-        });
+        this.eventListeners.values().forEach(listeners ->
+                listeners.removeAll(listeners.stream()
+                        .filter(pair -> pair.getObject().equals(listener))
+                        .collect(Collectors.toList())
+                ));
     }
 
     public void clearEventListener() {

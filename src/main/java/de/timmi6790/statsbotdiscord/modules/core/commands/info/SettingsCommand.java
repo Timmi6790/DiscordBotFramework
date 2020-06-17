@@ -22,7 +22,7 @@ public class SettingsCommand extends AbstractCommand {
             final StatEmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
                     .setTitle("Settings");
 
-            final Map<AbstractSetting, String> settingsMap = commandParameters.getUserDb().getSettingsMap();
+            final Map<AbstractSetting<?>, String> settingsMap = commandParameters.getUserDb().getSettingsMap();
             if (settingsMap.isEmpty()) {
                 embedBuilder.setDescription("You can unlock settings by using the bot.");
             } else {

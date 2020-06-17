@@ -178,6 +178,18 @@ public class MpStatsRestApiClient {
                 .asEmpty();
     }
 
+    public void addBedrockPlayerFilter(final String player, final String game) {
+        if (this.authName == null || this.authPassword == null) {
+            return;
+        }
+
+        Unirest.post("bedrock/leaderboards/filter")
+                .basicAuth(this.authName, this.authPassword)
+                .queryString("game", game)
+                .queryString("name", player)
+                .asEmpty();
+    }
+
     public void addJavaBoardAlias(final String board, final String alias) {
         if (this.authName == null || this.authPassword == null) {
             return;

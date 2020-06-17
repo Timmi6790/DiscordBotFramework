@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @Getter
 public class GuildDb {
     @Getter
-    private final static Cache<Long, GuildDb> GUILD_CACHE = Caffeine.newBuilder()
+    private static final Cache<Long, GuildDb> GUILD_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();

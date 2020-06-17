@@ -4,17 +4,13 @@ import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
     private final static int ARG_POS_START_POS = 1;
@@ -27,15 +23,6 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
 
         this.setDefaultPerms(true);
         this.setMinArgs(1);
-    }
-
-    private void addMessageEmote(final CommandParameters commandParameters, final Map<String, AbstractEmoteReaction> emotes, final DiscordEmotes emote, final int newStart, final int rowDistance) {
-        final CommandParameters newParameters = new CommandParameters(commandParameters);
-
-        newParameters.getArgs()[ARG_POS_START_POS] = String.valueOf(newStart);
-        newParameters.getArgs()[ARG_POS_END_POS] = String.valueOf(newStart + rowDistance);
-
-        emotes.put(emote.getEmote(), new CommandEmoteReaction(this, newParameters));
     }
 
     @Override
@@ -71,7 +58,7 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
             System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
             commandParameters.setArgs(newArgs);
         }
-        
+
         return this.sendPicture(
                 commandParameters,
                 new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),

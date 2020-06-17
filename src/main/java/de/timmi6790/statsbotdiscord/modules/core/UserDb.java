@@ -52,7 +52,7 @@ public class UserDb {
     private static final String INSERT_PLAYER_SETTING = "INSERT player_setting(player_id, setting_id, setting) VALUES(:playerId, :settingId, :setting);";
 
     @Getter
-    private final static Cache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
+    private static final Cache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
@@ -110,7 +110,7 @@ public class UserDb {
 
         UtilitiesDiscord.sendPrivateMessage(
                 commandParameters.getEvent().getAuthor(),
-                UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters)
+                UtilitiesDiscord.getEmbedBuilder(commandParameters)
                         .setTitle("You are banned")
                         .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
         );
@@ -195,7 +195,7 @@ public class UserDb {
     }
 
     // Settings
-    public void grantSetting(final Class<? extends AbstractSetting> settingClass) {
+    public void grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
         StatsBot.getSettingManager()
                 .getSettings()
                 .values()
@@ -205,7 +205,7 @@ public class UserDb {
                 .ifPresent(this::grantSetting);
     }
 
-    public void grantSetting(final AbstractSetting setting) {
+    public void grantSetting(final AbstractSetting<?> setting) {
         if (this.settings.containsKey(setting.getDatabaseId())) {
             return;
         }
@@ -225,7 +225,7 @@ public class UserDb {
         return StatsBot.getSettingManager().getSetting(internalName).map(abstractSetting -> this.settings.get(abstractSetting.getDatabaseId()));
     }
 
-    public List<AbstractSetting> getSettings() {
+    public List<AbstractSetting<?>> getSettings() {
         return this.settings.keySet()
                 .stream()
                 .map(settingDbId -> StatsBot.getSettingManager().getSettings().get(settingDbId))
@@ -233,7 +233,7 @@ public class UserDb {
                 .collect(Collectors.toList());
     }
 
-    public Map<AbstractSetting, String> getSettingsMap() {
+    public Map<AbstractSetting<?>, String> getSettingsMap() {
         return this.settings.entrySet()
                 .stream()
                 .map(entry -> new AbstractMap.SimpleEntry<>(StatsBot.getSettingManager().getSettings().get(entry.getKey()), entry.getValue()))
@@ -242,7 +242,7 @@ public class UserDb {
     }
 
     public boolean hasSettingAndEqualsTrue(final String internalName) {
-        final Optional<AbstractSetting> setting = StatsBot.getSettingManager().getSetting(internalName);
+        final Optional<AbstractSetting<?>> setting = StatsBot.getSettingManager().getSetting(internalName);
         if (!setting.isPresent() || !this.settings.containsKey(setting.get().getDatabaseId())) {
             return false;
         }

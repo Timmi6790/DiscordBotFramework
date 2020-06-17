@@ -33,14 +33,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class CommandManager {
-    private final static int COMMAND_USER_RATE_LIMIT = 10;
-    private final static List<Permission> MINIMUM_DISCORD_PERMISSIONS = Arrays.asList(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
+    private static final Pattern MESSAGE_SPLIT_PATTERN = Pattern.compile("\\s+");
 
-    private final static String GET_COMMAND_CAUSE_COUNT = "SELECT COUNT(*) FROM `command_cause` WHERE cause_name = :cause_name LIMIT 1;";
-    private final static String INSERT_COMMAND_CAUSE = "INSERT INTO command_cause(cause_name) VALUES(:cause_name);";
+    private static final int COMMAND_USER_RATE_LIMIT = 10;
+    private static final List<Permission> MINIMUM_DISCORD_PERMISSIONS = Arrays.asList(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
 
-    private final static String GET_COMMAND_STATUS_COUNT = "SELECT COUNT(*) FROM `command_status` WHERE status_name = :status_name LIMIT 1;";
-    private final static String INSERT_COMMAND_STATUS = "INSERT INTO command_status(status_name) VALUES(:status_name);";
+    private static final String GET_COMMAND_CAUSE_COUNT = "SELECT COUNT(*) FROM `command_cause` WHERE cause_name = :cause_name LIMIT 1;";
+    private static final String INSERT_COMMAND_CAUSE = "INSERT INTO command_cause(cause_name) VALUES(:cause_name);";
+
+    private static final String GET_COMMAND_STATUS_COUNT = "SELECT COUNT(*) FROM `command_status` WHERE status_name = :status_name LIMIT 1;";
+    private static final String INSERT_COMMAND_STATUS = "INSERT INTO command_status(status_name) VALUES(:status_name);";
 
     private final Pattern mainCommandPattern;
 
@@ -106,23 +108,10 @@ public class CommandManager {
         });
     }
 
-    private void sendMissingPermsMessage(final MessageReceivedIntEvent event, final List<Permission> missingPerms) {
-        final String perms = missingPerms.stream()
-                .map(perm -> MarkdownUtil.monospace(perm.getName()))
-                .collect(Collectors.joining(","));
-
-        UtilitiesDiscord.sendPrivateMessage(
-                event.getAuthor(),
-                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                        .setTitle("Missing Permission")
-                        .setDescription("The bot is missing " + perms + " permission(s).")
-        );
-    }
-
     private void sendUserBanMessage(final MessageReceivedIntEvent event) {
         UtilitiesDiscord.sendPrivateMessage(
                 event.getAuthor(),
-                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                UtilitiesDiscord.getEmbedBuilder(event.getAuthor(), event.getMemberOptional())
                         .setTitle("You are banned")
                         .setDescription("You are banned from using this service.")
         );
@@ -130,7 +119,7 @@ public class CommandManager {
 
     private void sendGuildBanMessage(final MessageReceivedIntEvent event) {
         event.getChannel().sendMessage(
-                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                UtilitiesDiscord.getEmbedBuilder(event.getAuthor(), event.getMemberOptional())
                         .setTitle("Banned Server")
                         .setDescription("This server is banned from using this service.")
                         .build())
@@ -167,7 +156,7 @@ public class CommandManager {
 
         final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
         event.getChannel().sendMessage(
-                UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                UtilitiesDiscord.getEmbedBuilder(event.getAuthor(), event.getMemberOptional())
                         .setTitle("Invalid Command")
                         .setDescription(description)
                         .setFooter("↓ Click Me!")
@@ -203,18 +192,9 @@ public class CommandManager {
     }
 
 
-    public Optional<AbstractCommand> getCommand(final String name) {
-        final AbstractCommand command = this.commands.get(name.toLowerCase());
-        if (command != null) {
-            return Optional.of(command);
-        }
-
-        final String commandAlias = this.commandAliases.get(name.toLowerCase());
-        if (commandAlias == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(this.commands.get(commandAlias));
+    public Optional<AbstractCommand> getCommand(String name) {
+        name = this.commandAliases.getOrDefault(name.toLowerCase(), name.toLowerCase());
+        return Optional.ofNullable(this.commands.get(name));
     }
 
     public List<AbstractCommand> getSimilarCommands(final CommandParameters commandParameters, final String name, final double similarity, final int limit) {
@@ -223,13 +203,10 @@ public class CommandManager {
                 this.commands.values()
                         .stream()
                         .filter(command -> command.hasPermission(commandParameters))
-                        .map(command -> command.getName().toLowerCase())
                         .collect(Collectors.toList()),
+                AbstractCommand::getName,
                 similarity,
-                limit)
-                .stream()
-                .map(this.commands::get)
-                .collect(Collectors.toList());
+                limit);
     }
 
     public Collection<AbstractCommand> getCommands() {
@@ -252,13 +229,13 @@ public class CommandManager {
         final Matcher mainMatcher = this.mainCommandPattern.matcher(rawMessage);
         if (mainMatcher.find()) {
             validStart = true;
-            rawMessage = rawMessage.substring(mainMatcher.group(1).length());
+            rawMessage = rawMessage.substring(mainMatcher.group(1).length()).trim();
 
         } else if (guildDb.getCommandAliasPattern() != null) {
             final Matcher guildAliasMatcher = guildDb.getCommandAliasPattern().matcher(rawMessage);
             if (guildAliasMatcher.find()) {
                 validStart = true;
-                rawMessage = rawMessage.substring(guildAliasMatcher.group(1).length());
+                rawMessage = rawMessage.substring(guildAliasMatcher.group(1).length()).trim();
             }
         }
 
@@ -280,41 +257,32 @@ public class CommandManager {
             return;
         }
 
-        final EnumSet<Permission> permissions;
+        // I want to have write perms in all channels the commands should work in
         if (event.isFromGuild()) {
-            // I want to have write perms in all channels the commands should work in
-            permissions = event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel());
+            final EnumSet<Permission> permissions = event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel());
             final List<Permission> missingPerms = MINIMUM_DISCORD_PERMISSIONS.stream()
                     .filter(perm -> !permissions.contains(perm))
                     .collect(Collectors.toList());
             if (!missingPerms.isEmpty()) {
-                this.sendMissingPermsMessage(event, missingPerms);
+                UtilitiesDiscord.sendMissingPermsMessage(event, missingPerms);
                 return;
             }
-
-        } else {
-            // Private chat
-            permissions = EnumSet.noneOf(Permission.class);
         }
 
-        boolean emptyArgs = false;
-        String[] args = rawMessage.trim().split("\\s+");
-        if (args.length == 1 && args[0].isEmpty()) {
-            args = new String[]{};
-            emptyArgs = true;
-        }
-
+        final String[] args = rawMessage.isEmpty() ? new String[0] : MESSAGE_SPLIT_PATTERN.split(rawMessage);
         final CommandParameters commandParameters = new CommandParameters(
-                permissions,
+                event.isFromGuild() ? event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel()) : EnumSet.noneOf(Permission.class),
                 ChannelDb.getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
                 userDb,
-                emptyArgs ? args : Arrays.copyOfRange(args, 1, args.length),
+                args.length == 0 ? args : Arrays.copyOfRange(args, 1, args.length),
                 event
         );
 
-        final Optional<AbstractCommand> commandOpt = emptyArgs ? this.getCommand(HelpCommand.class) : this.getCommand(args[0]);
+        final Optional<AbstractCommand> commandOpt = args.length == 0 ? this.getCommand(HelpCommand.class) : this.getCommand(args[0]);
         final AbstractCommand command;
-        if (!commandOpt.isPresent()) {
+        if (commandOpt.isPresent()) {
+            command = commandOpt.get();
+        } else {
             final List<AbstractCommand> similarCommands = this.getSimilarCommands(commandParameters, args[0], 0.6, 3);
             if (!similarCommands.isEmpty() && userDb.hasAutoCorrection()) {
                 command = similarCommands.get(0);
@@ -323,8 +291,6 @@ public class CommandManager {
                 this.sendInvalidCommandMessage(event, similarCommands, args[0], commandParameters);
                 return;
             }
-        } else {
-            command = commandOpt.get();
         }
 
         // Run Command

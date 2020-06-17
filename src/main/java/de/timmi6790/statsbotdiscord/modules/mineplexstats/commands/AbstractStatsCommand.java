@@ -108,7 +108,16 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
         return FORMAT_NUMBER.format(number);
     }
 
-    protected String getFormattedUnixTime(final long unix) {
+
+    /**
+     * Gets formatted unix time.
+     * <p>
+     * Required to run synchronized, because SimpleDateFormat is not thread safe
+     *
+     * @param unix the unix
+     * @return the formatted unix time
+     */
+    protected synchronized String getFormattedUnixTime(final long unix) {
         return FORMAT_DATE.format(Date.from(Instant.ofEpochSecond(unix)));
     }
 

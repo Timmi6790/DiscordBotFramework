@@ -3,15 +3,10 @@ package de.timmi6790.statsbotdiscord.modules.command;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.datatypes.StatEmbedBuilder;
 import de.timmi6790.statsbotdiscord.events.CommandExecutionEvent;
-import de.timmi6790.statsbotdiscord.events.MessageReceivedIntEvent;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.Event;
@@ -28,16 +23,17 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Data
 public abstract class AbstractCommand {
-    private final static Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
-    private final static Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
+    private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
+    private static final Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
 
-    private final static String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :command_name LIMIT 1;";
-    private final static String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:command_name);";
+    private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :command_name LIMIT 1;";
+    private static final String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:command_name);";
 
-    private final static String INSERT_COMMAND_LOG = "INSERT INTO command_log(command_id, command_cause_id, command_status_id, in_guild) VALUES(:commandId, " +
+    private static final String INSERT_COMMAND_LOG = "INSERT INTO command_log(command_id, command_cause_id, command_status_id, in_guild) VALUES(:commandId, " +
             "(SELECT id FROM command_cause WHERE cause_name = :causeName LIMIT 1), (SELECT id FROM command_status WHERE status_name = :statusName LIMIT 1), :inGuild);";
 
     private final int dbId;
@@ -97,11 +93,12 @@ public abstract class AbstractCommand {
     public void runCommand(final CommandParameters commandParameters, final CommandCause commandCause) {
         // Check command specific permissions discord bot perms
         if (commandParameters.getEvent().isFromGuild()) {
-            for (final Permission permission : this.getRequiredBotDiscordPermissions()) {
-                if (!commandParameters.getDiscordChannelPermissions().contains(permission)) {
-                    this.sendTimedMessage(commandParameters, this.getMissingPermsMessage(permission, commandParameters.getEvent()), 150);
-                    return;
-                }
+            final List<Permission> missingPerm = this.getRequiredBotDiscordPermissions().stream()
+                    .filter(permission -> !commandParameters.getDiscordChannelPermissions().contains(permission))
+                    .collect(Collectors.toList());
+            if (!missingPerm.isEmpty()) {
+                UtilitiesDiscord.sendMissingPermsMessage(commandParameters.getEvent(), missingPerm);
+                return;
             }
         }
 
@@ -225,11 +222,11 @@ public abstract class AbstractCommand {
     }
 
     protected void addExampleCommands(final String... exampleCommands) {
-        this.exampleCommands.addAll(Arrays.asList(exampleCommands));
+        this.exampleCommands.addAll(Arrays.stream(exampleCommands).map(example -> StatsBot.getCommandManager().getMainCommand() + " " + example).collect(Collectors.toList()));
     }
 
     public StatEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
-        return UtilitiesDiscord.getDefaultEmbedBuilder(commandParameters);
+        return UtilitiesDiscord.getEmbedBuilder(commandParameters);
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
@@ -243,27 +240,11 @@ public abstract class AbstractCommand {
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
-        this.sendEmoteMessage(
-                commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle(title)
-                        .setDescription(description),
-                emotes);
+        UtilitiesDiscord.sendEmoteMessage(commandParameters, title, description, emotes);
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getEvent().getChannel().sendMessage(
-                embedBuilder.setFooter("↓ Click Me!").build())
-                .queue(message -> {
-                            if (!emotes.isEmpty()) {
-                                final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
-                                        commandParameters.getEvent().getChannel().getIdLong());
-                                StatsBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
-                            }
-
-                            message.delete().queueAfter(90, TimeUnit.SECONDS);
-                        }
-                );
+        UtilitiesDiscord.sendEmoteMessage(commandParameters, embedBuilder, emotes);
     }
 
     protected void sendTimedMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final int deleteTime) {
@@ -276,42 +257,7 @@ public abstract class AbstractCommand {
 
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
                                    final AbstractCommand command, final String[] newArgs, final List<String> similarNames) {
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-        final StringBuilder description = new StringBuilder();
-        description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
-
-        if (similarNames.isEmpty()) {
-            description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
-                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
-
-        } else {
-            description.append("Is it possible that you wanted to write?\n\n");
-
-            for (int index = 0; similarNames.size() > index; index++) {
-                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames.get(index))).append("\n");
-
-                final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
-                newCommandParameters.getArgs()[argPos] = similarNames.get(index);
-
-                emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
-            }
-
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
-        }
-
-        final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
-        newCommandParameters.setArgs(newArgs);
-        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
-
-        this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
-    }
-
-    private EmbedBuilder getMissingPermsMessage(final Permission permission, final MessageReceivedIntEvent event) {
-        return UtilitiesDiscord.getDefaultEmbedBuilder(event.getAuthor(), event.getMemberOptional())
-                .setTitle("Missing Permission")
-                .setDescription("The bot is missing the " + MarkdownUtil.monospace(permission.getName()) + " permission.");
+        UtilitiesDiscord.sendHelpMessage(commandParameters, userArg, argPos, argName, this, command, newArgs, similarNames);
     }
 
     protected User getDiscordUser(final CommandParameters commandParameters, final int argPos) {
@@ -345,18 +291,20 @@ public abstract class AbstractCommand {
             return command.get();
         }
 
-        final AbstractCommand[] similarCommands = StatsBot.getCommandManager().getSimilarCommands(commandParameters, name, 0.6, 3).toArray(new AbstractCommand[0]);
-        if (similarCommands.length != 0 && commandParameters.getUserDb().hasAutoCorrection()) {
-            return similarCommands[0];
+        final List<AbstractCommand> similarCommands = StatsBot.getCommandManager().getSimilarCommands(commandParameters, name, 0.6, 3);
+        if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
+            return similarCommands.get(0);
         }
 
-        final List<String> similarNames = new ArrayList<>();
-        for (final AbstractCommand similarCommand : similarCommands) {
-            similarNames.add(similarCommand.getName());
-        }
-
-        final AbstractCommand helpCommand = StatsBot.getCommandManager().getCommand(HelpCommand.class).orElse(null);
-        this.sendHelpMessage(commandParameters, name, argPos, "command", helpCommand, new String[0], similarNames);
+        this.sendHelpMessage(
+                commandParameters,
+                name,
+                argPos,
+                "command",
+                StatsBot.getCommandManager().getCommand(HelpCommand.class).orElse(null),
+                new String[0],
+                similarCommands.stream().map(AbstractCommand::getName).collect(Collectors.toList())
+        );
         throw new CommandReturnException();
     }
 }

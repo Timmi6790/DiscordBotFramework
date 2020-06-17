@@ -9,6 +9,7 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedroc
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -39,8 +40,8 @@ public abstract class AbstractBedrockStatsCommand extends AbstractStatsCommand {
         throw new CommandReturnException();
     }
 
-    protected String getPlayer(final CommandParameters commandParameters) {
-        final String name = String.join(" ", commandParameters.getArgs());
+    protected String getPlayer(final CommandParameters commandParameters, final int startPos) {
+        final String name = String.join(" ", Arrays.copyOfRange(commandParameters.getArgs(), startPos, commandParameters.getArgs().length));
         if (NAME_PATTERN.matcher(name).find()) {
             return name;
         }

@@ -4,14 +4,10 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.core.UserDb;
 import lombok.Data;
 
-import java.util.regex.Pattern;
-
 @Data
 public class AbstractStat {
-    private final static Pattern INTERNAL_NAME_REPLACE_PATTERN = Pattern.compile("([ !<,\\.?`'])");
-
-    private final static String GET_STAT_ID = "SELECT id FROM `stat` WHERE stat_name = :statName LIMIT 1;";
-    private final static String INSERT_NEW_STAT = "INSERT INTO stat(stat_name) VALUES(:statName);";
+    private static final String GET_STAT_ID = "SELECT id FROM `stat` WHERE stat_name = :statName LIMIT 1;";
+    private static final String INSERT_NEW_STAT = "INSERT INTO stat(stat_name) VALUES(:statName);";
 
     private final int databaseId;
     private final String name;

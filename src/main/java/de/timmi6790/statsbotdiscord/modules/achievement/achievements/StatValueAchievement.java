@@ -29,7 +29,7 @@ public abstract class StatValueAchievement extends AbstractAchievement {
             event.getUserDb().grantAchievement(this);
 
             event.getUserDb().getUser().ifPresent(user -> {
-                UtilitiesDiscord.sendPrivateMessage(user, UtilitiesDiscord.getDefaultEmbedBuilder(user, Optional.empty())
+                UtilitiesDiscord.sendPrivateMessage(user, UtilitiesDiscord.getEmbedBuilder(user, Optional.empty())
                         .setTitle("Achievement Unlocked")
                         .setDescription("Unlocked: " + this.getName())
                 );

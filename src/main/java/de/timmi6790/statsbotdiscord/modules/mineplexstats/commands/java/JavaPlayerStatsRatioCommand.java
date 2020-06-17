@@ -2,12 +2,22 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java;
 
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PicturePie;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaRatioPlayer;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.PieChart;
+import org.knowm.xchart.PieChartBuilder;
+import org.knowm.xchart.PieSeries;
+import org.knowm.xchart.style.PieStyler;
+import org.knowm.xchart.style.Styler;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.Comparator;
@@ -40,7 +50,7 @@ public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
         // Add to pie chart
         // TODO: Write own piechart
         // https://cdn.discordapp.com/attachments/677989190914408478/716754040352145518/unknown.png
-        /*
+
         final PieChart chart = new PieChartBuilder()
                 .width(1000)
                 .height(800)
@@ -86,7 +96,7 @@ public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
             inputStream = Optional.empty();
         }
 
-         */
+         /*
 
         final PicturePie picturePie = new PicturePie(
                 javaRatioPlayer.getStats().values()
@@ -97,6 +107,8 @@ public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
         );
         
         final Optional<InputStream> inputStream = picturePie.getPie();
+
+          */
 
         final CommandResult commandResult = this.sendPicture(
                 commandParameters,

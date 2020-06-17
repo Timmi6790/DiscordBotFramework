@@ -71,7 +71,7 @@ public class StatsBot {
                 .setActivity(Activity.watching(config.getString("discord.mainCommand") + " help"))
 
                 .build();
-
+        
         eventManager = new EventManager();
         commandManager = new CommandManager(config.getString("discord.mainCommand"));
         emoteReactionManager = new EmoteReactionManager();

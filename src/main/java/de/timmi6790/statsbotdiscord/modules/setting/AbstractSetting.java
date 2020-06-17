@@ -21,6 +21,7 @@ public abstract class AbstractSetting<T> {
     }
 
     private int getSettingDbId() {
+        // Get current id or insert new
         return StatsBot.getDatabase().withHandle(handle ->
                 handle.createQuery(GET_SETTING_ID)
                         .bind("settingName", this.getInternalName())
