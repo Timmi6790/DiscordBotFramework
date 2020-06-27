@@ -25,6 +25,10 @@ public enum DiscordEmotes {
     @Getter
     private final String emote;
 
+    DiscordEmotes(final String emote) {
+        this.emote = emote;
+    }
+
     public static DiscordEmotes getNumberEmote(final int number) {
         switch (number) {
             case 1:
@@ -50,9 +54,5 @@ public enum DiscordEmotes {
             default:
                 return ZERO;
         }
-    }
-
-    DiscordEmotes(final String emote) {
-        this.emote = emote;
     }
 }

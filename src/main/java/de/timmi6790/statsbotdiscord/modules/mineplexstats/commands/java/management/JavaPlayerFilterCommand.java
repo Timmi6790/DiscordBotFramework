@@ -3,8 +3,8 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.managem
 import de.timmi6790.statsbotdiscord.datatypes.MapBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.EmptyEmoteReaction;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.EmptyEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;

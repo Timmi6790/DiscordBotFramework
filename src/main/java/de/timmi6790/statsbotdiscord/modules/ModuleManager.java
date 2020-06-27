@@ -2,13 +2,15 @@ package de.timmi6790.statsbotdiscord.modules;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.ModulesAllLoadedEvent;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
+@Data
 public class ModuleManager {
     private static final Logger logger = LoggerFactory.getLogger(ModuleManager.class);
 
@@ -24,22 +26,16 @@ public class ModuleManager {
     }
 
     public void registerModules(final AbstractModule... modules) {
-        for (final AbstractModule module : modules) {
-            this.registerModule(module);
-        }
+        Arrays.stream(modules).forEach(this::registerModule);
     }
 
     public AbstractModule getModule(final Class<? extends AbstractModule> clazz) {
         return this.modules.get(clazz);
     }
 
-    public Optional<AbstractModule> getModule(final String name) {
-        return Optional.empty();
-    }
-
     public void startAll() {
         for (final AbstractModule module : this.modules.values()) {
-            logger.info("Starting module " + module.getName());
+            logger.info("Starting module %s", module.getName());
             try {
                 module.onEnable();
             } catch (final Exception e) {

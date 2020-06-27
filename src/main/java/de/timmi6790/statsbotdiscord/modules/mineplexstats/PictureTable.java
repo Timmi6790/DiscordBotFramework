@@ -18,35 +18,31 @@ public class PictureTable extends AbstractPicture {
     private static final Font FONT_LEADERBOARD_HEADER = new Font("Arial", Font.PLAIN, 38);
     private static final Font FONT_LEADERBOARD = new Font("Arial", Font.PLAIN, 30);
 
-    private final static int GAP_X_BORDER = 10;
-    private final static int GAP_Y_ROW = 15;
-    private final static int GAP_WORD_MIN = 20;
+    private static final int GAP_X_BORDER = 10;
+    private static final int GAP_Y_ROW = 15;
+    private static final int GAP_WORD_MIN = 20;
 
-    private final static int GAP_HEADER = GAP_Y_ROW / 2;
-    private final static int GAP_SUB_HEADER = (int) (GAP_Y_ROW * 2.3);
-    private final static int GAP_LEADERBOARD_HEADER = GAP_Y_ROW * 2;
+    private static final int GAP_HEADER = GAP_Y_ROW / 2;
+    private static final int GAP_SUB_HEADER = (int) (GAP_Y_ROW * 2.3);
+    private static final int GAP_LEADERBOARD_HEADER = GAP_Y_ROW * 2;
 
     private final String[] header;
     private final String[][] leaderboard;
     private final String date;
 
     private final BufferedImage skin;
+    private final int[] widthHeader;
+    private final int[] widthLeaderboard;
     private int skinX = 0;
     private int skinY = 0;
-
     private int maxWidth = 0;
     private int maxHeight = 0;
-
     private int widthHeaderMax = 0;
     private int widthDateMax = 0;
     private int widthLeaderboardMax = 0;
-
-    private final int[] widthHeader;
-    private final int[] widthLeaderboard;
-
     private int currentHeightY = FONT_HEADER.getSize();
     private Graphics2D gd = null;
-    
+
     public PictureTable(final String[] header, final String date, final String[][] leaderboard) {
         this(header, date, leaderboard, null);
     }

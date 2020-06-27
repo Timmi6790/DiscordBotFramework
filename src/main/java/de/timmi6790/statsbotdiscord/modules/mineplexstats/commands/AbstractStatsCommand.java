@@ -5,9 +5,9 @@ import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.CommandEmoteReaction;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionMessage;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.errors.ErrorModel;
@@ -26,24 +26,24 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStatsCommand extends AbstractCommand {
-    protected final static String UNKNOWN_POSITION = ">1000";
-    protected final static String UNKNOWN_SCORE = "Unknown";
+    protected static final String UNKNOWN_POSITION = ">1000";
+    protected static final String UNKNOWN_SCORE = "Unknown";
 
-    private final static int MAX_LEADERBOARD_POSITION_DISTANCE = 15;
+    private static final int MAX_LEADERBOARD_POSITION_DISTANCE = 15;
 
-    private final static DecimalFormat FORMAT_NUMBER = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+    private static final DecimalFormat FORMAT_NUMBER = (DecimalFormat) NumberFormat.getInstance(Locale.US);
 
-    private final static SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss z");
-    private final static DecimalFormat FORMAT_DECIMAL_POINT = new DecimalFormat(".##");
+    private static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss z");
+    private static final DecimalFormat FORMAT_DECIMAL_POINT = new DecimalFormat(".##");
 
     static {
-        final DecimalFormatSymbols date_symbol = FORMAT_DECIMAL_POINT.getDecimalFormatSymbols();
-        date_symbol.setDecimalSeparator('.');
-        FORMAT_DECIMAL_POINT.setDecimalFormatSymbols(date_symbol);
+        final DecimalFormatSymbols dateSymbol = FORMAT_DECIMAL_POINT.getDecimalFormatSymbols();
+        dateSymbol.setDecimalSeparator('.');
+        FORMAT_DECIMAL_POINT.setDecimalFormatSymbols(dateSymbol);
 
-        final DecimalFormatSymbols number_symbol = FORMAT_NUMBER.getDecimalFormatSymbols();
-        number_symbol.setGroupingSeparator(',');
-        FORMAT_NUMBER.setDecimalFormatSymbols(number_symbol);
+        final DecimalFormatSymbols numberSymbol = FORMAT_NUMBER.getDecimalFormatSymbols();
+        numberSymbol.setGroupingSeparator(',');
+        FORMAT_NUMBER.setDecimalFormatSymbols(numberSymbol);
 
         FORMAT_DATE.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
@@ -188,7 +188,7 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
 
         final String[] dateArgs = new String[commandParameters.getArgs().length - startArgPos];
         System.arraycopy(commandParameters.getArgs(), startArgPos, dateArgs, 0, dateArgs.length);
-        final String name = String.join(" ", dateArgs);
+        final String name = String.join(" ", dateArgs).replace(".", "/");
 
         // TODO: Better date parsing :/
         final List<Date> dates = new PrettyTimeParser().parse(name);

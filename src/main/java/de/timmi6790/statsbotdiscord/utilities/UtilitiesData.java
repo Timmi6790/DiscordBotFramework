@@ -15,20 +15,15 @@ public class UtilitiesData {
     private static final Pattern INTEGER_PATTERN = Pattern.compile("^-?\\d+$");
 
     public static List<String> getSimilarityList(final String source, final Collection<String> targets, final double minimumRate, final int limit) {
-        final String sourceLower = source.toLowerCase();
-        return targets.parallelStream()
-                .filter(value -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, value.toLowerCase()) >= minimumRate)
-                .sorted(Comparator.comparingDouble((value) -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, value.toLowerCase()) * -1))
-                .limit(limit)
-                .collect(Collectors.toList());
+        return getSimilarityList(source, targets, String::toString, minimumRate, limit);
     }
 
     public static <T> List<T> getSimilarityList(final String source, final Collection<T> targets, final Function<T, String> toString, final double minimumRate, final int limit) {
         final String sourceLower = source.toLowerCase();
         return targets.parallelStream()
-                .filter(value -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, toString.apply(value).toLowerCase()) >= minimumRate)
-                .sorted(Comparator.comparingDouble((value) -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, toString.apply(value).toLowerCase()) * -1))
+                .sorted(Comparator.comparingDouble(value -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, toString.apply(value).toLowerCase()) * -1))
                 .limit(limit)
+                .filter(value -> UtilitiesData.SIMILARITY_STRATEGY.score(sourceLower, toString.apply(value).toLowerCase()) >= minimumRate)
                 .collect(Collectors.toList());
     }
 

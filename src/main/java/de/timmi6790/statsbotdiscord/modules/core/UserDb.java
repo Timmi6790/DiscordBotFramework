@@ -1,16 +1,15 @@
 package de.timmi6790.statsbotdiscord.modules.core;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.StatsChangeEvent;
 import de.timmi6790.statsbotdiscord.modules.achievement.AbstractAchievement;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
-import de.timmi6790.statsbotdiscord.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
 import de.timmi6790.statsbotdiscord.modules.setting.settings.BooleanSetting;
 import de.timmi6790.statsbotdiscord.modules.stat.AbstractStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -52,10 +51,26 @@ public class UserDb {
     private static final String INSERT_PLAYER_SETTING = "INSERT player_setting(player_id, setting_id, setting) VALUES(:playerId, :settingId, :setting);";
 
     @Getter
-    private static final Cache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
+    private static final LoadingCache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build();
+            .build(discordId ->
+                    StatsBot.getDatabase().withHandle(handle ->
+                            handle.createQuery(GET_PLAYER)
+                                    .bind("discordId", discordId)
+                                    .mapTo(UserDb.class)
+                                    .findOne()
+                                    .orElseGet(() -> {
+                                        handle.createUpdate(INSERT_PLAYER)
+                                                .bind("discordId", discordId)
+                                                .execute();
+
+                                        return handle.createQuery(GET_PLAYER)
+                                                .bind("discordId", discordId)
+                                                .mapTo(UserDb.class).first();
+                                    })
+                    )
+            );
 
     private final int databaseId;
     private final long discordId;
@@ -72,33 +87,8 @@ public class UserDb {
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
 
-    public static Optional<UserDb> get(final long discordId) {
-        final UserDb userDb = USER_CACHE.getIfPresent(discordId);
-        if (userDb != null) {
-            return Optional.of(userDb);
-        }
-
-        final Optional<UserDb> userOpt = StatsBot.getDatabase().withHandle(handle ->
-                handle.createQuery(GET_PLAYER)
-                        .bind("discordId", discordId)
-                        .mapTo(UserDb.class)
-                        .findOne()
-        );
-
-        userOpt.ifPresent(u -> USER_CACHE.put(discordId, u));
-        return userOpt;
-    }
-
     public static UserDb getOrCreate(final long discordId) {
-        return UserDb.get(discordId).orElseGet(() -> {
-            StatsBot.getDatabase().useHandle(handle ->
-                    handle.createUpdate(INSERT_PLAYER)
-                            .bind("discordId", discordId)
-                            .execute()
-            );
-
-            return UserDb.get(discordId).orElseThrow(RuntimeException::new);
-        });
+        return USER_CACHE.get(discordId);
     }
 
     public Optional<User> getUser() {
@@ -108,9 +98,9 @@ public class UserDb {
     public void ban(final CommandParameters commandParameters, final String reason) {
         this.setBanned(true);
 
-        UtilitiesDiscord.sendPrivateMessage(
+        UtilitiesDiscordMessages.sendPrivateMessage(
                 commandParameters.getEvent().getAuthor(),
-                UtilitiesDiscord.getEmbedBuilder(commandParameters)
+                UtilitiesDiscordMessages.getEmbedBuilder(commandParameters)
                         .setTitle("You are banned")
                         .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
         );
@@ -255,6 +245,6 @@ public class UserDb {
     }
 
     public boolean hasAutoCorrection() {
-        return this.hasSettingAndEqualsTrue(CommandAutoCorrectSetting.INTERNAL_NAME);
+        return this.hasSettingAndEqualsTrue("core.settings.autocorrect");
     }
 }

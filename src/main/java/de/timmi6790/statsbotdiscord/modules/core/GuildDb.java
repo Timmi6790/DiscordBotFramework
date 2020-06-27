@@ -1,7 +1,7 @@
 package de.timmi6790.statsbotdiscord.modules.core;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
 import lombok.EqualsAndHashCode;
@@ -11,19 +11,41 @@ import lombok.ToString;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @ToString
 @EqualsAndHashCode
 @Getter
 public class GuildDb {
+    private static final String GET_GUILD = "SELECT guild.id, discordId, banned, GROUP_CONCAT(alias.alias) aliases FROM guild " +
+            "LEFT JOIN guild_command_alias alias ON alias.guild_id = guild.id " +
+            "WHERE guild.discordId = :discordId " +
+            "LIMIT 1;";
+
+    private static final String INSERT_GUILD = "INSERT INTO guild(discordId) VALUES (:discordId);";
+
     @Getter
-    private static final Cache<Long, GuildDb> GUILD_CACHE = Caffeine.newBuilder()
+    private static final LoadingCache<Long, GuildDb> GUILD_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build();
+            .build(discordId ->
+                    StatsBot.getDatabase().withHandle(handle -> handle.createQuery(GET_GUILD)
+                            .bind("discordId", discordId)
+                            .mapTo(GuildDb.class)
+                            .findOne()
+                            .orElseGet(() -> {
+                                handle.createUpdate(INSERT_GUILD)
+                                        .bind("discordId", discordId)
+                                        .execute();
+                                return handle.createQuery(GET_GUILD)
+                                        .bind("discordId", discordId)
+                                        .mapTo(GuildDb.class)
+                                        .first();
+                            })
+                    )
+            );
 
     private final int databaseId;
     private final long discordId;
@@ -47,54 +69,24 @@ public class GuildDb {
             this.commandAliasPattern = null;
 
         } else {
-            final StringJoiner aliasPattern = new StringJoiner("|");
-            for (final String alias : commandAliasNames) {
-                aliasPattern.add("(" + alias + ")");
-            }
-
-            this.commandAliasPattern = Pattern.compile("^(" + aliasPattern.toString() + ")", Pattern.CASE_INSENSITIVE);
+            final String aliasPattern = commandAliasNames
+                    .stream()
+                    .map(alias -> "(?:" + alias + ")")
+                    .collect(Collectors.joining("|"));
+            this.commandAliasPattern = Pattern.compile("^(?:" + aliasPattern + ")(.*)$)", Pattern.CASE_INSENSITIVE);
         }
-    }
-
-    public static Optional<GuildDb> get(final long discordId) {
-        final GuildDb guildDb = GUILD_CACHE.getIfPresent(discordId);
-        if (guildDb != null) {
-            return Optional.of(guildDb);
-        }
-
-        final Optional<GuildDb> guildOpt = StatsBot.getDatabase().withHandle(handle ->
-                handle.createQuery("SELECT guild.id, discordId, banned, GROUP_CONCAT(alias.alias) aliases FROM guild " +
-                        "LEFT JOIN guild_command_alias alias ON alias.guild_id = guild.id " +
-                        "WHERE guild.discordId = :discordId " +
-                        "LIMIT 1;")
-                        .bind("discordId", discordId)
-                        .mapTo(GuildDb.class)
-                        .findOne()
-        );
-
-        guildOpt.ifPresent(g -> GUILD_CACHE.put(discordId, g));
-        return guildOpt;
     }
 
     public static GuildDb getOrCreate(final long discordId) {
-        return GuildDb.get(discordId).orElseGet(() -> {
-            StatsBot.getDatabase().useHandle(handle ->
-                    handle.createUpdate("INSERT INTO guild(discordId) VALUES (:discordId);")
-                            .bind("discordId", discordId)
-                            .execute()
-            );
+        return GUILD_CACHE.get(discordId);
+    }
 
-            return GuildDb.get(discordId).orElseThrow(RuntimeException::new);
-        });
+    public Optional<Pattern> getCommandAliasPattern() {
+        return Optional.ofNullable(this.commandAliasPattern);
     }
 
     public boolean addCommandAlias(final String alias) {
-        if (this.commandAliasNames.add(alias)) {
-            // Insert db
-
-            return true;
-        }
-
-        return false;
+        // Insert db
+        return this.commandAliasNames.add(alias);
     }
 }

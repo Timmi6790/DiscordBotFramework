@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.modules.ModuleManager;
 import de.timmi6790.statsbotdiscord.modules.achievement.AchievementManager;
 import de.timmi6790.statsbotdiscord.modules.command.CommandManager;
 import de.timmi6790.statsbotdiscord.modules.core.CoreModule;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionManager;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionManager;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.EventManager;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.setting.SettingManager;
@@ -29,17 +29,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class StatsBot {
-    public final static String BOT_VERSION = "3.0.1";
-
+    public static final String BOT_VERSION = "3.0.1";
+    @Getter
+    private static final ModuleManager moduleManager = new ModuleManager();
+    @Getter
+    private static final SettingManager settingManager = new SettingManager();
     @Getter
     private static SentryClient sentry;
     @Getter
     private static Jdbi database;
-
     @Getter
     private static JDA discord;
-    @Getter
-    private static final ModuleManager moduleManager = new ModuleManager();
     @Getter
     private static CommandManager commandManager;
     @Getter
@@ -50,8 +50,6 @@ public class StatsBot {
     private static AchievementManager achievementManager;
     @Getter
     private static EmoteReactionManager emoteReactionManager;
-    @Getter
-    private static final SettingManager settingManager = new SettingManager();
 
     public static void main(final String[] args) throws LoginException, ConfigurationException {
         final Configurations configs = new Configurations();
@@ -71,9 +69,13 @@ public class StatsBot {
                 .setActivity(Activity.watching(config.getString("discord.mainCommand") + " help"))
 
                 .build();
-        
+
         eventManager = new EventManager();
-        commandManager = new CommandManager(config.getString("discord.mainCommand"));
+
+        commandManager = new CommandManager(config.getString("discord.mainCommand"), discord.getSelfUser().getIdLong());
+        commandManager.innitDatabase(database);
+        eventManager.addEventListener(commandManager);
+
         emoteReactionManager = new EmoteReactionManager();
         statManager = new StatManager();
         achievementManager = new AchievementManager();

@@ -5,8 +5,8 @@ import de.timmi6790.statsbotdiscord.datatypes.StatEmbedBuilder;
 import de.timmi6790.statsbotdiscord.events.CommandExecutionEvent;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.emoteReactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.Event;
@@ -15,12 +15,10 @@ import io.sentry.event.interfaces.ExceptionInterface;
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,29 +28,29 @@ public abstract class AbstractCommand {
     private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
     private static final Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
 
-    private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :command_name LIMIT 1;";
-    private static final String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:command_name);";
+    private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :commandName LIMIT 1;";
+    private static final String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:commandName);";
 
     private static final String INSERT_COMMAND_LOG = "INSERT INTO command_log(command_id, command_cause_id, command_status_id, in_guild) VALUES(:commandId, " +
             "(SELECT id FROM command_cause WHERE cause_name = :causeName LIMIT 1), (SELECT id FROM command_status WHERE status_name = :statusName LIMIT 1), :inGuild);";
 
     private final int dbId;
     private final String name;
-    private String category;
+
     private final String description;
-
     private final List<String> exampleCommands = new ArrayList<>();
-
     private final String syntax;
-    private int minArgs = 0;
 
     private final String[] aliasNames;
 
+    private final List<Permission> userDiscordPermissions = new ArrayList<>();
+    private final Set<Permission> requiredBotDiscordPermissions = new HashSet<>();
+
+    private String category;
+    private int minArgs = 0;
+
     private boolean defaultPerms = false;
     private String permissionNode;
-    private final List<Permission> userDiscordPermissions = new ArrayList<>();
-
-    private final Set<Permission> requiredBotDiscordPermissions = new HashSet<>();
     private boolean allowBots = true;
     private boolean allowPrivateMessages = true;
 
@@ -65,19 +63,40 @@ public abstract class AbstractCommand {
         this.dbId = this.getCommandDbId();
     }
 
+
+    /**
+     * USED FOR TESTS ONLY
+     * Instantiates a new Abstract command.
+     *
+     * @param dbId        the db id
+     * @param name        the name
+     * @param category    the category
+     * @param description the description
+     * @param syntax      the syntax
+     * @param aliasNames  the alias names
+     */
+    public AbstractCommand(final int dbId, final String name, final String category, final String description, final String syntax, final String... aliasNames) {
+        this.name = name;
+        this.category = category;
+        this.description = description;
+        this.syntax = syntax;
+        this.aliasNames = aliasNames;
+        this.dbId = dbId;
+    }
+
     private int getCommandDbId() {
         return StatsBot.getDatabase().withHandle(handle ->
                 handle.createQuery(GET_COMMAND_ID)
-                        .bind("command_name", this.name)
+                        .bind("commandName", this.name)
                         .mapTo(int.class)
                         .findFirst()
                         .orElseGet(() -> {
                             handle.createUpdate(INSERT_NEW_COMMAND)
-                                    .bind("command_name", this.name)
+                                    .bind("commandName", this.name)
                                     .execute();
 
                             return handle.createQuery(GET_COMMAND_ID)
-                                    .bind("command_name", this.name)
+                                    .bind("commandName", this.name)
                                     .mapTo(int.class)
                                     .first();
                         })
@@ -97,7 +116,7 @@ public abstract class AbstractCommand {
                     .filter(permission -> !commandParameters.getDiscordChannelPermissions().contains(permission))
                     .collect(Collectors.toList());
             if (!missingPerm.isEmpty()) {
-                UtilitiesDiscord.sendMissingPermsMessage(commandParameters.getEvent(), missingPerm);
+                UtilitiesDiscordMessages.sendMissingPermsMessage(commandParameters.getEvent(), missingPerm);
                 return;
             }
         }
@@ -226,7 +245,7 @@ public abstract class AbstractCommand {
     }
 
     public StatEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
-        return UtilitiesDiscord.getEmbedBuilder(commandParameters);
+        return UtilitiesDiscordMessages.getEmbedBuilder(commandParameters);
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
@@ -240,24 +259,20 @@ public abstract class AbstractCommand {
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
-        UtilitiesDiscord.sendEmoteMessage(commandParameters, title, description, emotes);
+        UtilitiesDiscordMessages.sendEmoteMessage(commandParameters, title, description, emotes);
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
-        UtilitiesDiscord.sendEmoteMessage(commandParameters, embedBuilder, emotes);
+        UtilitiesDiscordMessages.sendEmoteMessage(commandParameters, embedBuilder, emotes);
     }
 
     protected void sendTimedMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final int deleteTime) {
-        commandParameters.getDiscordChannel()
-                .sendMessage(embedBuilder.build())
-                .delay(deleteTime, TimeUnit.SECONDS)
-                .flatMap(Message::delete)
-                .queue();
+        UtilitiesDiscordMessages.sendTimedMessage(commandParameters, embedBuilder, deleteTime);
     }
 
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
                                    final AbstractCommand command, final String[] newArgs, final List<String> similarNames) {
-        UtilitiesDiscord.sendHelpMessage(commandParameters, userArg, argPos, argName, this, command, newArgs, similarNames);
+        UtilitiesDiscordMessages.sendHelpMessage(commandParameters, userArg, argPos, argName, this, command, newArgs, similarNames);
     }
 
     protected User getDiscordUser(final CommandParameters commandParameters, final int argPos) {

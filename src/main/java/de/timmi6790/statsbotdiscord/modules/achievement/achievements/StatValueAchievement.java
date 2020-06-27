@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.events.StatsChangeEvent;
 import de.timmi6790.statsbotdiscord.modules.achievement.AbstractAchievement;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.SubscribeEvent;
 import de.timmi6790.statsbotdiscord.modules.stat.AbstractStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscord;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
 
 import java.util.Optional;
 
@@ -29,7 +29,7 @@ public abstract class StatValueAchievement extends AbstractAchievement {
             event.getUserDb().grantAchievement(this);
 
             event.getUserDb().getUser().ifPresent(user -> {
-                UtilitiesDiscord.sendPrivateMessage(user, UtilitiesDiscord.getEmbedBuilder(user, Optional.empty())
+                UtilitiesDiscordMessages.sendPrivateMessage(user, UtilitiesDiscordMessages.getEmbedBuilder(user, Optional.empty())
                         .setTitle("Achievement Unlocked")
                         .setDescription("Unlocked: " + this.getName())
                 );

@@ -3,7 +3,7 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock;
 import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.emoteReaction.EmoteReactionMessage;
+import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;

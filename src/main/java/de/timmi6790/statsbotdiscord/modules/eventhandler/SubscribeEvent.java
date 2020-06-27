@@ -8,7 +8,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SubscribeEvent {
-    boolean async() default false;
-
     EventPriority priority() default EventPriority.NORMAL;
 }

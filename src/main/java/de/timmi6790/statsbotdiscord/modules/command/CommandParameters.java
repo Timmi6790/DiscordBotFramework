@@ -21,8 +21,8 @@ public class CommandParameters {
     private final EnumSet<Permission> discordChannelPermissions;
     private final ChannelDb channelDb;
     private final UserDb userDb;
-    private String[] args;
     private final MessageReceivedIntEvent event;
+    private String[] args;
 
     public CommandParameters(final CommandParameters commandParameters) {
         this.discordChannelPermissions = commandParameters.discordChannelPermissions;
