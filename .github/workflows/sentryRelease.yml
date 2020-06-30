@@ -21,7 +21,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: timmi6790
-          SENTRY_PROJECT: 5181683
+          SENTRY_PROJECT: statsbotdiscord
         with:
             tagName: ${{ github.sha }}
             environment: qa
