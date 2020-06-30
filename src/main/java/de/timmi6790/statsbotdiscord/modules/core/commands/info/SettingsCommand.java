@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class SettingsCommand extends AbstractCommand {
     public SettingsCommand() {
-        super("settings", "", "[setting] [value]", "st");
+        super("settings", "Info", "Settings", "[setting] [value]", "", "st");
 
         this.setDefaultPerms(true);
     }

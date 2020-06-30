@@ -11,6 +11,7 @@ public class JavaStatAliasCommand extends AbstractJavaStatsCommand {
     public JavaStatAliasCommand() {
         super("aliasStat", "Stat Alias", "<game> <stat> <alias>", "as");
 
+        this.setCategory("MineplexStats - Java - Management");
         this.setPermission("mineplexstats.management.aliasStat");
         this.setMinArgs(3);
     }

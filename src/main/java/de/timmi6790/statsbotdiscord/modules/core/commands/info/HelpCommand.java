@@ -33,17 +33,20 @@ public class HelpCommand extends AbstractCommand {
                     .stream()
                     .filter(command -> command.hasPermission(commandParameters))
                     .collect(Collectors.groupingBy(AbstractCommand::getCategory, TreeMap::new, Collectors.toList()))
-                    .forEach((key, value) -> message.addField(
-                            key,
-                            value.stream()
-                                    .sorted(Comparator.comparing(AbstractCommand::getName))
-                                    .map(command -> {
-                                        final String capitalizedName = command.getName().substring(0, 1).toUpperCase() + command.getName().substring(1);
-                                        final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
+                    .forEach((key, value) ->
+                            message.addField(
+                                    key,
+                                    value.stream()
+                                            .sorted(Comparator.comparing(AbstractCommand::getName))
+                                            .map(command -> {
+                                                final String capitalizedName = command.getName().substring(0, 1).toUpperCase() + command.getName().substring(1);
+                                                final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
 
-                                        return capitalizedName + ": " + MarkdownUtil.monospace(mainCommand + command.getName() + syntax);
-                                    })
-                                    .collect(Collectors.joining("\n")), false)
+                                                return capitalizedName + ": " + MarkdownUtil.monospace(mainCommand + command.getName() + syntax);
+                                            })
+                                            .collect(Collectors.joining("\n")),
+                                    false
+                            )
                     );
 
             this.sendTimedMessage(commandParameters, message, 90);
@@ -52,11 +55,14 @@ public class HelpCommand extends AbstractCommand {
 
         // Command specific
         final AbstractCommand command = this.getCommand(commandParameters, 0);
+        final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
+
         final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Commands " + UtilitiesString.capitalize(command.getName()))
                 .addField("Description", command.getDescription(), false, !command.getDescription().isEmpty())
                 .addField("Alias Names", String.join(", ", command.getAliasNames()), false, command.getAliasNames().length != 0)
-                .addField("Syntax", command.getSyntax(), false, !command.getSyntax().isEmpty());
+                .addField("Syntax", command.getSyntax(), false, !command.getSyntax().isEmpty())
+                .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty());
 
         this.sendTimedMessage(commandParameters, message, 90);
         return CommandResult.SUCCESS;

@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.datatypes.BiggestLong;
 import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockPlayerStats;
 
@@ -18,6 +18,10 @@ public class BedrockPlayerCommand extends AbstractBedrockStatsCommand {
 
         this.setDefaultPerms(true);
         this.setMinArgs(1);
+
+        this.addExampleCommands(
+                "xottic7"
+        );
     }
 
     @Override

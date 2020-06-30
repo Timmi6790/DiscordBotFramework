@@ -12,7 +12,12 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
     public JavaGroupsGroupsCommand() {
         super("groups", "Java Groups", "[group]");
 
+        this.setCategory("MineplexStats - Java - Group");
         this.setDefaultPerms(true);
+
+        this.addExampleCommands(
+                "MixedArcade"
+        );
     }
 
     @Override

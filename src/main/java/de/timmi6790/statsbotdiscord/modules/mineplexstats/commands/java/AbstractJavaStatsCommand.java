@@ -28,10 +28,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
-    private final static Pattern NAME_PATTERN = Pattern.compile("^\\w{1,16}$");
-    private final static List<String> STATS_TIME = new ArrayList<>(Arrays.asList("Ingame Time", "Hub Time", "Time Playing"));
+    private static final Pattern NAME_PATTERN = Pattern.compile("^\\w{1,16}$");
+    private static final List<String> STATS_TIME = new ArrayList<>(Arrays.asList("Ingame Time", "Hub Time", "Time Playing"));
 
-    private final static Cache<UUID, BufferedImage> SKIN_CACHE = Caffeine.newBuilder()
+    private static final Cache<UUID, BufferedImage> SKIN_CACHE = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(2, TimeUnit.MINUTES)
             .expireAfterAccess(2, TimeUnit.MINUTES)

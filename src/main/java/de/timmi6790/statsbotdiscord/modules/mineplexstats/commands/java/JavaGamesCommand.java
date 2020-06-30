@@ -16,6 +16,11 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
         super("games", "Java Games", "[game] [stat]", "g");
 
         this.setDefaultPerms(true);
+
+        this.addExampleCommands(
+                "Global",
+                "Global ExpEarned"
+        );
     }
 
     @Override

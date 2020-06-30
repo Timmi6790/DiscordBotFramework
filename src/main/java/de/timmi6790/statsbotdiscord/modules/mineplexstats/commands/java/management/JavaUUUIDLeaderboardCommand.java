@@ -8,8 +8,8 @@ import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
@@ -24,15 +24,16 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
-    private final static int ARG_POS_BOARD_POS = 2;
-    private final static int ARG_POS_START_POS = 3;
-    private final static int ARG_POS_END_POS = 4;
+    private static final int ARG_POS_BOARD_POS = 2;
+    private static final int ARG_POS_START_POS = 3;
+    private static final int ARG_POS_END_POS = 4;
 
-    private final static int LEADERBOARD_UPPER_LIMIT = 1_000;
+    private static final int LEADERBOARD_UPPER_LIMIT = 1_000;
 
     public JavaUUUIDLeaderboardCommand() {
         super("uuidLeaderboard", "Java UUID Leaderboard", "<game> <stat> [board] [start] [end] [date]", "ul");
 
+        this.setCategory("MineplexStats - Java - Management");
         this.setMinArgs(2);
         this.setPermission("mineplexstats.management.filter");
         this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);

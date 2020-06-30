@@ -20,6 +20,7 @@ public class JavaPlayerFilterCommand extends AbstractJavaStatsCommand {
     public JavaPlayerFilterCommand() {
         super("filter", "Filter Players", "<uuid> <game> <stat> <board>");
 
+        this.setCategory("MineplexStats - Java - Management");
         this.setMinArgs(4);
         this.setPermission("mineplexstats.management.filter");
         this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);

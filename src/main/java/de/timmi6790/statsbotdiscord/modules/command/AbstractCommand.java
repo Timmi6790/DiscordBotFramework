@@ -37,7 +37,7 @@ public abstract class AbstractCommand {
     private final int dbId;
     private final String name;
 
-    private final String description;
+    private String description;
     private final List<String> exampleCommands = new ArrayList<>();
     private final String syntax;
 
@@ -123,36 +123,15 @@ public abstract class AbstractCommand {
 
         // Command pre event
         final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
-        StatsBot.getEventManager().callEvent(commandExecutionPre);
+        StatsBot.getEventManager().executeEvent(commandExecutionPre);
 
         CommandResult commandResult = null;
         if (!this.hasPermission(commandParameters)) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle("Missing perms")
-                            .setDescription("You don't have the permissions to run this command."),
-                    90
-            );
+            this.sendMissingPermissionMessage(commandParameters);
             commandResult = CommandResult.NO_PERMS;
 
         } else if (this.minArgs > commandParameters.getArgs().length) {
-            final String[] args = commandParameters.getArgs();
-            final String[] syntax = this.syntax.split(" ");
-
-            final StringJoiner requiredSyntax = new StringJoiner(" ");
-            for (int index = 0; Math.min(this.minArgs, syntax.length) > index; index++) {
-                requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(syntax[index]));
-            }
-
-            this.sendTimedMessage(
-                    commandParameters,
-                    this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
-                            .setDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
-                            .addField("Required Syntax", requiredSyntax.toString(), false)
-                            .addField("Command Syntax", this.getSyntax(), false),
-                    90
-            );
+            this.sendMissingArgsMessage(commandParameters);
             commandResult = CommandResult.MISSING_ARGS;
         }
 
@@ -202,7 +181,7 @@ public abstract class AbstractCommand {
 
         // Command post event
         final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, finalCommandResult);
-        StatsBot.getEventManager().callEvent(commandExecutionPost);
+        StatsBot.getEventManager().executeEvent(commandExecutionPost);
     }
 
     public final boolean hasPermission(final CommandParameters commandParameters) {
@@ -244,8 +223,48 @@ public abstract class AbstractCommand {
         this.exampleCommands.addAll(Arrays.stream(exampleCommands).map(example -> StatsBot.getCommandManager().getMainCommand() + " " + example).collect(Collectors.toList()));
     }
 
+    public List<String> getFormattedExampleCommands() {
+        final String mainCommand = StatsBot.getCommandManager().getMainCommand();
+        return this.exampleCommands
+                .stream()
+                .map(exampleCommand -> mainCommand + " " + this.name + " " + exampleCommand)
+                .collect(Collectors.toList());
+    }
+
     public StatEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
         return UtilitiesDiscordMessages.getEmbedBuilder(commandParameters);
+    }
+
+    protected void sendMissingPermissionMessage(final CommandParameters commandParameters) {
+        this.sendTimedMessage(
+                commandParameters,
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle("Missing perms")
+                        .setDescription("You don't have the permissions to run this command."),
+                90
+        );
+    }
+
+    protected void sendMissingArgsMessage(final CommandParameters commandParameters) {
+        final String[] args = commandParameters.getArgs();
+        final String[] syntax = this.syntax.split(" ");
+
+        final StringJoiner requiredSyntax = new StringJoiner(" ");
+        for (int index = 0; Math.min(this.minArgs, syntax.length) > index; index++) {
+            requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(syntax[index]));
+        }
+
+        final String exampleCommands = String.join("\n", this.getFormattedExampleCommands());
+
+        this.sendTimedMessage(
+                commandParameters,
+                this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
+                        .setStatDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
+                        .addField("Required Syntax", requiredSyntax.toString(), false)
+                        .addField("Command Syntax", this.getSyntax(), false)
+                        .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty()),
+                90
+        );
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {

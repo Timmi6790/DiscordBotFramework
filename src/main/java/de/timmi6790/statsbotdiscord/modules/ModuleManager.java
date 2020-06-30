@@ -35,7 +35,7 @@ public class ModuleManager {
 
     public void startAll() {
         for (final AbstractModule module : this.modules.values()) {
-            logger.info("Starting module %s", module.getName());
+            logger.info("Starting module {}", module.getName());
             try {
                 module.onEnable();
             } catch (final Exception e) {
@@ -43,6 +43,6 @@ public class ModuleManager {
             }
         }
 
-        StatsBot.getEventManager().callEvent(new ModulesAllLoadedEvent());
+        StatsBot.getEventManager().executeEvent(new ModulesAllLoadedEvent());
     }
 }

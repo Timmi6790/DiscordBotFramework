@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.picture;
 
 import lombok.Data;
 

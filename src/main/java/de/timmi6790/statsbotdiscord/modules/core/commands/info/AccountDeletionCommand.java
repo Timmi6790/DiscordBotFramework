@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AccountDeletionCommand extends AbstractCommand {
+    private static final String PLAYER_DELETE = "DELETE FROM player WHERE id = :dbId LIMIT 1;";
+
     private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"TakeMeBackToParadiseCity"};
 
     private final Cache<Long, Integer> userDeleteConfirmCache = Caffeine.newBuilder()
@@ -87,7 +89,7 @@ public class AccountDeletionCommand extends AbstractCommand {
         this.userDeleteConfirmCache.invalidate(userId);
         UserDb.getUSER_CACHE().invalidate(userId);
         StatsBot.getDatabase().useHandle(handle ->
-                handle.createUpdate("DELETE FROM player WHERE id = :dbId LIMIT 1;")
+                handle.createUpdate(PLAYER_DELETE)
                         .bind("dbId", commandParameters.getUserDb().getDatabaseId())
                         .execute()
         );

@@ -24,8 +24,8 @@ import java.util.UUID;
 public class MpStatsRestApiClient {
     private static final String BASE_URL = "https://mpstats.timmi6790.de/";//  "http://127.0.0.1:8000/"
 
-    private final static ErrorModel UNKNOWN_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "Unknown Error");
-    private final static ErrorModel TIMEOUT_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "API Timeout Exception");
+    private static final ErrorModel UNKNOWN_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "Unknown Error");
+    private static final ErrorModel TIMEOUT_ERROR_RESPONSE_MODEL = new ErrorModel(-1, "API Timeout Exception");
 
     private final Gson gson;
 

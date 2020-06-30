@@ -13,21 +13,21 @@ public class DiscordEventListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(@Nonnull final net.dv8tion.jda.api.events.message.MessageReceivedEvent event) {
         final MessageReceivedIntEvent messageReceivedIntEvent = new MessageReceivedIntEvent(event.getResponseNumber(), event.getMessage());
-        StatsBot.getEventManager().callEvent(messageReceivedIntEvent);
+        StatsBot.getEventManager().executeEvent(messageReceivedIntEvent);
     }
 
     @Override
     public void onMessageReactionAdd(@Nonnull final MessageReactionAddEvent event) {
-        StatsBot.getEventManager().callEvent(event);
+        StatsBot.getEventManager().executeEvent(event);
     }
 
     @Override
     public void onMessageReactionRemove(@Nonnull final MessageReactionRemoveEvent event) {
-        StatsBot.getEventManager().callEvent(event);
+        StatsBot.getEventManager().executeEvent(event);
     }
 
     @Override
     public void onMessageDelete(@Nonnull final MessageDeleteEvent event) {
-        StatsBot.getEventManager().callEvent(event);
+        StatsBot.getEventManager().executeEvent(event);
     }
 }

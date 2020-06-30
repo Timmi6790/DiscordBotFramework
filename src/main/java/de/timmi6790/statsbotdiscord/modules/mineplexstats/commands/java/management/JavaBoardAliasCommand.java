@@ -8,11 +8,12 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
 public class JavaBoardAliasCommand extends AbstractJavaStatsCommand {
-    private final static String[] JAVA_BOARDS = {"all", "daily", "weekly", "monthly", "yearly"};
+    private static final String[] JAVA_BOARDS = {"all", "daily", "weekly", "monthly", "yearly"};
 
     public JavaBoardAliasCommand() {
         super("aliasBoard", "Board Alias", "<board> <alias>", "ab");
 
+        this.setCategory("MineplexStats - Java - Management");
         this.setPermission("mineplexstats.management.aliasBoard");
         this.setMinArgs(2);
     }

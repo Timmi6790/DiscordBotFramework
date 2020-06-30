@@ -2,6 +2,7 @@ package de.timmi6790.statsbotdiscord;
 
 import de.timmi6790.statsbotdiscord.modules.ModuleManager;
 import de.timmi6790.statsbotdiscord.modules.achievement.AchievementManager;
+import de.timmi6790.statsbotdiscord.modules.botlist.BotListModule;
 import de.timmi6790.statsbotdiscord.modules.command.CommandManager;
 import de.timmi6790.statsbotdiscord.modules.core.CoreModule;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionManager;
@@ -12,21 +13,21 @@ import de.timmi6790.statsbotdiscord.modules.stat.StatManager;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
-import net.dv8tion.jda.api.AccountType;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.discordbots.api.client.DiscordBotListAPI;
 import org.jdbi.v3.core.Jdbi;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class StatsBot {
     public static final String BOT_VERSION = "3.0.1";
@@ -62,12 +63,10 @@ public class StatsBot {
 
         database = Jdbi.create(config.getString("db.url"), config.getString("db.name"), config.getString("db.password"));
 
-        discord = new JDABuilder(AccountType.BOT)
-                .setToken(config.getString("discord.token"))
-
+        discord = JDABuilder.createLight(config.getString("discord.token"),
+                GatewayIntent.DIRECT_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES)
                 .setStatus(OnlineStatus.ONLINE)
                 .setActivity(Activity.watching(config.getString("discord.mainCommand") + " help"))
-
                 .build();
 
         eventManager = new EventManager();
@@ -82,19 +81,10 @@ public class StatsBot {
 
         moduleManager.registerModules(
                 new MineplexStatsModule(),
-                new CoreModule()
+                new CoreModule(),
+                new BotListModule()
         );
         moduleManager.startAll();
-
-        // Bot list server count update task
-        if (!config.getString("discord.discordListToken").isEmpty()) {
-            final DiscordBotListAPI botListAPI = new DiscordBotListAPI.Builder()
-                    .token(config.getString("discord.discordListToken"))
-                    .botId(discord.getSelfUser().getId())
-                    .build();
-
-            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> botListAPI.setStats(discord.getGuilds().size()), 0, 30, TimeUnit.MINUTES);
-        }
     }
 
     public static Configuration getConfig() {

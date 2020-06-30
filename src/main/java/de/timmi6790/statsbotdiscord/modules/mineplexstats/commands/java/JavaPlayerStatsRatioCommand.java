@@ -30,6 +30,11 @@ public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
         this.setCategory("PROTOTYPE - MineplexStats - Java");
         this.setDefaultPerms(true);
         this.setMinArgs(2);
+
+        this.addExampleCommands(
+                "nwang888 wins",
+                "nwang888 wins yearly"
+        );
     }
 
     @Override

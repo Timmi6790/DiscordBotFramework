@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class EventManager {
-    private final Map<Class<Event>, List<EventObject>> eventListeners = new ConcurrentHashMap<>();
+    private final Map<Class<Event>, Map<EventPriority, Set<EventObject>>> eventListeners = new ConcurrentHashMap<>();
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -19,24 +19,33 @@ public class EventManager {
         StatsBot.getDiscord().addEventListener(new DiscordEventListener());
     }
 
+    private void callListenerSafe(final EventObject listener, final Event event) {
+        try {
+            // At the moment all events can't be canceled, that is why we run everything on a different thread
+            this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
+        } catch (final Exception e) {
+            StatsBot.getSentry().sendException(e);
+        }
+    }
+
     public void addEventListener(final Object listener) {
-        Arrays.stream(listener.getClass().getMethods()).forEach(method -> {
-            if (method.getParameterCount() != 1) {
-                return;
-            }
+        Arrays.stream(listener.getClass().getMethods())
+                .filter(method -> method.getParameterCount() == 1)
+                .forEach(method -> {
+                    final SubscribeEvent annotation;
+                    try {
+                        annotation = method.getAnnotation(SubscribeEvent.class);
+                    } catch (final NullPointerException ignore) {
+                        return;
+                    }
 
-            final SubscribeEvent annotation;
-            try {
-                annotation = method.getAnnotation(SubscribeEvent.class);
-            } catch (final NullPointerException ignore) {
-                return;
-            }
-
-            final Class<?> parameter = method.getParameterTypes()[0];
-            if (Event.class.isAssignableFrom(parameter)) {
-                this.eventListeners.computeIfAbsent((Class<Event>) parameter, key -> Collections.synchronizedList(new ArrayList())).add(new EventObject(listener, method, annotation.priority()));
-            }
-        });
+                    final Class<?> parameter = method.getParameterTypes()[0];
+                    if (Event.class.isAssignableFrom(parameter)) {
+                        this.eventListeners.computeIfAbsent((Class<Event>) parameter, key -> new ConcurrentHashMap<>())
+                                .computeIfAbsent(annotation.priority(), key -> Collections.synchronizedSet(new HashSet<>()))
+                                .add(new EventObject(listener, method));
+                    }
+                });
     }
 
     public void addEventListeners(final Object... listeners) {
@@ -44,37 +53,39 @@ public class EventManager {
     }
 
     public void removeEventListener(final Object listener) {
-        this.eventListeners.values().forEach(listeners ->
-                listeners.removeIf(eventListener -> eventListener.getObject().equals(listener))
-        );
+        for (final Map<EventPriority, Set<EventObject>> value : this.eventListeners.values()) {
+            final Iterator<Map.Entry<EventPriority, Set<EventObject>>> it = value.entrySet().iterator();
+            while (it.hasNext()) {
+                final Map.Entry<EventPriority, Set<EventObject>> entry = it.next();
+                final boolean removedElement = entry.getValue().removeIf(eventListener -> eventListener.getObject().equals(listener));
+                if (removedElement) {
+                    if (entry.getValue().isEmpty()) {
+                        it.remove();
+                    }
+
+                    return;
+                }
+            }
+        }
     }
 
     public void clearEventListener() {
         this.eventListeners.clear();
     }
 
-    public void callEvent(final Event event) {
-        if (!this.eventListeners.containsKey(event.getClass())) {
-            return;
-        }
-
-        this.eventListeners.get(event.getClass())
-                .stream()
-                .sorted(Comparator.comparingInt(eventObject -> eventObject.getPriority().ordinal()))
-                .forEach(listener -> {
-                    try {
-                        // At the moment all events can't be canceled, that is why we run everything on a different thread
-                        this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
-                    } catch (final Exception e) {
-                        StatsBot.getSentry().sendException(e);
-                    }
-                });
+    public void executeEvent(final Event event) {
+        Optional.ofNullable(this.eventListeners.get(event.getClass()))
+                .ifPresent(listeners -> Arrays.stream(EventPriority.values())
+                        .map(listeners::get)
+                        .filter(Objects::nonNull)
+                        .flatMap(Collection::stream)
+                        .forEach(listener -> this.callListenerSafe(listener, event))
+                );
     }
 
     @Data
     private static class EventObject {
         private final Object object;
         private final Method method;
-        private final EventPriority priority;
     }
 }

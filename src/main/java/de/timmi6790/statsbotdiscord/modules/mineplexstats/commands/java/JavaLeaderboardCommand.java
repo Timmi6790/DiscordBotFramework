@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionMessage;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
@@ -15,17 +15,24 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
-    private final static int ARG_POS_BOARD_POS = 2;
-    private final static int ARG_POS_START_POS = 3;
-    private final static int ARG_POS_END_POS = 4;
+    private static final int ARG_POS_BOARD_POS = 2;
+    private static final int ARG_POS_START_POS = 3;
+    private static final int ARG_POS_END_POS = 4;
 
-    private final static int LEADERBOARD_UPPER_LIMIT = 1_000;
+    private static final int LEADERBOARD_UPPER_LIMIT = 1_000;
 
     public JavaLeaderboardCommand() {
         super("leaderboard", "Java Leaderboard", "<game> <stat> [board] [start] [end] [date]", "lb");
 
         this.setDefaultPerms(true);
         this.setMinArgs(2);
+
+        this.addExampleCommands(
+                "Global ExpEarned",
+                "Global ExpEarned daily",
+                "Global ExpEarned global 20 40",
+                "Global ExpEarned global 20 40 1/30/2020"
+        );
     }
 
     @Override

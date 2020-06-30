@@ -10,6 +10,7 @@ public class JavaGameAliasCommand extends AbstractJavaStatsCommand {
     public JavaGameAliasCommand() {
         super("aliasGame", "Game Alias", "<game> <alias>", "ag");
 
+        this.setCategory("MineplexStats - Java - Management");
         this.setPermission("mineplexstats.management.aliasGame");
         this.setMinArgs(2);
     }

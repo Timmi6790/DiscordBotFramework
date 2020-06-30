@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.modules.mineplexstats;
+package de.timmi6790.statsbotdiscord.modules.mineplexstats.picture;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class AbstractPicture {
-    protected final static Color COLOUR_DISCORD_DARK_MODE = new Color(54, 57, 63);
+public abstract class AbstractPicture {
+    protected static final Color COLOUR_DISCORD_DARK_MODE = new Color(54, 57, 63);
 
     protected static final Graphics2D GD_TEST = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR).createGraphics();
 

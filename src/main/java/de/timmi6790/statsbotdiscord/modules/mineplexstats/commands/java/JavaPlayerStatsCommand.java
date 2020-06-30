@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.datatypes.BiggestLong;
 import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
@@ -26,6 +26,12 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         this.addDiscordPermission(Permission.MESSAGE_ATTACH_FILES);
         this.setMinArgs(2);
         this.setDefaultPerms(true);
+
+        this.addExampleCommands(
+                "nwang888 Global",
+                "nwang888 Global yearly",
+                "nwang888 Global global 1/25/2020"
+        );
     }
 
     @Override

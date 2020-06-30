@@ -41,7 +41,7 @@ public class UserDb {
             "WHERE player.discordId = :discordId LIMIT 1;";
     private static final String INSERT_PLAYER = "INSERT INTO player(discordId) VALUES (:discordId);";
 
-    private static final String BAN_PLAYER = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
+    private static final String UPDATE_PLAYER_BAN_STATUS = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
 
     private static final String UPDATE_STAT_VALUE = "UPDATE player_stat SET `value` = :value WHERE player_id = :playerId AND stat_id = :statId LIMIT 1;";
     private static final String INSERT_STAT_VALUE = "INSERT player_stat(player_id, stat_id, value) VALUES(:playerId, :statId, :value)";
@@ -112,7 +112,7 @@ public class UserDb {
         }
 
         StatsBot.getDatabase().useHandle(handle ->
-                handle.createUpdate(BAN_PLAYER)
+                handle.createUpdate(UPDATE_PLAYER_BAN_STATUS)
                         .bind("banned", banned ? 1 : 0)
                         .bind("databaseId", this.databaseId)
                         .execute()
@@ -173,7 +173,7 @@ public class UserDb {
         this.stats.put(stat.getDatabaseId(), value);
 
         final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(this, stat, currentValue, value);
-        StatsBot.getEventManager().callEvent(statsChangeEvent);
+        StatsBot.getEventManager().executeEvent(statsChangeEvent);
     }
 
     public Map<AbstractStat, Integer> getStatsMap() {

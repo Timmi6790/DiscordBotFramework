@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionMessage;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
@@ -13,16 +13,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
-    private final static int ARG_POS_START_POS = 1;
-    private final static int ARG_POS_END_POS = 2;
+    private static final int ARG_POS_START_POS = 1;
+    private static final int ARG_POS_END_POS = 2;
 
-    private final static int LEADERBOARD_UPPER_LIMIT = 100;
+    private static final int LEADERBOARD_UPPER_LIMIT = 100;
 
     public BedrockLeaderboardCommand() {
         super("bleaderboard", "Bedrock Leaderboard", "<game> [start] [end] [date]", "bl", "blb");
 
         this.setDefaultPerms(true);
         this.setMinArgs(1);
+
+        this.addExampleCommands(
+                "CakeWars"
+        );
     }
 
     @Override

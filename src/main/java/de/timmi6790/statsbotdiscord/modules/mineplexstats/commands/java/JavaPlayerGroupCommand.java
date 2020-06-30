@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.datatypes.BiggestLong;
 import de.timmi6790.statsbotdiscord.datatypes.ListBuilder;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
-import de.timmi6790.statsbotdiscord.modules.mineplexstats.PictureTable;
+import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.*;
 
@@ -19,8 +19,16 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
     public JavaPlayerGroupCommand() {
         super("gplayer", "Java player group stats", "<player> <group> <stat> [board] [date]", "gpl");
 
+        this.setCategory("MineplexStats - Java - Group");
+
         this.setMinArgs(3);
         this.setDefaultPerms(true);
+
+        this.addExampleCommands(
+                "nwang888 MixedArcade wins",
+                "nwang888 MixedArcade wins yearly",
+                "nwang888 MixedArcade wins global 1/30/2020"
+        );
     }
 
     @Override
