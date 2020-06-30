@@ -102,7 +102,7 @@
         <dependency>
             <groupId>org.ocpsoft.prettytime</groupId>
             <artifactId>prettytime-nlp</artifactId>
-            <version>4.0.3.Final</version>
+            <version>4.0.5.Final</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
