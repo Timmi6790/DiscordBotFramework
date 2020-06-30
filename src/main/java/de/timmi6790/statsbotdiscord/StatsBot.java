@@ -25,12 +25,9 @@ import org.jdbi.v3.core.Jdbi;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class StatsBot {
-    public static final String BOT_VERSION = "3.0.1";
+    public static final String BOT_VERSION = "3.0.2";
     @Getter
     private static final ModuleManager moduleManager = new ModuleManager();
     @Getter
