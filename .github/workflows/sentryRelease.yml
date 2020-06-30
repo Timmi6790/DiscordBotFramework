@@ -20,8 +20,8 @@ jobs:
         uses: tclindner/sentry-releases-action@v1.2.0
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: Timmi6790
-          SENTRY_PROJECT: statsbotdiscord
+          SENTRY_ORG: timmi6790
+          SENTRY_PROJECT: 5181683
         with:
             tagName: ${{ github.sha }}
             environment: qa
