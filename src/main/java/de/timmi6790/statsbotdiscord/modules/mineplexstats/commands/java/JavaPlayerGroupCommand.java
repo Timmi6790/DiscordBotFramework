@@ -68,7 +68,7 @@ public class JavaPlayerGroupCommand extends AbstractJavaStatsCommand {
         BufferedImage skin;
         try {
             skin = skinFuture.get();
-        } catch (final InterruptedException | ExecutionException e) {
+        } catch (final InterruptedException | ExecutionException ignore) {
             skin = null;
         }
 

@@ -2,7 +2,6 @@ package de.timmi6790.statsbotdiscord.modules.core;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.AbstractModule;
-import de.timmi6790.statsbotdiscord.modules.core.achievements.CommandAutoCorrectAchievement;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.*;
 import de.timmi6790.statsbotdiscord.modules.core.commands.management.BotInfoCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.management.UserInfoCommand;
@@ -45,7 +44,7 @@ public class CoreModule extends AbstractModule {
         );
 
         StatsBot.getAchievementManager().registerAchievements(
-                new CommandAutoCorrectAchievement()
+                // new CommandAutoCorrectAchievement()
         );
     }
 
