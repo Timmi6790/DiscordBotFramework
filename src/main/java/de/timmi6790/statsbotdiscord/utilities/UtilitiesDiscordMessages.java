@@ -105,7 +105,7 @@ public class UtilitiesDiscordMessages {
         final StringBuilder description = new StringBuilder();
         description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
-        if (similarNames.isEmpty()) {
+        if (similarNames.isEmpty() && allCommand != null) {
             description.append("Use the ").append(MarkdownUtil.bold(StatsBot.getCommandManager().getMainCommand() + " " + allCommand.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
@@ -123,12 +123,17 @@ public class UtilitiesDiscordMessages {
                 emotes.put(emote, new CommandEmoteReaction(thisCommand, newCommandParameters));
             }
 
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
+            if (allCommand != null) {
+                description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
+            }
         }
 
         final CommandParameters newCommandParameters = new CommandParameters(commandParameters);
         newCommandParameters.setArgs(newArgs);
-        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(allCommand, newCommandParameters));
+
+        if (allCommand != null) {
+            emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(allCommand, newCommandParameters));
+        }
 
         sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
     }

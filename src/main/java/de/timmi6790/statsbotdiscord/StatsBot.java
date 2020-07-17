@@ -8,6 +8,8 @@ import de.timmi6790.statsbotdiscord.modules.core.CoreModule;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionManager;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.EventManager;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
+import de.timmi6790.statsbotdiscord.modules.permisssion.PermissionsManager;
+import de.timmi6790.statsbotdiscord.modules.rank.RankManager;
 import de.timmi6790.statsbotdiscord.modules.setting.SettingManager;
 import de.timmi6790.statsbotdiscord.modules.stat.StatManager;
 import io.sentry.SentryClient;
@@ -45,6 +47,10 @@ public class StatsBot {
     @Getter
     private static EventManager eventManager;
     @Getter
+    private static PermissionsManager permissionsManager;
+    @Getter
+    private static RankManager rankManager;
+    @Getter
     private static AchievementManager achievementManager;
     @Getter
     private static EmoteReactionManager emoteReactionManager;
@@ -67,6 +73,9 @@ public class StatsBot {
                 .build();
 
         eventManager = new EventManager();
+        permissionsManager = new PermissionsManager();
+        rankManager = new RankManager();
+        rankManager.loadRanksFromDatabase();
 
         commandManager = new CommandManager(config.getString("discord.mainCommand"), discord.getSelfUser().getIdLong());
         commandManager.innitDatabase(database);

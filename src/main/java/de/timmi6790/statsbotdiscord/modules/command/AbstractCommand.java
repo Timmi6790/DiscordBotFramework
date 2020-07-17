@@ -50,7 +50,7 @@ public abstract class AbstractCommand {
     private int minArgs = 0;
 
     private boolean defaultPerms = false;
-    private String permissionNode;
+    private int permissionId = -1;
     private boolean allowBots = true;
     private boolean allowPrivateMessages = true;
 
@@ -190,7 +190,7 @@ public abstract class AbstractCommand {
             return false;
         }
 
-        if (this.defaultPerms || commandParameters.getUserDb().getPermissionNodes().contains(this.permissionNode)) {
+        if (this.defaultPerms || commandParameters.getUserDb().getAllPermissionIds().contains(this.permissionId)) {
             if (this.userDiscordPermissions.isEmpty() || !commandParameters.getEvent().isFromGuild()) {
                 return true;
             }
@@ -208,7 +208,12 @@ public abstract class AbstractCommand {
     }
 
     protected void setPermission(final String permission) {
-        this.permissionNode = permission;
+        final int permissionId = StatsBot.getPermissionsManager().addPermission(permission);
+        if (permissionId == this.permissionId) {
+            return;
+        }
+
+        this.permissionId = permissionId;
     }
 
     protected void addDiscordPermission(final Permission permission) {
@@ -246,16 +251,19 @@ public abstract class AbstractCommand {
     }
 
     protected void sendMissingArgsMessage(final CommandParameters commandParameters) {
+        this.sendMissingArgsMessage(commandParameters, this.minArgs);
+    }
+
+    protected void sendMissingArgsMessage(final CommandParameters commandParameters, final int requiredSyntaxLenght) {
         final String[] args = commandParameters.getArgs();
         final String[] syntax = this.syntax.split(" ");
 
         final StringJoiner requiredSyntax = new StringJoiner(" ");
-        for (int index = 0; Math.min(this.minArgs, syntax.length) > index; index++) {
+        for (int index = 0; Math.min(requiredSyntaxLenght, syntax.length) > index; index++) {
             requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(syntax[index]));
         }
 
         final String exampleCommands = String.join("\n", this.getFormattedExampleCommands());
-
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
@@ -298,7 +306,9 @@ public abstract class AbstractCommand {
         final String name = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
         if (userIdMatcher.find()) {
-            final User user = StatsBot.getDiscord().getUserById(userIdMatcher.group(2));
+            // TODO: Fix me
+            // Change to queue instead of complete
+            final User user = StatsBot.getDiscord().retrieveUserById(userIdMatcher.group(2)).complete();
             if (user != null) {
                 return user;
             }
@@ -318,6 +328,45 @@ public abstract class AbstractCommand {
         );
     }
 
+    public int getPermissionId(final CommandParameters commandParameters, final int argPos) {
+        final String permArg = commandParameters.getArgs()[argPos];
+        final Optional<AbstractCommand> commandOpt = StatsBot.getCommandManager().getCommand(permArg);
+
+        if (commandOpt.isPresent()) {
+            final AbstractCommand command = commandOpt.get();
+            if (command.getPermissionId() == -1) {
+                throw new CommandReturnException(
+                        this.getEmbedBuilder(commandParameters)
+                                .setTitle("Error")
+                                .setDescription(MarkdownUtil.monospace(command.getName()) + " command has no permission.")
+                );
+            }
+
+            return command.getPermissionId();
+        } else {
+            return StatsBot.getPermissionsManager().getPermissionId(permArg)
+                    .orElseThrow(() -> new CommandReturnException(
+                            this.getEmbedBuilder(commandParameters)
+                                    .setTitle("Error")
+                                    .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
+                    ));
+        }
+    }
+
+    protected String getFromListIgnoreCase(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {
+        final String userArg = commandParameters.getArgs()[argPos];
+        final Optional<String> arg = possibleArguments.stream()
+                .filter(possibleArg -> possibleArg.equalsIgnoreCase(userArg))
+                .findAny();
+
+        if (arg.isPresent()) {
+            return arg.get();
+        }
+
+        this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, possibleArguments);
+        throw new CommandReturnException();
+    }
+    
     protected AbstractCommand getCommand(final CommandParameters commandParameters, final int argPos) {
         final String name = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> command = StatsBot.getCommandManager().getCommand(name);

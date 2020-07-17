@@ -6,14 +6,13 @@ import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.events.StatsChangeEvent;
 import de.timmi6790.statsbotdiscord.modules.achievement.AbstractAchievement;
 import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
+import de.timmi6790.statsbotdiscord.modules.rank.Rank;
+import de.timmi6790.statsbotdiscord.modules.rank.RankManager;
 import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
 import de.timmi6790.statsbotdiscord.modules.setting.settings.BooleanSetting;
 import de.timmi6790.statsbotdiscord.modules.stat.AbstractStat;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -27,7 +26,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class UserDb {
     private static final String GET_PLAYER = "SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, " +
-            "GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, GROUP_CONCAT(DISTINCT permission.permission_node) AS perms, " +
+            "GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, " +
+            "GROUP_CONCAT(DISTINCT permission.id) perms, " +
             "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_setting.setting_id, p_setting.setting) SEPARATOR ';') settings, " +
             "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_stat.stat_id, p_stat.value) SEPARATOR ';') stats, " +
             "GROUP_CONCAT(DISTINCT p_ach.achievement_id) achievements " +
@@ -49,6 +49,13 @@ public class UserDb {
     private static final String INSERT_PLAYER_ACHIEVEMENT = "INSERT player_achievement(player_id, achievement_id) VALUES(:playerId, :achievementId)";
 
     private static final String INSERT_PLAYER_SETTING = "INSERT player_setting(player_id, setting_id, setting) VALUES(:playerId, :settingId, :setting);";
+
+    private static final String INSERT_PLAYER_PERMISSION = "INSERT INTO player_permission(player_id, permission_id) VALUES(:playerId, :permissionId);";
+    private static final String DELETE_PLAYER_PERMISSION = "DELETE FROM player_permission WHERE player_id = :playerId AND permission_id = :permissionId LIMIT 1";
+
+    private static final String SET_PRIMARY_RANK = "UPDATE `player` SET player.primary_rank = :primaryRank WHERE player.id = :databaseId LIMIT 1;";
+    private static final String ADD_RANK = "INSERT INTO player_rank(player_id, rank_id) VALUES(:databaseId, :rankId);";
+    private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
 
     @Getter
     private static final LoadingCache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
@@ -75,14 +82,14 @@ public class UserDb {
     private final int databaseId;
     private final long discordId;
 
-    private final Rank primaryRank;
-    private final List<Rank> ranks;
+    private int primaryRank;
+    private final Set<Integer> ranks;
 
     private final boolean banned;
 
     private final long points;
 
-    private final Set<String> permissionNodes;
+    private final Set<Integer> permissionIds;
     private final Map<Integer, String> settings;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
@@ -119,6 +126,132 @@ public class UserDb {
         );
 
         return true;
+    }
+
+    // Permission
+    public Set<Integer> getAllPermissionIds() {
+        final Set<Integer> permissionSet = new HashSet<>(this.permissionIds);
+
+        final RankManager rankManager = StatsBot.getRankManager();
+        rankManager.getRank(this.primaryRank).ifPresent(rank -> permissionSet.addAll(rank.getAllPermissions()));
+        this.ranks.stream()
+                .map(rankManager::getRank)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(rank -> permissionSet.addAll(rank.getAllPermissions()));
+
+        return permissionSet;
+    }
+
+    public boolean hasPermission(final int id) {
+        return this.permissionIds.contains(id);
+    }
+
+    public boolean addPermission(final int id) {
+        if (this.hasPermission(id)) {
+            return false;
+        }
+
+        this.permissionIds.add(id);
+        StatsBot.getDatabase().useHandle(handle ->
+                handle.createUpdate(INSERT_PLAYER_PERMISSION)
+                        .bind("playerId", this.databaseId)
+                        .bind("permissionId", id)
+                        .execute()
+        );
+        return true;
+    }
+
+    public boolean removePermission(final int id) {
+        if (!this.hasPermission(id)) {
+            return false;
+        }
+
+        this.permissionIds.remove(id);
+        StatsBot.getDatabase().useHandle(handle ->
+                handle.createUpdate(DELETE_PLAYER_PERMISSION)
+                        .bind("playerId", this.databaseId)
+                        .bind("permissionId", id)
+                        .execute()
+        );
+        return true;
+    }
+
+    // Ranks
+    public boolean hasPrimaryRank(final int rankId) {
+        return this.primaryRank == rankId;
+    }
+
+    public boolean hasPrimaryRank(@NonNull final Rank rank) {
+        return this.hasPrimaryRank(rank.getDatabaseId());
+    }
+
+    public boolean setPrimaryRank(final int rankId) {
+        if (rankId == this.primaryRank) {
+            return false;
+        }
+
+        StatsBot.getDatabase().useHandle(handle ->
+                handle.createUpdate(SET_PRIMARY_RANK)
+                        .bind("primaryRank", rankId)
+                        .bind("databaseId", this.databaseId)
+                        .execute()
+        );
+        this.primaryRank = rankId;
+
+        return true;
+    }
+
+    public boolean setPrimaryRank(@NonNull final Rank rank) {
+        return this.setPrimaryRank(rank.getDatabaseId());
+    }
+
+    public boolean hasRank(final int rankId) {
+        return this.ranks.contains(rankId);
+    }
+
+    public boolean hasRank(@NonNull final Rank rank) {
+        return this.hasRank(rank.getDatabaseId());
+    }
+
+    public boolean addRank(final int rankId) {
+        if (this.hasRank(rankId)) {
+            return false;
+        }
+
+        StatsBot.getDatabase().useHandle(handle ->
+                handle.createUpdate(ADD_RANK)
+                        .bind("rankId", rankId)
+                        .bind("databaseId", this.databaseId)
+                        .execute()
+        );
+        this.ranks.add(rankId);
+
+        return true;
+    }
+
+    public boolean addRank(@NonNull final Rank rank) {
+        return this.addRank(rank.getDatabaseId());
+    }
+
+    public boolean removeRank(final int rankId) {
+        if (!this.hasRank(rankId)) {
+            return false;
+        }
+
+        StatsBot.getDatabase().useHandle(handle ->
+                handle.createUpdate(DELETE_RANK)
+                        .bind("rankId", rankId)
+                        .bind("databaseId", this.databaseId)
+                        .execute()
+        );
+        this.ranks.remove(rankId);
+
+        return true;
+    }
+
+    public boolean removeRank(@NonNull final Rank rank) {
+        return this.removeRank(rank.getDatabaseId());
     }
 
     // Shop

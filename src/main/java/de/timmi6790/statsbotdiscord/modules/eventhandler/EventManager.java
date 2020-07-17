@@ -24,6 +24,7 @@ public class EventManager {
             // At the moment all events can't be canceled, that is why we run everything on a different thread
             this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
         } catch (final Exception e) {
+            e.printStackTrace();
             StatsBot.getSentry().sendException(e);
         }
     }
