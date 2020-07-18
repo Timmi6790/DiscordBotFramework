@@ -2,6 +2,7 @@ package de.timmi6790.statsbotdiscord.modules.mineplexstats;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.AbstractModule;
+import de.timmi6790.statsbotdiscord.modules.core.CoreModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockGamesCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockLeaderboardCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.BedrockPlayerCommand;
@@ -42,6 +43,10 @@ public class MineplexStatsModule extends AbstractModule {
 
     public MineplexStatsModule() {
         super("MineplexStats");
+
+        this.addDependenciesAndLoadAfter(
+                CoreModule.class
+        );
     }
 
     @Override

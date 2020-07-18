@@ -7,7 +7,7 @@ import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.Abstrac
 import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.EmptyEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.commands.bedrock.AbstractBedrockStatsCommand;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
+import de.timmi6790.statsbotdiscord.utilities.discord.DiscordEmotes;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 

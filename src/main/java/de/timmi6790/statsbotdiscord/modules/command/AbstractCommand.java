@@ -6,7 +6,7 @@ import de.timmi6790.statsbotdiscord.events.CommandExecutionEvent;
 import de.timmi6790.statsbotdiscord.exceptions.CommandReturnException;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.AbstractEmoteReaction;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
+import de.timmi6790.statsbotdiscord.utilities.discord.UtilitiesDiscordMessages;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.Event;
@@ -177,7 +177,8 @@ public abstract class AbstractCommand {
                         .bind("causeName", commandCause.name().toLowerCase())
                         .bind("statusName", finalCommandResult.name().toLowerCase())
                         .bind("inGuild", commandParameters.getEvent().isFromGuild())
-                        .execute());
+                        .execute()
+        );
 
         // Command post event
         final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, finalCommandResult);
@@ -306,8 +307,7 @@ public abstract class AbstractCommand {
         final String name = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
         if (userIdMatcher.find()) {
-            // TODO: Fix me
-            // Change to queue instead of complete
+            // TODO: Change to queue instead of complete
             final User user = StatsBot.getDiscord().retrieveUserById(userIdMatcher.group(2)).complete();
             if (user != null) {
                 return user;
@@ -366,7 +366,7 @@ public abstract class AbstractCommand {
         this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, possibleArguments);
         throw new CommandReturnException();
     }
-    
+
     protected AbstractCommand getCommand(final CommandParameters commandParameters, final int argPos) {
         final String name = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> command = StatsBot.getCommandManager().getCommand(name);

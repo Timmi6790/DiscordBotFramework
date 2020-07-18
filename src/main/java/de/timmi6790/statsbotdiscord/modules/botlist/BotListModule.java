@@ -15,7 +15,7 @@ public class BotListModule extends AbstractModule {
     private ScheduledFuture<?> updateTask;
 
     public BotListModule() {
-        super("botList");
+        super("BotList");
     }
 
     @Override

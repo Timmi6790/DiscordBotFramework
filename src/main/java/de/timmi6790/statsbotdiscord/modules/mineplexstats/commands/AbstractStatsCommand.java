@@ -11,8 +11,8 @@ import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.Command
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.errors.ErrorModel;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
+import de.timmi6790.statsbotdiscord.utilities.discord.DiscordEmotes;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
@@ -64,7 +64,7 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
     }
 
     protected MineplexStatsModule getStatsModule() {
-        return (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
+        return StatsBot.getModuleManager().getModule(MineplexStatsModule.class).orElseThrow(RuntimeException::new);
     }
 
     protected String getFormattedTime(long time) {

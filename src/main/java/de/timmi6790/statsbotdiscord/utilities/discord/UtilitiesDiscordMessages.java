@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.utilities;
+package de.timmi6790.statsbotdiscord.utilities.discord;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.datatypes.StatEmbedBuilder;
@@ -9,6 +9,7 @@ import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.EmoteReactionMessage;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.statsbotdiscord.modules.emotereaction.emotereactions.CommandEmoteReaction;
+import de.timmi6790.statsbotdiscord.utilities.UtilitiesString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;

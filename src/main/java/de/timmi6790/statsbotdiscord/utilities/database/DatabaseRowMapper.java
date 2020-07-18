@@ -1,4 +1,4 @@
-package de.timmi6790.statsbotdiscord.utilities;
+package de.timmi6790.statsbotdiscord.utilities.database;
 
 import java.util.*;
 import java.util.function.Function;

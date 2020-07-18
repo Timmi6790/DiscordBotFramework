@@ -1,6 +1,6 @@
 package de.timmi6790.statsbotdiscord.modules.rank;
 
-import de.timmi6790.statsbotdiscord.utilities.DatabaseRowMapper;
+import de.timmi6790.statsbotdiscord.utilities.database.DatabaseRowMapper;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 

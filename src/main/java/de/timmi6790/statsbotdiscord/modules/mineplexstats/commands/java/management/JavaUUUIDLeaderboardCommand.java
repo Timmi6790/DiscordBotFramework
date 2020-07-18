@@ -15,7 +15,7 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.J
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaLeaderboard;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.java.JavaStat;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
+import de.timmi6790.statsbotdiscord.utilities.discord.DiscordEmotes;
 import net.dv8tion.jda.api.Permission;
 
 import java.util.ArrayList;

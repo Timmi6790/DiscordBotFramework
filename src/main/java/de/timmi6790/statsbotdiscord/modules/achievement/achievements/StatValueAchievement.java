@@ -4,7 +4,7 @@ import de.timmi6790.statsbotdiscord.events.StatsChangeEvent;
 import de.timmi6790.statsbotdiscord.modules.achievement.AbstractAchievement;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.SubscribeEvent;
 import de.timmi6790.statsbotdiscord.modules.stat.AbstractStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
+import de.timmi6790.statsbotdiscord.utilities.discord.UtilitiesDiscordMessages;
 
 import java.util.Optional;
 

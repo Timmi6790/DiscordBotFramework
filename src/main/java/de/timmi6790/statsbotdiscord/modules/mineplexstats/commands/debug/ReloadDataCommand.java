@@ -17,7 +17,7 @@ public class ReloadDataCommand extends AbstractCommand {
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        final MineplexStatsModule module = (MineplexStatsModule) StatsBot.getModuleManager().getModule(MineplexStatsModule.class);
+        final MineplexStatsModule module = StatsBot.getModuleManager().getModule(MineplexStatsModule.class).orElseThrow(RuntimeException::new);
 
         final String firstArg = commandParameters.getArgs()[0];
         switch (firstArg.toLowerCase()) {

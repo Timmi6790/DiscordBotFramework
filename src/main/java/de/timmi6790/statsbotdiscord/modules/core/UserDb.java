@@ -9,9 +9,11 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandParameters;
 import de.timmi6790.statsbotdiscord.modules.rank.Rank;
 import de.timmi6790.statsbotdiscord.modules.rank.RankManager;
 import de.timmi6790.statsbotdiscord.modules.setting.AbstractSetting;
+import de.timmi6790.statsbotdiscord.modules.setting.SettingModule;
 import de.timmi6790.statsbotdiscord.modules.setting.settings.BooleanSetting;
 import de.timmi6790.statsbotdiscord.modules.stat.AbstractStat;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
+import de.timmi6790.statsbotdiscord.modules.stat.StatModule;
+import de.timmi6790.statsbotdiscord.utilities.discord.UtilitiesDiscordMessages;
 import lombok.*;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -310,16 +312,23 @@ public class UserDb {
     }
 
     public Map<AbstractStat, Integer> getStatsMap() {
-        return this.stats.entrySet()
+        final Optional<StatModule> statModuleOpt = StatsBot.getModuleManager().getModule(StatModule.class);
+        return statModuleOpt.map(statModule -> this.stats.entrySet()
                 .stream()
-                .map(entry -> new AbstractMap.SimpleEntry<>(StatsBot.getStatManager().getStats().get(entry.getKey()), entry.getValue()))
+                .map(entry -> new AbstractMap.SimpleEntry<>(statModule.getStats().get(entry.getKey()), entry.getValue()))
                 .filter(entry -> entry.getKey() != null)
-                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)))
+                .orElseGet(HashMap::new);
     }
 
     // Settings
     public void grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
-        StatsBot.getSettingManager()
+        final Optional<SettingModule> settingModule = StatsBot.getModuleManager().getModule(SettingModule.class);
+        if (!settingModule.isPresent()) {
+            return;
+        }
+
+        settingModule.get()
                 .getSettings()
                 .values()
                 .stream()
@@ -345,27 +354,40 @@ public class UserDb {
     }
 
     public Object getSettingValue(final String internalName) {
-        return StatsBot.getSettingManager().getSetting(internalName).map(abstractSetting -> this.settings.get(abstractSetting.getDatabaseId()));
+        final Optional<SettingModule> settingModule = StatsBot.getModuleManager().getModule(SettingModule.class);
+        if (!settingModule.isPresent()) {
+            throw new RuntimeException("StatsModule is not enabled.");
+        }
+        return settingModule.get().getSetting(internalName).map(abstractSetting -> this.settings.get(abstractSetting.getDatabaseId()));
     }
 
     public List<AbstractSetting<?>> getSettings() {
-        return this.settings.keySet()
+        final Optional<SettingModule> settingModule = StatsBot.getModuleManager().getModule(SettingModule.class);
+        return settingModule.<List<AbstractSetting<?>>>map(module -> this.settings.keySet()
                 .stream()
-                .map(settingDbId -> StatsBot.getSettingManager().getSettings().get(settingDbId))
+                .map(settingDbId -> module.getSettings().get(settingDbId))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())).orElseGet(ArrayList::new);
+
     }
 
     public Map<AbstractSetting<?>, String> getSettingsMap() {
-        return this.settings.entrySet()
+        final Optional<SettingModule> settingModule = StatsBot.getModuleManager().getModule(SettingModule.class);
+        return settingModule.<Map<AbstractSetting<?>, String>>map(module -> this.settings.entrySet()
                 .stream()
-                .map(entry -> new AbstractMap.SimpleEntry<>(StatsBot.getSettingManager().getSettings().get(entry.getKey()), entry.getValue()))
+                .map(entry -> new AbstractMap.SimpleEntry<>(module.getSettings().get(entry.getKey()), entry.getValue()))
                 .filter(entry -> entry.getKey() != null)
-                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue))).orElseGet(HashMap::new);
+
     }
 
     public boolean hasSettingAndEqualsTrue(final String internalName) {
-        final Optional<AbstractSetting<?>> setting = StatsBot.getSettingManager().getSetting(internalName);
+        final Optional<SettingModule> settingModule = StatsBot.getModuleManager().getModule(SettingModule.class);
+        if (!settingModule.isPresent()) {
+            return false;
+        }
+
+        final Optional<AbstractSetting<?>> setting = settingModule.get().getSetting(internalName);
         if (!setting.isPresent() || !this.settings.containsKey(setting.get().getDatabaseId())) {
             return false;
         }

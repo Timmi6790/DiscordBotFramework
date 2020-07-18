@@ -12,7 +12,7 @@ import de.timmi6790.statsbotdiscord.modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockGame;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
-import de.timmi6790.statsbotdiscord.utilities.DiscordEmotes;
+import de.timmi6790.statsbotdiscord.utilities.discord.DiscordEmotes;
 import net.dv8tion.jda.api.Permission;
 
 import java.util.ArrayList;

@@ -1,6 +1,12 @@
 package de.timmi6790.statsbotdiscord.modules.eventhandler;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
+import de.timmi6790.statsbotdiscord.datatypes.MapBuilder;
+import de.timmi6790.statsbotdiscord.modules.command.AbstractCommand;
+import io.sentry.event.Breadcrumb;
+import io.sentry.event.BreadcrumbBuilder;
+import io.sentry.event.EventBuilder;
+import io.sentry.event.interfaces.ExceptionInterface;
 import lombok.Data;
 import net.dv8tion.jda.api.events.Event;
 
@@ -25,7 +31,26 @@ public class EventManager {
             this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
         } catch (final Exception e) {
             e.printStackTrace();
-            StatsBot.getSentry().sendException(e);
+
+            // Sentry error
+            final Map<String, String> data = new MapBuilder<String, String>(HashMap::new)
+                    .put("Class", event.getClass().toString())
+                    .put("Listener", listener.getMethod().getName())
+                    .build();
+
+            final Breadcrumb breadcrumb = new BreadcrumbBuilder()
+                    .setCategory("Event")
+                    .setData(data)
+                    .build();
+
+            final EventBuilder eventBuilder = new EventBuilder()
+                    .withMessage("Event Exception")
+                    .withLevel(io.sentry.event.Event.Level.ERROR)
+                    .withBreadcrumbs(Collections.singletonList(breadcrumb))
+                    .withLogger(AbstractCommand.class.getName())
+                    .withSentryInterface(new ExceptionInterface(e));
+
+            StatsBot.getSentry().sendEvent(eventBuilder);
         }
     }
 

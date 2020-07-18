@@ -1,6 +1,6 @@
 package de.timmi6790.statsbotdiscord.datatypes;
 
-import org.jetbrains.annotations.NotNull;
+import lombok.NonNull;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -23,7 +23,7 @@ public class MemoryDeque<T> extends ArrayDeque<T> {
     }
 
     @Override
-    public boolean add(@NotNull final T t) {
+    public boolean add(@NonNull final T t) {
         if (!this.seenItemList.add(t)) {
             return false;
         }

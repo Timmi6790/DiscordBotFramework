@@ -19,10 +19,10 @@ public class ModuleManagerTest {
     @Test
     void getModuleByClass() {
         final ModuleManager commandManager = this.getModuleManager();
-        final AbstractModule module = new ExampleModule();
+        final ExampleModule module = new ExampleModule();
         commandManager.registerModule(module);
 
-        final AbstractModule found = commandManager.getModule(module.getClass());
+        final ExampleModule found = commandManager.getModule(ExampleModule.class).orElseThrow(RuntimeException::new);
         assertThat(module).isEqualTo(found);
     }
 }

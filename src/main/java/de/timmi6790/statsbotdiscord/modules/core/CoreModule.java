@@ -2,6 +2,7 @@ package de.timmi6790.statsbotdiscord.modules.core;
 
 import de.timmi6790.statsbotdiscord.StatsBot;
 import de.timmi6790.statsbotdiscord.modules.AbstractModule;
+import de.timmi6790.statsbotdiscord.modules.achievement.AchievementModule;
 import de.timmi6790.statsbotdiscord.modules.core.commands.info.*;
 import de.timmi6790.statsbotdiscord.modules.core.commands.management.BotInfoCommand;
 import de.timmi6790.statsbotdiscord.modules.core.commands.management.RankCommand;
@@ -14,10 +15,22 @@ import de.timmi6790.statsbotdiscord.modules.core.stats.FailedCommandStat;
 import de.timmi6790.statsbotdiscord.modules.core.stats.IncorrectArgCommandStat;
 import de.timmi6790.statsbotdiscord.modules.core.stats.MissingArgCommandStat;
 import de.timmi6790.statsbotdiscord.modules.core.stats.SuccessfulCommandStat;
+import de.timmi6790.statsbotdiscord.modules.setting.SettingModule;
+import de.timmi6790.statsbotdiscord.modules.stat.StatModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CoreModule extends AbstractModule {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public CoreModule() {
         super("Core");
+
+        this.addLoadAfter(
+                AchievementModule.class,
+                StatModule.class,
+                SettingModule.class
+        );
     }
 
     @Override
@@ -38,20 +51,34 @@ public class CoreModule extends AbstractModule {
                 new RankCommand()
         );
 
-        StatsBot.getSettingManager().registerSettings(
-                new CommandAutoCorrectSetting()
-        );
+        StatsBot.getModuleManager().getModule(SettingModule.class)
+                .ifPresent(settingModule -> {
+                            this.logger.info("Registering settings");
+                            settingModule.registerSettings(
+                                    new CommandAutoCorrectSetting()
 
-        StatsBot.getStatManager().registerStats(
-                new FailedCommandStat(),
-                new MissingArgCommandStat(),
-                new SuccessfulCommandStat(),
-                new IncorrectArgCommandStat()
-        );
+                            );
+                        }
+                );
 
-        StatsBot.getAchievementManager().registerAchievements(
-                // new CommandAutoCorrectAchievement()
-        );
+        StatsBot.getModuleManager().getModule(StatModule.class)
+                .ifPresent(statModule -> {
+                            this.logger.info("Registering stats");
+                            statModule.registerStats(
+                                    new FailedCommandStat(),
+                                    new MissingArgCommandStat(),
+                                    new SuccessfulCommandStat(),
+                                    new IncorrectArgCommandStat()
+                            );
+                        }
+                );
+
+        StatsBot.getModuleManager().getModule(AchievementModule.class)
+                .ifPresent(achievementModule ->
+                        achievementModule.registerAchievements(
+                                // new CommandAutoCorrectAchievement()
+                        )
+                );
     }
 
     @Override

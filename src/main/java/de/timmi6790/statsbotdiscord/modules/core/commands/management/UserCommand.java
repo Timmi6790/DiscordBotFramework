@@ -24,7 +24,8 @@ public class UserCommand extends AbstractCommand {
     private static final List<String> RANK_2_ARGS = new ArrayList<>(Arrays.asList("add", "remove"));
 
     public UserCommand() {
-        super("user", "Management", "User control command", "<>");
+        super("user", "Management", "User control command", "<discordUser> <perms|rank|achievement|setting|setPrimaryRank|ban|" +
+                "unBan|info> <add;remove;list|add;remove|add|add|rank||||> <command;permNode|rank|>");
 
         this.setMinArgs(2);
         this.setPermission("core.management.user_control");
@@ -35,7 +36,7 @@ public class UserCommand extends AbstractCommand {
         // <discordUser> <achievement> <add> // TODO: Add more modes; remove
         // <discordUser> <setting> <add> // TODO: Add more modes; remove, change
         // <discordUser> <perms> <add|remove> <command|permNode>
-        // <discordUser> <rank> <add|remove|list> <rank|rank|>
+        // <discordUser> <rank> <add|remove|list> <rank>
         // <discordUser> <setPrimaryRank> <rank>
         // <discordUser> <ban>
         // <discordUser> <unBan>

@@ -10,7 +10,7 @@ import de.timmi6790.statsbotdiscord.modules.core.commands.info.HelpCommand;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.EventPriority;
 import de.timmi6790.statsbotdiscord.modules.eventhandler.SubscribeEvent;
 import de.timmi6790.statsbotdiscord.utilities.UtilitiesData;
-import de.timmi6790.statsbotdiscord.utilities.UtilitiesDiscordMessages;
+import de.timmi6790.statsbotdiscord.utilities.discord.UtilitiesDiscordMessages;
 import lombok.Getter;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.GuildChannel;

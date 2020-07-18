@@ -1,7 +1,8 @@
 package de.timmi6790.statsbotdiscord;
 
+import de.timmi6790.statsbotdiscord.exceptions.TopicalSortCycleException;
 import de.timmi6790.statsbotdiscord.modules.ModuleManager;
-import de.timmi6790.statsbotdiscord.modules.achievement.AchievementManager;
+import de.timmi6790.statsbotdiscord.modules.achievement.AchievementModule;
 import de.timmi6790.statsbotdiscord.modules.botlist.BotListModule;
 import de.timmi6790.statsbotdiscord.modules.command.CommandManager;
 import de.timmi6790.statsbotdiscord.modules.core.CoreModule;
@@ -10,8 +11,8 @@ import de.timmi6790.statsbotdiscord.modules.eventhandler.EventManager;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import de.timmi6790.statsbotdiscord.modules.permisssion.PermissionsManager;
 import de.timmi6790.statsbotdiscord.modules.rank.RankManager;
-import de.timmi6790.statsbotdiscord.modules.setting.SettingManager;
-import de.timmi6790.statsbotdiscord.modules.stat.StatManager;
+import de.timmi6790.statsbotdiscord.modules.setting.SettingModule;
+import de.timmi6790.statsbotdiscord.modules.stat.StatModule;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
@@ -31,9 +32,7 @@ import java.io.File;
 public class StatsBot {
     public static final String BOT_VERSION = "3.0.2";
     @Getter
-    private static final ModuleManager moduleManager = new ModuleManager();
-    @Getter
-    private static final SettingManager settingManager = new SettingManager();
+    private static ModuleManager moduleManager;
     @Getter
     private static SentryClient sentry;
     @Getter
@@ -43,22 +42,22 @@ public class StatsBot {
     @Getter
     private static CommandManager commandManager;
     @Getter
-    private static StatManager statManager;
-    @Getter
     private static EventManager eventManager;
     @Getter
     private static PermissionsManager permissionsManager;
     @Getter
     private static RankManager rankManager;
     @Getter
-    private static AchievementManager achievementManager;
-    @Getter
     private static EmoteReactionManager emoteReactionManager;
 
-    public static void main(final String[] args) throws LoginException, ConfigurationException {
+    public static void main(final String[] args) throws LoginException, ConfigurationException, TopicalSortCycleException {
         final Configurations configs = new Configurations();
         final Configuration config = configs.properties(new File("config.properties"));
 
+        start(config);
+    }
+
+    public static void start(final Configuration config) throws TopicalSortCycleException, LoginException {
         if (!config.getString("sentry.dsn").isEmpty()) {
             sentry = SentryClientFactory.sentryClient(config.getString("sentry.dsn"));
             sentry.setRelease(BOT_VERSION);
@@ -72,6 +71,7 @@ public class StatsBot {
                 .setActivity(Activity.watching(config.getString("discord.mainCommand") + " help"))
                 .build();
 
+        moduleManager = new ModuleManager();
         eventManager = new EventManager();
         permissionsManager = new PermissionsManager();
         rankManager = new RankManager();
@@ -82,13 +82,15 @@ public class StatsBot {
         eventManager.addEventListener(commandManager);
 
         emoteReactionManager = new EmoteReactionManager();
-        statManager = new StatManager();
-        achievementManager = new AchievementManager();
 
         moduleManager.registerModules(
+                new StatModule(),
+                new AchievementModule(),
+                new SettingModule(),
+
+                new BotListModule(),
                 new MineplexStatsModule(),
-                new CoreModule(),
-                new BotListModule()
+                new CoreModule()
         );
         moduleManager.startAll();
     }
