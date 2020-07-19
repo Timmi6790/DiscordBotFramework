@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AccountDeletionCommand extends AbstractCommand {
     private static final String PLAYER_DELETE = "DELETE FROM player WHERE id = :dbId LIMIT 1;";
 
-    private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"PutMeDown", "TimmiIsBad", "GodSaveTheBot"};
+    private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"PutMeDown", "SaveMeImBeingHeldCaptive", "GodSaveTheBot"};
 
     private final Cache<Long, Integer> userDeleteConfirmCache = Caffeine.newBuilder()
             .maximumSize(10_000)
