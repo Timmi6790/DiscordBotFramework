@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.timmi6790.statsbotdiscord</groupId>
-    <artifactId>StatsBotDiscord</artifactId>
+    <groupId>de.timmi6790.discord_framework</groupId>
+    <artifactId>DiscordBot</artifactId>
     <version>3.0.3</version>
 
     <packaging>jar
@@ -159,7 +159,7 @@
                     <archive>
                         <index>true</index>
                         <manifest>
-                            <mainClass>de.timmi6790.statsbotdiscord.StatsBot</mainClass>
+                            <mainClass>de.timmi6790.discord_framework.DiscordBot</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
