@@ -17,9 +17,11 @@ import de.timmi6790.statsbotdiscord.modules.core.stats.MissingArgCommandStat;
 import de.timmi6790.statsbotdiscord.modules.core.stats.SuccessfulCommandStat;
 import de.timmi6790.statsbotdiscord.modules.setting.SettingModule;
 import de.timmi6790.statsbotdiscord.modules.stat.StatModule;
+import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@EqualsAndHashCode(callSuper = true)
 public class CoreModule extends AbstractModule {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

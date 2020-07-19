@@ -34,6 +34,18 @@ public class Rank {
     private String name;
     private final Set<Integer> extendedRanks;
     private final Set<Integer> permissions;
+    private Set<Integer> cachedAllPermissions;
+
+    public Rank(final int databaseId, final String name, final Set<Integer> extendedRanks, final Set<Integer> permissions) {
+        this.databaseId = databaseId;
+        this.name = name;
+        this.extendedRanks = extendedRanks;
+        this.permissions = permissions;
+    }
+
+    public void invalidateCachedPermissions() {
+        this.cachedAllPermissions = null;
+    }
 
     // Permissions
     public boolean hasPermission(final int permissionId) {
@@ -53,6 +65,8 @@ public class Rank {
         );
         this.permissions.add(permissionId);
 
+        StatsBot.getRankManager().invalidateAllPermCaches();
+
         return true;
     }
 
@@ -69,13 +83,17 @@ public class Rank {
         );
         this.permissions.remove(permissionId);
 
+        StatsBot.getRankManager().invalidateAllPermCaches();
+
         return true;
     }
 
     public Set<Integer> getAllPermissions() {
-        // TODO: Cache the result
-        final Set<Integer> foundPermissions = new HashSet<>(this.permissions);
+        if (this.cachedAllPermissions != null) {
+            return this.cachedAllPermissions;
+        }
 
+        final Set<Integer> foundPermissions = new HashSet<>(this.permissions);
         final RankManager rankManager = StatsBot.getRankManager();
         final MemoryDeque<Integer> ranksQueue = new MemoryDeque<>();
         ranksQueue.addAll(this.extendedRanks);
@@ -87,6 +105,7 @@ public class Rank {
             });
         }
 
+        this.cachedAllPermissions = foundPermissions;
         return foundPermissions;
     }
 
@@ -111,6 +130,9 @@ public class Rank {
                         .execute()
         );
         this.extendedRanks.add(rankId);
+
+        StatsBot.getRankManager().invalidateAllPermCaches();
+
         return true;
     }
 
@@ -130,6 +152,9 @@ public class Rank {
                         .execute()
         );
         this.extendedRanks.remove(rankId);
+
+        StatsBot.getRankManager().invalidateAllPermCaches();
+
         return true;
     }
 

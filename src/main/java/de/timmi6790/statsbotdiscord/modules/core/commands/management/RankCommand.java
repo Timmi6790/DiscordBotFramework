@@ -10,15 +10,14 @@ import de.timmi6790.statsbotdiscord.modules.rank.Rank;
 import de.timmi6790.statsbotdiscord.modules.rank.RankManager;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class RankCommand extends AbstractCommand {
-    private static final List<String> VALID_1_ARGS = new ArrayList<>(Arrays.asList("perms", "extend", "rename", "create", "delete", "info"));
-    private static final List<String> PERMS_2_ARGS = new ArrayList<>(Arrays.asList("add", "remove"));
-    private static final List<String> EXTEND_2_ARGS = new ArrayList<>(Arrays.asList("add", "remove"));
+    private static final List<String> VALID_1_ARGS = Arrays.asList("perms", "extend", "rename", "create", "delete", "info");
+    private static final List<String> PERMS_2_ARGS = Arrays.asList("add", "remove");
+    private static final List<String> EXTEND_2_ARGS = Arrays.asList("add", "remove");
 
     public RankCommand() {
         // TODO: Add a better command system, to support more complex commands

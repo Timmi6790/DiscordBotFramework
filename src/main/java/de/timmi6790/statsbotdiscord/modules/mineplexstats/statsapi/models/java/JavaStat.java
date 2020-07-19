@@ -18,7 +18,7 @@ public class JavaStat {
 
     public JavaStat(final String name, final String[] aliasNames, final boolean achievement, final String description, final Map<String, JavaBoard> boards) {
         this.name = name;
-        this.aliasNames = aliasNames;
+        this.aliasNames = aliasNames.clone();
         this.achievement = achievement;
         this.description = description;
         this.boards = boards;

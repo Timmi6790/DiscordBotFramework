@@ -30,7 +30,7 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 
 public class StatsBot {
-    public static final String BOT_VERSION = "3.0.2";
+    public static final String BOT_VERSION = "3.0.3";
     @Getter
     private static ModuleManager moduleManager;
     @Getter

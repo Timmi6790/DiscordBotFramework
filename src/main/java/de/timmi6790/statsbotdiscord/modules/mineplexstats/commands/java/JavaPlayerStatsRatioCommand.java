@@ -25,7 +25,7 @@ import java.util.Optional;
 
 public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
     public JavaPlayerStatsRatioCommand() {
-        super("playerstats", "Player stats", "<player> <stat> [board]", "pls", "plsats", "plstat");
+        super("playerstats", "Player stats as graph", "<player> <stat> [board]", "pls", "plsats", "plstat");
 
         this.setCategory("PROTOTYPE - MineplexStats - Java");
         this.setDefaultPerms(true);

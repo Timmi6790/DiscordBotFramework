@@ -7,7 +7,12 @@ import de.timmi6790.statsbotdiscord.modules.command.CommandResult;
 import de.timmi6790.statsbotdiscord.modules.mineplexstats.MineplexStatsModule;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class ReloadDataCommand extends AbstractCommand {
+    private static final List<String> VALID_0_ARGS = Arrays.asList("javaGame", "javaGroup", "bedrockGame");
+
     public ReloadDataCommand() {
         super("sReload", "Debug", "", "[data]", "sr");
 
@@ -18,38 +23,29 @@ public class ReloadDataCommand extends AbstractCommand {
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         final MineplexStatsModule module = StatsBot.getModuleManager().getModule(MineplexStatsModule.class).orElseThrow(RuntimeException::new);
+        final String arg0 = this.getFromListIgnoreCase(commandParameters, 0, VALID_0_ARGS);
 
-        final String firstArg = commandParameters.getArgs()[0];
-        switch (firstArg.toLowerCase()) {
-            case "javagame":
+        switch (arg0) {
+            case "javaGame":
                 module.loadJavaGames();
                 break;
 
-            case "javagroup":
+            case "javaGroup":
                 module.loadJavaGroups();
                 break;
 
-            case "bedrockgame":
+            case "bedrockGame":
                 module.loadBedrockGames();
                 break;
-
             default:
-                this.sendTimedMessage(
-                        commandParameters,
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle("Incorrect data type")
-                                .setDescription(MarkdownUtil.monospace(firstArg) + " is not a valid type.\n" +
-                                        "[javaGame, javaGroup, bedrockGame]"),
-                        90
-                );
-                return CommandResult.INVALID_ARGS;
+                return CommandResult.ERROR;
         }
 
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Reloaded data")
-                        .setDescription("Reloaded " + MarkdownUtil.monospace(firstArg)),
+                        .setDescription("Reloaded " + MarkdownUtil.monospace(arg0)),
                 90
         );
         return CommandResult.SUCCESS;

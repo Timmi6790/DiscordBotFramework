@@ -5,5 +5,5 @@ package de.timmi6790.statsbotdiscord.modules.timedcommands;
  * Allow owners to disable and/or limit this in their server
  * Even if limited, add bypas via discord admin perms
  */
-public class TimedCommandsManager {
+public class TimedCommandsModule {
 }

@@ -44,9 +44,14 @@ public class RankManager {
         rankList.forEach(this::addRank);
     }
 
+    public void invalidateAllPermCaches() {
+        this.rankMap.values().forEach(Rank::invalidateCachedPermissions);
+    }
+
     public void addRank(final Rank rank) {
         this.rankMappingMap.put(rank.getDatabaseId(), rank.getName());
         this.rankMap.put(rank.getDatabaseId(), rank);
+        this.invalidateAllPermCaches();
     }
 
     public boolean hasRank(final int id) {
@@ -113,6 +118,8 @@ public class RankManager {
         });
         this.rankMap.remove(rankId);
         this.rankMappingMap.remove(rankId);
+
+        this.invalidateAllPermCaches();
 
         return true;
     }

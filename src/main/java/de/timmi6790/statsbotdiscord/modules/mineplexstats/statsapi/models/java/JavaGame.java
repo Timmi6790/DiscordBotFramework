@@ -24,7 +24,7 @@ public class JavaGame {
 
     public JavaGame(final String name, final String[] aliasNames, final String category, final String wikiUrl, final String description, final Map<String, JavaStat> stats) {
         this.name = name;
-        this.aliasNames = aliasNames;
+        this.aliasNames = aliasNames.clone();
         this.category = category;
         this.wikiUrl = wikiUrl;
         this.description = description;

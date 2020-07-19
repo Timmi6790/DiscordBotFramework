@@ -34,6 +34,10 @@ public class CommandParameters {
         System.arraycopy(commandParameters.args, 0, this.args, 0, this.args.length);
     }
 
+    public boolean isFromGuild() {
+        return this.event.isFromGuild();
+    }
+
     public GuildDb getServer() {
         return this.channelDb.getGuildDb();
     }

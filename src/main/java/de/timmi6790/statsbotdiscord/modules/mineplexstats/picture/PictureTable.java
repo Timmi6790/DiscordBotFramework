@@ -48,8 +48,8 @@ public class PictureTable extends AbstractPicture {
     }
 
     public PictureTable(final String[] header, final String date, final String[][] leaderboard, final BufferedImage skin) {
-        this.header = header;
-        this.leaderboard = leaderboard;
+        this.header = header.clone();
+        this.leaderboard = leaderboard.clone();
         this.date = date;
 
         this.widthHeader = new int[this.header.length];

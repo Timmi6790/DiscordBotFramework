@@ -27,6 +27,7 @@ public class CommandExecutionEvent extends Event {
         }
     }
 
+    @EqualsAndHashCode(callSuper = true)
     public static class Post extends CommandExecutionEvent {
         @Getter
         private final CommandResult commandResult;

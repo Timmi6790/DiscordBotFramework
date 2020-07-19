@@ -18,6 +18,10 @@ public abstract class AbstractModule {
         this.name = name;
     }
 
+    public abstract void onEnable();
+
+    public abstract void onDisable();
+
     protected final void addDependencies(final Class<? extends AbstractModule>... dependencies) {
         this.dependencies.addAll(Arrays.asList(dependencies));
     }
@@ -34,8 +38,4 @@ public abstract class AbstractModule {
     protected final void addLoadBefore(final Class<? extends AbstractModule>... loadBefore) {
         this.loadBefore.addAll(Arrays.asList(loadBefore));
     }
-
-    public abstract void onEnable();
-
-    public abstract void onDisable();
 }

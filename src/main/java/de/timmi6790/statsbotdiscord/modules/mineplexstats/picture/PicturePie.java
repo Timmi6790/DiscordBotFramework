@@ -17,7 +17,7 @@ public class PicturePie extends AbstractPicture {
     private final double total;
 
     public PicturePie(final Slice[] slices) {
-        this.slices = slices;
+        this.slices = slices.clone();
         this.total = Arrays.stream(this.slices).mapToDouble(Slice::getValue).sum();
     }
 

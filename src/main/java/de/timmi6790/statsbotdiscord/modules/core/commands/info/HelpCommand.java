@@ -39,10 +39,8 @@ public class HelpCommand extends AbstractCommand {
                                     value.stream()
                                             .sorted(Comparator.comparing(AbstractCommand::getName))
                                             .map(command -> {
-                                                final String capitalizedName = command.getName().substring(0, 1).toUpperCase() + command.getName().substring(1);
                                                 final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
-
-                                                return capitalizedName + ": " + MarkdownUtil.monospace(mainCommand + command.getName() + syntax);
+                                                return MarkdownUtil.monospace(mainCommand + command.getName() + syntax) + " " + command.getDescription();
                                             })
                                             .collect(Collectors.joining("\n")),
                                     false
