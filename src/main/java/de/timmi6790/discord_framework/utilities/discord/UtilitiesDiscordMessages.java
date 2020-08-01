@@ -2,13 +2,15 @@ package de.timmi6790.discord_framework.utilities.discord;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.StatEmbedBuilder;
-import de.timmi6790.discord_framework.events.MessageReceivedIntEvent;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.modules.core.commands.info.HelpCommand;
+import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
+import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
+import de.timmi6790.discord_framework.modules.event.events.MessageReceivedIntEvent;
 import de.timmi6790.discord_framework.utilities.UtilitiesString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -66,7 +68,7 @@ public class UtilitiesDiscordMessages {
 
         if (similarCommands.isEmpty()) {
             description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
-                    .append("Use the ").append(MarkdownUtil.bold(DiscordBot.getCommandManager().getMainCommand() + " help")).append(" command or click the ")
+                    .append("Use the ").append(MarkdownUtil.bold(DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " help")).append(" command or click the ")
                     .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
 
         } else {
@@ -84,7 +86,7 @@ public class UtilitiesDiscordMessages {
 
             description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
-        DiscordBot.getCommandManager().getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
+        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
 
         final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
         event.getChannel().sendMessage(
@@ -94,7 +96,7 @@ public class UtilitiesDiscordMessages {
                         .setFooter("↓ Click Me!")
                         .build())
                 .queue(sendMessage -> {
-                            DiscordBot.getEmoteReactionManager().addEmoteReactionMessage(sendMessage, emoteReactionMessage);
+                            DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(sendMessage, emoteReactionMessage);
                             sendMessage.delete().queueAfter(90, TimeUnit.SECONDS);
                         }
                 );
@@ -107,7 +109,7 @@ public class UtilitiesDiscordMessages {
         description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
         if (similarNames.isEmpty() && allCommand != null) {
-            description.append("Use the ").append(MarkdownUtil.bold(DiscordBot.getCommandManager().getMainCommand() + " " + allCommand.getName() + " " + String.join(" ", newArgs)))
+            description.append("Use the ").append(MarkdownUtil.bold(DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " " + allCommand.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
@@ -156,7 +158,7 @@ public class UtilitiesDiscordMessages {
                             if (!emotes.isEmpty()) {
                                 final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getEvent().getAuthor().getIdLong(),
                                         commandParameters.getEvent().getChannel().getIdLong());
-                                DiscordBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
+                                DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
                             }
 
                             message.delete().queueAfter(90, TimeUnit.SECONDS);

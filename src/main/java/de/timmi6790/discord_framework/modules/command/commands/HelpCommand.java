@@ -1,7 +1,8 @@
-package de.timmi6790.discord_framework.modules.core.commands.info;
+package de.timmi6790.discord_framework.modules.command.commands;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.utilities.UtilitiesString;
@@ -23,13 +24,13 @@ public class HelpCommand extends AbstractCommand {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All info
         if (commandParameters.getArgs().length == 0) {
-            final String mainCommand = DiscordBot.getCommandManager().getMainCommand();
+            final String mainCommand = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
             final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Commands")
                     .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
-                    .setFooter("TIP: Use " + DiscordBot.getCommandManager().getMainCommand() + " help <command> to see more details");
+                    .setFooter("TIP: Use " + DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " help <command> to see more details");
 
-            DiscordBot.getCommandManager().getCommands()
+            DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommands()
                     .stream()
                     .filter(command -> command.hasPermission(commandParameters))
                     .collect(Collectors.groupingBy(AbstractCommand::getCategory, TreeMap::new, Collectors.toList()))
@@ -52,7 +53,7 @@ public class HelpCommand extends AbstractCommand {
         }
 
         // Command specific
-        final AbstractCommand command = this.getCommand(commandParameters, 0);
+        final AbstractCommand command = this.getCommandThrow(commandParameters, 0);
         final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
 
         final EmbedBuilder message = this.getEmbedBuilder(commandParameters)

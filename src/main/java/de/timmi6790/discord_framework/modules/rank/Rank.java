@@ -1,12 +1,14 @@
 package de.timmi6790.discord_framework.modules.rank;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.datatypes.MemoryDeque;
-import de.timmi6790.discord_framework.modules.core.UserDb;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +59,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_PERMISSION)
                         .bind("rankId", this.databaseId)
                         .bind("permissionId", permissionId)
@@ -65,7 +67,7 @@ public class Rank {
         );
         this.permissions.add(permissionId);
 
-        DiscordBot.getRankManager().invalidateAllPermCaches();
+        DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
 
         return true;
     }
@@ -75,7 +77,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_PERMISSION)
                         .bind("rankId", this.databaseId)
                         .bind("permissionId", permissionId)
@@ -83,7 +85,7 @@ public class Rank {
         );
         this.permissions.remove(permissionId);
 
-        DiscordBot.getRankManager().invalidateAllPermCaches();
+        DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
 
         return true;
     }
@@ -94,14 +96,22 @@ public class Rank {
         }
 
         final Set<Integer> foundPermissions = new HashSet<>(this.permissions);
-        final RankManager rankManager = DiscordBot.getRankManager();
-        final MemoryDeque<Integer> ranksQueue = new MemoryDeque<>();
-        ranksQueue.addAll(this.extendedRanks);
+        final RankModule rankModule = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class);
 
-        for (final int rankId : ranksQueue) {
-            rankManager.getRank(rankId).ifPresent(rank -> {
+        final Set<Integer> seen = new HashSet<>();
+        final ArrayDeque<Integer> queue = new ArrayDeque<>(this.extendedRanks);
+
+        while (!queue.isEmpty()) {
+            rankModule.getRank(queue.pop()).ifPresent(rank -> {
                 foundPermissions.addAll(rank.getPermissions());
-                ranksQueue.addAll(rank.getExtendedRanks());
+
+                rank.getExtendedRanks()
+                        .stream()
+                        .filter(extendId -> !seen.contains(extendId))
+                        .forEach(extendId -> {
+                            seen.add(extendId);
+                            queue.add(extendId);
+                        });
             });
         }
 
@@ -123,7 +133,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_RELATION)
                         .bind("rankId", this.databaseId)
                         .bind("extendedRankId", rankId)
@@ -131,7 +141,7 @@ public class Rank {
         );
         this.extendedRanks.add(rankId);
 
-        DiscordBot.getRankManager().invalidateAllPermCaches();
+        DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
 
         return true;
     }
@@ -145,7 +155,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_RELATION)
                         .bind("rankId", this.databaseId)
                         .bind("extendedRankId", rankId)
@@ -153,7 +163,7 @@ public class Rank {
         );
         this.extendedRanks.remove(rankId);
 
-        DiscordBot.getRankManager().invalidateAllPermCaches();
+        DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
 
         return true;
     }
@@ -164,7 +174,7 @@ public class Rank {
 
     // Name
     public void setName(final String name) {
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(SET_NAME)
                         .bind("newRankName", name)
                         .bind("databaseId", this.databaseId)
@@ -175,7 +185,7 @@ public class Rank {
 
     // Players
     public long retrievePlayerCount() {
-        return DiscordBot.getDatabase().withHandle(handle ->
+        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PLAYER_IDS_WITH_RANK)
                         .bind("databaseId", this.databaseId)
                         .mapTo(long.class)
@@ -186,7 +196,7 @@ public class Rank {
 
     public Set<UserDb> retrieveAllPlayers() {
         // I think it is the best solution to just get the discord ids
-        final List<Long> playerIds = DiscordBot.getDatabase().withHandle(handle ->
+        final List<Long> playerIds = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PLAYER_IDS_WITH_RANK)
                         .bind("databaseId", this.databaseId)
                         .mapTo(long.class)
@@ -194,7 +204,7 @@ public class Rank {
         );
 
         return playerIds.parallelStream()
-                .map(UserDb::getOrCreate)
+                .map(DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class)::getOrCreate)
                 .collect(Collectors.toSet());
     }
 }

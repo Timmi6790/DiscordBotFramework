@@ -22,7 +22,7 @@ public class ModuleManagerTest {
         final ExampleModule module = new ExampleModule();
         commandManager.registerModule(module);
 
-        final ExampleModule found = commandManager.getModule(ExampleModule.class).orElseThrow(RuntimeException::new);
+        final ExampleModule found = commandManager.getModuleOrThrow(ExampleModule.class);
         assertThat(module).isEqualTo(found);
     }
 }

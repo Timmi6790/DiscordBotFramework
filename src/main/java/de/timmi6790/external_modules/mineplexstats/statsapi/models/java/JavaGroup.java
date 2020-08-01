@@ -24,7 +24,7 @@ public class JavaGroup {
     }
 
     public List<JavaGame> getGames() {
-        final MineplexStatsModule module = DiscordBot.getModuleManager().getModule(MineplexStatsModule.class).orElseThrow(RuntimeException::new);
+        final MineplexStatsModule module = DiscordBot.getModuleManager().getModuleOrThrow(MineplexStatsModule.class);
         return this.games.stream()
                 .map(module::getJavaGame)
                 .filter(Optional::isPresent)
@@ -33,7 +33,7 @@ public class JavaGroup {
     }
 
     public List<JavaGame> getGames(final JavaStat stat) {
-        final MineplexStatsModule module = DiscordBot.getModuleManager().getModule(MineplexStatsModule.class).orElseThrow(RuntimeException::new);
+        final MineplexStatsModule module = DiscordBot.getModuleManager().getModuleOrThrow(MineplexStatsModule.class);
         return this.games.stream()
                 .map(module::getJavaGame)
                 .filter(gameOpt -> gameOpt.map(game -> game.getStat(stat.getName()).isPresent()).orElse(false))

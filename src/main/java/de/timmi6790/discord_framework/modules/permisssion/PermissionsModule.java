@@ -1,8 +1,11 @@
 package de.timmi6790.discord_framework.modules.permisssion;
 
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
+import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.util.Optional;
@@ -11,7 +14,8 @@ import java.util.Optional;
  * Stores the permission nodes for all perms(player, group).
  * With id and perm_node
  */
-public class PermissionsManager {
+@EqualsAndHashCode(callSuper = true)
+public class PermissionsModule extends AbstractModule {
     private static final String GET_LAST_INSERT_ID = "SELECT LAST_INSERT_ID();";
     private static final String GET_PERMISSION_ID = "SELECT id " +
             "FROM `permission` " +
@@ -21,8 +25,27 @@ public class PermissionsManager {
 
     private final ConcurrentTwoLaneMap<Integer, String> permissionsMap = new ConcurrentTwoLaneMap<>();
 
+    public PermissionsModule() {
+        super("Permissions");
+
+        this.addDependenciesAndLoadAfter(
+                DatabaseModule.class
+        );
+    }
+
+
+    @Override
+    public void onEnable() {
+
+    }
+
+    @Override
+    public void onDisable() {
+
+    }
+
     private Optional<Integer> getDatabasePermissionId(final @NonNull String permission) {
-        return DiscordBot.getDatabase().withHandle(handle ->
+        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PERMISSION_ID)
                         .bind("permNode", permission)
                         .mapTo(int.class)
@@ -31,7 +54,7 @@ public class PermissionsManager {
     }
 
     private int insertPermissionIntoDatabase(final @NonNull String permission) {
-        return DiscordBot.getDatabase().withHandle(handle -> {
+        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
                     handle.createUpdate(INSERT_PERMISSION)
                             .bind("permNode", permission)
                             .execute();

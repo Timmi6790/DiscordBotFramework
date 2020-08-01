@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.modules.achievement.achievements;
 
-import de.timmi6790.discord_framework.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
-import de.timmi6790.discord_framework.modules.event_handler.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.event.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
 

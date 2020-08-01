@@ -1,10 +1,10 @@
 package de.timmi6790.discord_framework.modules.command;
 
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
-import de.timmi6790.discord_framework.events.MessageReceivedIntEvent;
-import de.timmi6790.discord_framework.modules.core.ChannelDb;
-import de.timmi6790.discord_framework.modules.core.GuildDb;
-import de.timmi6790.discord_framework.modules.core.UserDb;
+import de.timmi6790.discord_framework.modules.channel.ChannelDb;
+import de.timmi6790.discord_framework.modules.event.events.MessageReceivedIntEvent;
+import de.timmi6790.discord_framework.modules.guild.GuildDb;
+import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.dv8tion.jda.api.Permission;

@@ -9,6 +9,8 @@ import java.util.Set;
 
 @Data
 public abstract class AbstractModule {
+    // TODO: Make dependenciesLoad = must need always load after
+    // TODO: depencies = must have | don't care about load order
     private final String name;
     private Set<Class<? extends AbstractModule>> dependencies = new HashSet<>();
     private Set<Class<? extends AbstractModule>> loadAfter = new HashSet<>();

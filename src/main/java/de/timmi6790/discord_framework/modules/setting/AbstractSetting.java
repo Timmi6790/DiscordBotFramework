@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import lombok.Data;
 
 @Data
@@ -22,7 +23,7 @@ public abstract class AbstractSetting<T> {
 
     private int getSettingDbId() {
         // Get current id or insert new
-        return DiscordBot.getDatabase().withHandle(handle ->
+        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_SETTING_ID)
                         .bind("settingName", this.getInternalName())
                         .mapTo(int.class)

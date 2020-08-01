@@ -3,8 +3,10 @@ package de.timmi6790.discord_framework.modules.emote_reaction;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
+import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.event_handler.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class EmoteReactionManager {
+public class EmoteReactionModule extends AbstractModule {
     private static final int ACTIVE_EMOTES_LIMIT = 6;
 
     @Getter
@@ -82,8 +84,22 @@ public class EmoteReactionManager {
             })
             .build();
 
-    public EmoteReactionManager() {
-        DiscordBot.getEventManager().addEventListener(this);
+    public EmoteReactionModule() {
+        super("EmoteReaction");
+
+        this.addDependenciesAndLoadAfter(
+                EventModule.class
+        );
+    }
+
+    @Override
+    public void onEnable() {
+        DiscordBot.getModuleManager().getModuleOrThrow(EventModule.class).addEventListener(this);
+    }
+
+    @Override
+    public void onDisable() {
+
     }
 
     public void addEmoteReactionMessage(final Message message, final EmoteReactionMessage emoteReactionMessage) {

@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.events;
+package de.timmi6790.discord_framework.modules.event.events;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import lombok.EqualsAndHashCode;

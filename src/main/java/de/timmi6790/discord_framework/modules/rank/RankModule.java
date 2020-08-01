@@ -1,7 +1,13 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
+import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.rank.commands.RankCommand;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.util.HashSet;
@@ -10,7 +16,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RankManager {
+@EqualsAndHashCode(callSuper = true)
+
+public class RankModule extends AbstractModule {
     private static final RankMapper rankMapper = new RankMapper();
 
     private static final String GET_ALL_RANKS = "SELECT rank.id, rank_name rankName, GROUP_CONCAT(DISTINCT rank_permission.permission_id) permissions, GROUP_CONCAT(DISTINCT rank_relation.parent_rank_id) parentRanks " +
@@ -34,8 +42,35 @@ public class RankManager {
     private final ConcurrentHashMap<Integer, Rank> rankMap = new ConcurrentHashMap<>();
     private final ConcurrentTwoLaneMap<Integer, String> rankMappingMap = new ConcurrentTwoLaneMap<>();
 
+    public RankModule() {
+        super("Rank");
+
+        this.addDependenciesAndLoadAfter(DatabaseModule.class,
+
+                PermissionsModule.class,
+                CommandModule.class
+        );
+    }
+
+    @Override
+    public void onEnable() {
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().registerRowMapper(Rank.class, new RankMapper());
+        this.loadRanksFromDatabase();
+
+        DiscordBot.getModuleManager()
+                .getModuleOrThrow(CommandModule.class)
+                .registerCommands(
+                        new RankCommand()
+                );
+    }
+
+    @Override
+    public void onDisable() {
+
+    }
+
     public void loadRanksFromDatabase() {
-        final List<Rank> rankList = DiscordBot.getDatabase().withHandle(handle ->
+        final List<Rank> rankList = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_ALL_RANKS)
                         .map(rankMapper)
                         .list()
@@ -84,7 +119,7 @@ public class RankManager {
             return false;
         }
 
-        final Rank newRank = DiscordBot.getDatabase().withHandle(handle -> {
+        final Rank newRank = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
             handle.createUpdate(INSERT_RANK)
                     .bind("rankName", name)
                     .execute();
@@ -108,7 +143,7 @@ public class RankManager {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle -> {
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle -> {
             handle.createUpdate(SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE)
                     .bind("databaseId", rankId)
                     .execute();

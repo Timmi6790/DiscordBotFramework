@@ -1,6 +1,7 @@
 package de.timmi6790.external_modules.mineplexstats.commands.java;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaGroup;
@@ -35,7 +36,7 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
                                             .sorted(Comparator.naturalOrder())
                                             .collect(Collectors.joining("\n")),
                                     false)
-                            .setFooter("TIP: Run " + DiscordBot.getCommandManager().getMainCommand() + " groups <group> to see more details"),
+                            .setFooter("TIP: Run " + DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " groups <group> to see more details"),
                     150
             );
             return CommandResult.SUCCESS;

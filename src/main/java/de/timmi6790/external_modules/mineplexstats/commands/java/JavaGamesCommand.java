@@ -1,6 +1,7 @@
 package de.timmi6790.external_modules.mineplexstats.commands.java;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaGame;
@@ -29,7 +30,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
         if (commandParameters.getArgs().length == 0) {
             final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Java Games")
-                    .setFooter("TIP: Run " + DiscordBot.getCommandManager().getMainCommand() + " games <game> to see more details");
+                    .setFooter("TIP: Run " + DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " games <game> to see more details");
 
             this.getStatsModule().getJavaGames().values().stream()
                     .collect(Collectors.groupingBy(JavaGame::getCategory, TreeMap::new, Collectors.toList()))
@@ -62,7 +63,7 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
                             .addField("Description", game.getDescription(), false, !game.getDescription().isEmpty())
                             .addField("Alias names", String.join(", ", game.getAliasNames()), false, game.getAliasNames().length > 0)
                             .addField("Stats (You don't need to type Achievement in front of it)", stats, false)
-                            .setFooter("TIP: Run " + DiscordBot.getCommandManager().getMainCommand() + " games " + game.getName() + " <stat> to see more details"),
+                            .setFooter("TIP: Run " + DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " games " + game.getName() + " <stat> to see more details"),
                     90
             );
 

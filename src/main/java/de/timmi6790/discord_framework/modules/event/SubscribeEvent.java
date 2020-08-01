@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.event_handler;
+package de.timmi6790.discord_framework.modules.event;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

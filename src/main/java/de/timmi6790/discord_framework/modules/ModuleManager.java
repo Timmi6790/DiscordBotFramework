@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.modules;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.utilities.sorting.TopicalSort;
 import lombok.Data;
@@ -34,14 +35,18 @@ public class ModuleManager {
         return (Optional<T>) Optional.ofNullable(this.loadedModules.get(clazz));
     }
 
+    public <T extends AbstractModule> T getModuleOrThrow(final Class<T> clazz) {
+        return this.getModule(clazz).orElseThrow(() -> new ModuleGetException(String.valueOf(clazz)));
+    }
+
     public boolean start(final Class<? extends AbstractModule> moduleClass) {
         final AbstractModule module = this.loadedModules.get(moduleClass);
         if (module == null || this.startedModules.contains(moduleClass)) {
             return false;
         }
 
-        // Check if all dependencies are started
-        for (final Class<? extends AbstractModule> dependencyClass : module.getDependencies()) {
+        // Check if all load dependencies are started
+        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
             if (!this.startedModules.contains(dependencyClass)) {
                 logger.warn("Tried to start {} without {} dependency being started", moduleClass, dependencyClass);
                 return false;

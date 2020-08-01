@@ -38,6 +38,26 @@
     </repositories>
     <dependencies>
         <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>tinylog-api</artifactId>
+            <version>2.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>tinylog-impl</artifactId>
+            <version>2.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>log4j1.2-api</artifactId>
+            <version>2.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>slf4j-tinylog</artifactId>
+            <version>2.1.2</version>
+        </dependency>
+        <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry</artifactId>
             <version>1.7.30</version>
@@ -47,11 +67,6 @@
             <artifactId>lombok</artifactId>
             <version>1.18.12</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>net.dv8tion</groupId>
@@ -103,11 +118,6 @@
             <groupId>org.ocpsoft.prettytime</groupId>
             <artifactId>prettytime-nlp</artifactId>
             <version>4.0.5.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>org.discordbots</groupId>

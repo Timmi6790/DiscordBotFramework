@@ -3,13 +3,12 @@ package de.timmi6790.discord_framework.modules.core;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.modules.core.commands.info.*;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
+import de.timmi6790.discord_framework.modules.core.commands.info.AboutCommand;
+import de.timmi6790.discord_framework.modules.core.commands.info.AccountDeletionCommand;
+import de.timmi6790.discord_framework.modules.core.commands.info.InviteCommand;
+import de.timmi6790.discord_framework.modules.core.commands.info.SettingsCommand;
 import de.timmi6790.discord_framework.modules.core.commands.management.BotInfoCommand;
-import de.timmi6790.discord_framework.modules.core.commands.management.RankCommand;
-import de.timmi6790.discord_framework.modules.core.commands.management.UserCommand;
-import de.timmi6790.discord_framework.modules.core.database.ChannelDbMapper;
-import de.timmi6790.discord_framework.modules.core.database.GuildDbMapper;
-import de.timmi6790.discord_framework.modules.core.database.UserDbMapper;
 import de.timmi6790.discord_framework.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.core.stats.FailedCommandStat;
 import de.timmi6790.discord_framework.modules.core.stats.IncorrectArgCommandStat;
@@ -29,6 +28,7 @@ public class CoreModule extends AbstractModule {
         super("Core");
 
         this.addLoadAfter(
+                CommandModule.class,
                 AchievementModule.class,
                 StatModule.class,
                 SettingModule.class
@@ -37,30 +37,22 @@ public class CoreModule extends AbstractModule {
 
     @Override
     public void onEnable() {
-        DiscordBot.getDatabase()
-                .registerRowMapper(ChannelDb.class, new ChannelDbMapper())
-                .registerRowMapper(GuildDb.class, new GuildDbMapper())
-                .registerRowMapper(UserDb.class, new UserDbMapper());
-
-        DiscordBot.getCommandManager().registerCommands(
-                new HelpCommand(),
+        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
                 new AboutCommand(),
                 new BotInfoCommand(),
-                new AccountDeletionCommand(),
-                new UserCommand(),
-                new RankCommand()
+                new AccountDeletionCommand()
         );
 
         final String inviteUrl = DiscordBot.getConfig().getString("discord.inviteUrl");
         if (inviteUrl != null && !inviteUrl.isEmpty()) {
-            DiscordBot.getCommandManager().registerCommands(
+            DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
                     new InviteCommand(inviteUrl)
             );
         }
 
         DiscordBot.getModuleManager().getModule(SettingModule.class)
                 .ifPresent(settingModule -> {
-                            DiscordBot.getCommandManager().registerCommands(
+                            DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
                                     new SettingsCommand()
                             );
 

@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -17,6 +18,10 @@ public class SettingModule extends AbstractModule {
 
     public SettingModule() {
         super("SettingModule");
+
+        this.addDependenciesAndLoadAfter(
+                DatabaseModule.class
+        );
     }
 
     @Override

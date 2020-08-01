@@ -1,11 +1,12 @@
 package de.timmi6790.external_modules.mineplexstats.commands;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
+import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.utilities.UtilitiesData;
@@ -64,7 +65,7 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
     }
 
     protected MineplexStatsModule getStatsModule() {
-        return DiscordBot.getModuleManager().getModule(MineplexStatsModule.class).orElseThrow(RuntimeException::new);
+        return DiscordBot.getModuleManager().getModuleOrThrow(MineplexStatsModule.class);
     }
 
     protected String getFormattedTime(long time) {
@@ -263,7 +264,7 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
                     .sendFile(inputStream, pictureName + ".png")
                     .queue(message -> {
                         if (emoteReactionMessage != null) {
-                            DiscordBot.getEmoteReactionManager().addEmoteReactionMessage(message, emoteReactionMessage);
+                            DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
                         }
                     });
             return CommandResult.SUCCESS;

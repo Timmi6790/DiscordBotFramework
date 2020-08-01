@@ -1,12 +1,14 @@
 package de.timmi6790.discord_framework.modules.core.commands.management;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.core.ChannelDb;
-import de.timmi6790.discord_framework.modules.core.GuildDb;
-import de.timmi6790.discord_framework.modules.core.UserDb;
+import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
+import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -21,18 +23,18 @@ public class BotInfoCommand extends AbstractCommand {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         final int guilds = DiscordBot.getDiscord().getSelfUser().getMutualGuilds().size();
 
-        final long userCacheSize = UserDb.getUSER_CACHE().estimatedSize();
-        final double userCacheMissRate = UserDb.getUSER_CACHE().stats().missRate();
+        final long userCacheSize = DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getCache().estimatedSize();
+        final double userCacheMissRate = DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getCache().stats().missRate();
 
-        final long channelCacheSize = ChannelDb.getCHANNEL_CACHE().estimatedSize();
-        final double channelCacheMissRate = ChannelDb.getCHANNEL_CACHE().stats().missRate();
+        final long channelCacheSize = DiscordBot.getModuleManager().getModuleOrThrow(ChannelDbModule.class).getCache().estimatedSize();
+        final double channelCacheMissRate = DiscordBot.getModuleManager().getModuleOrThrow(ChannelDbModule.class).getCache().stats().missRate();
 
-        final long guildCacheSize = GuildDb.getGUILD_CACHE().estimatedSize();
-        final double guildCacheMissRate = GuildDb.getGUILD_CACHE().stats().missRate();
+        final long guildCacheSize = DiscordBot.getModuleManager().getModuleOrThrow(GuildDbModule.class).getCache().estimatedSize();
+        final double guildCacheMissRate = DiscordBot.getModuleManager().getModuleOrThrow(GuildDbModule.class).getCache().stats().missRate();
 
-        final long emoteListenerSize = DiscordBot.getEmoteReactionManager().getEmoteMessageCache().estimatedSize();
+        final long emoteListenerSize = DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).getEmoteMessageCache().estimatedSize();
 
-        final ThreadPoolExecutor commandExecutor = DiscordBot.getCommandManager().getExecutor();
+        final ThreadPoolExecutor commandExecutor = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getExecutor();
         final long activeCommands = commandExecutor.getActiveCount();
         final long queuedCommands = commandExecutor.getQueue().size();
         final long totalCommands = commandExecutor.getTaskCount();

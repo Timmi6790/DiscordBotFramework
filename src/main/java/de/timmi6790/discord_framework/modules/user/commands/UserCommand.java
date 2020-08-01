@@ -1,28 +1,24 @@
-package de.timmi6790.discord_framework.modules.core.commands.management;
+package de.timmi6790.discord_framework.modules.user.commands;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.core.UserDb;
+import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
-import de.timmi6790.discord_framework.modules.rank.RankManager;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class UserCommand extends AbstractCommand {
-    private static final List<String> VALID_1_ARGS = new ArrayList<>(Arrays.asList("info", "unBan", "ban", "setPrimaryRank", "rank", "perms", "setting", "achievement", "invalidate"));
-    private static final List<String> PERMS_2_ARGS = new ArrayList<>(Arrays.asList("add", "remove"));
-    private static final List<String> RANK_2_ARGS = new ArrayList<>(Arrays.asList("add", "remove"));
-
     public UserCommand() {
         super("user", "Management", "User control command", "<discordUser> <perms|rank|achievement|setting|setPrimaryRank|ban|" +
                 "unBan|info|invalidate> <add;remove;list|add;remove|add|add|rank|||||> <command;permNode|rank|>");
@@ -43,28 +39,28 @@ public class UserCommand extends AbstractCommand {
         // <discordUser> <info>
         // <discordUser> <invalidate>
 
-        final User user = this.getDiscordUser(commandParameters, 0);
-        final UserDb userDb = UserDb.getOrCreate(user.getIdLong());
-        final String arg1 = this.getFromListIgnoreCase(commandParameters, 1, VALID_1_ARGS);
+        final User user = this.getDiscordUserThrow(commandParameters, 0);
+        final UserDb userDb = DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getOrCreate(user.getIdLong());
+        final ValidArgs1 arg1 = this.getFromEnumIgnoreCaseThrow(commandParameters, 1, ValidArgs1.values());
 
         switch (arg1) {
-            case "info":
+            case INFO:
                 return this.infoCommand(commandParameters, userDb);
-            case "unBan":
+            case UN_BAN:
                 return this.unBanCommand(commandParameters, userDb, user);
-            case "ban":
+            case BAN:
                 return this.banCommand(commandParameters, userDb, user);
-            case "setPrimaryRank":
+            case SET_PRIMARY_RANK:
                 return this.setPrimaryRankCommand(commandParameters, userDb);
-            case "rank":
+            case RANK:
                 return this.rankCommand(commandParameters, userDb);
-            case "perms":
+            case PERMS:
                 return this.permsCommand(commandParameters, userDb, user);
-            case "setting":
+            case SETTING:
                 return this.settingCommand(commandParameters, userDb);
-            case "achievement":
+            case ACHIEVEMENT:
                 return this.achievementCommand(commandParameters, userDb);
-            case "invalidate":
+            case INVALIDATE:
                 return this.invalidateCommand(commandParameters, userDb);
             default:
                 return CommandResult.ERROR;
@@ -72,7 +68,7 @@ public class UserCommand extends AbstractCommand {
     }
 
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        UserDb.getUSER_CACHE().invalidate(userDb.getDiscordId());
+        DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getCache().invalidate(userDb.getDiscordId());
 
         this.sendTimedMessage(
                 commandParameters,
@@ -86,8 +82,8 @@ public class UserCommand extends AbstractCommand {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        final int commandSpamCache = DiscordBot.getCommandManager().getCommandSpamCache().get(userDb.getDiscordId()).get();
-        final int activeEmotes = DiscordBot.getEmoteReactionManager().getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
+        final int commandSpamCache = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(userDb.getDiscordId()).get();
+        final int activeEmotes = DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
         final String settings = userDb.getSettingsMap()
                 .entrySet()
@@ -101,13 +97,13 @@ public class UserCommand extends AbstractCommand {
                 .map(setting -> setting.getKey().getInternalName() + ": " + setting.getValue())
                 .collect(Collectors.joining("\n"));
 
-        final RankManager rankManager = DiscordBot.getRankManager();
-        final String primaryRank = rankManager.getRank(userDb.getPrimaryRank())
+        final RankModule rankModule = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class);
+        final String primaryRank = rankModule.getRank(userDb.getPrimaryRank())
                 .map(Rank::getName)
                 .orElse("Unknown");
         final String subRanks = userDb.getRanks()
                 .stream()
-                .map(rankManager::getRank)
+                .map(rankModule::getRank)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(Rank::getName)
@@ -115,14 +111,14 @@ public class UserCommand extends AbstractCommand {
 
         final String permissions = userDb.getPermissionIds()
                 .stream()
-                .map(DiscordBot.getPermissionsManager()::getPermissionFromId)
+                .map(DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class)::getPermissionFromId)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.joining("\n"));
 
         final String allPermissions = userDb.getAllPermissionIds()
                 .stream()
-                .map(DiscordBot.getPermissionsManager()::getPermissionFromId)
+                .map(DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class)::getPermissionFromId)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.joining("\n"));
@@ -198,7 +194,7 @@ public class UserCommand extends AbstractCommand {
             return CommandResult.MISSING_ARGS;
         }
 
-        final Rank rank = this.getRank(commandParameters, 2);
+        final Rank rank = this.getRankThrow(commandParameters, 2);
         if (userDb.hasPrimaryRank(rank)) {
             this.sendTimedMessage(
                     commandParameters,
@@ -229,10 +225,10 @@ public class UserCommand extends AbstractCommand {
             return CommandResult.MISSING_ARGS;
         }
 
-        final String mode = this.getFromListIgnoreCase(commandParameters, 2, RANK_2_ARGS);
-        final Rank rank = this.getRank(commandParameters, 3);
+        final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
+        final Rank rank = this.getRankThrow(commandParameters, 3);
 
-        if ("add".equalsIgnoreCase(mode)) {
+        if (AddRemoveArgs.ADD == mode) {
             if (userDb.hasRank(rank)) {
                 this.sendTimedMessage(
                         commandParameters,
@@ -254,7 +250,7 @@ public class UserCommand extends AbstractCommand {
                     90
             );
 
-        } else if ("remove".equalsIgnoreCase(mode)) {
+        } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasRank(rank)) {
                 this.sendTimedMessage(
                         commandParameters,
@@ -286,12 +282,12 @@ public class UserCommand extends AbstractCommand {
             return CommandResult.MISSING_ARGS;
         }
 
-        final String mode = this.getFromListIgnoreCase(commandParameters, 2, PERMS_2_ARGS);
-        final int permissionId = this.getPermissionId(commandParameters, 3);
-        final String permissionNode = DiscordBot.getPermissionsManager().getPermissionFromId(permissionId)
+        final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
+        final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
+        final String permissionNode = DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
-        if ("add".equalsIgnoreCase(mode)) {
+        if (AddRemoveArgs.ADD == mode) {
             if (userDb.hasPermission(permissionId)) {
                 this.sendTimedMessage(
                         commandParameters,
@@ -313,7 +309,7 @@ public class UserCommand extends AbstractCommand {
                     90
             );
 
-        } else if ("remove".equalsIgnoreCase(mode)) {
+        } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasPermission(permissionId)) {
                 this.sendTimedMessage(
                         commandParameters,
@@ -362,17 +358,20 @@ public class UserCommand extends AbstractCommand {
     }
 
     // Utilities
-    private Rank getRank(final CommandParameters commandParameters, final int position) {
-        final String userInput = commandParameters.getArgs()[position];
+    private enum ValidArgs1 {
+        INFO,
+        UN_BAN,
+        BAN,
+        SET_PRIMARY_RANK,
+        RANK,
+        PERMS,
+        SETTING,
+        ACHIEVEMENT,
+        INVALIDATE
+    }
 
-        return DiscordBot.getRankManager().getRanks()
-                .stream()
-                .filter(rank -> rank.getName().equalsIgnoreCase(userInput))
-                .findAny()
-                .orElseThrow(() -> new CommandReturnException(
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
-                                .setDescription(MarkdownUtil.monospace(userInput) + " is not a valid rank.")
-                ));
+    private enum AddRemoveArgs {
+        ADD,
+        REMOVE
     }
 }

@@ -1,7 +1,7 @@
-package de.timmi6790.discord_framework.modules.core.database;
+package de.timmi6790.discord_framework.modules.channel;
 
-import de.timmi6790.discord_framework.modules.core.ChannelDb;
-import de.timmi6790.discord_framework.modules.core.GuildDb;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.utilities.database.DatabaseRowMapper;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -19,7 +19,7 @@ public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<Chan
         return new ChannelDb(
                 rs.getInt("id"),
                 rs.getLong("discordId"),
-                GuildDb.getOrCreate(rs.getLong("serverDiscordId")),
+                DiscordBot.getModuleManager().getModuleOrThrow(GuildDbModule.class).getOrCreate(rs.getLong("serverDiscordId")),
                 rs.getBoolean("disabled")
         );
     }

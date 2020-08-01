@@ -2,19 +2,26 @@ package de.timmi6790.discord_framework.modules.command;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.events.MessageReceivedIntEvent;
-import de.timmi6790.discord_framework.modules.core.ChannelDb;
-import de.timmi6790.discord_framework.modules.core.GuildDb;
-import de.timmi6790.discord_framework.modules.core.UserDb;
-import de.timmi6790.discord_framework.modules.core.commands.info.HelpCommand;
-import de.timmi6790.discord_framework.modules.event_handler.EventPriority;
-import de.timmi6790.discord_framework.modules.event_handler.SubscribeEvent;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
+import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.event.EventPriority;
+import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.event.events.MessageReceivedIntEvent;
+import de.timmi6790.discord_framework.modules.guild.GuildDb;
+import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.UtilitiesData;
 import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.GuildChannel;
-import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -25,7 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class CommandManager {
+@EqualsAndHashCode(callSuper = true)
+public class CommandModule extends AbstractModule {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))(.*)$";
     private static final Pattern MESSAGE_SPLIT_PATTERN = Pattern.compile("\\s+");
 
@@ -57,17 +65,46 @@ public class CommandManager {
     private final Map<String, AbstractCommand> commands = new HashMap<>();
     private final Map<String, String> commandAliases = new HashMap<>();
 
-    public CommandManager(final String mainCommand, final long botId) {
-        this.botId = botId;
+    public CommandModule(final String mainCommand, final long botId) {
+        super("Command");
 
+        this.addDependenciesAndLoadAfter(
+                DatabaseModule.class,
+                EventModule.class,
+                PermissionsModule.class
+        );
+
+        this.addDependencies(
+                UserDbModule.class,
+                GuildDbModule.class,
+                ChannelDbModule.class
+        );
+
+        this.botId = botId;
         this.mainCommandPattern = Pattern.compile(String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), this.botId), Pattern.CASE_INSENSITIVE);
         this.mainCommand = mainCommand;
     }
 
-    public void innitDatabase(final Jdbi database) {
+    @Override
+    public void onEnable() {
+        DiscordBot.getModuleManager().getModuleOrThrow(EventModule.class).addEventListener(this);
+
+        this.innitDatabase();
+
+        this.registerCommand(
+                new HelpCommand()
+        );
+    }
+
+    @Override
+    public void onDisable() {
+
+    }
+
+    public void innitDatabase() {
         // Db
         // CommandCause
-        database.useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 Arrays.stream(CommandCause.values())
                         .parallel()
                         .map(commandCause -> commandCause.name().toLowerCase())
@@ -85,7 +122,7 @@ public class CommandManager {
         );
 
         // CommandStatus
-        database.useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 Arrays.stream(CommandResult.values())
                         .parallel()
                         .map(commandResult -> commandResult.name().toLowerCase())
@@ -156,9 +193,10 @@ public class CommandManager {
             return;
         }
 
-        final GuildDb guildDb = GuildDb.getOrCreate(event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0);
+        final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
+        final GuildDb guildDb = DiscordBot.getModuleManager().getModuleOrThrow(GuildDbModule.class).getOrCreate(guildId);
 
-        String rawMessage = event.getMessage().getContentRaw();
+        String rawMessage = event.getMessage().getContentRaw().replace("\n", " ");
         boolean validStart = false;
 
         // Check if the message matches the main or guild specific start regex
@@ -186,7 +224,7 @@ public class CommandManager {
             return;
         }
 
-        final UserDb userDb = UserDb.getOrCreate(event.getAuthor().getIdLong());
+        final UserDb userDb = DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong());
         // User ban check
         if (userDb.isBanned()) {
             UtilitiesDiscordMessages.sendUserBanMessage(event);
@@ -208,7 +246,7 @@ public class CommandManager {
         final String[] args = rawMessage.isEmpty() ? new String[0] : MESSAGE_SPLIT_PATTERN.split(rawMessage);
         final CommandParameters commandParameters = new CommandParameters(
                 event.isFromGuild() ? event.getGuild().getSelfMember().getPermissions((GuildChannel) event.getMessage().getChannel()) : EnumSet.noneOf(Permission.class),
-                ChannelDb.getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
+                DiscordBot.getModuleManager().getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
                 userDb,
                 event,
                 args.length == 0 ? args : Arrays.copyOfRange(args, 1, args.length)

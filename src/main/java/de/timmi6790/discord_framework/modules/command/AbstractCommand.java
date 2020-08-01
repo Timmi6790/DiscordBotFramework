@@ -2,10 +2,16 @@ package de.timmi6790.discord_framework.modules.command;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.StatEmbedBuilder;
-import de.timmi6790.discord_framework.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.exceptions.CommandReturnException;
-import de.timmi6790.discord_framework.modules.core.commands.info.HelpCommand;
+import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.event.events.CommandExecutionEvent;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.rank.Rank;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.utilities.EnumUtilities;
 import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
@@ -85,7 +91,7 @@ public abstract class AbstractCommand {
     }
 
     private int getCommandDbId() {
-        return DiscordBot.getDatabase().withHandle(handle ->
+        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_COMMAND_ID)
                         .bind("commandName", this.name)
                         .mapTo(int.class)
@@ -123,7 +129,9 @@ public abstract class AbstractCommand {
 
         // Command pre event
         final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
-        DiscordBot.getEventManager().executeEvent(commandExecutionPre);
+        DiscordBot.getModuleManager()
+                .getModule(EventModule.class)
+                .ifPresent(eventModule -> eventModule.executeEvent(commandExecutionPre));
 
         CommandResult commandResult = null;
         if (!this.hasPermission(commandParameters)) {
@@ -171,7 +179,7 @@ public abstract class AbstractCommand {
         final CommandResult finalCommandResult = commandResult != null ? commandResult : CommandResult.MISSING;
 
         // Log commands
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_COMMAND_LOG)
                         .bind("commandId", this.dbId)
                         .bind("causeName", commandCause.name().toLowerCase())
@@ -182,7 +190,9 @@ public abstract class AbstractCommand {
 
         // Command post event
         final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, finalCommandResult);
-        DiscordBot.getEventManager().executeEvent(commandExecutionPost);
+        DiscordBot.getModuleManager()
+                .getModule(EventModule.class)
+                .ifPresent(eventModule -> eventModule.executeEvent(commandExecutionPost));
     }
 
     public final boolean hasPermission(final CommandParameters commandParameters) {
@@ -209,7 +219,9 @@ public abstract class AbstractCommand {
     }
 
     protected void setPermission(final String permission) {
-        final int permissionId = DiscordBot.getPermissionsManager().addPermission(permission);
+        final int permissionId = DiscordBot.getModuleManager()
+                .getModuleOrThrow(PermissionsModule.class)
+                .addPermission(permission);
         if (permissionId == this.permissionId) {
             return;
         }
@@ -226,11 +238,12 @@ public abstract class AbstractCommand {
     }
 
     protected void addExampleCommands(final String... exampleCommands) {
-        this.exampleCommands.addAll(Arrays.stream(exampleCommands).map(example -> DiscordBot.getCommandManager().getMainCommand() + " " + example).collect(Collectors.toList()));
+        final String mainCommand = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
+        this.exampleCommands.addAll(Arrays.stream(exampleCommands).map(example -> mainCommand + " " + example).collect(Collectors.toList()));
     }
 
     public List<String> getFormattedExampleCommands() {
-        final String mainCommand = DiscordBot.getCommandManager().getMainCommand();
+        final String mainCommand = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
         return this.exampleCommands
                 .stream()
                 .map(exampleCommand -> mainCommand + " " + this.name + " " + exampleCommand)
@@ -303,7 +316,96 @@ public abstract class AbstractCommand {
         UtilitiesDiscordMessages.sendHelpMessage(commandParameters, userArg, argPos, argName, this, command, newArgs, similarNames);
     }
 
-    protected User getDiscordUser(final CommandParameters commandParameters, final int argPos) {
+    // Arg parser
+    protected String getFromListIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {
+        final String userArg = commandParameters.getArgs()[argPos];
+        final Optional<String> arg = possibleArguments.stream()
+                .filter(possibleArg -> possibleArg.equalsIgnoreCase(userArg))
+                .findAny();
+
+        if (arg.isPresent()) {
+            return arg.get();
+        }
+
+        this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, possibleArguments);
+        throw new CommandReturnException();
+    }
+
+    protected <T extends Enum> T getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final T[] enumValue) {
+        final String userArg = commandParameters.getArgs()[argPos];
+        final Optional<T> arg = EnumUtilities.getIgnoreCase(userArg, enumValue);
+        if (arg.isPresent()) {
+            return arg.get();
+        }
+
+        this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, EnumUtilities.getPrettyNames(enumValue));
+        throw new CommandReturnException();
+    }
+
+    protected AbstractCommand getCommandThrow(final CommandParameters commandParameters, final int argPos) {
+        final String name = commandParameters.getArgs()[argPos];
+        final Optional<AbstractCommand> command = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(name);
+        if (command.isPresent()) {
+            return command.get();
+        }
+
+        final List<AbstractCommand> similarCommands = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getSimilarCommands(commandParameters, name, 0.6, 3);
+        if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
+            return similarCommands.get(0);
+        }
+
+        this.sendHelpMessage(
+                commandParameters,
+                name,
+                argPos,
+                "command",
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).orElse(null),
+                new String[0],
+                similarCommands.stream().map(AbstractCommand::getName).collect(Collectors.toList())
+        );
+        throw new CommandReturnException();
+    }
+
+    protected Rank getRankThrow(final CommandParameters commandParameters, final int position) {
+        final String userInput = commandParameters.getArgs()[position];
+
+        return DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).getRanks()
+                .stream()
+                .filter(rank -> rank.getName().equalsIgnoreCase(userInput))
+                .findAny()
+                .orElseThrow(() -> new CommandReturnException(
+                        this.getEmbedBuilder(commandParameters)
+                                .setTitle("Error")
+                                .setDescription(MarkdownUtil.monospace(userInput) + " is not a valid rank.")
+                ));
+    }
+
+    public int getPermissionIdThrow(final CommandParameters commandParameters, final int argPos) {
+        final String permArg = commandParameters.getArgs()[argPos];
+        final Optional<AbstractCommand> commandOpt = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(permArg);
+
+        if (commandOpt.isPresent()) {
+            final AbstractCommand command = commandOpt.get();
+            if (command.getPermissionId() == -1) {
+                throw new CommandReturnException(
+                        this.getEmbedBuilder(commandParameters)
+                                .setTitle("Error")
+                                .setDescription(MarkdownUtil.monospace(command.getName()) + " command has no permission.")
+                );
+            }
+
+            return command.getPermissionId();
+        } else {
+            return DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionId(permArg)
+                    .orElseThrow(() -> new CommandReturnException(
+                            this.getEmbedBuilder(commandParameters)
+                                    .setTitle("Error")
+                                    .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
+                    ));
+        }
+    }
+
+    protected User getDiscordUserThrow(final CommandParameters commandParameters, final int argPos) {
         final String name = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
         if (userIdMatcher.find()) {
@@ -326,68 +428,5 @@ public abstract class AbstractCommand {
                         .setTitle("Invalid User")
                         .setDescription(MarkdownUtil.monospace(name) + " is not a valid discord user.")
         );
-    }
-
-    public int getPermissionId(final CommandParameters commandParameters, final int argPos) {
-        final String permArg = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand> commandOpt = DiscordBot.getCommandManager().getCommand(permArg);
-
-        if (commandOpt.isPresent()) {
-            final AbstractCommand command = commandOpt.get();
-            if (command.getPermissionId() == -1) {
-                throw new CommandReturnException(
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
-                                .setDescription(MarkdownUtil.monospace(command.getName()) + " command has no permission.")
-                );
-            }
-
-            return command.getPermissionId();
-        } else {
-            return DiscordBot.getPermissionsManager().getPermissionId(permArg)
-                    .orElseThrow(() -> new CommandReturnException(
-                            this.getEmbedBuilder(commandParameters)
-                                    .setTitle("Error")
-                                    .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
-                    ));
-        }
-    }
-
-    protected String getFromListIgnoreCase(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {
-        final String userArg = commandParameters.getArgs()[argPos];
-        final Optional<String> arg = possibleArguments.stream()
-                .filter(possibleArg -> possibleArg.equalsIgnoreCase(userArg))
-                .findAny();
-
-        if (arg.isPresent()) {
-            return arg.get();
-        }
-
-        this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, possibleArguments);
-        throw new CommandReturnException();
-    }
-
-    protected AbstractCommand getCommand(final CommandParameters commandParameters, final int argPos) {
-        final String name = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand> command = DiscordBot.getCommandManager().getCommand(name);
-        if (command.isPresent()) {
-            return command.get();
-        }
-
-        final List<AbstractCommand> similarCommands = DiscordBot.getCommandManager().getSimilarCommands(commandParameters, name, 0.6, 3);
-        if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
-            return similarCommands.get(0);
-        }
-
-        this.sendHelpMessage(
-                commandParameters,
-                name,
-                argPos,
-                "command",
-                DiscordBot.getCommandManager().getCommand(HelpCommand.class).orElse(null),
-                new String[0],
-                similarCommands.stream().map(AbstractCommand::getName).collect(Collectors.toList())
-        );
-        throw new CommandReturnException();
     }
 }

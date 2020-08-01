@@ -1,48 +1,31 @@
-package de.timmi6790.discord_framework.modules.core;
+package de.timmi6790.discord_framework.modules.user;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.event.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.rank.Rank;
-import de.timmi6790.discord_framework.modules.rank.RankManager;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.setting.settings.BooleanSetting;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@ToString
-@EqualsAndHashCode
-@Getter
+@Data
 @AllArgsConstructor
 public class UserDb {
-    private static final String GET_PLAYER = "SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, " +
-            "GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, " +
-            "GROUP_CONCAT(DISTINCT permission.id) perms, " +
-            "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_setting.setting_id, p_setting.setting) SEPARATOR ';') settings, " +
-            "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_stat.stat_id, p_stat.value) SEPARATOR ';') stats, " +
-            "GROUP_CONCAT(DISTINCT p_ach.achievement_id) achievements " +
-            "FROM player  " +
-            "LEFT JOIN player_rank p_rank ON p_rank.player_id = player.id  " +
-            "LEFT JOIN player_permission p_perm ON p_perm.player_id = player.id  " +
-            "LEFT JOIN permission ON permission.default_permission = 1 OR permission.id = p_perm.permission_id  " +
-            "LEFT JOIN player_setting p_setting ON p_setting.player_id = player.id  " +
-            "LEFT JOIN player_stat p_stat ON p_stat.player_id = player.id " +
-            "LEFT JOIN player_achievement p_ach ON p_ach.player_id = player.id " +
-            "WHERE player.discordId = :discordId LIMIT 1;";
-    private static final String INSERT_PLAYER = "INSERT INTO player(discordId) VALUES (:discordId);";
-
     private static final String UPDATE_PLAYER_BAN_STATUS = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
 
     private static final String UPDATE_STAT_VALUE = "UPDATE player_stat SET `value` = :value WHERE player_id = :playerId AND stat_id = :statId LIMIT 1;";
@@ -59,35 +42,13 @@ public class UserDb {
     private static final String ADD_RANK = "INSERT INTO player_rank(player_id, rank_id) VALUES(:databaseId, :rankId);";
     private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
 
-    @Getter
-    private static final LoadingCache<Long, UserDb> USER_CACHE = Caffeine.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build(discordId ->
-                    DiscordBot.getDatabase().withHandle(handle ->
-                            handle.createQuery(GET_PLAYER)
-                                    .bind("discordId", discordId)
-                                    .mapTo(UserDb.class)
-                                    .findOne()
-                                    .orElseGet(() -> {
-                                        handle.createUpdate(INSERT_PLAYER)
-                                                .bind("discordId", discordId)
-                                                .execute();
-
-                                        return handle.createQuery(GET_PLAYER)
-                                                .bind("discordId", discordId)
-                                                .mapTo(UserDb.class).first();
-                                    })
-                    )
-            );
-
     private final int databaseId;
     private final long discordId;
 
     private int primaryRank;
     private final Set<Integer> ranks;
 
-    private final boolean banned;
+    private boolean banned;
 
     private final long points;
 
@@ -95,10 +56,6 @@ public class UserDb {
     private final Map<Integer, String> settings;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
-
-    public static UserDb getOrCreate(final long discordId) {
-        return USER_CACHE.get(discordId);
-    }
 
     public Optional<User> getUser() {
         return Optional.ofNullable(DiscordBot.getDiscord().getUserById(this.discordId));
@@ -120,13 +77,13 @@ public class UserDb {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(UPDATE_PLAYER_BAN_STATUS)
                         .bind("banned", banned ? 1 : 0)
                         .bind("databaseId", this.databaseId)
                         .execute()
         );
-
+        this.banned = banned;
         return true;
     }
 
@@ -134,10 +91,10 @@ public class UserDb {
     public Set<Integer> getAllPermissionIds() {
         final Set<Integer> permissionSet = new HashSet<>(this.permissionIds);
 
-        final RankManager rankManager = DiscordBot.getRankManager();
-        rankManager.getRank(this.primaryRank).ifPresent(rank -> permissionSet.addAll(rank.getAllPermissions()));
+        final RankModule rankModule = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class);
+        rankModule.getRank(this.primaryRank).ifPresent(rank -> permissionSet.addAll(rank.getAllPermissions()));
         this.ranks.stream()
-                .map(rankManager::getRank)
+                .map(rankModule::getRank)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .forEach(rank -> permissionSet.addAll(rank.getAllPermissions()));
@@ -155,7 +112,7 @@ public class UserDb {
         }
 
         this.permissionIds.add(id);
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_PLAYER_PERMISSION)
                         .bind("playerId", this.databaseId)
                         .bind("permissionId", id)
@@ -170,7 +127,7 @@ public class UserDb {
         }
 
         this.permissionIds.remove(id);
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_PLAYER_PERMISSION)
                         .bind("playerId", this.databaseId)
                         .bind("permissionId", id)
@@ -193,7 +150,7 @@ public class UserDb {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(SET_PRIMARY_RANK)
                         .bind("primaryRank", rankId)
                         .bind("databaseId", this.databaseId)
@@ -221,7 +178,7 @@ public class UserDb {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(ADD_RANK)
                         .bind("rankId", rankId)
                         .bind("databaseId", this.databaseId)
@@ -241,7 +198,7 @@ public class UserDb {
             return false;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_RANK)
                         .bind("rankId", rankId)
                         .bind("databaseId", this.databaseId)
@@ -256,12 +213,6 @@ public class UserDb {
         return this.removeRank(rank.getDatabaseId());
     }
 
-    // Shop
-    public boolean addPoints(final long points) {
-
-        return true;
-    }
-
     // Achievements
     public boolean hasAchievement(final AbstractAchievement achievement) {
         return this.achievements.contains(achievement.getDatabaseId());
@@ -272,7 +223,7 @@ public class UserDb {
             return;
         }
 
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_PLAYER_ACHIEVEMENT)
                         .bind("playerId", this.getDatabaseId())
                         .bind("achievementId", achievement.getDatabaseId())
@@ -297,7 +248,7 @@ public class UserDb {
     public void setStatValue(final AbstractStat stat, final int value) {
         final int currentValue = this.getStatValue(stat).orElse(-1);
         final String sqlQuery = currentValue == -1 ? INSERT_STAT_VALUE : UPDATE_STAT_VALUE;
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(sqlQuery)
                         .bind("playerId", this.getDatabaseId())
                         .bind("statId", stat.getDatabaseId())
@@ -308,7 +259,7 @@ public class UserDb {
         this.stats.put(stat.getDatabaseId(), value);
 
         final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(this, stat, currentValue, value);
-        DiscordBot.getEventManager().executeEvent(statsChangeEvent);
+        DiscordBot.getModuleManager().getModuleOrThrow(EventModule.class).executeEvent(statsChangeEvent);
     }
 
     public Map<AbstractStat, Integer> getStatsMap() {
@@ -344,7 +295,7 @@ public class UserDb {
 
         final String defaultValue = setting.getDefaultValue();
         this.settings.put(setting.getDatabaseId(), defaultValue);
-        DiscordBot.getDatabase().useHandle(handle ->
+        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_PLAYER_SETTING)
                         .bind("playerId", this.getDatabaseId())
                         .bind("settingId", setting.getDatabaseId())

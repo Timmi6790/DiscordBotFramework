@@ -13,10 +13,10 @@ public class CommandManagerTest {
     private static final long BOT_ID = 0;
     private static final String MAIN_COMMAND = "starto";
 
-    private static final CommandManager COMMAND_MANAGER = new CommandManager(MAIN_COMMAND, BOT_ID);
+    private static final CommandModule COMMAND_MANAGER = new CommandModule(MAIN_COMMAND, BOT_ID);
 
-    private CommandManager getCommandManager() {
-        return new CommandManager(MAIN_COMMAND, BOT_ID);
+    private CommandModule getCommandManager() {
+        return new CommandModule(MAIN_COMMAND, BOT_ID);
     }
 
     private void commandPatternTester(final Pattern pattern, final String preValue, final String value, final String checkName) {
@@ -59,28 +59,28 @@ public class CommandManagerTest {
 
     @Test
     void registerCommand() {
-        final CommandManager commandManager = this.getCommandManager();
+        final CommandModule commandModule = this.getCommandManager();
         final AbstractCommand command = new ExampleCommand();
-        assertThat(commandManager.registerCommand(command)).isTrue();
+        assertThat(commandModule.registerCommand(command)).isTrue();
     }
 
     @Test
     void getCommandByClass() {
-        final CommandManager commandManager = this.getCommandManager();
+        final CommandModule commandModule = this.getCommandManager();
         final AbstractCommand command = new ExampleCommand();
-        commandManager.registerCommands(command);
+        commandModule.registerCommands(command);
 
-        final AbstractCommand foundCommand = commandManager.getCommand(command.getClass()).orElse(null);
+        final AbstractCommand foundCommand = commandModule.getCommand(command.getClass()).orElse(null);
         assertThat(command).isEqualTo(foundCommand);
     }
 
     @Test
     void getCommandByName() {
-        final CommandManager commandManager = this.getCommandManager();
+        final CommandModule commandModule = this.getCommandManager();
         final AbstractCommand command = new ExampleCommand();
-        commandManager.registerCommands(command);
+        commandModule.registerCommands(command);
 
-        final AbstractCommand foundCommand = commandManager.getCommand(command.getName()).orElse(null);
+        final AbstractCommand foundCommand = commandModule.getCommand(command.getName()).orElse(null);
         assertThat(command).isEqualTo(foundCommand);
     }
 }

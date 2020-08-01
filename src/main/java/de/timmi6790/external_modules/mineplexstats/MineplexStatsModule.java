@@ -1,8 +1,8 @@
 package de.timmi6790.external_modules.mineplexstats;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.core.CoreModule;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.utilities.UtilitiesData;
 import de.timmi6790.external_modules.mineplexstats.commands.bedrock.BedrockGamesCommand;
 import de.timmi6790.external_modules.mineplexstats.commands.bedrock.BedrockLeaderboardCommand;
@@ -45,7 +45,7 @@ public class MineplexStatsModule extends AbstractModule {
         super("MineplexStats");
 
         this.addDependenciesAndLoadAfter(
-                CoreModule.class
+                CommandModule.class
         );
     }
 
@@ -57,29 +57,31 @@ public class MineplexStatsModule extends AbstractModule {
 
         this.loadBedrockGames();
 
-        DiscordBot.getCommandManager().registerCommands(
-                new JavaGamesCommand(),
-                new JavaPlayerStatsCommand(),
-                new JavaPlayerGroupCommand(),
-                new JavaGroupsGroupsCommand(),
-                new JavaLeaderboardCommand(),
-                new JavaPlayerStatsRatioCommand(),
+        DiscordBot.getModuleManager()
+                .getModuleOrThrow(CommandModule.class)
+                .registerCommands(
+                        new JavaGamesCommand(),
+                        new JavaPlayerStatsCommand(),
+                        new JavaPlayerGroupCommand(),
+                        new JavaGroupsGroupsCommand(),
+                        new JavaLeaderboardCommand(),
+                        new JavaPlayerStatsRatioCommand(),
 
-                new BedrockGamesCommand(),
-                new BedrockPlayerCommand(),
-                new BedrockLeaderboardCommand(),
+                        new BedrockGamesCommand(),
+                        new BedrockPlayerCommand(),
+                        new BedrockLeaderboardCommand(),
 
-                new ReloadDataCommand(),
+                        new ReloadDataCommand(),
 
-                new JavaUUUIDLeaderboardCommand(),
-                new JavaPlayerFilterCommand(),
-                new JavaGameAliasCommand(),
-                new JavaBoardAliasCommand(),
-                new JavaStatAliasCommand(),
+                        new JavaUUUIDLeaderboardCommand(),
+                        new JavaPlayerFilterCommand(),
+                        new JavaGameAliasCommand(),
+                        new JavaBoardAliasCommand(),
+                        new JavaStatAliasCommand(),
 
-                new BedrockPlayerFilterCommand(),
-                new BedrockFilterLeaderboardCommand()
-        );
+                        new BedrockPlayerFilterCommand(),
+                        new BedrockFilterLeaderboardCommand()
+                );
     }
 
     @Override

@@ -2,7 +2,9 @@ package de.timmi6790.discord_framework.modules.achievement;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.core.UserDb;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -18,6 +20,10 @@ public class AchievementModule extends AbstractModule {
 
     public AchievementModule() {
         super("AchievementModule");
+
+        this.addDependenciesAndLoadAfter(
+                DatabaseModule.class
+        );
     }
 
     @Override
@@ -37,7 +43,7 @@ public class AchievementModule extends AbstractModule {
                     this.achievements.put(achievement.getDatabaseId(), achievement);
                     this.nameIdMatching.put(achievement.getInternalName(), achievement.getDatabaseId());
 
-                    DiscordBot.getEventManager().addEventListener(achievement);
+                    DiscordBot.getModuleManager().getModuleOrThrow(EventModule.class).addEventListener(achievement);
                 });
     }
 

@@ -1,7 +1,8 @@
 package de.timmi6790.discord_framework.modules.stat;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.core.UserDb;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.Data;
 
 @Data
@@ -20,7 +21,7 @@ public class AbstractStat {
     }
 
     private int getStatDbId() {
-        return DiscordBot.getDatabase().withHandle(handle ->
+        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_STAT_ID)
                         .bind("statName", this.getInternalName())
                         .mapTo(int.class)

@@ -1,13 +1,15 @@
-package de.timmi6790.discord_framework.modules.event_handler;
+package de.timmi6790.discord_framework.modules.event;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
+import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.EventBuilder;
 import io.sentry.event.interfaces.ExceptionInterface;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.events.Event;
 
 import java.lang.reflect.Method;
@@ -16,13 +18,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class EventManager {
+@EqualsAndHashCode(callSuper = true)
+public class EventModule extends AbstractModule {
     private final Map<Class<Event>, Map<EventPriority, Set<EventObject>>> eventListeners = new ConcurrentHashMap<>();
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    public EventManager() {
+    public EventModule() {
+        super("Event");
+    }
+
+    @Override
+    public void onEnable() {
         DiscordBot.getDiscord().addEventListener(new DiscordEventListener());
+    }
+
+    @Override
+    public void onDisable() {
+
     }
 
     private void callListenerSafe(final EventObject listener, final Event event) {

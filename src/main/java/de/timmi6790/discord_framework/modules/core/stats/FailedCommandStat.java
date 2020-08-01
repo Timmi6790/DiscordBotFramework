@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.modules.core.stats;
 
-import de.timmi6790.discord_framework.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.event_handler.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.event.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 
 public class FailedCommandStat extends AbstractStat {

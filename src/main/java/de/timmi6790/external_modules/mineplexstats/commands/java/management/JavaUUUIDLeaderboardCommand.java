@@ -1,7 +1,8 @@
 package de.timmi6790.external_modules.mineplexstats.commands.java.management;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
@@ -70,14 +71,16 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
         // Emotes
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-        DiscordBot.getCommandManager().getCommand(JavaPlayerFilterCommand.class).ifPresent(filterCommand -> {
-            final AtomicInteger emoteIndex = new AtomicInteger(1);
-            leaderboardResponse.getLeaderboard().forEach(data -> {
-                final CommandParameters newParameters = new CommandParameters(commandParameters);
-                newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
-                emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
-            });
-        });
+        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
+                .getCommand(JavaPlayerFilterCommand.class)
+                .ifPresent(filterCommand -> {
+                    final AtomicInteger emoteIndex = new AtomicInteger(1);
+                    leaderboardResponse.getLeaderboard().forEach(data -> {
+                        final CommandParameters newParameters = new CommandParameters(commandParameters);
+                        newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
+                        emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
+                    });
+                });
 
         // Leaderboard default responses
         final int rowDistance = endPos - startPos;

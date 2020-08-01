@@ -1,7 +1,8 @@
 package de.timmi6790.external_modules.mineplexstats.commands.bedrock.management;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
@@ -62,7 +63,7 @@ public class BedrockFilterLeaderboardCommand extends AbstractBedrockStatsCommand
         // Emotes
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
-        DiscordBot.getCommandManager().getCommand(BedrockPlayerFilterCommand.class).ifPresent(filterCommand -> {
+        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(BedrockPlayerFilterCommand.class).ifPresent(filterCommand -> {
             final AtomicInteger emoteIndex = new AtomicInteger(1);
             leaderboardResponse.forEach(data -> {
                 final CommandParameters newParameters = new CommandParameters(commandParameters);

@@ -2,8 +2,9 @@ package de.timmi6790.external_modules.mineplexstats.commands.java;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.utilities.UtilitiesData;
 import de.timmi6790.external_modules.mineplexstats.commands.AbstractStatsCommand;
@@ -100,7 +101,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 name,
                 argPos,
                 "game",
-                DiscordBot.getCommandManager()
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                         .getCommand(JavaGamesCommand.class)
                         .orElse(null),
                 new String[0],
@@ -128,7 +129,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 name,
                 argPos,
                 "stat",
-                DiscordBot.getCommandManager()
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                         .getCommand(JavaGamesCommand.class)
                         .orElse(null),
                 new String[]{game.getName()},
@@ -208,7 +209,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 name,
                 argPos,
                 "board",
-                DiscordBot.getCommandManager()
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                         .getCommand(JavaGamesCommand.class)
                         .orElse(null),
                 new String[]{game.getName(), game.getStats().values().stream().findFirst().map(JavaStat::getName).orElse("")},
@@ -234,7 +235,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 name,
                 argPos,
                 "board",
-                DiscordBot.getCommandManager()
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                         .getCommand(JavaGamesCommand.class)
                         .orElse(null),
                 new String[]{game.getName(), stat.getName()},
@@ -307,7 +308,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 name,
                 argPos,
                 "group",
-                DiscordBot.getCommandManager()
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                         .getCommand(JavaGroupsGroupsCommand.class)
                         .orElse(null),
                 new String[]{},
@@ -343,7 +344,7 @@ public abstract class AbstractJavaStatsCommand extends AbstractStatsCommand {
                 name,
                 argPos,
                 "stat",
-                DiscordBot.getCommandManager()
+                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                         .getCommand(JavaGroupsGroupsCommand.class)
                         .orElse(null),
                 new String[]{group.getName()},

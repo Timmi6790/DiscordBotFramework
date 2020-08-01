@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.emote_reaction.emotereactions;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import lombok.Data;
 
@@ -20,7 +21,7 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
 
     @Override
     public void onEmote() {
-        DiscordBot.getCommandManager()
+        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.command)
                 .ifPresent(command -> command.runCommand(this.commandParameters, CommandCause.EMOTES));
     }
