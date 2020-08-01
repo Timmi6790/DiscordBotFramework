@@ -7,7 +7,6 @@ import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.core.commands.info.AboutCommand;
 import de.timmi6790.discord_framework.modules.core.commands.info.AccountDeletionCommand;
 import de.timmi6790.discord_framework.modules.core.commands.info.InviteCommand;
-import de.timmi6790.discord_framework.modules.core.commands.info.SettingsCommand;
 import de.timmi6790.discord_framework.modules.core.commands.management.BotInfoCommand;
 import de.timmi6790.discord_framework.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.core.stats.FailedCommandStat;
@@ -52,10 +51,6 @@ public class CoreModule extends AbstractModule {
 
         DiscordBot.getModuleManager().getModule(SettingModule.class)
                 .ifPresent(settingModule -> {
-                            DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
-                                    new SettingsCommand()
-                            );
-
                             this.logger.info("Registering settings");
                             settingModule.registerSettings(
                                     new CommandAutoCorrectSetting()

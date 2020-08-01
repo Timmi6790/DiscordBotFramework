@@ -10,7 +10,6 @@ import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
-import de.timmi6790.discord_framework.modules.setting.settings.BooleanSetting;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
@@ -273,24 +272,25 @@ public class UserDb {
     }
 
     // Settings
-    public void grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
+    public boolean grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
         final Optional<SettingModule> settingModule = DiscordBot.getModuleManager().getModule(SettingModule.class);
         if (!settingModule.isPresent()) {
-            return;
+            return false;
         }
 
-        settingModule.get()
+        return settingModule.get()
                 .getSettings()
                 .values()
                 .stream()
                 .filter(setting -> setting.getClass().isAssignableFrom(settingClass))
                 .findAny()
-                .ifPresent(this::grantSetting);
+                .filter(this::grantSetting)
+                .isPresent();
     }
 
-    public void grantSetting(final AbstractSetting<?> setting) {
+    public boolean grantSetting(final AbstractSetting<?> setting) {
         if (this.settings.containsKey(setting.getDatabaseId())) {
-            return;
+            return false;
         }
 
         final String defaultValue = setting.getDefaultValue();
@@ -302,55 +302,12 @@ public class UserDb {
                         .bind("setting", defaultValue)
                         .execute()
         );
-    }
 
-    public Object getSettingValue(final String internalName) {
-        final Optional<SettingModule> settingModule = DiscordBot.getModuleManager().getModule(SettingModule.class);
-        if (!settingModule.isPresent()) {
-            throw new RuntimeException("StatsModule is not enabled.");
-        }
-        return settingModule.get().getSetting(internalName).map(abstractSetting -> this.settings.get(abstractSetting.getDatabaseId()));
-    }
-
-    public List<AbstractSetting<?>> getSettings() {
-        final Optional<SettingModule> settingModule = DiscordBot.getModuleManager().getModule(SettingModule.class);
-        return settingModule.<List<AbstractSetting<?>>>map(module -> this.settings.keySet()
-                .stream()
-                .map(settingDbId -> module.getSettings().get(settingDbId))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList())).orElseGet(ArrayList::new);
-
-    }
-
-    public Map<AbstractSetting<?>, String> getSettingsMap() {
-        final Optional<SettingModule> settingModule = DiscordBot.getModuleManager().getModule(SettingModule.class);
-        return settingModule.<Map<AbstractSetting<?>, String>>map(module -> this.settings.entrySet()
-                .stream()
-                .map(entry -> new AbstractMap.SimpleEntry<>(module.getSettings().get(entry.getKey()), entry.getValue()))
-                .filter(entry -> entry.getKey() != null)
-                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue))).orElseGet(HashMap::new);
-
-    }
-
-    public boolean hasSettingAndEqualsTrue(final String internalName) {
-        final Optional<SettingModule> settingModule = DiscordBot.getModuleManager().getModule(SettingModule.class);
-        if (!settingModule.isPresent()) {
-            return false;
-        }
-
-        final Optional<AbstractSetting<?>> setting = settingModule.get().getSetting(internalName);
-        if (!setting.isPresent() || !this.settings.containsKey(setting.get().getDatabaseId())) {
-            return false;
-        }
-
-        if (!(setting.get() instanceof BooleanSetting)) {
-            return false;
-        }
-
-        return ((BooleanSetting) setting.get()).parseSetting(this.settings.get(setting.get().getDatabaseId()));
+        return true;
     }
 
     public boolean hasAutoCorrection() {
-        return this.hasSettingAndEqualsTrue("core.settings.autocorrect");
+        // TODO: Reimplement me
+        return false;
     }
 }

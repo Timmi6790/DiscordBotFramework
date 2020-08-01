@@ -1,9 +1,10 @@
-package de.timmi6790.external_modules.mineplexstats.commands.java;
+package de.timmi6790.external_modules.mineplexstats.commands.java.unfiltered;
 
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
+import de.timmi6790.external_modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.external_modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaBoard;
@@ -14,16 +15,17 @@ import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaStat
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
+public class JavaUnfilteredLeaderboardCommand extends AbstractJavaStatsCommand {
     private static final int ARG_POS_BOARD_POS = 2;
     private static final int ARG_POS_START_POS = 3;
     private static final int ARG_POS_END_POS = 4;
 
     private static final int LEADERBOARD_UPPER_LIMIT = 1_000;
 
-    public JavaLeaderboardCommand() {
-        super("leaderboard", "Java Leaderboard", "<game> <stat> [board] [start] [end] [date]", "lb");
+    public JavaUnfilteredLeaderboardCommand() {
+        super("unfilteredLeaderboard", "Java Unfiltered Leaderboard", "<game> <stat> [board] [start] [end] [date]", "ulb");
 
+        this.setCategory("MineplexStats - Java - Unfiltered");
         this.setDefaultPerms(true);
         this.setMinArgs(2);
 
@@ -46,7 +48,7 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
         final long unixTime = this.getUnixTime(commandParameters, 5);
 
         final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(),
-                startPos, endPos, unixTime, true);
+                startPos, endPos, unixTime, false);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         // Parse data to image generator
@@ -61,7 +63,7 @@ public class JavaLeaderboardCommand extends AbstractJavaStatsCommand {
                 .toArray(new String[0][3]);
 
         final JavaLeaderboard.Info leaderboardInfo = leaderboardResponse.getInfo();
-        final String[] header = {leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()};
+        final String[] header = {leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard(), "UNFILTERED"};
 
         // Emote Reaction
         final int rowDistance = endPos - startPos;

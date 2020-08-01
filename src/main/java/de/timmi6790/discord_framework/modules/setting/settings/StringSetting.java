@@ -7,8 +7,4 @@ public abstract class StringSetting extends AbstractSetting<String> {
         super(internalName, name, defaultValues);
     }
 
-    @Override
-    public String parseSetting(final String setting) {
-        return setting;
-    }
 }

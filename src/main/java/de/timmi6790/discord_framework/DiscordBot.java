@@ -34,7 +34,7 @@ import javax.security.auth.login.LoginException;
 import java.io.File;
 
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.0.3";
+    public static final String BOT_VERSION = "3.0.4";
     @Getter
     private static ModuleManager moduleManager;
     @Getter

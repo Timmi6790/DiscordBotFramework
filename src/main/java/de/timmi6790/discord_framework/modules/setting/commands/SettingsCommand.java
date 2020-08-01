@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.core.commands.info;
+package de.timmi6790.discord_framework.modules.setting.commands;
 
 import de.timmi6790.discord_framework.datatypes.StatEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SettingsCommand extends AbstractCommand {
@@ -22,7 +23,8 @@ public class SettingsCommand extends AbstractCommand {
             final StatEmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
                     .setTitle("Settings");
 
-            final Map<AbstractSetting<?>, String> settingsMap = commandParameters.getUserDb().getSettingsMap();
+            // TODO: Fix me after new settings module
+            final Map<AbstractSetting<?>, String> settingsMap = new HashMap<>(); // commandParameters.getUserDb().getSettingsMap();
             if (settingsMap.isEmpty()) {
                 embedBuilder.setDescription("You can unlock settings by using the bot.");
             } else {

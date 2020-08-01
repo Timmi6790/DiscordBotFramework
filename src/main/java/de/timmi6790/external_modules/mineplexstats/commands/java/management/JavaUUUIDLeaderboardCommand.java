@@ -1,7 +1,7 @@
 package de.timmi6790.external_modules.mineplexstats.commands.java.management;
 
-import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
@@ -50,7 +50,8 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
         final long unixTime = this.getUnixTime(commandParameters, 5);
 
         final MineplexStatsModule module = this.getStatsModule();
-        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos, unixTime);
+        final ResponseModel responseModel = module.getMpStatsRestClient().getJavaLeaderboard(game.getName(), stat.getName(), board.getName(), startPos, endPos,
+                unixTime, true);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaLeaderboard leaderboardResponse = (JavaLeaderboard) responseModel;

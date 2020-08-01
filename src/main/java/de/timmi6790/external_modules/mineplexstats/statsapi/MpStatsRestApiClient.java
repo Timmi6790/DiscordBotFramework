@@ -2,8 +2,8 @@ package de.timmi6790.external_modules.mineplexstats.statsapi;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.bedrock.BedrockGames;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.bedrock.BedrockLeaderboard;
@@ -76,29 +76,32 @@ public class MpStatsRestApiClient {
         return this.makeRequest("java/leaderboards/games", new HashMap<>(0), JavaGamesModel.class);
     }
 
-    public ResponseModel getJavaPlayerStats(final String player, final String game, final String board, final long unixTime) {
+    public ResponseModel getJavaPlayerStats(final String player, final String game, final String board, final long unixTime, final boolean filtering) {
         return this.makeRequest(
                 "java/leaderboards/player",
-                new MapBuilder<String, Object>(() -> new HashMap<>(4))
+                new MapBuilder<String, Object>(() -> new HashMap<>(5))
                         .put("player", player)
                         .put("game", game)
                         .put("board", board.toLowerCase())
                         .put("date", unixTime)
+                        .put("filtering", filtering)
                         .build(),
                 JavaPlayerStats.class
         );
     }
 
-    public ResponseModel getJavaLeaderboard(final String game, final String stat, final String board, final int startPos, final int endPos, final long unixTime) {
+    public ResponseModel getJavaLeaderboard(final String game, final String stat, final String board, final int startPos, final int endPos,
+                                            final long unixTime, final boolean filtering) {
         return this.makeRequest(
                 "java/leaderboards/leaderboard",
-                new MapBuilder<String, Object>(() -> new HashMap<>(6))
+                new MapBuilder<String, Object>(() -> new HashMap<>(7))
                         .put("game", game)
                         .put("stat", stat)
                         .put("board", board.toLowerCase())
                         .put("startPosition", startPos)
                         .put("endPosition", endPos)
                         .put("date", unixTime)
+                        .put("filtering", filtering)
                         .build(),
                 JavaLeaderboard.class
         );

@@ -1,6 +1,8 @@
 package de.timmi6790.discord_framework.modules.setting;
 
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,13 +22,18 @@ public class SettingModule extends AbstractModule {
         super("SettingModule");
 
         this.addDependenciesAndLoadAfter(
-                DatabaseModule.class
+                DatabaseModule.class,
+                CommandModule.class
         );
     }
 
     @Override
     public void onEnable() {
-
+        DiscordBot.getModuleManager()
+                .getModuleOrThrow(CommandModule.class)
+                .registerCommands(
+                        // new SettingsCommand()
+                );
     }
 
     @Override
@@ -49,6 +56,10 @@ public class SettingModule extends AbstractModule {
         }
 
         return Optional.ofNullable(this.settings.get(this.nameIdMatching.get(internalName)));
+    }
+
+    public <D extends AbstractSetting> Optional<AbstractSetting<D>> getSetting(final Class<D> clazz) {
+        return null;
     }
 
     public Optional<AbstractSetting<?>> getSetting(final int dbId) {

@@ -41,7 +41,9 @@ public abstract class AbstractSetting<T> {
         );
     }
 
-    public abstract T parseSetting(String setting);
-
     public abstract boolean isAllowedValue(String value);
+
+    public abstract String toDatabaseValue(T value);
+
+    public abstract T fromDatabaseValue(String value);
 }

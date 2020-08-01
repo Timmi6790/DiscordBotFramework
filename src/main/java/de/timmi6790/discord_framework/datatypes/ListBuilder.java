@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 public class ListBuilder<T> {
     private final List<T> list;
-
+    
     public ListBuilder(final Supplier<List<T>> listFactory) {
         this.list = listFactory.get();
     }

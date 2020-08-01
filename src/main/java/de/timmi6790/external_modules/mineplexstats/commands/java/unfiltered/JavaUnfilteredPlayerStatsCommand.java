@@ -1,10 +1,11 @@
-package de.timmi6790.external_modules.mineplexstats.commands.java;
+package de.timmi6790.external_modules.mineplexstats.commands.java.unfiltered;
 
 import de.timmi6790.discord_framework.datatypes.BiggestLong;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.external_modules.mineplexstats.commands.AbstractStatsCommand;
+import de.timmi6790.external_modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.external_modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaBoard;
@@ -19,11 +20,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+public class JavaUnfilteredPlayerStatsCommand extends AbstractJavaStatsCommand {
+    public JavaUnfilteredPlayerStatsCommand() {
+        super("unfilteredPlayer", "Java unfiltered player stats", "<player> <game> [board] [date]", "upl");
 
-public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
-    public JavaPlayerStatsCommand() {
-        super("player", "Java player stats", "<player> <game> [board] [date]", "pl");
-
+        this.setCategory("MineplexStats - Java - Unfiltered");
         this.addDiscordPermission(Permission.MESSAGE_ATTACH_FILES);
         this.setMinArgs(2);
         this.setDefaultPerms(true);
@@ -44,7 +45,8 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
         final long unixTime = this.getUnixTime(commandParameters, 3);
 
         // Web Requests
-        final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName(), unixTime, true);
+        final ResponseModel responseModel = this.getStatsModule().getMpStatsRestClient().getJavaPlayerStats(player, javaGame.getName(), board.getName(),
+                unixTime, false);
         this.checkApiResponse(commandParameters, responseModel, "No stats available");
 
         final JavaPlayerStats playerStats = (JavaPlayerStats) responseModel;
@@ -85,7 +87,7 @@ public class JavaPlayerStatsCommand extends AbstractJavaStatsCommand {
             skin = null;
         }
 
-        final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard()};
+        final String[] header = {playerStatsInfo.getName(), playerStatsInfo.getGame(), playerStatsInfo.getBoard(), "UNFILTERED"};
         return this.sendPicture(
                 commandParameters,
                 new PictureTable(header, this.getFormattedUnixTime(highestUnixTime.get()), leaderboard, skin).getPlayerPicture(),

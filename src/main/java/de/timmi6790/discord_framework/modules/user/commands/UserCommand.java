@@ -85,11 +85,14 @@ public class UserCommand extends AbstractCommand {
         final int commandSpamCache = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(userDb.getDiscordId()).get();
         final int activeEmotes = DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
-        final String settings = userDb.getSettingsMap()
+        final String settings = "TODO";
+                /*userDb.getSettingsMap()
                 .entrySet()
                 .stream()
-                .map(setting -> setting.getKey().getInternalName() + ": " + setting.getKey().parseSetting(setting.getValue()))
+                .map(setting -> setting.getKey().getInternalName() + ": " + setting.getKey().fromDatabaseValue(setting.getValue()))
                 .collect(Collectors.joining("\n"));
+
+                 */
 
         final String stats = userDb.getStatsMap()
                 .entrySet()
