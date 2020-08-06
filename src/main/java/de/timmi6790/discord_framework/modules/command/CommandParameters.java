@@ -1,56 +1,72 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
-import de.timmi6790.discord_framework.modules.event.events.MessageReceivedIntEvent;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildChannel;
 import net.dv8tion.jda.api.entities.MessageChannel;
-import org.apache.commons.collections.map.HashedMap;
+import net.dv8tion.jda.api.entities.User;
 
-import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.Map;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
 public class CommandParameters {
-    private final EnumSet<Permission> discordChannelPermissions;
+    private final String rawArgs;
+    private final String[] args;
+    private final boolean guildCommand;
+    private final CommandCause commandCause;
     private final ChannelDb channelDb;
     private final UserDb userDb;
-    private final MessageReceivedIntEvent event;
-    private String[] args;
 
-    public CommandParameters(final CommandParameters commandParameters) {
-        this.discordChannelPermissions = commandParameters.discordChannelPermissions;
-        this.channelDb = commandParameters.channelDb;
-        this.userDb = commandParameters.userDb;
-        this.event = commandParameters.event;
-
-        this.args = new String[commandParameters.args.length];
-        System.arraycopy(commandParameters.args, 0, this.args, 0, this.args.length);
+    public CommandParameters(final CommandParameters commandParameters, final String... newArgs) {
+        this.rawArgs = String.join(" ", newArgs);
+        this.args = newArgs;
+        this.guildCommand = commandParameters.isGuildCommand();
+        this.commandCause = commandParameters.commandCause;
+        this.channelDb = commandParameters.getChannelDb();
+        this.userDb = commandParameters.getUserDb();
     }
 
-    public boolean isFromGuild() {
-        return this.event.isFromGuild();
+    public CommandParameters(final CommandParameters commandParameters, final CommandCause commandCause, final String... newArgs) {
+        this.rawArgs = String.join(" ", newArgs);
+        this.args = newArgs;
+        this.guildCommand = commandParameters.isGuildCommand();
+        this.commandCause = commandParameters.commandCause;
+        this.channelDb = commandParameters.getChannelDb();
+        this.userDb = commandParameters.getUserDb();
     }
 
-    public GuildDb getServer() {
+    public User getUser() {
+        return this.userDb.getUser();
+    }
+
+    public Guild getGuild() {
+        return this.getGuildDb().getGuild();
+    }
+
+    public GuildDb getGuildDb() {
         return this.channelDb.getGuildDb();
     }
 
-    public MessageChannel getDiscordChannel() {
-        return this.event.getMessage().getChannel();
+    public MessageChannel getTextChannel() {
+        if (this.isGuildCommand()) {
+            return this.channelDb.getChannel();
+        } else {
+            return this.getUser().openPrivateChannel().complete();
+        }
     }
 
-    public Map<String, String> getSentryMap() {
-        return new MapBuilder<String, String>(HashedMap::new)
-                .put("channelId", String.valueOf(this.channelDb.getDatabaseId()))
-                .put("userId", String.valueOf(this.userDb.getDatabaseId()))
-                .put("args", Arrays.toString(this.args))
-                .build();
+    public Set<Permission> getDiscordPermissions() {
+        if (this.isGuildCommand()) {
+            return this.channelDb.getGuildDb().getGuild().getSelfMember().getPermissions((GuildChannel) this.getTextChannel());
+        } else {
+            return EnumSet.noneOf(Permission.class);
+        }
     }
 }

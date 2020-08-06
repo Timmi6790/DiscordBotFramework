@@ -1,10 +1,12 @@
 package de.timmi6790.discord_framework.modules;
 
 
+import de.timmi6790.discord_framework.DiscordBot;
 import lombok.Data;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Data
@@ -39,5 +41,13 @@ public abstract class AbstractModule {
 
     protected final void addLoadBefore(final Class<? extends AbstractModule>... loadBefore) {
         this.loadBefore.addAll(Arrays.asList(loadBefore));
+    }
+
+    public <T extends AbstractModule> Optional<T> getModule(final Class<T> clazz) {
+        return DiscordBot.getModuleManager().getModule(clazz);
+    }
+
+    public <T extends AbstractModule> T getModuleOrThrow(final Class<T> clazz) {
+        return DiscordBot.getModuleManager().getModuleOrThrow(clazz);
     }
 }

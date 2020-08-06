@@ -3,6 +3,8 @@ package de.timmi6790.external_modules.mineplexstats.commands.bedrock;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
 import de.timmi6790.external_modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
@@ -21,11 +23,9 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
     public BedrockLeaderboardCommand() {
         super("bleaderboard", "Bedrock Leaderboard", "<game> [start] [end] [date]", "bl", "blb");
 
-        this.setDefaultPerms(true);
-        this.setMinArgs(1);
-
-        this.addExampleCommands(
-                "CakeWars"
+        this.addProperties(
+                new MinArgCommandProperty(1),
+                new ExampleCommandsCommandProperty("CakeWars")
         );
     }
 
@@ -57,21 +57,24 @@ public class BedrockLeaderboardCommand extends AbstractBedrockStatsCommand {
         final int rowDistance = endPos - startPos;
         final int fastRowDistance = leaderboardInfo.getTotalLength() * 50 / 100;
 
+        final CommandParameters newCommandParameters;
         if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
             final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
             System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
-            commandParameters.setArgs(newArgs);
+            newCommandParameters = new CommandParameters(commandParameters, newArgs);
+        } else {
+            newCommandParameters = commandParameters;
         }
 
         return this.sendPicture(
-                commandParameters,
+                newCommandParameters,
                 new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),
                 String.join("-", header) + "-" + leaderboardInfo.getUnix(),
                 new EmoteReactionMessage(
                         this.getLeaderboardEmotes(commandParameters, rowDistance, fastRowDistance, startPos, endPos,
                                 leaderboardInfo.getTotalLength(), ARG_POS_START_POS, ARG_POS_END_POS),
-                        commandParameters.getEvent().getAuthor().getIdLong(),
-                        commandParameters.getEvent().getChannel().getIdLong()
+                        commandParameters.getUser().getIdLong(),
+                        commandParameters.getTextChannel().getIdLong()
                 )
         );
     }

@@ -1,28 +1,56 @@
 package de.timmi6790.discord_framework.modules.emote_reaction.emotereactions;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.ModuleManager;
+import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.Data;
 
 @Data
 public class CommandEmoteReaction implements AbstractEmoteReaction {
-    // TODO: Find a better way, it is stupid to save the entire commandParameter object in here
+    private final Class<? extends AbstractCommand<?>> command;
+    private final Values values;
 
-    private final Class<? extends AbstractCommand> command;
-    private final CommandParameters commandParameters;
-
-    public CommandEmoteReaction(final AbstractCommand command, final CommandParameters commandParameters) {
-        this.command = command.getClass();
-        this.commandParameters = commandParameters;
+    public CommandEmoteReaction(final AbstractCommand<?> command, final CommandParameters commandParameters) {
+        this.command = (Class<? extends AbstractCommand<?>>) command.getClass();
+        this.values = new Values(
+                commandParameters.getArgs(),
+                commandParameters.isGuildCommand(),
+                commandParameters.getChannelDb().getDiscordId(),
+                commandParameters.getGuildDb().getDiscordId(),
+                commandParameters.getUserDb().getDiscordId()
+        );
     }
 
     @Override
     public void onEmote() {
         DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.command)
-                .ifPresent(command -> command.runCommand(this.commandParameters, CommandCause.EMOTES));
+                .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));
+    }
+
+    @Data
+    private static class Values {
+        private final String[] args;
+        private final boolean guildCommand;
+        private final long channelDiscordId;
+        private final long guildDiscordId;
+        private final long userDiscordId;
+
+        public CommandParameters getCommandParameters() {
+            final ModuleManager moduleManager = DiscordBot.getModuleManager();
+            return new CommandParameters(
+                    String.join(" ", this.args),
+                    this.args,
+                    this.guildCommand,
+                    CommandCause.EMOTES,
+                    moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(this.channelDiscordId, this.guildDiscordId),
+                    moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(this.userDiscordId)
+            );
+        }
     }
 }

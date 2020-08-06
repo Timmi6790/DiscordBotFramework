@@ -1,5 +1,7 @@
 package de.timmi6790.discord_framework.modules.user;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -12,18 +14,18 @@ import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
-import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
-import lombok.AllArgsConstructor;
+import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Data
-@AllArgsConstructor
 public class UserDb {
     private static final String UPDATE_PLAYER_BAN_STATUS = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
 
@@ -41,6 +43,12 @@ public class UserDb {
     private static final String ADD_RANK = "INSERT INTO player_rank(player_id, rank_id) VALUES(:databaseId, :rankId);";
     private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
 
+    @Getter
+    private static final LoadingCache<Long, User> userCache = Caffeine.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .build(key -> DiscordBot.getDiscord().retrieveUserById(key, false).complete());
+
     private final int databaseId;
     private final long discordId;
 
@@ -56,16 +64,30 @@ public class UserDb {
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
 
-    public Optional<User> getUser() {
-        return Optional.ofNullable(DiscordBot.getDiscord().getUserById(this.discordId));
+    public UserDb(final int databaseId, final long discordId, final int primaryRank, final Set<Integer> ranks, final boolean banned, final long points, final Set<Integer> permissionIds,
+                  final Map<Integer, String> settings, final Map<Integer, Integer> stats, final Set<Integer> achievements) {
+        this.databaseId = databaseId;
+        this.discordId = discordId;
+        this.primaryRank = primaryRank;
+        this.ranks = ranks;
+        this.banned = banned;
+        this.points = points;
+        this.permissionIds = permissionIds;
+        this.settings = settings;
+        this.stats = stats;
+        this.achievements = achievements;
+    }
+
+    public User getUser() {
+        return userCache.get(this.getDiscordId());
     }
 
     public void ban(final CommandParameters commandParameters, final String reason) {
         this.setBanned(true);
 
-        UtilitiesDiscordMessages.sendPrivateMessage(
-                commandParameters.getEvent().getAuthor(),
-                UtilitiesDiscordMessages.getEmbedBuilder(commandParameters)
+        DiscordMessagesUtilities.sendPrivateMessage(
+                commandParameters.getUser(),
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                         .setTitle("You are banned")
                         .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
         );

@@ -1,7 +1,7 @@
 package de.timmi6790.external_modules.mineplexstats.commands;
 
-import de.timmi6790.discord_framework.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public abstract class AbstractStatsCommand extends AbstractCommand {
+public abstract class AbstractStatsCommand extends AbstractCommand<MineplexStatsModule> {
     protected static final String UNKNOWN_POSITION = ">1000";
     protected static final String UNKNOWN_SCORE = "Unknown";
 
@@ -57,7 +57,6 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
     private CommandParameters getLeaderboardNewCommandParameters(final CommandParameters commandParameters, final int argPosStart, final int argPosEnd, final int newStart,
                                                                  final int rowDistance) {
         final CommandParameters newParameters = new CommandParameters(commandParameters);
-
         newParameters.getArgs()[argPosStart] = String.valueOf(newStart);
         newParameters.getArgs()[argPosEnd] = String.valueOf(newStart + rowDistance);
 
@@ -260,7 +259,7 @@ public abstract class AbstractStatsCommand extends AbstractCommand {
     protected CommandResult sendPicture(final CommandParameters commandParameters, final Optional<InputStream> inputStreamOpt, final String pictureName,
                                         final EmoteReactionMessage emoteReactionMessage) {
         return inputStreamOpt.map(inputStream -> {
-            commandParameters.getDiscordChannel()
+            commandParameters.getTextChannel()
                     .sendFile(inputStream, pictureName + ".png")
                     .queue(message -> {
                         if (emoteReactionMessage != null) {

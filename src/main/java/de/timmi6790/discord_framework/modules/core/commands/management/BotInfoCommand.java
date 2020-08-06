@@ -15,8 +15,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class BotInfoCommand extends AbstractCommand {
     public BotInfoCommand() {
         super("binfo", "Management", "", "");
-
-        this.setPermission("core.management.binfo");
     }
 
     @Override

@@ -8,6 +8,7 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.core.CoreModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -15,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class AccountDeletionCommand extends AbstractCommand {
+public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
     private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"PutMeDown", "SaveMeImBeingHeldCaptive", "GodSaveTheBot"};
 
     private final Cache<Long, Integer> userDeleteConfirmCache = Caffeine.newBuilder()
@@ -33,8 +34,6 @@ public class AccountDeletionCommand extends AbstractCommand {
 
     public AccountDeletionCommand() {
         super("deleteMyAccount", "Info", "Wipe all my data!", "");
-
-        this.setDefaultPerms(true);
     }
 
     @Override

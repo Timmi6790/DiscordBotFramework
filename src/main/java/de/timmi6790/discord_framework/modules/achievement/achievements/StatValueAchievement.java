@@ -4,7 +4,8 @@ import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.modules.event.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
-import de.timmi6790.discord_framework.utilities.discord.UtilitiesDiscordMessages;
+import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.Optional;
 
@@ -28,12 +29,11 @@ public abstract class StatValueAchievement extends AbstractAchievement {
         if (event.getNewValue() >= this.requiredValue) {
             event.getUserDb().grantAchievement(this);
 
-            event.getUserDb().getUser().ifPresent(user -> {
-                UtilitiesDiscordMessages.sendPrivateMessage(user, UtilitiesDiscordMessages.getEmbedBuilder(user, Optional.empty())
-                        .setTitle("Achievement Unlocked")
-                        .setDescription("Unlocked: " + this.getName())
-                );
-            });
+            final User user = event.getUserDb().getUser();
+            DiscordMessagesUtilities.sendPrivateMessage(user, DiscordMessagesUtilities.getEmbedBuilder(user, Optional.empty())
+                    .setTitle("Achievement Unlocked")
+                    .setDescription("Unlocked: " + this.getName())
+            );
         }
     }
 }

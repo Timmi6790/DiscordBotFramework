@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.modules.rank;
 
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -60,6 +60,7 @@ public class RankModule extends AbstractModule {
         DiscordBot.getModuleManager()
                 .getModuleOrThrow(CommandModule.class)
                 .registerCommands(
+                        this,
                         new RankCommand()
                 );
     }

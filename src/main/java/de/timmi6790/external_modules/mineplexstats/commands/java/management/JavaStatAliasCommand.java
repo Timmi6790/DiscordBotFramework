@@ -2,6 +2,7 @@ package de.timmi6790.external_modules.mineplexstats.commands.java.management;
 
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaStat;
@@ -12,8 +13,9 @@ public class JavaStatAliasCommand extends AbstractJavaStatsCommand {
         super("aliasStat", "Stat Alias", "<game> <stat> <alias>", "as");
 
         this.setCategory("MineplexStats - Java - Management");
-        this.setPermission("mineplexstats.management.aliasStat");
-        this.setMinArgs(3);
+        this.addProperties(
+                new MinArgCommandProperty(3)
+        );
     }
 
     @Override

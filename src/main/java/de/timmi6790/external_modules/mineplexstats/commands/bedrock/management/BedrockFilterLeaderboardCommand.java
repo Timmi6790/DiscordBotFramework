@@ -1,10 +1,12 @@
 package de.timmi6790.external_modules.mineplexstats.commands.bedrock.management;
 
-import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
@@ -31,9 +33,10 @@ public class BedrockFilterLeaderboardCommand extends AbstractBedrockStatsCommand
     public BedrockFilterLeaderboardCommand() {
         super("bfleaderboard", "Bedrock Filter Leaderboard", "<game> [start] [end] [date]", "bfl", "bflb");
 
-        this.setPermission("mineplexstats.management.bfilter");
-        this.setMinArgs(1);
-        this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);
+        this.addProperties(
+                new MinArgCommandProperty(1),
+                new RequiredDiscordBotPermsCommandProperty(Permission.MESSAGE_ADD_REACTION)
+        );
     }
 
     @Override
@@ -66,8 +69,7 @@ public class BedrockFilterLeaderboardCommand extends AbstractBedrockStatsCommand
         DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(BedrockPlayerFilterCommand.class).ifPresent(filterCommand -> {
             final AtomicInteger emoteIndex = new AtomicInteger(1);
             leaderboardResponse.forEach(data -> {
-                final CommandParameters newParameters = new CommandParameters(commandParameters);
-                newParameters.setArgs(new String[]{leaderboardInfo.getGame(), data.getName()});
+                final CommandParameters newParameters = new CommandParameters(commandParameters, leaderboardInfo.getGame(), data.getName());
                 emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
             });
         });
@@ -76,15 +78,18 @@ public class BedrockFilterLeaderboardCommand extends AbstractBedrockStatsCommand
         final int rowDistance = endPos - startPos;
         final int fastRowDistance = leaderboardInfo.getTotalLength() * 50 / 100;
 
+        final CommandParameters newCommandParameters;
         if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
             final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
             System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
-            commandParameters.setArgs(newArgs);
+            newCommandParameters = new CommandParameters(commandParameters, newArgs);
+        } else {
+            newCommandParameters = commandParameters;
         }
 
         emotes.putAll(
                 this.getLeaderboardEmotes(
-                        commandParameters,
+                        newCommandParameters,
                         rowDistance,
                         fastRowDistance,
                         startPos,
@@ -96,13 +101,13 @@ public class BedrockFilterLeaderboardCommand extends AbstractBedrockStatsCommand
         );
 
         return this.sendPicture(
-                commandParameters,
+                newCommandParameters,
                 new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),
                 String.join("-", header) + "-" + leaderboardInfo.getUnix(),
                 new EmoteReactionMessage(
                         emotes,
-                        commandParameters.getEvent().getAuthor().getIdLong(),
-                        commandParameters.getEvent().getChannel().getIdLong()
+                        commandParameters.getUser().getIdLong(),
+                        commandParameters.getTextChannel().getIdLong()
                 )
         );
     }

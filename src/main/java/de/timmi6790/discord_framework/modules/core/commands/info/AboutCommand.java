@@ -5,12 +5,12 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.core.CoreModule;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-public class AboutCommand extends AbstractCommand {
+public class AboutCommand extends AbstractCommand<CoreModule> {
     public AboutCommand() {
         super("about", "Info", "About the bot", "");
-        this.setDefaultPerms(true);
     }
 
     @Override

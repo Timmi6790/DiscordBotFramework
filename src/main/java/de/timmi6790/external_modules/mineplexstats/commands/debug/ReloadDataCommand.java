@@ -4,16 +4,18 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.utilities.EnumUtilities;
 import de.timmi6790.external_modules.mineplexstats.MineplexStatsModule;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-public class ReloadDataCommand extends AbstractCommand {
+public class ReloadDataCommand extends AbstractCommand<MineplexStatsModule> {
     public ReloadDataCommand() {
         super("sReload", "Debug", "", "<javaGame|javaGroup|bedrockGame>", "sr");
 
-        this.setMinArgs(1);
-        this.setPermission("mineplexstats.debug.reload");
+        this.addProperties(
+                new MinArgCommandProperty(1)
+        );
     }
 
     @Override

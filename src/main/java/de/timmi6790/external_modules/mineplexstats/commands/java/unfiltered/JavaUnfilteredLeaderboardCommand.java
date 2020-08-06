@@ -3,6 +3,8 @@ package de.timmi6790.external_modules.mineplexstats.commands.java.unfiltered;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
 import de.timmi6790.external_modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.external_modules.mineplexstats.picture.PictureTable;
@@ -26,14 +28,14 @@ public class JavaUnfilteredLeaderboardCommand extends AbstractJavaStatsCommand {
         super("unfilteredLeaderboard", "Java Unfiltered Leaderboard", "<game> <stat> [board] [start] [end] [date]", "ulb");
 
         this.setCategory("MineplexStats - Java - Unfiltered");
-        this.setDefaultPerms(true);
-        this.setMinArgs(2);
-
-        this.addExampleCommands(
-                "Global ExpEarned",
-                "Global ExpEarned daily",
-                "Global ExpEarned global 20 40",
-                "Global ExpEarned global 20 40 1/30/2020"
+        this.addProperties(
+                new MinArgCommandProperty(2),
+                new ExampleCommandsCommandProperty(
+                        "Global ExpEarned",
+                        "Global ExpEarned daily",
+                        "Global ExpEarned global 20 40",
+                        "Global ExpEarned global 20 40 1/30/2020"
+                )
         );
     }
 
@@ -70,23 +72,26 @@ public class JavaUnfilteredLeaderboardCommand extends AbstractJavaStatsCommand {
         final int fastRowDistance = leaderboardInfo.getTotalLength() * 10 / 100;
 
         // Create a new args array if the old array has no positions
+        final CommandParameters newCommandParameters;
         if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
             final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
             newArgs[ARG_POS_BOARD_POS] = board.getName();
 
             System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
-            commandParameters.setArgs(newArgs);
+            newCommandParameters = new CommandParameters(commandParameters, newArgs);
+        } else {
+            newCommandParameters = commandParameters;
         }
 
         return this.sendPicture(
-                commandParameters,
+                newCommandParameters,
                 new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),
                 String.join("-", header) + "-" + leaderboardInfo.getUnix(),
                 new EmoteReactionMessage(
                         this.getLeaderboardEmotes(commandParameters, rowDistance, fastRowDistance, startPos, endPos,
                                 leaderboardInfo.getTotalLength(), ARG_POS_START_POS, ARG_POS_END_POS),
-                        commandParameters.getEvent().getAuthor().getIdLong(),
-                        commandParameters.getEvent().getChannel().getIdLong()
+                        commandParameters.getUser().getIdLong(),
+                        commandParameters.getTextChannel().getIdLong()
                 )
         );
     }

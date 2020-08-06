@@ -3,16 +3,15 @@ package de.timmi6790.discord_framework.modules.core.commands.info;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.core.CoreModule;
 
-public class InviteCommand extends AbstractCommand {
+public class InviteCommand extends AbstractCommand<CoreModule> {
     private final String inviteUrl;
 
     public InviteCommand(final String inviteUrl) {
         super("invite", "Info", "Invite me.", "", "iv");
 
         this.inviteUrl = inviteUrl;
-
-        this.setDefaultPerms(true);
     }
 
     @Override

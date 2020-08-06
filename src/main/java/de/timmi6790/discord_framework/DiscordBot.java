@@ -66,6 +66,7 @@ public class DiscordBot {
                 new DatabaseModule(config.getString("db.url"), config.getString("db.name"), config.getString("db.password")),
                 new EventModule(),
                 new CommandModule(config.getString("discord.mainCommand"), discord.getSelfUser().getIdLong()),
+
                 new PermissionsModule(),
                 new RankModule(),
                 new UserDbModule(),

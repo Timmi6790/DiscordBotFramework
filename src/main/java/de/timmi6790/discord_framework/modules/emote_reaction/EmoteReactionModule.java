@@ -3,8 +3,8 @@ package de.timmi6790.discord_framework.modules.emote_reaction;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
-import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import lombok.Getter;
@@ -12,6 +12,8 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.exceptions.ErrorHandler;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -78,8 +80,7 @@ public class EmoteReactionModule extends AbstractModule {
                                             } catch (final Exception ignore) {
                                             }
                                         }),
-                                failure -> {
-                                }
+                                new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
                         );
             })
             .build();

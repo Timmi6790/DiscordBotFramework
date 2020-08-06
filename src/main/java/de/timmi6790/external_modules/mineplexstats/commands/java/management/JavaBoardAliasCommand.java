@@ -3,6 +3,7 @@ package de.timmi6790.external_modules.mineplexstats.commands.java.management;
 import de.timmi6790.discord_framework.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.apache.commons.lang3.ArrayUtils;
@@ -14,8 +15,9 @@ public class JavaBoardAliasCommand extends AbstractJavaStatsCommand {
         super("aliasBoard", "Board Alias", "<board> <alias>", "ab");
 
         this.setCategory("MineplexStats - Java - Management");
-        this.setPermission("mineplexstats.management.aliasBoard");
-        this.setMinArgs(2);
+        this.addProperties(
+                new MinArgCommandProperty(2)
+        );
     }
 
     @Override

@@ -4,6 +4,8 @@ import de.timmi6790.discord_framework.datatypes.BiggestLong;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.picture.PictureTable;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.bedrock.BedrockPlayerStats;
@@ -16,11 +18,11 @@ public class BedrockPlayerCommand extends AbstractBedrockStatsCommand {
     public BedrockPlayerCommand() {
         super("bplayer", "Bedrock player stats", "<player>", "bpl");
 
-        this.setDefaultPerms(true);
-        this.setMinArgs(1);
-
-        this.addExampleCommands(
-                "xottic7"
+        this.addProperties(
+                new MinArgCommandProperty(1),
+                new ExampleCommandsCommandProperty(
+                        "xottic7"
+                )
         );
     }
 

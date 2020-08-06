@@ -4,6 +4,9 @@ import de.timmi6790.discord_framework.datatypes.BiggestLong;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.commands.AbstractStatsCommand;
 import de.timmi6790.external_modules.mineplexstats.commands.java.AbstractJavaStatsCommand;
 import de.timmi6790.external_modules.mineplexstats.picture.PictureTable;
@@ -25,14 +28,14 @@ public class JavaUnfilteredPlayerStatsCommand extends AbstractJavaStatsCommand {
         super("unfilteredPlayer", "Java unfiltered player stats", "<player> <game> [board] [date]", "upl");
 
         this.setCategory("MineplexStats - Java - Unfiltered");
-        this.addDiscordPermission(Permission.MESSAGE_ATTACH_FILES);
-        this.setMinArgs(2);
-        this.setDefaultPerms(true);
-
-        this.addExampleCommands(
-                "nwang888 Global",
-                "nwang888 Global yearly",
-                "nwang888 Global global 1/25/2020"
+        this.addProperties(
+                new MinArgCommandProperty(2),
+                new RequiredDiscordBotPermsCommandProperty(Permission.MESSAGE_ATTACH_FILES),
+                new ExampleCommandsCommandProperty(
+                        "nwang888 Global",
+                        "nwang888 Global yearly",
+                        "nwang888 Global global 1/25/2020"
+                )
         );
     }
 

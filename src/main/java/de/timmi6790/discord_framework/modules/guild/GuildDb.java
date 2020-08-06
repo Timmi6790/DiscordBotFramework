@@ -1,9 +1,12 @@
 package de.timmi6790.discord_framework.modules.guild;
 
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
+import net.dv8tion.jda.api.entities.Guild;
 
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +17,7 @@ import java.util.stream.Collectors;
 @ToString
 @EqualsAndHashCode
 @Getter
+@Setter
 public class GuildDb {
     private final int databaseId;
     private final long discordId;
@@ -24,7 +28,7 @@ public class GuildDb {
     private final Pattern commandAliasPattern;
 
     private final Map<String, AbstractSetting> properties;
-
+    
     public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames, final Map<String, AbstractSetting> properties) {
         this.databaseId = databaseId;
         this.discordId = discordId;
@@ -43,6 +47,10 @@ public class GuildDb {
                     .collect(Collectors.joining("|"));
             this.commandAliasPattern = Pattern.compile("^(?:" + aliasPattern + ")(.*)$)", Pattern.CASE_INSENSITIVE);
         }
+    }
+
+    public Guild getGuild() {
+        return DiscordBot.getDiscord().getGuildById(this.discordId);
     }
 
     public Optional<Pattern> getCommandAliasPattern() {

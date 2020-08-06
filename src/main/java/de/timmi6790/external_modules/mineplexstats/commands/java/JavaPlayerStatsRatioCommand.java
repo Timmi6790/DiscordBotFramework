@@ -2,6 +2,8 @@ package de.timmi6790.external_modules.mineplexstats.commands.java;
 
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaBoard;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaRatioPlayer;
@@ -28,12 +30,13 @@ public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
         super("playerstats", "Player stats as graph", "<player> <stat> [board]", "pls", "plsats", "plstat");
 
         this.setCategory("PROTOTYPE - MineplexStats - Java");
-        this.setDefaultPerms(true);
-        this.setMinArgs(2);
 
-        this.addExampleCommands(
-                "nwang888 wins",
-                "nwang888 wins yearly"
+        this.addProperties(
+                new MinArgCommandProperty(2),
+                new ExampleCommandsCommandProperty(
+                        "nwang888 wins",
+                        "nwang888 wins yearly"
+                )
         );
     }
 
@@ -122,7 +125,7 @@ public class JavaPlayerStatsRatioCommand extends AbstractJavaStatsCommand {
         );
 
 
-        commandParameters.getDiscordChannel()
+        commandParameters.getTextChannel()
                 .sendMessage(this.getEmbedBuilder(commandParameters)
                         .setTitle("Prototype Command")
                         .setDescription("Thx for using this prototype command. \n" +

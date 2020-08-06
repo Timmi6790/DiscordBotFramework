@@ -2,9 +2,12 @@ package de.timmi6790.external_modules.mineplexstats.commands.java.management;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ListBuilder;
+import de.timmi6790.discord_framework.modules.command.CommandCause;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
@@ -35,9 +38,12 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
         super("uuidLeaderboard", "Java UUID Leaderboard", "<game> <stat> [board] [start] [end] [date]", "ul");
 
         this.setCategory("MineplexStats - Java - Management");
-        this.setMinArgs(2);
-        this.setPermission("mineplexstats.management.filter");
-        this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);
+        this.addProperties(
+                new MinArgCommandProperty(2),
+                new RequiredDiscordBotPermsCommandProperty(
+                        Permission.MESSAGE_ADD_REACTION
+                )
+        );
     }
 
     @Override
@@ -77,8 +83,7 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
                 .ifPresent(filterCommand -> {
                     final AtomicInteger emoteIndex = new AtomicInteger(1);
                     leaderboardResponse.getLeaderboard().forEach(data -> {
-                        final CommandParameters newParameters = new CommandParameters(commandParameters);
-                        newParameters.setArgs(new String[]{data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard()});
+                        final CommandParameters newParameters = new CommandParameters(commandParameters, CommandCause.EMOTES, data.getUuid().toString(), leaderboardInfo.getGame(), leaderboardInfo.getStat(), leaderboardInfo.getBoard());
                         emotes.put(DiscordEmotes.getNumberEmote(emoteIndex.getAndIncrement()).getEmote(), new CommandEmoteReaction(filterCommand, newParameters));
                     });
                 });
@@ -88,25 +93,28 @@ public class JavaUUUIDLeaderboardCommand extends AbstractJavaStatsCommand {
         final int fastRowDistance = leaderboardInfo.getTotalLength() * 10 / 100;
 
         // Create a new args array if the old array has no positions
+        final CommandParameters newCommandParameters;
         if (Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1 > commandParameters.getArgs().length) {
             final String[] newArgs = new String[Math.max(ARG_POS_END_POS, ARG_POS_START_POS) + 1];
             newArgs[ARG_POS_BOARD_POS] = board.getName();
 
             System.arraycopy(commandParameters.getArgs(), 0, newArgs, 0, commandParameters.getArgs().length);
-            commandParameters.setArgs(newArgs);
+            newCommandParameters = new CommandParameters(commandParameters, newArgs);
+        } else {
+            newCommandParameters = commandParameters;
         }
 
         emotes.putAll(this.getLeaderboardEmotes(commandParameters, rowDistance, fastRowDistance, startPos, endPos,
                 leaderboardInfo.getTotalLength(), ARG_POS_START_POS, ARG_POS_END_POS));
 
         return this.sendPicture(
-                commandParameters,
+                newCommandParameters,
                 new PictureTable(header, this.getFormattedUnixTime(leaderboardInfo.getUnix()), leaderboard).getPlayerPicture(),
                 String.join("-", header) + "-" + leaderboardInfo.getUnix(),
                 new EmoteReactionMessage(
                         emotes,
-                        commandParameters.getEvent().getAuthor().getIdLong(),
-                        commandParameters.getEvent().getChannel().getIdLong()
+                        commandParameters.getUser().getIdLong(),
+                        commandParameters.getTextChannel().getIdLong()
                 )
         );
     }

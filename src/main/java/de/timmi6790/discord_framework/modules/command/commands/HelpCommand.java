@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.discord_framework.utilities.UtilitiesString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -13,13 +14,17 @@ import java.util.Comparator;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class HelpCommand extends AbstractCommand {
+public class HelpCommand extends AbstractCommand<CommandModule> {
     public HelpCommand() {
         super("help", "Info", "In need of help", "[command]", "h");
 
-        this.setDefaultPerms(true);
+        this.addProperties(
+                new ExampleCommandsCommandProperty(
+                        "help"
+                )
+        );
     }
-
+    
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All info
@@ -28,9 +33,9 @@ public class HelpCommand extends AbstractCommand {
             final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Commands")
                     .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
-                    .setFooter("TIP: Use " + DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " help <command> to see more details");
+                    .setFooter("TIP: Use " + this.getModule().getMainCommand() + " help <command> to see more details");
 
-            DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommands()
+            this.getModule().getCommands()
                     .stream()
                     .filter(command -> command.hasPermission(commandParameters))
                     .collect(Collectors.groupingBy(AbstractCommand::getCategory, TreeMap::new, Collectors.toList()))
@@ -48,12 +53,13 @@ public class HelpCommand extends AbstractCommand {
                             )
                     );
 
-            this.sendTimedMessage(commandParameters, message, 90);
+            this.sendTimedMessage(commandParameters, message, 150);
             return CommandResult.SUCCESS;
         }
 
+
         // Command specific
-        final AbstractCommand command = this.getCommandThrow(commandParameters, 0);
+        final AbstractCommand<?> command = this.getCommandThrow(commandParameters, 0);
         final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
 
         final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
@@ -64,6 +70,7 @@ public class HelpCommand extends AbstractCommand {
                 .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty());
 
         this.sendTimedMessage(commandParameters, message, 90);
+
         return CommandResult.SUCCESS;
     }
 }

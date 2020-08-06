@@ -3,6 +3,8 @@ package de.timmi6790.external_modules.mineplexstats.commands.java.management;
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.EmptyEmoteReaction;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
@@ -21,9 +23,12 @@ public class JavaPlayerFilterCommand extends AbstractJavaStatsCommand {
         super("filter", "Filter Players", "<uuid> <game> <stat> <board>");
 
         this.setCategory("MineplexStats - Java - Management");
-        this.setMinArgs(4);
-        this.setPermission("mineplexstats.management.filter");
-        this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);
+        this.addProperties(
+                new MinArgCommandProperty(4),
+                new RequiredDiscordBotPermsCommandProperty(
+                        Permission.MESSAGE_ADD_REACTION
+                )
+        );
     }
 
     @Override

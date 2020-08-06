@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaGame;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaStat;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -16,11 +17,11 @@ public class JavaGamesCommand extends AbstractJavaStatsCommand {
     public JavaGamesCommand() {
         super("games", "Java Games", "[game] [stat]", "g");
 
-        this.setDefaultPerms(true);
-
-        this.addExampleCommands(
-                "Global",
-                "Global ExpEarned"
+        this.addProperties(
+                new ExampleCommandsCommandProperty(
+                        "Global",
+                        "Global ExpEarned"
+                )
         );
     }
 

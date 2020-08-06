@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.java.JavaGroup;
 
 import java.util.Comparator;
@@ -14,10 +15,10 @@ public class JavaGroupsGroupsCommand extends AbstractJavaStatsCommand {
         super("groups", "Java Groups", "[group]");
 
         this.setCategory("MineplexStats - Java - Group");
-        this.setDefaultPerms(true);
-
-        this.addExampleCommands(
-                "MixedArcade"
+        this.addProperties(
+                new ExampleCommandsCommandProperty(
+                        "MixedArcade"
+                )
         );
     }
 

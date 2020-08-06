@@ -62,6 +62,7 @@ public class MineplexStatsModule extends AbstractModule {
         DiscordBot.getModuleManager()
                 .getModuleOrThrow(CommandModule.class)
                 .registerCommands(
+                        this,
                         new JavaGamesCommand(),
                         new JavaPlayerStatsCommand(),
                         new JavaPlayerGroupCommand(),

@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
@@ -11,13 +12,14 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.stream.Collectors;
 
-public class RankCommand extends AbstractCommand {
+public class RankCommand extends AbstractCommand<RankModule> {
     public RankCommand() {
         // TODO: Add a better command system, to support more complex commands
         super("rank", "Management", "Rank control command", "<rankName|list> <perms;extend;rename;rename;create;delete;info|> <add,remove;add,remove;newName|> <command,permNode;rankName|>");
 
-        this.setMinArgs(1);
-        this.setPermission("core.management.rank_control");
+        this.addProperty(
+                new MinArgCommandProperty(1)
+        );
     }
 
     @Override

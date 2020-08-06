@@ -2,8 +2,8 @@ package de.timmi6790.discord_framework.modules.user;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -50,6 +50,7 @@ public class UserDbModule extends AbstractModule {
         DiscordBot.getModuleManager()
                 .getModuleOrThrow(CommandModule.class)
                 .registerCommands(
+                        this,
                         new UserCommand()
                 );
     }

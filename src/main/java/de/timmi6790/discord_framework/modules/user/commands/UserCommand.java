@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
@@ -18,13 +19,14 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class UserCommand extends AbstractCommand {
+public class UserCommand extends AbstractCommand<UserDbModule> {
     public UserCommand() {
         super("user", "Management", "User control command", "<discordUser> <perms|rank|achievement|setting|setPrimaryRank|ban|" +
                 "unBan|info|invalidate> <add;remove;list|add;remove|add|add|rank|||||> <command;permNode|rank|>");
 
-        this.setMinArgs(2);
-        this.setPermission("core.management.user_control");
+        this.addProperty(
+                new MinArgCommandProperty(2)
+        );
     }
 
     @Override
@@ -40,7 +42,7 @@ public class UserCommand extends AbstractCommand {
         // <discordUser> <invalidate>
 
         final User user = this.getDiscordUserThrow(commandParameters, 0);
-        final UserDb userDb = DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getOrCreate(user.getIdLong());
+        final UserDb userDb = this.getModule().getOrCreate(user.getIdLong());
         final ValidArgs1 arg1 = this.getFromEnumIgnoreCaseThrow(commandParameters, 1, ValidArgs1.values());
 
         switch (arg1) {

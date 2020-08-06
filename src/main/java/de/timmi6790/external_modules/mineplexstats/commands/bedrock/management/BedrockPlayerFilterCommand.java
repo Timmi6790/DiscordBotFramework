@@ -3,6 +3,8 @@ package de.timmi6790.external_modules.mineplexstats.commands.bedrock.management;
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.EmptyEmoteReaction;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
@@ -17,9 +19,10 @@ public class BedrockPlayerFilterCommand extends AbstractBedrockStatsCommand {
     public BedrockPlayerFilterCommand() {
         super("bfilter", "Filter Bedrock Players", "<game> <player>");
 
-        this.setMinArgs(2);
-        this.setPermission("mineplexstats.management.bfilter");
-        this.addDiscordPermissions(Permission.MESSAGE_ADD_REACTION);
+        this.addProperties(
+                new MinArgCommandProperty(2),
+                new RequiredDiscordBotPermsCommandProperty(Permission.MESSAGE_ADD_REACTION)
+        );
     }
 
     @Override

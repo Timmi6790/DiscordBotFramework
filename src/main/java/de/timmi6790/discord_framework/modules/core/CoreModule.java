@@ -37,6 +37,7 @@ public class CoreModule extends AbstractModule {
     @Override
     public void onEnable() {
         DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
+                this,
                 new AboutCommand(),
                 new BotInfoCommand(),
                 new AccountDeletionCommand()
@@ -45,6 +46,7 @@ public class CoreModule extends AbstractModule {
         final String inviteUrl = DiscordBot.getConfig().getString("discord.inviteUrl");
         if (inviteUrl != null && !inviteUrl.isEmpty()) {
             DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
+                    this,
                     new InviteCommand(inviteUrl)
             );
         }

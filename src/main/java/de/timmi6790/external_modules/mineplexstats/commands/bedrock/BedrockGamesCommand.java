@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 public class BedrockGamesCommand extends AbstractBedrockStatsCommand {
     public BedrockGamesCommand() {
         super("bgames", "Bedrock games", "", "bg");
-
-        this.setDefaultPerms(true);
     }
 
     @Override
