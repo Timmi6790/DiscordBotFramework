@@ -16,6 +16,8 @@ import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import net.dv8tion.jda.api.exceptions.ErrorHandler;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
@@ -124,8 +126,18 @@ public class MessageListener extends GetModule<CommandModule> {
                         .setFooter("↓ Click Me!")
                         .build())
                 .queue(sendMessage -> {
-                            DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(sendMessage, emoteReactionMessage);
-                            sendMessage.delete().queueAfter(90, TimeUnit.SECONDS);
+                            DiscordBot.getModuleManager()
+                                    .getModuleOrThrow(EmoteReactionModule.class)
+                                    .addEmoteReactionMessage(sendMessage, emoteReactionMessage);
+
+                            sendMessage
+                                    .delete()
+                                    .queueAfter(
+                                            90,
+                                            TimeUnit.SECONDS,
+                                            null,
+                                            new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
+                                    );
                         }
                 );
     }

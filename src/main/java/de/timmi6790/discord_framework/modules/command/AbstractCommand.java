@@ -39,8 +39,6 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
-import org.apache.commons.collections.map.HashedMap;
-import org.tinylog.Logger;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -100,11 +98,11 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             return e.getCommandResult();
 
         } catch (final Exception e) {
-            Logger.error(e);
+            DiscordBot.getLogger().error(e);
             this.sendErrorMessage(commandParameters, "Unknown");
 
             // Sentry error
-            final Map<String, String> data = new MapBuilder<String, String>(HashedMap::new)
+            final Map<String, String> data = new MapBuilder<String, String>(HashMap::new)
                     .put("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()))
                     .put("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
                     .put("args", Arrays.toString(commandParameters.getArgs()))
@@ -306,13 +304,15 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
-        this.sendTimedMessage(commandParameters,
+        this.sendTimedMessage(
+                commandParameters,
                 this.getEmbedBuilder(commandParameters).setTitle("Something went wrong")
                         .setDescription("Something went wrong while executing this command.")
                         .addField("Command", this.getName(), false)
                         .addField("Args", String.join(" ", commandParameters.getArgs()), false)
                         .addField("Error", error, false),
-                90);
+                90
+        );
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {

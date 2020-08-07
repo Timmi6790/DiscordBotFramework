@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.datatypes;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,48 +142,48 @@ public class ConcurrentTwoLaneMap<K, V> extends AbstractMap<K, V> implements Ser
 
     @Override
     public void replaceAll(final BiFunction<? super K, ? super V, ? extends V> function) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Nullable
     @Override
     public V putIfAbsent(final K key, final V value) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public boolean remove(final Object key, final Object value) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public boolean replace(final K key, final V oldValue, final V newValue) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Nullable
     @Override
     public V replace(final K key, final V value) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public V computeIfAbsent(final K key, @NotNull final Function<? super K, ? extends V> mappingFunction) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public V computeIfPresent(final K key, @NotNull final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public V compute(final K key, @NotNull final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public V merge(final K key, @NotNull final V value, @NotNull final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        throw new NotImplementedException("Not implemented");
+        throw new RuntimeException("Not implemented");
     }
 }

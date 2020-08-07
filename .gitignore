@@ -26,14 +26,12 @@ target/
 
 .idea/
 
-src/main/resources/config.properties
-
 dependency-reduced-pom.xml
 
 StatsBot.iml
 
 StatsBotDiscord.iml
 
-src/main/resources/Pconfig.properties
-
 DiscordBot.iml
+
+run/

@@ -5,16 +5,12 @@ import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.utilities.sorting.TopicalSort;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 public class ModuleManager {
-    private static final Logger logger = LoggerFactory.getLogger(ModuleManager.class);
-
     private final Map<Class<? extends AbstractModule>, AbstractModule> loadedModules = new HashMap<>();
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
 
@@ -48,18 +44,18 @@ public class ModuleManager {
         // Check if all load dependencies are started
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
             if (!this.startedModules.contains(dependencyClass)) {
-                logger.warn("Tried to start {} without {} dependency being started", moduleClass, dependencyClass);
+                DiscordBot.getLogger().warn("Tried to start {} without {} dependency being started", moduleClass, dependencyClass);
                 return false;
             }
         }
 
-        logger.info("Starting module {}", module.getName());
+        DiscordBot.getLogger().info("Starting module {}", module.getName());
         try {
             module.onEnable();
             this.startedModules.add(moduleClass);
             return true;
         } catch (final Exception e) {
-            logger.error(module.getName(), e);
+            DiscordBot.getLogger().error(module.getName(), e);
             DiscordBot.getSentry().sendException(e);
 
             return false;
@@ -84,7 +80,7 @@ public class ModuleManager {
                         .findAny();
 
                 if (missingDependency.isPresent()) {
-                    logger.warn("Can't load {}, because it is missing the {} dependency.", module.getName(), missingDependency.get().getSimpleName());
+                    DiscordBot.getLogger().warn("Can't load {}, because it is missing the {} dependency.", module.getName(), missingDependency.get().getSimpleName());
 
                     moduleClasses.remove(module.getClass());
                     moduleIterator.remove();
@@ -131,7 +127,7 @@ public class ModuleManager {
             this.startedModules.remove(moduleClass);
             return true;
         } catch (final Exception e) {
-            logger.error(module.getName(), e);
+            DiscordBot.getLogger().error(module.getName(), e);
             DiscordBot.getSentry().sendException(e);
             return false;
         }

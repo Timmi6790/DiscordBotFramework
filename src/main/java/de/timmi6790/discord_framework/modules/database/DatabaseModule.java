@@ -1,25 +1,29 @@
 package de.timmi6790.discord_framework.modules.database;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.jdbi.v3.core.Jdbi;
 
 @EqualsAndHashCode(callSuper = true)
-
 public class DatabaseModule extends AbstractModule {
     @Getter
-    private final Jdbi jdbi;
+    private Jdbi jdbi;
 
-    public DatabaseModule(final String url, final String dbName, final String password) {
+    public DatabaseModule() {
         super("Database");
 
-        this.jdbi = Jdbi.create(url, dbName, password);
+        this.addDependenciesAndLoadAfter(
+                ConfigModule.class
+        );
     }
 
     @Override
     public void onEnable() {
-
+        final Config databaseConfig = this.getModuleOrThrow(ConfigModule.class)
+                .registerAndGetConfig(this, new Config());
+        this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
     }
 
     @Override

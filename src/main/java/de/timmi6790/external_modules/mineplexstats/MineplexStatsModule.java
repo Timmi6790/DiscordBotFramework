@@ -3,6 +3,7 @@ package de.timmi6790.external_modules.mineplexstats;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
+import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.utilities.UtilitiesData;
 import de.timmi6790.external_modules.mineplexstats.commands.bedrock.BedrockGamesCommand;
 import de.timmi6790.external_modules.mineplexstats.commands.bedrock.BedrockLeaderboardCommand;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 
 public class MineplexStatsModule extends AbstractModule {
     @Getter
-    private final MpStatsRestApiClient mpStatsRestClient = new MpStatsRestApiClient();
+    private MpStatsRestApiClient mpStatsRestClient;
 
     @Getter
     private final Map<String, JavaGame> javaGames = new ConcurrentHashMap<>();
@@ -47,12 +48,18 @@ public class MineplexStatsModule extends AbstractModule {
         super("MineplexStats");
 
         this.addDependenciesAndLoadAfter(
+                ConfigModule.class,
                 CommandModule.class
         );
     }
 
     @Override
     public void onEnable() {
+        final Config statsConfig = DiscordBot.getModuleManager()
+                .getModuleOrThrow(ConfigModule.class)
+                .registerAndGetConfig(this, new Config());
+        this.mpStatsRestClient = new MpStatsRestApiClient(statsConfig.getApiName(), statsConfig.getApiPassword());
+
         // I should maybe handle the api downtime better
         this.loadJavaGames();
         this.loadJavaGroups();

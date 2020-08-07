@@ -2,10 +2,12 @@ package de.timmi6790.discord_framework.modules.command;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.commands.CommandCommand;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
+import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
@@ -14,7 +16,7 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.UtilitiesData;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.tinylog.Logger;
+import net.dv8tion.jda.api.entities.Activity;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -47,20 +49,21 @@ public class CommandModule extends AbstractModule {
             .build(key -> new AtomicInteger(0));
 
     @Getter
-    private final Pattern mainCommandPattern;
+    private Pattern mainCommandPattern;
 
     @Getter
-    private final String mainCommand;
+    private String mainCommand;
     @Getter
-    private final long botId;
+    private long botId;
 
     private final Map<String, AbstractCommand<?>> commands = new HashMap<>();
     private final Map<String, String> commandAliases = new HashMap<>();
 
-    public CommandModule(final String mainCommand, final long botId) {
+    public CommandModule() {
         super("Command");
 
         this.addDependenciesAndLoadAfter(
+                ConfigModule.class,
                 EventModule.class,
                 PermissionsModule.class,
                 DatabaseModule.class
@@ -71,14 +74,19 @@ public class CommandModule extends AbstractModule {
                 GuildDbModule.class,
                 ChannelDbModule.class
         );
-
-        this.botId = botId;
-        this.mainCommandPattern = Pattern.compile(String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), this.botId), Pattern.CASE_INSENSITIVE);
-        this.mainCommand = mainCommand;
     }
 
     @Override
     public void onEnable() {
+        final Config commandConfig = this.getModuleOrThrow(ConfigModule.class)
+                .registerAndGetConfig(this, new Config());
+
+        this.botId = DiscordBot.getDiscord().getSelfUser().getIdLong();
+        this.mainCommand = commandConfig.getMainCommand();
+        this.mainCommandPattern = Pattern.compile(String.format(MAIN_COMMAND_PATTERN, this.mainCommand.replace(" ", ""), this.botId), Pattern.CASE_INSENSITIVE);
+
+        DiscordBot.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
+
         this.getModuleOrThrow(EventModule.class)
                 .addEventListeners(
                         new MessageListener()
@@ -158,7 +166,7 @@ public class CommandModule extends AbstractModule {
 
     public boolean registerCommand(final AbstractModule module, final AbstractCommand<?> command) {
         if (this.commands.containsKey(command.getName())) {
-            Logger.error("{} is already registered.", command.getName());
+            DiscordBot.getLogger().error("{} is already registered.", command.getName());
             return false;
         }
         this.commands.put(command.getName().toLowerCase(), command);
@@ -166,7 +174,7 @@ public class CommandModule extends AbstractModule {
                 .filter(alias -> !this.commandAliases.containsKey(alias))
                 .forEach(alias -> this.commandAliases.put(alias.toLowerCase(), command.getName().toLowerCase()));
 
-        Logger.info("Registerd {} command.", command.getName());
+        DiscordBot.getLogger().info("Registerd {} command.", command.getName());
 
         command.setDbId(this.getCommandDatabaseId(command));
         final String defaultPermissionName = (module.getName() + ".command." + command.getName()).replace(" ", "_").toLowerCase();

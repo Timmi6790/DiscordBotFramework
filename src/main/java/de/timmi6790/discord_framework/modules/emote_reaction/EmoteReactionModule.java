@@ -123,12 +123,7 @@ public class EmoteReactionModule extends AbstractModule {
         this.emoteMessageCache.put(message.getIdLong(), emoteReactionMessage);
         emoteReactionMessage.getEmotes()
                 .keySet()
-                .forEach(emote -> {
-                    try {
-                        message.addReaction(emote).queue();
-                    } catch (final Exception ignore) {
-                    }
-                });
+                .forEach(emote -> message.addReaction(emote).queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)));
     }
 
     @SubscribeEvent

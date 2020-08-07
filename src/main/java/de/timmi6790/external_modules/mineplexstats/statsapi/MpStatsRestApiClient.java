@@ -2,7 +2,6 @@ package de.timmi6790.external_modules.mineplexstats.statsapi;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.ResponseModel;
 import de.timmi6790.external_modules.mineplexstats.statsapi.models.bedrock.BedrockGames;
@@ -32,7 +31,7 @@ public class MpStatsRestApiClient {
     private final String authName;
     private final String authPassword;
 
-    public MpStatsRestApiClient() {
+    public MpStatsRestApiClient(final String authName, final String authPassword) {
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(JavaGamesModel.class, new JavaGamesModelDeserializer());
         this.gson = gsonBuilder.create();
@@ -41,8 +40,8 @@ public class MpStatsRestApiClient {
         Unirest.config().connectTimeout(6_000);
         Unirest.config().addDefaultHeader("User-Agent", "MpStatsRestApiClient-Java");
 
-        this.authName = DiscordBot.getConfig().getString("mpStatsApi.name");
-        this.authPassword = DiscordBot.getConfig().getString("mpStatsApi.password");
+        this.authName = authName;
+        this.authPassword = authPassword;
 
         Unirest.config().setDefaultBasicAuth(this.authName, this.authPassword);
     }
