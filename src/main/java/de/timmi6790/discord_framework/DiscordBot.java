@@ -18,8 +18,6 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import de.timmi6790.external_modules.botlist.BotListModule;
-import de.timmi6790.external_modules.mineplexstats.MineplexStatsModule;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
@@ -52,6 +50,7 @@ public class DiscordBot {
     @Getter
     private static Path basePath;
 
+    @Getter
     private static final Gson gson = new GsonBuilder()
             .enableComplexMapKeySerialization()
             .serializeNulls()
@@ -62,6 +61,7 @@ public class DiscordBot {
         setup();
         start();
     }
+
 
     public static void setup() throws IOException {
         basePath = Paths.get(".").toAbsolutePath().normalize();
@@ -118,12 +118,8 @@ public class DiscordBot {
                 new CoreModule()
         );
 
-        moduleManager.registerModules(
-                new BotListModule(),
-                new MineplexStatsModule()
-        );
-
         discord.awaitReady();
+        moduleManager.loadExternalModules();
         moduleManager.startAll();
     }
 
