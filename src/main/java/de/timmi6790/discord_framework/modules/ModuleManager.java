@@ -89,6 +89,8 @@ public class ModuleManager {
 
                             String className = entry.getName().substring(0, entry.getName().length() - 6);
                             className = className.replace('/', '.');
+
+                            DiscordBot.getLogger().debug("Loading {} class from {}", className, pluginModule.getName());
                             classLoader.loadClass(className);
                         }
 

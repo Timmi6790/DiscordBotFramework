@@ -33,14 +33,13 @@ import javax.security.auth.login.LoginException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.0.4";
+    public static final String BOT_VERSION = "3.0.5";
     @Getter
     private static ModuleManager moduleManager;
     @Getter
@@ -57,7 +56,7 @@ public class DiscordBot {
             .setPrettyPrinting()
             .create();
 
-    public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException, URISyntaxException {
+    public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
         setup();
         start();
     }
