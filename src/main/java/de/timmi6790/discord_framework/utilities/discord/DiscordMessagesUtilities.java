@@ -11,7 +11,11 @@ import java.util.Optional;
 
 public class DiscordMessagesUtilities {
     public static StatEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
-        return getEmbedBuilder(commandParameters.getUser(), Optional.ofNullable(commandParameters.getGuild().retrieveMember(commandParameters.getUser(), false).complete()));
+        if (commandParameters.isGuildCommand()) {
+            return getEmbedBuilder(commandParameters.getUser(), Optional.ofNullable(commandParameters.getGuild().retrieveMember(commandParameters.getUser(), false).complete()));
+        }
+        
+        return getEmbedBuilder(commandParameters.getUser(), Optional.empty());
     }
 
     public static StatEmbedBuilder getEmbedBuilder(final User user, final Optional<Member> member) {

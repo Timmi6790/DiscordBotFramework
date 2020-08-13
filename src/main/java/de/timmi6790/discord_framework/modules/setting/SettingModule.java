@@ -1,8 +1,10 @@
 package de.timmi6790.discord_framework.modules.setting;
 
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.setting.commands.SettingsCommand;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -28,15 +30,13 @@ public class SettingModule extends AbstractModule {
 
     @Override
     public void onEnable() {
-        /*
         DiscordBot.getModuleManager()
                 .getModuleOrThrow(CommandModule.class)
                 .registerCommands(
                         this,
-                        // new SettingsCommand()
+                        new SettingsCommand()
                 );
 
-         */
     }
 
     @Override

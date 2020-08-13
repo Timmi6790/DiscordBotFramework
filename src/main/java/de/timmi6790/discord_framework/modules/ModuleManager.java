@@ -12,13 +12,12 @@ import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 public class ModuleManager {
     private final Map<Class<? extends AbstractModule>, AbstractModule> loadedModules = new HashMap<>();
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
-
+    
     public boolean registerModule(final AbstractModule module) {
         if (this.loadedModules.containsKey(module.getClass())) {
             return false;
@@ -145,13 +144,13 @@ public class ModuleManager {
 
         // Sort modules after load after order
         final List<TopicalSort.Dependency> edges = new ArrayList<>();
-        final AtomicInteger index = new AtomicInteger(0);
-        modules.forEach(module -> {
-            final int moduleIndex = index.getAndIncrement();
+        int index = 0;
+        for (final AbstractModule module : modules) {
+            final int moduleIndex = index++;
 
             // Load after
             module.getLoadAfter()
-                    .parallelStream()
+                    .stream()
                     .map(moduleClasses::indexOf)
                     .filter(dependencyIndex -> dependencyIndex != -1)
                     .map(dependencyIndex -> new TopicalSort.Dependency(moduleIndex, dependencyIndex))
@@ -159,12 +158,12 @@ public class ModuleManager {
 
             // Load before
             module.getLoadBefore()
-                    .parallelStream()
+                    .stream()
                     .map(moduleClasses::indexOf)
                     .filter(dependencyIndex -> dependencyIndex != -1)
                     .map(dependencyIndex -> new TopicalSort.Dependency(dependencyIndex, moduleIndex))
                     .forEach(edges::add);
-        });
+        }
 
         final TopicalSort<Class<? extends AbstractModule>> moduleSort = new TopicalSort<>(moduleClasses, edges);
         moduleSort.sort().forEach(this::start);

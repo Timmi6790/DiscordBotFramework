@@ -130,22 +130,22 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected boolean customPermissionCheck(final CommandParameters commandParameters) {
-        return false;
+        return true;
     }
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
     public boolean hasPermission(final CommandParameters commandParameters) {
-        // Permission check
-        if (this.permissionId != -1 && commandParameters.getUserDb().getAllPermissionIds().contains(this.permissionId)) {
-            return true;
-        }
-
         // Properties Check
         for (final CommandProperty<?> commandProperty : this.propertiesMap.values()) {
-            if (commandProperty.onPermissionCheck(this, commandParameters)) {
+            if (!commandProperty.onPermissionCheck(this, commandParameters)) {
                 return false;
             }
+        }
+
+        // Permission check
+        if (this.permissionId != -1 && !commandParameters.getUserDb().getAllPermissionIds().contains(this.permissionId)) {
+            return false;
         }
 
         return this.customPermissionCheck(commandParameters);
@@ -384,6 +384,15 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
         this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
     }
+
+    // Checks
+    protected void checkArgLength(final CommandParameters commandParameters, final int length) {
+        if (length > commandParameters.getArgs().length) {
+            this.sendMissingArgsMessage(commandParameters, Math.max(this.getPropertyValueOrDefault(MinArgCommandProperty.class, length), length));
+            throw new CommandReturnException(CommandResult.MISSING_ARGS);
+        }
+    }
+
 
     // Arg parser
     protected String getFromListIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {

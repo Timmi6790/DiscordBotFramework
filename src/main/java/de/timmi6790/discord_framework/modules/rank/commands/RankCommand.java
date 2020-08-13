@@ -38,6 +38,8 @@ public class RankCommand extends AbstractCommand<RankModule> {
             return this.listCommand(commandParameters);
         }
 
+        this.checkArgLength(commandParameters, 2);
+
         // Special handling for create
         final ValidArgs1 args1 = this.getFromEnumIgnoreCaseThrow(commandParameters, 1, ValidArgs1.values());
         if (commandParameters.getArgs().length >= 2 && args1 == ValidArgs1.CREATE) {
@@ -46,10 +48,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
 
         // All other commands
         final Rank rank = this.getRankThrow(commandParameters, 0);
-        if (2 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 2);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 2);
 
         switch (args1) {
             case INFO:
@@ -69,10 +68,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
 
     // Sub commands
     private CommandResult permsCommand(final CommandParameters commandParameters, final Rank rank) {
-        if (4 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 4);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 4);
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
@@ -132,10 +128,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult extendCommand(final CommandParameters commandParameters, final Rank rank) {
-        if (4 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 4);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 4);
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final Rank extendedRank = this.getRankThrow(commandParameters, 3);
@@ -198,10 +191,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult renameCommand(final CommandParameters commandParameters, final Rank rank) {
-        if (3 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 3);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 3);
 
         final String oldName = rank.getName();
         final String newName = commandParameters.getArgs()[2];

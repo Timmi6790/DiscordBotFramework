@@ -18,6 +18,6 @@ public class AllowBotCommandProperty extends CommandProperty<Boolean> {
 
     @Override
     public boolean onPermissionCheck(final AbstractCommand<?> command, final CommandParameters commandParameters) {
-        return !this.allowBot && commandParameters.getUser().isBot();
+        return !this.allowBot && !commandParameters.getUser().isBot();
     }
 }

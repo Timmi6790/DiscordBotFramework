@@ -194,10 +194,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult setPrimaryRankCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        if (3 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 3);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 3);
 
         final Rank rank = this.getRankThrow(commandParameters, 2);
         if (userDb.hasPrimaryRank(rank)) {
@@ -225,10 +222,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult rankCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        if (4 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 4);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 4);
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final Rank rank = this.getRankThrow(commandParameters, 3);
@@ -282,10 +276,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult permsCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
-        if (4 > commandParameters.getArgs().length) {
-            this.sendMissingArgsMessage(commandParameters, 4);
-            return CommandResult.MISSING_ARGS;
-        }
+        this.checkArgLength(commandParameters, 4);
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);

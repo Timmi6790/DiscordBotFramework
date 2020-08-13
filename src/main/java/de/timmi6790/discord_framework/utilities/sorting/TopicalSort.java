@@ -1,5 +1,6 @@
 package de.timmi6790.discord_framework.utilities.sorting;
 
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class TopicalSort<T> {
         this.vertices = vertices;
         this.adjacency = new boolean[this.vertices.size()][this.vertices.size()];
 
+        DiscordBot.getLogger().debug("Dependencies: " + dependencies);
         dependencies.forEach(edge -> this.adjacency[edge.getId()][edge.getDependencyId()] = true);
     }
 
