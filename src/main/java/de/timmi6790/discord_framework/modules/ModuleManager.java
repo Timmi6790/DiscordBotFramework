@@ -12,12 +12,14 @@ import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 @Data
 public class ModuleManager {
     private final Map<Class<? extends AbstractModule>, AbstractModule> loadedModules = new HashMap<>();
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
-    
+
     public boolean registerModule(final AbstractModule module) {
         if (this.loadedModules.containsKey(module.getClass())) {
             return false;
@@ -45,7 +47,7 @@ public class ModuleManager {
         final File[] pluginJars = new File(DiscordBot.getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
         for (final File jar : pluginJars) {
             DiscordBot.getLogger().info("Checking {} for modules.", jar.getName());
-            try {
+            try (final JarFile jarFile = new JarFile(jar)) {
                 final URL jarUrl = jar.toURI().toURL();
                 try (final URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, ClassLoader.getSystemClassLoader())) {
                     final URL pluginUrl = classLoader.getResource("plugin.json");
@@ -77,6 +79,19 @@ public class ModuleManager {
                             DiscordBot.getLogger().warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());
                             continue;
                         }
+
+                        // Load all module classes
+                        final Enumeration<JarEntry> entries = jarFile.entries();
+                        for (JarEntry entry = entries.nextElement(); entries.hasMoreElements(); entry = entries.nextElement()) {
+                            if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
+                                continue;
+                            }
+
+                            String className = entry.getName().substring(0, entry.getName().length() - 6);
+                            className = className.replace('/', '.');
+                            classLoader.loadClass(className);
+                        }
+
                         abstractModules.add(pluginModule);
                     }
                 }
