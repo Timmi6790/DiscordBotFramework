@@ -15,7 +15,7 @@ public class CommandExecutionEvent extends Event {
     private final CommandParameters parameters;
 
     public CommandExecutionEvent(final AbstractCommand command, final CommandParameters parameters) {
-        super(DiscordBot.getDiscord());
+        super(DiscordBot.getInstance().getDiscord());
 
         this.command = command;
         this.parameters = parameters;

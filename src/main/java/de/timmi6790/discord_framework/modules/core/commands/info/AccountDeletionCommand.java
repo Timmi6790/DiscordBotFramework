@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules.core.commands.info;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -49,7 +48,7 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
                             .setTitle("How to delete my account")
                             .setDescription("If you really wish to delete your account, write the " + MarkdownUtil.monospace("Confirm Command") + " in the next 5 minutes.\n" +
                                     MarkdownUtil.bold("THERE IS NO WAY TO REVERT THIS ACTION"))
-                            .addField("Confirm Command", DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " deleteMyAccount " + phrase, false),
+                            .addField("Confirm Command", this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand() + " deleteMyAccount " + phrase, false),
                     300
             );
 
@@ -64,7 +63,7 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
                             .setTitle("Incorrect confirm phrase")
                             .setDescription(MarkdownUtil.monospace(arg) + " is not your confirm phrase!\n" +
                                     "Please use the command in " + MarkdownUtil.monospace("Confirm Command") + " to delete your account")
-                            .addField("Confirm Command", DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " deleteMyAccount " + phrase, false),
+                            .addField("Confirm Command", this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand() + " deleteMyAccount " + phrase, false),
                     90
             );
 
@@ -85,7 +84,7 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
         );
 
         this.userDeleteConfirmCache.invalidate(userId);
-        DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).delete(userId);
+        this.getModule().getModuleOrThrow(UserDbModule.class).delete(userId);
 
         return CommandResult.SUCCESS;
     }

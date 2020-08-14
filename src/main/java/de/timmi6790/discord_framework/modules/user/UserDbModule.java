@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules.user;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -44,15 +43,20 @@ public class UserDbModule extends AbstractModule {
     }
 
     @Override
-    public void onEnable() {
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().registerRowMapper(UserDb.class, new UserDbMapper());
+    public void onInitialize() {
+        this.getModuleOrThrow(DatabaseModule.class).getJdbi()
+                .registerRowMapper(UserDb.class, new UserDbMapper());
 
-        DiscordBot.getModuleManager()
-                .getModuleOrThrow(CommandModule.class)
+        this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
                         this,
                         new UserCommand()
                 );
+    }
+
+    @Override
+    public void onEnable() {
+
     }
 
     @Override
@@ -69,7 +73,7 @@ public class UserDbModule extends AbstractModule {
     private UserDb create(final long discordId) {
         // Make sure that the user is not present
         return this.get(discordId).orElseGet(() -> {
-            DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+            this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                     handle.createUpdate(INSERT_PLAYER)
                             .bind("discordId", discordId)
                             .execute()
@@ -86,7 +90,7 @@ public class UserDbModule extends AbstractModule {
             return Optional.of(userDbCache);
         }
 
-        final Optional<UserDb> userDbOpt = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final Optional<UserDb> userDbOpt = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PLAYER)
                         .bind("discordId", discordId)
                         .mapTo(UserDb.class)
@@ -106,7 +110,7 @@ public class UserDbModule extends AbstractModule {
     }
 
     public void delete(final long discordId) {
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(REMOVE_PLAYER)
                         .bind("dbId", discordId)
                         .execute()

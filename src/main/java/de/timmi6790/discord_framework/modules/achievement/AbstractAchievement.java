@@ -21,7 +21,7 @@ public abstract class AbstractAchievement {
     }
 
     private int getStatDbId() {
-        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_ACHIEVEMENT_ID)
                         .bind("achievementName", this.getInternalName())
                         .mapTo(int.class)

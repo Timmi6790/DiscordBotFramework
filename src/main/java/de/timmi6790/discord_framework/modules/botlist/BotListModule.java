@@ -1,6 +1,5 @@
-package de.timmi6790.external_modules.botlist;
+package de.timmi6790.discord_framework.modules.botlist;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import lombok.EqualsAndHashCode;
@@ -23,18 +22,25 @@ public class BotListModule extends AbstractModule {
     }
 
     @Override
+    public void onInitialize() {
+        this.getModuleOrThrow(ConfigModule.class).registerAndGetConfig(this, new Config());
+    }
+
+    @Override
     public void onEnable() {
         // Bot list server count update task
-        final Config config = this.getModuleOrThrow(ConfigModule.class).registerAndGetConfig(this, new Config());
-        if (!config.getDiscordListToken().isEmpty()) {
+        final String discordListToken = this.getModuleOrThrow(ConfigModule.class)
+                .getConfig(this, Config.class)
+                .getDiscordListToken();
+        if (!discordListToken.isEmpty()) {
             final DiscordBotListAPI botListAPI = new DiscordBotListAPI.Builder()
-                    .token(config.getDiscordListToken())
-                    .botId(DiscordBot.getDiscord().getSelfUser().getId())
+                    .token(discordListToken)
+                    .botId(this.getDiscord().getSelfUser().getId())
                     .build();
 
             this.updateTask = Executors.newScheduledThreadPool(1)
                     .scheduleAtFixedRate(
-                            () -> botListAPI.setStats(DiscordBot.getDiscord().getGuilds().size()),
+                            () -> botListAPI.setStats(this.getDiscord().getGuilds().size()),
                             0,
                             30,
                             TimeUnit.MINUTES

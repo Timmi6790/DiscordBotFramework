@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import de.timmi6790.discord_framework.datatypes.ListBuilder;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
+import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
@@ -12,12 +12,15 @@ import de.timmi6790.discord_framework.modules.core.CoreModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.feedback.FeedbackModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import de.timmi6790.discord_framework.utilities.FileUtilities;
+import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
@@ -30,74 +33,45 @@ import org.tinylog.Logger;
 import org.tinylog.TaggedLogger;
 
 import javax.security.auth.login.LoginException;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+@Getter
 public class DiscordBot {
     public static final String BOT_VERSION = "3.0.5";
-    @Getter
-    private static ModuleManager moduleManager;
-    @Getter
-    private static SentryClient sentry;
-    @Getter
-    private static JDA discord;
-    @Getter
-    private static Path basePath;
+    private static DiscordBot instance;
 
-    @Getter
-    private static final Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization()
-            .serializeNulls()
-            .setPrettyPrinting()
-            .create();
+    private final ModuleManager moduleManager;
+    private SentryClient sentry;
+    private JDA discord;
+    private final Path basePath;
+
+    private final List<AbstractModule> internalModules;
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
-        setup();
-        start();
+        instance = new DiscordBot();
+        instance.start();
     }
 
-
-    public static void setup() throws IOException {
-        basePath = Paths.get(".").toAbsolutePath().normalize();
-
-        // Plugins
-        final Path pluginsFolderPath = Paths.get(basePath + "/plugins/");
-        Files.createDirectories(pluginsFolderPath);
-
-        // Logs
-        final Path logsFolderPath = Paths.get(basePath + "/logs/");
-        Files.createDirectories(logsFolderPath);
-
-        // Config
-        final Path configFolderPath = Paths.get(basePath + "/configs/");
-        Files.createDirectories(configFolderPath);
-        final Path configPath = Paths.get(configFolderPath + "/config.json");
-        if (!Files.exists(configPath)) {
-            Files.write(configPath, Collections.singleton(gson.toJson(new Config())));
-            DiscordBot.getLogger().info("Created main logging file.");
-            System.exit(1);
-        }
+    public static DiscordBot getInstance() {
+        return instance;
     }
 
-    public static void start() throws TopicalSortCycleException, LoginException, InterruptedException {
-        final Config mainConfig = getConfig();
-        if (!mainConfig.getSentry().isEmpty()) {
-            sentry = SentryClientFactory.sentryClient(mainConfig.getSentry());
-            sentry.setRelease(BOT_VERSION);
-        }
+    public static TaggedLogger getLogger() {
+        return Logger.tag("DiscordFramework");
+    }
 
-        discord = JDABuilder.createLight(mainConfig.getDiscordToken(),
-                GatewayIntent.DIRECT_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES)
-                .setStatus(OnlineStatus.ONLINE)
-                .build();
+    public DiscordBot() {
+        this.basePath = Paths.get(".").toAbsolutePath().normalize();
 
-        moduleManager = new ModuleManager();
-        moduleManager.registerModules(
+        this.moduleManager = new ModuleManager();
+        this.internalModules = new ListBuilder<AbstractModule>(ArrayList::new).addAll(
                 new DatabaseModule(),
                 new EventModule(),
                 new CommandModule(),
@@ -113,23 +87,83 @@ public class DiscordBot {
                 new StatModule(),
                 new AchievementModule(),
                 new SettingModule(),
+                new FeedbackModule(),
 
                 new CoreModule()
-        );
-
-        discord.awaitReady();
-        moduleManager.loadExternalModules();
-        moduleManager.startAll();
-    }
-
-    public static TaggedLogger getLogger() {
-        return Logger.tag("DiscordFramework");
+        ).build();
     }
 
     @SneakyThrows
-    public static Config getConfig() {
-        final Path mainConfigPath = Paths.get(basePath + "/configs/config.json");
-        final BufferedReader bufferedReader = new BufferedReader(new FileReader(mainConfigPath.toString()));
-        return gson.fromJson(bufferedReader, Config.class);
+    private Config getConfig() {
+        final Path mainConfigPath = Paths.get(this.basePath + "/configs/config.json");
+        return FileUtilities.readJsonFile(mainConfigPath, Config.class);
+    }
+
+    private void setup() throws IOException {
+        // Plugins
+        final Path pluginsFolderPath = Paths.get(this.basePath + "/plugins/");
+        Files.createDirectories(pluginsFolderPath);
+
+        // Logs
+        final Path logsFolderPath = Paths.get(this.basePath + "/logs/");
+        Files.createDirectories(logsFolderPath);
+
+        // Config
+        final Path configFolderPath = Paths.get(this.basePath + "/configs/");
+        Files.createDirectories(configFolderPath);
+        final Path configPath = Paths.get(configFolderPath + "/config.json");
+
+        final boolean firstInnit;
+        final Config config;
+        if (!Files.exists(configPath)) {
+            firstInnit = true;
+            config = new Config();
+        } else {
+            firstInnit = false;
+            config = this.getConfig();
+        }
+
+        final Config newConfig = ReflectionUtilities.deepCopy(config);
+        for (final AbstractModule module : this.internalModules) {
+            newConfig.getEnabledModules().putIfAbsent(module.getName(), true);
+        }
+
+        FileUtilities.saveToJsonIfChanged(configPath, config, newConfig);
+        if (firstInnit) {
+            DiscordBot.getLogger().info("Created main logging file.");
+            System.exit(1);
+        }
+    }
+
+    public void start() throws TopicalSortCycleException, LoginException, InterruptedException, IOException {
+        this.setup();
+
+        final Config mainConfig = this.getConfig();
+        if (!mainConfig.getSentry().isEmpty()) {
+            this.sentry = SentryClientFactory.sentryClient(mainConfig.getSentry());
+            this.sentry.setRelease(BOT_VERSION);
+        }
+
+        // Modules
+        this.internalModules.stream()
+                .filter(module -> mainConfig.getEnabledModules().containsKey(module.getName()))
+                .filter(module -> mainConfig.getEnabledModules().get(module.getName()))
+                .forEach(this.moduleManager::registerModule);
+        this.moduleManager.loadExternalModules();
+
+        // Discord
+        final Set<GatewayIntent> requiredGatewayIntents = new HashSet<>();
+        for (final AbstractModule loadedModule : this.moduleManager.getLoadedModules().values()) {
+            requiredGatewayIntents.addAll(loadedModule.getRequiredGatewayIntents());
+        }
+
+        getLogger().debug("Starting discord with {} gateway intents.", requiredGatewayIntents);
+        this.discord = JDABuilder.createLight(mainConfig.getDiscordToken(), requiredGatewayIntents)
+                .setStatus(OnlineStatus.ONLINE)
+                .build();
+
+        this.moduleManager.initializeAll();
+        this.discord.awaitReady();
+        this.moduleManager.startAll();
     }
 }

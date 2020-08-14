@@ -5,6 +5,6 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Plugin {
+public class PluginConfig {
     private List<String> modules;
 }

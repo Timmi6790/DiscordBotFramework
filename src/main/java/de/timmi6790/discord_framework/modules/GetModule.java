@@ -27,6 +27,6 @@ public abstract class GetModule<T extends AbstractModule> {
     }
 
     protected ModuleManager getModuleManager() {
-        return DiscordBot.getModuleManager();
+        return DiscordBot.getInstance().getModuleManager();
     }
 }

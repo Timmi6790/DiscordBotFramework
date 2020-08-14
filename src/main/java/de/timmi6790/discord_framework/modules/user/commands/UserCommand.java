@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.user.commands;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -70,7 +69,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getCache().invalidate(userDb.getDiscordId());
+        this.getModule().getModuleOrThrow(UserDbModule.class).getCache().invalidate(userDb.getDiscordId());
 
         this.sendTimedMessage(
                 commandParameters,
@@ -84,8 +83,8 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        final int commandSpamCache = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(userDb.getDiscordId()).get();
-        final int activeEmotes = DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
+        final int commandSpamCache = this.getModule().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(userDb.getDiscordId()).get();
+        final int activeEmotes = this.getModule().getModuleOrThrow(EmoteReactionModule.class).getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
         final String settings = "TODO";
                 /*userDb.getSettingsMap()
@@ -102,7 +101,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
                 .map(setting -> setting.getKey().getInternalName() + ": " + setting.getValue())
                 .collect(Collectors.joining("\n"));
 
-        final RankModule rankModule = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class);
+        final RankModule rankModule = this.getModule().getModuleOrThrow(RankModule.class);
         final String primaryRank = rankModule.getRank(userDb.getPrimaryRank())
                 .map(Rank::getName)
                 .orElse("Unknown");
@@ -116,14 +115,14 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         final String permissions = userDb.getPermissionIds()
                 .stream()
-                .map(DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class)::getPermissionFromId)
+                .map(this.getModule().getModuleOrThrow(PermissionsModule.class)::getPermissionFromId)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.joining("\n"));
 
         final String allPermissions = userDb.getAllPermissionIds()
                 .stream()
-                .map(DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class)::getPermissionFromId)
+                .map(this.getModule().getModuleOrThrow(PermissionsModule.class)::getPermissionFromId)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.joining("\n"));
@@ -280,7 +279,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionFromId(permissionId)
+        final String permissionNode = this.getModule().getModuleOrThrow(PermissionsModule.class).getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {

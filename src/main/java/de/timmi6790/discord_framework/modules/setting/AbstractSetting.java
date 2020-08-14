@@ -23,7 +23,7 @@ public abstract class AbstractSetting<T> {
 
     private int getSettingDbId() {
         // Get current id or insert new
-        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_SETTING_ID)
                         .bind("settingName", this.getInternalName())
                         .mapTo(int.class)

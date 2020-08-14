@@ -19,7 +19,7 @@ public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<Chan
         return new ChannelDb(
                 rs.getInt("id"),
                 rs.getLong("discordId"),
-                DiscordBot.getModuleManager().getModuleOrThrow(GuildDbModule.class).getOrCreate(rs.getLong("serverDiscordId")),
+                DiscordBot.getInstance().getModuleManager().getModuleOrThrow(GuildDbModule.class).getOrCreate(rs.getLong("serverDiscordId")),
                 rs.getBoolean("disabled")
         );
     }

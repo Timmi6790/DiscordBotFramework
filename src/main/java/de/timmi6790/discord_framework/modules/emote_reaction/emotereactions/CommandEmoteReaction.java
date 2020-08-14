@@ -28,7 +28,7 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
 
     @Override
     public void onEmote() {
-        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class)
+        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.command)
                 .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));
     }
@@ -42,7 +42,7 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
         private final long userDiscordId;
 
         public CommandParameters getCommandParameters() {
-            final ModuleManager moduleManager = DiscordBot.getModuleManager();
+            final ModuleManager moduleManager = DiscordBot.getInstance().getModuleManager();
             return new CommandParameters(
                     String.join(" ", this.args),
                     this.args,

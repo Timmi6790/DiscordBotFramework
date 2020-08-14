@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.rank.commands;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
@@ -72,7 +71,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionFromId(permissionId)
+        final String permissionNode = this.getModule().getModuleOrThrow(PermissionsModule.class).getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {
@@ -208,7 +207,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult createCommand(final CommandParameters commandParameters, final String rankName) {
-        final boolean success = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).createRank(rankName);
+        final boolean success = this.getModule().getModuleOrThrow(RankModule.class).createRank(rankName);
         if (success) {
             this.sendTimedMessage(
                     commandParameters,
@@ -230,7 +229,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult deleteCommand(final CommandParameters commandParameters, final Rank rank) {
-        final boolean success = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).deleteRank(rank);
+        final boolean success = this.getModule().getModuleOrThrow(RankModule.class).deleteRank(rank);
         if (success) {
             this.sendTimedMessage(
                     commandParameters,
@@ -253,7 +252,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final Rank rank) {
-        final RankModule rankModule = DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class);
+        final RankModule rankModule = this.getModule().getModuleOrThrow(RankModule.class);
         final String extendedRanks = rank.getExtendedRanks()
                 .stream()
                 .map(rankId ->
@@ -263,7 +262,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 )
                 .collect(Collectors.joining("\n"));
 
-        final PermissionsModule permissionsModule = DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class);
+        final PermissionsModule permissionsModule = this.getModule().getModuleOrThrow(PermissionsModule.class);
         final String perms = rank.getPermissions()
                 .stream()
                 .map(permId ->
@@ -303,7 +302,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Ranks")
                         .setDescription(
-                                DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).getRanks()
+                                this.getModule().getModuleOrThrow(RankModule.class).getRanks()
                                         .stream()
                                         .map(Rank::getName)
                                         .sorted()

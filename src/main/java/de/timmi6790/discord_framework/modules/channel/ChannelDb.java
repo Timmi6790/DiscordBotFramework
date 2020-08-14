@@ -24,6 +24,6 @@ public class ChannelDb {
 
 
     public MessageChannel getChannel() {
-        return DiscordBot.getDiscord().getTextChannelById(this.discordId);
+        return DiscordBot.getInstance().getDiscord().getTextChannelById(this.discordId);
     }
 }

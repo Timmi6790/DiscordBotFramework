@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
@@ -53,16 +52,21 @@ public class RankModule extends AbstractModule {
     }
 
     @Override
-    public void onEnable() {
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().registerRowMapper(Rank.class, new RankMapper());
+    public void onInitialize() {
+        this.getModuleOrThrow(DatabaseModule.class)
+                .getJdbi()
+                .registerRowMapper(Rank.class, new RankMapper());
         this.loadRanksFromDatabase();
 
-        DiscordBot.getModuleManager()
-                .getModuleOrThrow(CommandModule.class)
+        this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
                         this,
                         new RankCommand()
                 );
+    }
+
+    @Override
+    public void onEnable() {
     }
 
     @Override
@@ -71,7 +75,7 @@ public class RankModule extends AbstractModule {
     }
 
     public void loadRanksFromDatabase() {
-        final List<Rank> rankList = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final List<Rank> rankList = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_ALL_RANKS)
                         .map(rankMapper)
                         .list()
@@ -120,7 +124,7 @@ public class RankModule extends AbstractModule {
             return false;
         }
 
-        final Rank newRank = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
+        final Rank newRank = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
             handle.createUpdate(INSERT_RANK)
                     .bind("rankName", name)
                     .execute();
@@ -144,7 +148,7 @@ public class RankModule extends AbstractModule {
             return false;
         }
 
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle -> {
+        this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle -> {
             handle.createUpdate(SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE)
                     .bind("databaseId", rankId)
                     .execute();

@@ -33,8 +33,8 @@ public class CoreModule extends AbstractModule {
     }
 
     @Override
-    public void onEnable() {
-        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
+    public void onInitialize() {
+        this.getModuleOrThrow(CommandModule.class).registerCommands(
                 this,
                 new AboutCommand(),
                 new BotInfoCommand(),
@@ -45,13 +45,13 @@ public class CoreModule extends AbstractModule {
                 .registerAndGetConfig(this, new Config())
                 .getInviteUrl();
         if (inviteUrl != null && !inviteUrl.isEmpty()) {
-            DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).registerCommands(
+            this.getModuleOrThrow(CommandModule.class).registerCommands(
                     this,
                     new InviteCommand(inviteUrl)
             );
         }
 
-        DiscordBot.getModuleManager().getModule(SettingModule.class)
+        this.getModule(SettingModule.class)
                 .ifPresent(settingModule -> {
                             DiscordBot.getLogger().info("Registering settings");
                             settingModule.registerSettings(
@@ -61,7 +61,7 @@ public class CoreModule extends AbstractModule {
                         }
                 );
 
-        DiscordBot.getModuleManager().getModule(StatModule.class)
+        this.getModule(StatModule.class)
                 .ifPresent(statModule -> {
                             DiscordBot.getLogger().info("Registering stats");
                             statModule.registerStats(
@@ -73,12 +73,17 @@ public class CoreModule extends AbstractModule {
                         }
                 );
 
-        DiscordBot.getModuleManager().getModule(AchievementModule.class)
+        this.getModule(AchievementModule.class)
                 .ifPresent(achievementModule ->
                         achievementModule.registerAchievements(
                                 // new CommandAutoCorrectAchievement()
                         )
                 );
+    }
+
+    @Override
+    public void onEnable() {
+
     }
 
     @Override

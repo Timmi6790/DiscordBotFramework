@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command.commands;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -24,12 +23,12 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
                 )
         );
     }
-    
+
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All info
         if (commandParameters.getArgs().length == 0) {
-            final String mainCommand = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
+            final String mainCommand = this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand();
             final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
                     .setTitle("Commands")
                     .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))

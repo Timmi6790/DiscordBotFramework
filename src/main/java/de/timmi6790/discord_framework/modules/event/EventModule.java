@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules.event;
 
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
@@ -29,8 +28,13 @@ public class EventModule extends AbstractModule {
     }
 
     @Override
+    public void onInitialize() {
+
+    }
+
+    @Override
     public void onEnable() {
-        DiscordBot.getDiscord().addEventListener(new DiscordEventListener());
+        this.getDiscord().addEventListener(new DiscordEventListener());
     }
 
     @Override
@@ -63,7 +67,7 @@ public class EventModule extends AbstractModule {
                     .withLogger(AbstractCommand.class.getName())
                     .withSentryInterface(new ExceptionInterface(e));
 
-            DiscordBot.getSentry().sendEvent(eventBuilder);
+            this.getSentry().sendEvent(eventBuilder);
         }
     }
 

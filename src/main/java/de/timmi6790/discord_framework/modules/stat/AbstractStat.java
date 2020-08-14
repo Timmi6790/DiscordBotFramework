@@ -21,7 +21,7 @@ public class AbstractStat {
     }
 
     private int getStatDbId() {
-        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_STAT_ID)
                         .bind("statName", this.getInternalName())
                         .mapTo(int.class)

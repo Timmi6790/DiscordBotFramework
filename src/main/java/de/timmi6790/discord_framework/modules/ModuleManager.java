@@ -1,5 +1,7 @@
 package de.timmi6790.discord_framework.modules;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
@@ -17,7 +19,14 @@ import java.util.jar.JarFile;
 
 @Data
 public class ModuleManager {
+    private static final Gson gson = new GsonBuilder()
+            .enableComplexMapKeySerialization()
+            .serializeNulls()
+            .setPrettyPrinting()
+            .create();
+
     private final Map<Class<? extends AbstractModule>, AbstractModule> loadedModules = new HashMap<>();
+    private final Set<Class<? extends AbstractModule>> initializedModules = new HashSet<>();
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
 
     public boolean registerModule(final AbstractModule module) {
@@ -41,98 +50,7 @@ public class ModuleManager {
         return this.getModule(clazz).orElseThrow(() -> new ModuleGetException(String.valueOf(clazz)));
     }
 
-    private Set<AbstractModule> getExternalModules() {
-        final Set<AbstractModule> abstractModules = new HashSet<>();
-
-        final File[] pluginJars = new File(DiscordBot.getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-        for (final File jar : pluginJars) {
-            DiscordBot.getLogger().info("Checking {} for modules.", jar.getName());
-            try (final JarFile jarFile = new JarFile(jar)) {
-                final URL jarUrl = jar.toURI().toURL();
-                try (final URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, ClassLoader.getSystemClassLoader())) {
-                    final URL pluginUrl = classLoader.getResource("plugin.json");
-                    if (pluginUrl == null) {
-                        DiscordBot.getLogger().warn("Can't load {}, no plugins.json found.", jar.getName());
-                        continue;
-                    }
-
-                    final Plugin plugin = DiscordBot.getGson().fromJson(new InputStreamReader(pluginUrl.openStream()), Plugin.class);
-                    for (final String path : plugin.getModules()) {
-                        final Class<?> pluginClass;
-                        try {
-                            pluginClass = classLoader.loadClass(path);
-                        } catch (final ClassNotFoundException ignore) {
-                            DiscordBot.getLogger().warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
-                            continue;
-                        }
-                        if (!AbstractModule.class.isAssignableFrom(pluginClass)) {
-                            DiscordBot.getLogger().warn("Module {} inside {} is not extending AbstractModule!", path, jar.getName());
-                            continue;
-                        }
-
-                        final Class<?> clazz = Class.forName(path, true, classLoader);
-                        final Class<? extends AbstractModule> newClass = clazz.asSubclass(AbstractModule.class);
-                        final Constructor<? extends AbstractModule> constructor = newClass.getConstructor();
-                        final AbstractModule pluginModule = constructor.newInstance();
-
-                        if (abstractModules.contains(pluginModule)) {
-                            DiscordBot.getLogger().warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());
-                            continue;
-                        }
-
-                        // Load all module classes
-                        final Enumeration<JarEntry> entries = jarFile.entries();
-                        for (JarEntry entry = entries.nextElement(); entries.hasMoreElements(); entry = entries.nextElement()) {
-                            if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
-                                continue;
-                            }
-
-                            String className = entry.getName().substring(0, entry.getName().length() - 6);
-                            className = className.replace('/', '.');
-
-                            DiscordBot.getLogger().debug("Loading {} class from {}", className, pluginModule.getName());
-                            classLoader.loadClass(className);
-                        }
-
-                        abstractModules.add(pluginModule);
-                    }
-                }
-            } catch (final Exception e) {
-                DiscordBot.getLogger().warn(e, "Error while trying to load modules from {}.", jar.getName());
-            }
-        }
-
-        return abstractModules;
-    }
-
-    public boolean start(final Class<? extends AbstractModule> moduleClass) {
-        final AbstractModule module = this.loadedModules.get(moduleClass);
-        if (module == null || this.startedModules.contains(moduleClass)) {
-            return false;
-        }
-
-        // Check if all load dependencies are started
-        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
-            if (!this.startedModules.contains(dependencyClass)) {
-                DiscordBot.getLogger().warn("Tried to start {} without {} dependency being started", moduleClass, dependencyClass);
-                return false;
-            }
-        }
-
-        DiscordBot.getLogger().info("Starting module {}", module.getName());
-        try {
-            module.onEnable();
-            this.startedModules.add(moduleClass);
-            return true;
-        } catch (final Exception e) {
-            DiscordBot.getLogger().error(module.getName(), e);
-            DiscordBot.getSentry().sendException(e);
-
-            return false;
-        }
-    }
-
-    public void startAll() throws TopicalSortCycleException {
+    private List<Class<? extends AbstractModule>> getSortedModules() throws TopicalSortCycleException {
         final List<AbstractModule> modules = new ArrayList<>(this.loadedModules.values());
         final List<Class<? extends AbstractModule>> moduleClasses = new ArrayList<>(this.loadedModules.keySet());
 
@@ -183,7 +101,156 @@ public class ModuleManager {
         }
 
         final TopicalSort<Class<? extends AbstractModule>> moduleSort = new TopicalSort<>(moduleClasses, edges);
-        moduleSort.sort().forEach(this::start);
+        return moduleSort.sort();
+    }
+
+    private Set<AbstractModule> getExternalModules() {
+        final Set<AbstractModule> abstractModules = new HashSet<>();
+
+        final File[] pluginJars = new File(DiscordBot.getInstance().getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+        for (final File jar : pluginJars) {
+            DiscordBot.getLogger().info("Checking {} for modules.", jar.getName());
+            try (final JarFile jarFile = new JarFile(jar)) {
+                final URL jarUrl = jar.toURI().toURL();
+                try (final URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, ClassLoader.getSystemClassLoader())) {
+                    final URL pluginUrl = classLoader.getResource("plugin.json");
+                    if (pluginUrl == null) {
+                        DiscordBot.getLogger().warn("Can't load {}, no plugins.json found.", jar.getName());
+                        continue;
+                    }
+
+                    final PluginConfig plugin = gson.fromJson(new InputStreamReader(pluginUrl.openStream()), PluginConfig.class);
+                    for (final String path : plugin.getModules()) {
+                        final Class<?> pluginClass;
+                        try {
+                            pluginClass = classLoader.loadClass(path);
+                        } catch (final ClassNotFoundException ignore) {
+                            DiscordBot.getLogger().warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
+                            continue;
+                        }
+                        if (!AbstractModule.class.isAssignableFrom(pluginClass)) {
+                            DiscordBot.getLogger().warn("Module {} inside {} is not extending AbstractModule!", path, jar.getName());
+                            continue;
+                        }
+
+                        final Class<?> clazz = Class.forName(path, true, classLoader);
+                        final Class<? extends AbstractModule> newClass = clazz.asSubclass(AbstractModule.class);
+                        final Constructor<? extends AbstractModule> constructor = newClass.getConstructor();
+                        final AbstractModule pluginModule = constructor.newInstance();
+
+                        if (abstractModules.contains(pluginModule)) {
+                            DiscordBot.getLogger().warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());
+                            continue;
+                        }
+
+                        // Load all module classes
+                        final Enumeration<JarEntry> entries = jarFile.entries();
+                        for (JarEntry entry = entries.nextElement(); entries.hasMoreElements(); entry = entries.nextElement()) {
+                            if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
+                                continue;
+                            }
+
+                            String className = entry.getName().substring(0, entry.getName().length() - 6);
+                            className = className.replace('/', '.');
+
+                            DiscordBot.getLogger().debug("Loading {} class from {}", className, pluginModule.getName());
+                            classLoader.loadClass(className);
+                        }
+
+                        abstractModules.add(pluginModule);
+                    }
+                }
+            } catch (final Exception e) {
+                DiscordBot.getLogger().warn(e, "Error while trying to load modules from {}.", jar.getName());
+            }
+        }
+
+        return abstractModules;
+    }
+
+    public boolean initialize(final Class<? extends AbstractModule> moduleClass) {
+        if (this.startedModules.contains(moduleClass)) {
+            DiscordBot.getLogger().warn("Tried to initialize {} while already being started.", moduleClass);
+            return false;
+        }
+
+        if (this.initializedModules.contains(moduleClass)) {
+            DiscordBot.getLogger().warn("Tried to initialize {} while already being initialized.", moduleClass);
+            return false;
+        }
+
+        final AbstractModule module = this.loadedModules.get(moduleClass);
+        if (module == null) {
+            DiscordBot.getLogger().warn("Tried to start {} while not being loaded.", moduleClass);
+            return false;
+        }
+
+        // Check if all load dependencies are innitlized
+        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
+            if (!this.initializedModules.contains(dependencyClass)) {
+                DiscordBot.getLogger().warn("Tried to initialize {} without {} dependency being initialized.", moduleClass, dependencyClass);
+                return false;
+            }
+        }
+
+        DiscordBot.getLogger().info("Initialize module {}", module.getName());
+        try {
+            module.onInitialize();
+            this.initializedModules.add(moduleClass);
+            return true;
+        } catch (final Exception e) {
+            DiscordBot.getLogger().error(module.getName(), e);
+            DiscordBot.getInstance().getSentry().sendException(e);
+
+            return false;
+        }
+    }
+
+    public boolean start(final Class<? extends AbstractModule> moduleClass) {
+        if (this.startedModules.contains(moduleClass)) {
+            DiscordBot.getLogger().warn("Tried to start {} while already being started.", moduleClass);
+            return false;
+        }
+
+        if (!this.initializedModules.contains(moduleClass)) {
+            DiscordBot.getLogger().warn("Tried to start {} while not being initialized.", moduleClass);
+            return false;
+        }
+
+        final AbstractModule module = this.loadedModules.get(moduleClass);
+        if (module == null) {
+            DiscordBot.getLogger().warn("Tried to start {} while not being loaded.", moduleClass);
+            return false;
+        }
+
+        // Check if all load dependencies are started
+        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
+            if (!(this.initializedModules.contains(dependencyClass) || this.startedModules.contains(dependencyClass))) {
+                DiscordBot.getLogger().warn("Tried to start {} without {} dependency being started", moduleClass, dependencyClass);
+                return false;
+            }
+        }
+
+        DiscordBot.getLogger().info("Starting module {}", module.getName());
+        try {
+            module.onEnable();
+            this.startedModules.add(moduleClass);
+            this.initializedModules.remove(moduleClass);
+            return true;
+        } catch (final Exception e) {
+            DiscordBot.getLogger().error(module.getName(), e);
+            DiscordBot.getInstance().getSentry().sendException(e);
+
+            return false;
+        }
+    }
+
+    public void initializeAll() throws TopicalSortCycleException {
+        this.getSortedModules().forEach(this::initialize);
+    }
+
+    public void startAll() throws TopicalSortCycleException {
+        this.getSortedModules().forEach(this::start);
     }
 
     public void loadExternalModules() {
@@ -202,7 +269,7 @@ public class ModuleManager {
             return true;
         } catch (final Exception e) {
             DiscordBot.getLogger().error(module.getName(), e);
-            DiscordBot.getSentry().sendException(e);
+            DiscordBot.getInstance().getSentry().sendException(e);
             return false;
         }
     }

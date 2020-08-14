@@ -6,6 +6,11 @@ public class ExampleModule extends AbstractModule {
     }
 
     @Override
+    public void onInitialize() {
+
+    }
+
+    @Override
     public void onEnable() {
 
     }

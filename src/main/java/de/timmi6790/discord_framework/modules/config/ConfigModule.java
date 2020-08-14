@@ -1,32 +1,29 @@
 package de.timmi6790.discord_framework.modules.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.utilities.FileUtilities;
+import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@EqualsAndHashCode(callSuper = true)
 public class ConfigModule extends AbstractModule {
-    private static final Gson gson = new GsonBuilder()
-            .enableComplexMapKeySerialization()
-            .serializeNulls()
-            .setPrettyPrinting()
-            .create();
-
     private final Map<Class<?>, Object> configs = new HashMap<>();
 
     public ConfigModule() {
         super("ConfigModule");
+    }
+
+    @Override
+    public void onInitialize() {
+
     }
 
     @Override
@@ -44,7 +41,7 @@ public class ConfigModule extends AbstractModule {
     }
 
     private Path getBaseConfigPath() {
-        return Paths.get(DiscordBot.getBasePath() + "/configs/");
+        return Paths.get(this.getDiscordBot().getBasePath() + "/configs/");
     }
 
     private Path getModuleFolderPath(final AbstractModule module) {
@@ -63,13 +60,12 @@ public class ConfigModule extends AbstractModule {
         final Path configPath = this.getModuleConfigPath(module, config.getClass());
         if (!Files.exists(configPath)) {
             // New file
-            Files.write(configPath, Collections.singleton(gson.toJson(config)));
+            FileUtilities.saveToJson(configPath, config);
             DiscordBot.getLogger().info("Created {} config file {}", module.getName(), config.getClass().getSimpleName());
         } else {
             // TODO: Add a better verify method
             // This will currently always write new configs and remove old ones
-            final Object currentConfig = this.getConfig(module, config.getClass());
-            Files.write(configPath, Collections.singleton(gson.toJson(currentConfig)));
+            this.saveConfig(module, config.getClass());
         }
 
         return true;
@@ -81,11 +77,20 @@ public class ConfigModule extends AbstractModule {
             return (T) this.configs.get(configClass);
         }
 
-        final BufferedReader bufferedReader = new BufferedReader(new FileReader(this.getModuleConfigPath(module, configClass).toString()));
-        final T config = gson.fromJson(bufferedReader, configClass);
-        DiscordBot.getLogger().debug("Loaded {} from file.", configClass.getSimpleName());
+        final T config = FileUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
+        DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getName());
         this.configs.put(configClass, config);
         return config;
+    }
+
+    @SneakyThrows
+    public void saveConfig(final AbstractModule module, final Class<?> configClass) {
+        final Object currentConfig = this.getConfig(module, configClass);
+        if (currentConfig == null) {
+            return;
+        }
+
+        FileUtilities.saveToJson(this.getModuleConfigPath(module, configClass), currentConfig);
     }
 
     public <T> T registerAndGetConfig(final AbstractModule module, final T config) {

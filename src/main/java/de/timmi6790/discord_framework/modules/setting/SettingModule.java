@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.setting;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -29,13 +28,16 @@ public class SettingModule extends AbstractModule {
     }
 
     @Override
-    public void onEnable() {
-        DiscordBot.getModuleManager()
-                .getModuleOrThrow(CommandModule.class)
+    public void onInitialize() {
+        this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
                         this,
                         new SettingsCommand()
                 );
+    }
+
+    @Override
+    public void onEnable() {
 
     }
 

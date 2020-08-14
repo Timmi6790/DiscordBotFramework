@@ -28,7 +28,7 @@ public class GuildDb {
     private final Pattern commandAliasPattern;
 
     private final Map<String, AbstractSetting> properties;
-    
+
     public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames, final Map<String, AbstractSetting> properties) {
         this.databaseId = databaseId;
         this.discordId = discordId;
@@ -50,7 +50,7 @@ public class GuildDb {
     }
 
     public Guild getGuild() {
-        return DiscordBot.getDiscord().getGuildById(this.discordId);
+        return DiscordBot.getInstance().getDiscord().getGuildById(this.discordId);
     }
 
     public Optional<Pattern> getCommandAliasPattern() {

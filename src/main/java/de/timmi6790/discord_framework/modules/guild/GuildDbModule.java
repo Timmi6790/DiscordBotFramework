@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules.guild;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import lombok.EqualsAndHashCode;
@@ -37,8 +36,15 @@ public class GuildDbModule extends AbstractModule {
     }
 
     @Override
+    public void onInitialize() {
+        this.getModuleOrThrow(DatabaseModule.class)
+                .getJdbi()
+                .registerRowMapper(GuildDb.class, new GuildDbMapper());
+    }
+
+    @Override
     public void onEnable() {
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().registerRowMapper(GuildDb.class, new GuildDbMapper());
+
     }
 
     @Override
@@ -49,7 +55,7 @@ public class GuildDbModule extends AbstractModule {
     private GuildDb create(final long discordId) {
         // Make sure that the guild is not present
         return this.get(discordId).orElseGet(() -> {
-            DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+            this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                     handle.createUpdate(INSERT_GUILD)
                             .bind("discordId", discordId)
                             .execute()
@@ -66,7 +72,7 @@ public class GuildDbModule extends AbstractModule {
             return Optional.of(guildDbCache);
         }
 
-        final Optional<GuildDb> guildDbOpt = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final Optional<GuildDb> guildDbOpt = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_GUILD)
                         .bind("discordId", discordId)
                         .mapTo(GuildDb.class)

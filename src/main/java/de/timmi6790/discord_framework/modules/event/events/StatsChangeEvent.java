@@ -16,7 +16,7 @@ public class StatsChangeEvent extends Event {
     private final long newValue;
 
     public StatsChangeEvent(final UserDb userDb, final AbstractStat stat, final long oldValue, final long newValue) {
-        super(DiscordBot.getDiscord());
+        super(DiscordBot.getInstance().getDiscord());
 
         this.userDb = userDb;
         this.stat = stat;

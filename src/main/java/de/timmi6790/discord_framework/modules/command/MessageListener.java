@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
@@ -61,7 +60,7 @@ public class MessageListener extends GetModule<CommandModule> {
             return;
         }
 
-        final UserDb userDb = DiscordBot.getModuleManager().getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong());
+        final UserDb userDb = this.getModule().getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong());
 
         final String[] args = rawMessage.isEmpty() ? new String[0] : MESSAGE_SPLIT_PATTERN.split(rawMessage);
         final CommandParameters commandParameters = new CommandParameters(
@@ -69,7 +68,7 @@ public class MessageListener extends GetModule<CommandModule> {
                 args.length == 0 ? args : Arrays.copyOfRange(args, 1, args.length),
                 event.isFromGuild(),
                 CommandCause.USER,
-                DiscordBot.getModuleManager().getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
+                this.getModule().getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
                 userDb
         );
         UserDb.getUserCache().put(event.getAuthor().getIdLong(), event.getAuthor());
@@ -98,7 +97,7 @@ public class MessageListener extends GetModule<CommandModule> {
 
         if (similarCommands.isEmpty()) {
             description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
-                    .append("Use the ").append(MarkdownUtil.bold(DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " help")).append(" command or click the ")
+                    .append("Use the ").append(MarkdownUtil.bold(this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand() + " help")).append(" command or click the ")
                     .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
 
         } else {
@@ -116,7 +115,7 @@ public class MessageListener extends GetModule<CommandModule> {
 
             description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
-        DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
+        this.getModule().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
 
         final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
         event.getChannel().sendMessage(
@@ -126,7 +125,7 @@ public class MessageListener extends GetModule<CommandModule> {
                         .setFooter("↓ Click Me!")
                         .build())
                 .queue(sendMessage -> {
-                            DiscordBot.getModuleManager()
+                    this.getModule()
                                     .getModuleOrThrow(EmoteReactionModule.class)
                                     .addEmoteReactionMessage(sendMessage, emoteReactionMessage);
 

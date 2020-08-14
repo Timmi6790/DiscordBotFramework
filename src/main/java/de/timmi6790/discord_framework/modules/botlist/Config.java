@@ -1,4 +1,4 @@
-package de.timmi6790.external_modules.botlist;
+package de.timmi6790.discord_framework.modules.botlist;
 
 import lombok.Data;
 

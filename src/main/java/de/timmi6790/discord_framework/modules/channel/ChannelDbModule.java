@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules.channel;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
@@ -38,8 +37,15 @@ public class ChannelDbModule extends AbstractModule {
     }
 
     @Override
+    public void onInitialize() {
+        this.getModuleOrThrow(DatabaseModule.class)
+                .getJdbi()
+                .registerRowMapper(ChannelDb.class, new ChannelDbMapper());
+    }
+
+    @Override
     public void onEnable() {
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().registerRowMapper(ChannelDb.class, new ChannelDbMapper());
+
     }
 
     @Override
@@ -50,7 +56,7 @@ public class ChannelDbModule extends AbstractModule {
     private ChannelDb create(final long discordId, final long guildId) {
         // Make sure that the channel is not present
         return this.get(discordId).orElseGet(() -> {
-            DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+            this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                     handle.createUpdate(INSERT_CHANNEL)
                             .bind("discordId", discordId)
                             .bind("guildId", guildId)
@@ -68,7 +74,7 @@ public class ChannelDbModule extends AbstractModule {
             return Optional.of(channelDbCache);
         }
 
-        final Optional<ChannelDb> channelDbOpt = DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final Optional<ChannelDb> channelDbOpt = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_CHANNEL)
                         .bind("discordId", discordId)
                         .mapTo(ChannelDb.class)

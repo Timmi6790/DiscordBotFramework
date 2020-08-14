@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules.permisssion;
 
 import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -33,6 +32,10 @@ public class PermissionsModule extends AbstractModule {
         );
     }
 
+    @Override
+    public void onInitialize() {
+
+    }
 
     @Override
     public void onEnable() {
@@ -45,7 +48,7 @@ public class PermissionsModule extends AbstractModule {
     }
 
     private Optional<Integer> getDatabasePermissionId(final @NonNull String permission) {
-        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        return this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PERMISSION_ID)
                         .bind("permNode", permission)
                         .mapTo(int.class)
@@ -54,7 +57,7 @@ public class PermissionsModule extends AbstractModule {
     }
 
     private int insertPermissionIntoDatabase(final @NonNull String permission) {
-        return DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
+        return this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
                     handle.createUpdate(INSERT_PERMISSION)
                             .bind("permNode", permission)
                             .execute();

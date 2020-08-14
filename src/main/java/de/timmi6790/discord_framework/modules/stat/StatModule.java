@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.modules.stat;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
@@ -28,6 +27,11 @@ public class StatModule extends AbstractModule {
     }
 
     @Override
+    public void onInitialize() {
+
+    }
+
+    @Override
     public void onEnable() {
 
     }
@@ -49,7 +53,7 @@ public class StatModule extends AbstractModule {
         this.stats.put(stat.getDatabaseId(), stat);
         this.nameIdMatching.put(stat.getInternalName(), stat.getDatabaseId());
 
-        DiscordBot.getModuleManager().getModuleOrThrow(EventModule.class).addEventListener(stat);
+        this.getModuleOrThrow(EventModule.class).addEventListener(stat);
         return true;
     }
 

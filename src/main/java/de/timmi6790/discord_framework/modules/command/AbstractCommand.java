@@ -80,7 +80,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     private void logCommand(final CommandParameters commandParameters, final CommandResult commandResult) {
-        DiscordBot.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_COMMAND_LOG)
                         .bind("commandId", this.dbId)
                         .bind("causeName", commandParameters.getCommandCause().name().toLowerCase())
@@ -121,8 +121,8 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                     .withLogger(AbstractCommand.class.getName())
                     .withSentryInterface(new ExceptionInterface(e));
 
-            if (DiscordBot.getSentry() != null) {
-                DiscordBot.getSentry().sendEvent(eventBuilder);
+            if (this.getModule().getSentry() != null) {
+                this.getModule().getSentry().sendEvent(eventBuilder);
             }
 
             return CommandResult.ERROR;
@@ -168,7 +168,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void setPermission(final String permission) {
-        this.permissionId = DiscordBot.getModuleManager()
+        this.permissionId = this.getModuleManager()
                 .getModuleOrThrow(PermissionsModule.class)
                 .addPermission(permission);
     }
@@ -241,7 +241,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
         // Command pre event
         final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
-        DiscordBot.getModuleManager()
+        this.getModuleManager()
                 .getModule(EventModule.class)
                 .ifPresent(eventModule -> eventModule.executeEvent(commandExecutionPre));
 
@@ -251,14 +251,14 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
         // Command post event
         final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, commandResult);
-        DiscordBot.getModuleManager()
+        this.getModuleManager()
                 .getModule(EventModule.class)
                 .ifPresent(eventModule -> eventModule.executeEvent(commandExecutionPost));
     }
 
     // Old Stuff
     public List<String> getFormattedExampleCommands() {
-        final String mainCommand = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
+        final String mainCommand = this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
         return Arrays.stream(this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0]))
                 .map(exampleCommand -> mainCommand + " " + this.name + " " + exampleCommand)
                 .collect(Collectors.toList());
@@ -332,7 +332,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                             if (!emotes.isEmpty()) {
                                 final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
                                         commandParameters.getTextChannel().getIdLong());
-                                DiscordBot.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
+                                this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
                             }
 
                             message.delete().queueAfter(90, TimeUnit.SECONDS);
@@ -355,7 +355,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
         if (similarNames.isEmpty() && command != null) {
-            description.append("Use the ").append(MarkdownUtil.bold(DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
+            description.append("Use the ").append(MarkdownUtil.bold(this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
@@ -423,12 +423,12 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
     protected AbstractCommand<?> getCommandThrow(final CommandParameters commandParameters, final int argPos) {
         final String name = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand<?>> command = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(name);
+        final Optional<AbstractCommand<?>> command = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(name);
         if (command.isPresent()) {
             return command.get();
         }
 
-        final List<AbstractCommand<?>> similarCommands = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getSimilarCommands(commandParameters, name, 0.6, 3);
+        final List<AbstractCommand<?>> similarCommands = this.getModuleManager().getModuleOrThrow(CommandModule.class).getSimilarCommands(commandParameters, name, 0.6, 3);
         if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarCommands.get(0);
         }
@@ -438,7 +438,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                 name,
                 argPos,
                 "command",
-                DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).orElse(null),
+                this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).orElse(null),
                 new String[0],
                 similarCommands.stream().map(AbstractCommand::getName).collect(Collectors.toList())
         );
@@ -448,7 +448,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     protected Rank getRankThrow(final CommandParameters commandParameters, final int position) {
         final String userInput = commandParameters.getArgs()[position];
 
-        return DiscordBot.getModuleManager().getModuleOrThrow(RankModule.class).getRanks()
+        return this.getModuleManager().getModuleOrThrow(RankModule.class).getRanks()
                 .stream()
                 .filter(rank -> rank.getName().equalsIgnoreCase(userInput))
                 .findAny()
@@ -461,7 +461,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
     public int getPermissionIdThrow(final CommandParameters commandParameters, final int argPos) {
         final String permArg = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand<?>> commandOpt = DiscordBot.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(permArg);
+        final Optional<AbstractCommand<?>> commandOpt = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(permArg);
 
         if (commandOpt.isPresent()) {
             final AbstractCommand<?> command = commandOpt.get();
@@ -475,7 +475,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
             return command.getPermissionId();
         } else {
-            return DiscordBot.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionId(permArg)
+            return this.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionId(permArg)
                     .orElseThrow(() -> new CommandReturnException(
                             AbstractCommand.this.getEmbedBuilder(commandParameters)
                                     .setTitle("Error")
@@ -489,14 +489,14 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
         if (userIdMatcher.find()) {
             // TODO: Change to queue instead of complete
-            final User user = DiscordBot.getDiscord().retrieveUserById(userIdMatcher.group(2)).complete();
+            final User user = this.getModule().getDiscord().retrieveUserById(userIdMatcher.group(2)).complete();
             if (user != null) {
                 return user;
             }
         }
 
         if (DISCORD_USER_TAG_PATTERN.matcher(name).find()) {
-            final User user = DiscordBot.getDiscord().getUserByTag(name);
+            final User user = this.getModule().getDiscord().getUserByTag(name);
             if (user != null) {
                 return user;
             }

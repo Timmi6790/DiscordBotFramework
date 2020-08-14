@@ -14,7 +14,7 @@ import java.util.Optional;
 public class MessageReceivedIntEvent extends net.dv8tion.jda.api.events.message.MessageReceivedEvent {
 
     public MessageReceivedIntEvent(final long responseNumber, @Nonnull final Message message) {
-        super(DiscordBot.getDiscord(), responseNumber, message);
+        super(DiscordBot.getInstance().getDiscord(), responseNumber, message);
     }
 
     public Optional<Member> getMemberOptional() {

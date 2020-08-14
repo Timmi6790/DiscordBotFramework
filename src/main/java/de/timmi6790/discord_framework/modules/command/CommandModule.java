@@ -17,6 +17,7 @@ import de.timmi6790.discord_framework.utilities.UtilitiesData;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -62,6 +63,13 @@ public class CommandModule extends AbstractModule {
     public CommandModule() {
         super("Command");
 
+        this.addGatewayIntents(
+                GatewayIntent.DIRECT_MESSAGE_REACTIONS,
+                GatewayIntent.DIRECT_MESSAGES,
+                GatewayIntent.GUILD_MESSAGE_REACTIONS,
+                GatewayIntent.GUILD_MESSAGES
+        );
+
         this.addDependenciesAndLoadAfter(
                 ConfigModule.class,
                 EventModule.class,
@@ -77,15 +85,13 @@ public class CommandModule extends AbstractModule {
     }
 
     @Override
-    public void onEnable() {
+    public void onInitialize() {
         final Config commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
-        this.botId = DiscordBot.getDiscord().getSelfUser().getIdLong();
+        this.botId = this.getDiscord().getSelfUser().getIdLong();
         this.mainCommand = commandConfig.getMainCommand();
         this.mainCommandPattern = Pattern.compile(String.format(MAIN_COMMAND_PATTERN, this.mainCommand.replace(" ", ""), this.botId), Pattern.CASE_INSENSITIVE);
-
-        DiscordBot.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
 
         this.getModuleOrThrow(EventModule.class)
                 .addEventListeners(
@@ -99,6 +105,11 @@ public class CommandModule extends AbstractModule {
                 new HelpCommand(),
                 new CommandCommand()
         );
+    }
+
+    @Override
+    public void onEnable() {
+        this.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
     }
 
     @Override
