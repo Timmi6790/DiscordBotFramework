@@ -7,13 +7,13 @@ import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
-import de.timmi6790.discord_framework.modules.event.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
+import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import lombok.Getter;
@@ -52,18 +52,14 @@ public class UserDb {
 
     private final int databaseId;
     private final long discordId;
-
-    private int primaryRank;
     private final Set<Integer> ranks;
-
-    private boolean banned;
-
     private final long points;
-
     private final Set<Integer> permissionIds;
     private final Map<Integer, String> settings;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
+    private int primaryRank;
+    private boolean banned;
 
     public UserDb(final int databaseId, final long discordId, final int primaryRank, final Set<Integer> ranks, final boolean banned, final long points, final Set<Integer> permissionIds,
                   final Map<Integer, String> settings, final Map<Integer, Integer> stats, final Set<Integer> achievements) {

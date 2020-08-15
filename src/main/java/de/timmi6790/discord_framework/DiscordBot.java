@@ -48,28 +48,14 @@ public class DiscordBot {
     private static DiscordBot instance;
 
     private final ModuleManager moduleManager;
+    private final Path basePath;
+    private final List<AbstractModule> internalModules;
     private SentryClient sentry;
     private JDA discord;
-    private final Path basePath;
-
-    private final List<AbstractModule> internalModules;
-
-    public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
-        instance = new DiscordBot();
-        instance.start();
-    }
-
-    public static DiscordBot getInstance() {
-        return instance;
-    }
-
-    public static TaggedLogger getLogger() {
-        return Logger.tag("DiscordFramework");
-    }
 
     public DiscordBot() {
         this.basePath = Paths.get(".").toAbsolutePath().normalize();
-
+        
         this.moduleManager = new ModuleManager();
         this.internalModules = new ListBuilder<AbstractModule>(ArrayList::new).addAll(
                 new DatabaseModule(),
@@ -91,6 +77,19 @@ public class DiscordBot {
 
                 new CoreModule()
         ).build();
+    }
+
+    public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
+        instance = new DiscordBot();
+        instance.start();
+    }
+
+    public static DiscordBot getInstance() {
+        return instance;
+    }
+
+    public static TaggedLogger getLogger() {
+        return Logger.tag("DiscordFramework");
     }
 
     @SneakyThrows

@@ -18,7 +18,7 @@ public class ConfigModule extends AbstractModule {
     private final Map<Class<?>, Object> configs = new HashMap<>();
 
     public ConfigModule() {
-        super("ConfigModule");
+        super("Config");
     }
 
     @Override

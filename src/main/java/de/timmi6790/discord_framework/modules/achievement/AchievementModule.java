@@ -18,7 +18,7 @@ public class AchievementModule extends AbstractModule {
     private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
 
     public AchievementModule() {
-        super("AchievementModule");
+        super("Achievement");
 
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class
@@ -27,7 +27,7 @@ public class AchievementModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        
+
     }
 
     @Override

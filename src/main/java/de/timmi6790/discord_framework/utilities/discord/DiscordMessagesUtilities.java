@@ -14,7 +14,7 @@ public class DiscordMessagesUtilities {
         if (commandParameters.isGuildCommand()) {
             return getEmbedBuilder(commandParameters.getUser(), Optional.ofNullable(commandParameters.getGuild().retrieveMember(commandParameters.getUser(), false).complete()));
         }
-        
+
         return getEmbedBuilder(commandParameters.getUser(), Optional.empty());
     }
 

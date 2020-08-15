@@ -31,6 +31,11 @@ public class UserDbModule extends AbstractModule {
             "WHERE player.discordId = :discordId LIMIT 1;";
     private static final String INSERT_PLAYER = "INSERT INTO player(discordId) VALUES (:discordId);";
     private static final String REMOVE_PLAYER = "DELETE FROM player WHERE id = :dbId LIMIT 1;";
+    @Getter
+    private final Cache<Long, UserDb> cache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build();
 
     public UserDbModule() {
         super("UserDb");
@@ -63,12 +68,6 @@ public class UserDbModule extends AbstractModule {
     public void onDisable() {
 
     }
-
-    @Getter
-    private final Cache<Long, UserDb> cache = Caffeine.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build();
 
     private UserDb create(final long discordId) {
         // Make sure that the user is not present

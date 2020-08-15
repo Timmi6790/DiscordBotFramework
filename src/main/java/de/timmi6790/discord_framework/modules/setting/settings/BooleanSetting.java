@@ -10,7 +10,7 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
     public BooleanSetting(final String internalName, final String name, final String defaultValues) {
         super(internalName, name, defaultValues);
     }
-    
+
 
     @Override
     public boolean isAllowedValue(final String value) {
@@ -18,12 +18,12 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
     }
 
     @Override
-    public String toDatabaseValue(Boolean value) {
+    public String toDatabaseValue(final Boolean value) {
         return null;
     }
 
     @Override
-    public Boolean fromDatabaseValue(String value) {
+    public Boolean fromDatabaseValue(final String value) {
         return Boolean.parseBoolean(value);
     }
 }

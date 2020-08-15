@@ -1,25 +1,27 @@
 package de.timmi6790.discord_framework.modules.event;
 
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.SetMultimap;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.MapBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
 import io.sentry.event.EventBuilder;
 import io.sentry.event.interfaces.ExceptionInterface;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import net.dv8tion.jda.api.events.Event;
+import net.dv8tion.jda.api.events.GenericEvent;
 
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @EqualsAndHashCode(callSuper = true)
 public class EventModule extends AbstractModule {
-    private final Map<Class<Event>, Map<EventPriority, Set<EventObject>>> eventListeners = new ConcurrentHashMap<>();
+    private final Map<Class<GenericEvent>, SetMultimap<EventPriority, EventObject>> eventListeners = new HashMap<>();
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -42,53 +44,30 @@ public class EventModule extends AbstractModule {
 
     }
 
-    private void callListenerSafe(final EventObject listener, final Event event) {
-        try {
-            // At the moment all events can't be canceled, that is why we run everything on a different thread
-            this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
-        } catch (final Exception e) {
-            e.printStackTrace();
-
-            // Sentry error
-            final Map<String, String> data = new MapBuilder<String, String>(HashMap::new)
-                    .put("Class", event.getClass().toString())
-                    .put("Listener", listener.getMethod().getName())
-                    .build();
-
-            final Breadcrumb breadcrumb = new BreadcrumbBuilder()
-                    .setCategory("Event")
-                    .setData(data)
-                    .build();
-
-            final EventBuilder eventBuilder = new EventBuilder()
-                    .withMessage("Event Exception")
-                    .withLevel(io.sentry.event.Event.Level.ERROR)
-                    .withBreadcrumbs(Collections.singletonList(breadcrumb))
-                    .withLogger(AbstractCommand.class.getName())
-                    .withSentryInterface(new ExceptionInterface(e));
-
-            this.getSentry().sendEvent(eventBuilder);
-        }
-    }
-
     public void addEventListener(final Object listener) {
-        Arrays.stream(listener.getClass().getMethods())
-                .filter(method -> method.getParameterCount() == 1)
-                .forEach(method -> {
-                    final SubscribeEvent annotation;
-                    try {
-                        annotation = method.getAnnotation(SubscribeEvent.class);
-                    } catch (final NullPointerException ignore) {
-                        return;
-                    }
+        for (final Method method : listener.getClass().getMethods()) {
+            ReflectionUtilities.getAnnotation(method, SubscribeEvent.class).ifPresent(annotation -> {
+                        if (method.getParameterCount() != 1) {
+                            DiscordBot.getLogger().warn("{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
+                                    listener.getClass(), method.getName(), method.getParameterCount());
+                            return;
+                        }
 
-                    final Class<?> parameter = method.getParameterTypes()[0];
-                    if (Event.class.isAssignableFrom(parameter)) {
-                        this.eventListeners.computeIfAbsent((Class<Event>) parameter, key -> new ConcurrentHashMap<>())
-                                .computeIfAbsent(annotation.priority(), key -> Collections.synchronizedSet(new HashSet<>()))
-                                .add(new EventObject(listener, method));
+                        final Class<?> parameter = method.getParameterTypes()[0];
+                        if (!GenericEvent.class.isAssignableFrom(parameter)) {
+                            DiscordBot.getLogger().warn("{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
+                                    listener.getClass(), method.getName());
+                            return;
+                        }
+
+                        this.eventListeners.computeIfAbsent(
+                                (Class<GenericEvent>) parameter,
+                                key -> MultimapBuilder.enumKeys(EventPriority.class).hashSetValues().build()
+                        ).put(annotation.priority(), new EventObject(listener, method, annotation.ignoreCanceled()));
+                        DiscordBot.getLogger().info("Added {}.{} as new event listener for {}.", listener.getClass(), method.getName(), parameter.getName());
                     }
-                });
+            );
+        }
     }
 
     public void addEventListeners(final Object... listeners) {
@@ -96,17 +75,16 @@ public class EventModule extends AbstractModule {
     }
 
     public void removeEventListener(final Object listener) {
-        for (final Map<EventPriority, Set<EventObject>> value : this.eventListeners.values()) {
-            final Iterator<Map.Entry<EventPriority, Set<EventObject>>> it = value.entrySet().iterator();
-            while (it.hasNext()) {
-                final Map.Entry<EventPriority, Set<EventObject>> entry = it.next();
-                final boolean removedElement = entry.getValue().removeIf(eventListener -> eventListener.getObject().equals(listener));
-                if (removedElement) {
-                    if (entry.getValue().isEmpty()) {
-                        it.remove();
+        for (final SetMultimap<EventPriority, EventObject> value : this.eventListeners.values()) {
+            final Iterator<EventObject> valueIterator = value.values().iterator();
+            while (valueIterator.hasNext()) {
+                final EventObject eventObject = valueIterator.next();
+                if (eventObject.getClass().equals(listener.getClass())) {
+                    for (final Method method : listener.getClass().getMethods()) {
+                        if (eventObject.getMethod().equals(method)) {
+                            valueIterator.remove();
+                        }
                     }
-
-                    return;
                 }
             }
         }
@@ -116,19 +94,49 @@ public class EventModule extends AbstractModule {
         this.eventListeners.clear();
     }
 
-    public void executeEvent(final Event event) {
-        Optional.ofNullable(this.eventListeners.get(event.getClass()))
-                .ifPresent(listeners -> Arrays.stream(EventPriority.values())
-                        .map(listeners::get)
-                        .filter(Objects::nonNull)
-                        .flatMap(Collection::stream)
-                        .forEach(listener -> this.callListenerSafe(listener, event))
-                );
+    public void executeEvent(final GenericEvent event) {
+        if (!this.eventListeners.containsKey(event.getClass())) {
+            return;
+        }
+
+        final SetMultimap<EventPriority, EventObject> entry = this.eventListeners.get(event.getClass());
+        final boolean canCancel = Cancelable.class.isAssignableFrom(event.getClass());
+        for (final EventObject listener : entry.values()) {
+            if (canCancel && !listener.isIgnoreCanceled() && ((Cancelable) event).isCancelled()) {
+                continue;
+            }
+
+            try {
+                // If there is no way to cancel the event, we can run it in multiple threads
+                if (canCancel) {
+                    listener.getMethod().invoke(listener.getObject(), event);
+                } else {
+                    this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
+                }
+            } catch (final Exception e) {
+                DiscordBot.getLogger().error(e);
+
+                // Sentry error
+                final Map<String, String> data = new MapBuilder<String, String>(HashMap::new)
+                        .put("Class", event.getClass().toString())
+                        .put("Listener", listener.getMethod().getName())
+                        .build();
+
+                final Breadcrumb breadcrumb = new BreadcrumbBuilder()
+                        .setCategory("Event")
+                        .setData(data)
+                        .build();
+
+                final EventBuilder eventBuilder = new EventBuilder()
+                        .withMessage("Event Exception")
+                        .withLevel(io.sentry.event.Event.Level.ERROR)
+                        .withBreadcrumbs(Collections.singletonList(breadcrumb))
+                        .withLogger(AbstractCommand.class.getName())
+                        .withSentryInterface(new ExceptionInterface(e));
+
+                this.getSentry().sendEvent(eventBuilder);
+            }
+        }
     }
 
-    @Data
-    private static class EventObject {
-        private final Object object;
-        private final Method method;
-    }
 }

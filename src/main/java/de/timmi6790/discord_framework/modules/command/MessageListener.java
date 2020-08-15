@@ -1,5 +1,6 @@
 package de.timmi6790.discord_framework.modules.command;
 
+import com.google.common.base.Splitter;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
@@ -8,13 +9,13 @@ import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
-import de.timmi6790.discord_framework.modules.event.events.MessageReceivedIntEvent;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -22,14 +23,14 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 public class MessageListener extends GetModule<CommandModule> {
-    private static final Pattern MESSAGE_SPLIT_PATTERN = Pattern.compile("\\s+");
+    private static final Splitter SPLITTER = Splitter.on(' ')
+            .trimResults()
+            .omitEmptyStrings();
 
     @SubscribeEvent
-    public void onTextMessage(final MessageReceivedIntEvent event) {
+    public void onTextMessage(final MessageReceivedEvent event) {
         // Ignore yourself
         if (this.getModule().getBotId() == event.getAuthor().getIdLong()) {
             return;
@@ -62,7 +63,7 @@ public class MessageListener extends GetModule<CommandModule> {
 
         final UserDb userDb = this.getModule().getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong());
 
-        final String[] args = rawMessage.isEmpty() ? new String[0] : MESSAGE_SPLIT_PATTERN.split(rawMessage);
+        final String[] args = SPLITTER.splitToList(rawMessage).toArray(new String[0]);
         final CommandParameters commandParameters = new CommandParameters(
                 rawMessage,
                 args.length == 0 ? args : Arrays.copyOfRange(args, 1, args.length),
@@ -91,7 +92,7 @@ public class MessageListener extends GetModule<CommandModule> {
         command.runCommand(commandParameters);
     }
 
-    private void sendIncorrectCommandHelpMessage(final MessageReceivedIntEvent event, final List<AbstractCommand<?>> similarCommands, final String firstArg, final CommandParameters commandParameters) {
+    private void sendIncorrectCommandHelpMessage(final MessageReceivedEvent event, final List<AbstractCommand<?>> similarCommands, final String firstArg, final CommandParameters commandParameters) {
         final StringBuilder description = new StringBuilder();
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
@@ -104,14 +105,13 @@ public class MessageListener extends GetModule<CommandModule> {
             description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
                     .append("Is it possible that you wanted to write?\n\n");
 
-            IntStream.range(0, similarCommands.size())
-                    .forEach(index -> {
-                        final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
-                        final AbstractCommand<?> similarCommand = similarCommands.get(index);
+            for (int index = 0; similarCommands.size() > index; index++) {
+                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+                final AbstractCommand<?> similarCommand = similarCommands.get(index);
 
-                        description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
-                        emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
-                    });
+                description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
+                emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
+            }
 
             description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
@@ -119,13 +119,13 @@ public class MessageListener extends GetModule<CommandModule> {
 
         final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
         event.getChannel().sendMessage(
-                DiscordMessagesUtilities.getEmbedBuilder(event.getAuthor(), event.getMemberOptional())
+                DiscordMessagesUtilities.getEmbedBuilder(event.getAuthor(), Optional.ofNullable(event.getMember()))
                         .setTitle("Invalid Command")
                         .setDescription(description)
                         .setFooter("↓ Click Me!")
                         .build())
                 .queue(sendMessage -> {
-                    this.getModule()
+                            this.getModule()
                                     .getModuleOrThrow(EmoteReactionModule.class)
                                     .addEmoteReactionMessage(sendMessage, emoteReactionMessage);
 

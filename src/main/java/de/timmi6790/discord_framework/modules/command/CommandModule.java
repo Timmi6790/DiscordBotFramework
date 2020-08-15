@@ -48,17 +48,14 @@ public class CommandModule extends AbstractModule {
             .maximumSize(10_000)
             .expireAfterWrite(30, TimeUnit.SECONDS)
             .build(key -> new AtomicInteger(0));
-
+    private final Map<String, AbstractCommand<?>> commands = new HashMap<>();
+    private final Map<String, String> commandAliases = new HashMap<>();
     @Getter
     private Pattern mainCommandPattern;
-
     @Getter
     private String mainCommand;
     @Getter
     private long botId;
-
-    private final Map<String, AbstractCommand<?>> commands = new HashMap<>();
-    private final Map<String, String> commandAliases = new HashMap<>();
 
     public CommandModule() {
         super("Command");

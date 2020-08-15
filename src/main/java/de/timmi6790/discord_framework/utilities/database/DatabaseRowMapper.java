@@ -15,7 +15,7 @@ public abstract class DatabaseRowMapper {
                 .collect(Collectors.toSet());
     }
 
-    public <K, V> Map<K, V> toMap(final String string, final Function<String, K> keyFunction, final Function<String, V> valueFunction) {
+    protected <K, V> Map<K, V> toMap(final String string, final Function<String, K> keyFunction, final Function<String, V> valueFunction) {
         if (string == null) {
             return new HashMap<>();
         }

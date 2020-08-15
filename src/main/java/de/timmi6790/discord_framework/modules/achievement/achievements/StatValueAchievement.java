@@ -2,7 +2,7 @@ package de.timmi6790.discord_framework.modules.achievement.achievements;
 
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
-import de.timmi6790.discord_framework.modules.event.events.StatsChangeEvent;
+import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import net.dv8tion.jda.api.entities.User;

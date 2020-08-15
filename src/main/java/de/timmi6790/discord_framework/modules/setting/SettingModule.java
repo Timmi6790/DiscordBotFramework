@@ -19,7 +19,7 @@ public class SettingModule extends AbstractModule {
     private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
 
     public SettingModule() {
-        super("SettingModule");
+        super("Setting");
 
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,

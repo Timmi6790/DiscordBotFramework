@@ -33,9 +33,9 @@ public class Rank {
             "GROUP BY player.id;";
 
     private final int databaseId;
-    private String name;
     private final Set<Integer> extendedRanks;
     private final Set<Integer> permissions;
+    private String name;
     private Set<Integer> cachedAllPermissions;
 
     public Rank(final int databaseId, final String name, final Set<Integer> extendedRanks, final Set<Integer> permissions) {

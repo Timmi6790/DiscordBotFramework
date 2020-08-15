@@ -8,6 +8,7 @@ import de.timmi6790.discord_framework.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
+import de.timmi6790.discord_framework.modules.command.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
@@ -17,7 +18,6 @@ import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.EventModule;
-import de.timmi6790.discord_framework.modules.event.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
@@ -57,19 +57,15 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
     private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
     private static final Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
-
-    private Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> propertiesMap = new HashMap<>();
-
-    private int dbId;
-    private Class<? extends AbstractModule> commandModule;
-
     private final String name;
-    private int permissionId = -1;
-
-    private String category;
-    private String description;
     private final String syntax;
     private final String[] aliasNames;
+    private Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> propertiesMap = new HashMap<>();
+    private int dbId;
+    private Class<? extends AbstractModule> commandModule;
+    private int permissionId = -1;
+    private String category;
+    private String description;
 
     public AbstractCommand(final String name, final String category, final String description, final String syntax, final String... aliasNames) {
         this.name = name;
@@ -421,7 +417,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         throw new CommandReturnException();
     }
 
-    protected AbstractCommand<?> getCommandThrow(final CommandParameters commandParameters, final int argPos) {
+    protected AbstractCommand<? extends AbstractModule> getCommandThrow(final CommandParameters commandParameters, final int argPos) {
         final String name = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand<?>> command = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(name);
         if (command.isPresent()) {

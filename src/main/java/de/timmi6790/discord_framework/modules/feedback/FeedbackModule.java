@@ -31,6 +31,23 @@ public class FeedbackModule extends AbstractModule {
             .build();
 
 
+    public FeedbackModule() {
+        super("Feedback");
+
+        this.addDependenciesAndLoadAfter(
+                DatabaseModule.class,
+                ConfigModule.class,
+                CommandModule.class,
+                EmoteReactionModule.class,
+                EventModule.class
+        );
+
+        this.addFeedbackHandlers(
+                new BugFeedbackHandler(),
+                new SuggestionFeedbackHandler()
+        );
+    }
+
     public List<FeedbackHandler> getFeedbackHandlers() {
         return new ArrayList<>(this.feedbackMap.values());
     }
@@ -51,23 +68,6 @@ public class FeedbackModule extends AbstractModule {
 
     public void addFeedbackHandlers(final FeedbackHandler... feedbackHandlers) {
         Arrays.stream(feedbackHandlers).forEach(this::addFeedbackHandler);
-    }
-
-    public FeedbackModule() {
-        super("Feedback");
-
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                ConfigModule.class,
-                CommandModule.class,
-                EmoteReactionModule.class,
-                EventModule.class
-        );
-
-        this.addFeedbackHandlers(
-                new BugFeedbackHandler(),
-                new SuggestionFeedbackHandler()
-        );
     }
 
     @Override

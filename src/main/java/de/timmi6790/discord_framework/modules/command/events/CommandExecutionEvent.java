@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.event.events;
+package de.timmi6790.discord_framework.modules.command.events;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
@@ -11,10 +11,10 @@ import net.dv8tion.jda.api.events.Event;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class CommandExecutionEvent extends Event {
-    private final AbstractCommand command;
+    private final AbstractCommand<?> command;
     private final CommandParameters parameters;
 
-    public CommandExecutionEvent(final AbstractCommand command, final CommandParameters parameters) {
+    public CommandExecutionEvent(final AbstractCommand<?> command, final CommandParameters parameters) {
         super(DiscordBot.getInstance().getDiscord());
 
         this.command = command;
@@ -22,7 +22,7 @@ public class CommandExecutionEvent extends Event {
     }
 
     public static class Pre extends CommandExecutionEvent {
-        public Pre(final AbstractCommand command, final CommandParameters parameters) {
+        public Pre(final AbstractCommand<?> command, final CommandParameters parameters) {
             super(command, parameters);
         }
     }
@@ -32,7 +32,7 @@ public class CommandExecutionEvent extends Event {
         @Getter
         private final CommandResult commandResult;
 
-        public Post(final AbstractCommand command, final CommandParameters parameters, final CommandResult commandResult) {
+        public Post(final AbstractCommand<?> command, final CommandParameters parameters, final CommandResult commandResult) {
             super(command, parameters);
 
             this.commandResult = commandResult;

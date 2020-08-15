@@ -1,10 +1,12 @@
 package de.timmi6790.discord_framework.modules.core.stats;
 
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
-import de.timmi6790.discord_framework.modules.event.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 public class FailedCommandStat extends AbstractStat {
     public FailedCommandStat() {
         super("Failed Commands", "core.stat.failed_command");

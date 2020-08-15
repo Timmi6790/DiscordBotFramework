@@ -5,17 +5,19 @@ import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
-import de.timmi6790.discord_framework.modules.event.events.MessageReceivedIntEvent;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import lombok.EqualsAndHashCode;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.util.regex.Pattern;
 
+@EqualsAndHashCode(callSuper = true)
 public class MessageListener extends GetModule<FeedbackModule> {
     private static final Pattern MESSAGE_SPLIT_PATTERN = Pattern.compile("\\s+");
 
     @SubscribeEvent
-    public void onTextMessage(final MessageReceivedIntEvent event) {
+    public void onTextMessage(final MessageReceivedEvent event) {
         if (event.isFromGuild() || this.getModule().getActiveFeedbackCache().getIfPresent(event.getAuthor().getIdLong()) == null) {
             return;
         }

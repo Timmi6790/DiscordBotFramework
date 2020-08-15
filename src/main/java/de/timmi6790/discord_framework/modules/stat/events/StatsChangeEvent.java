@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.event.events;
+package de.timmi6790.discord_framework.modules.stat.events;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
