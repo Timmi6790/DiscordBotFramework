@@ -44,7 +44,7 @@ import java.util.Set;
 
 @Getter
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.0.5";
+    public static final String BOT_VERSION = "3.0.6";
     private static DiscordBot instance;
 
     private final ModuleManager moduleManager;
