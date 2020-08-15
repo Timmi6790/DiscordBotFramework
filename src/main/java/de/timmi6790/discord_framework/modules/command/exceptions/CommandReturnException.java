@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.exceptions;
+package de.timmi6790.discord_framework.modules.command.exceptions;
 
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import lombok.Data;
@@ -12,34 +12,38 @@ import java.util.Optional;
 @Getter
 @Data
 public class CommandReturnException extends RuntimeException {
-    private final Optional<EmbedBuilder> embedBuilder;
+    private final EmbedBuilder embedBuilder;
     private final CommandResult commandResult;
 
     public CommandReturnException(final EmbedBuilder embedBuilder, final CommandResult commandResult) {
         super("");
 
-        this.embedBuilder = Optional.ofNullable(embedBuilder);
+        this.embedBuilder = embedBuilder;
         this.commandResult = commandResult;
     }
 
     public CommandReturnException(final EmbedBuilder embedBuilder) {
         super("");
 
-        this.embedBuilder = Optional.ofNullable(embedBuilder);
+        this.embedBuilder = embedBuilder;
         this.commandResult = CommandResult.INVALID_ARGS;
     }
 
     public CommandReturnException() {
         super("");
 
-        this.embedBuilder = Optional.empty();
+        this.embedBuilder = null;
         this.commandResult = CommandResult.INVALID_ARGS;
     }
 
     public CommandReturnException(final CommandResult commandResult) {
         super("");
 
-        this.embedBuilder = Optional.empty();
+        this.embedBuilder = null;
         this.commandResult = commandResult;
+    }
+
+    public Optional<EmbedBuilder> getEmbedBuilder() {
+        return Optional.ofNullable(this.embedBuilder);
     }
 }

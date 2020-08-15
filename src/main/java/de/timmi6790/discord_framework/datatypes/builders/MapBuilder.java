@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.datatypes;
+package de.timmi6790.discord_framework.datatypes.builders;
 
 import java.util.Collections;
 import java.util.Map;

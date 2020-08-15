@@ -1,12 +1,16 @@
 package de.timmi6790.discord_framework.utilities;
 
 import com.google.gson.Gson;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Optional;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 
 public class ReflectionUtilities {
     @SneakyThrows

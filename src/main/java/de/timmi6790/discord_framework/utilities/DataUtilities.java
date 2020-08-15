@@ -1,12 +1,21 @@
 package de.timmi6790.discord_framework.utilities;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import net.ricecode.similarity.LevenshteinDistanceStrategy;
 import net.ricecode.similarity.SimilarityStrategy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class UtilitiesData {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class DataUtilities {
     private static final SimilarityStrategy SIMILARITY_STRATEGY = new LevenshteinDistanceStrategy();
 
     public static List<String> getSimilarityList(final String source, final Collection<String> targets, final double minimumRate, final int limit) {
@@ -19,25 +28,20 @@ public class UtilitiesData {
         }
 
         final String sourceLower = source.toLowerCase();
-        final Map<Double, List<T>> sortedMap = new TreeMap<>(Collections.reverseOrder());
+        final Multimap<Double, T> sortedMap = MultimapBuilder.
+                treeKeys(Collections.reverseOrder())
+                .arrayListValues()
+                .build();
         for (final T target : targets) {
             final double value = SIMILARITY_STRATEGY.score(sourceLower, toString.apply(target).toLowerCase());
-            if (minimumRate > value) {
-                continue;
-            }
-            sortedMap.computeIfAbsent(value, d -> new ArrayList<>()).add(target);
-        }
-
-        final List<T> returnValues = new ArrayList<>();
-        for (final Map.Entry<Double, List<T>> entry : sortedMap.entrySet()) {
-            if (entry.getValue().size() + returnValues.size() >= limit) {
-                returnValues.addAll(entry.getValue().subList(0, limit - returnValues.size()));
-                break;
-            } else {
-                returnValues.addAll(entry.getValue());
+            if (value >= minimumRate) {
+                sortedMap.put(value, target);
             }
         }
 
-        return returnValues;
+        return sortedMap.values()
+                .stream()
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 }

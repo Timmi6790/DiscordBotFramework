@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.modules.event;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.datatypes.MapBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.utilities.ReflectionUtilities;

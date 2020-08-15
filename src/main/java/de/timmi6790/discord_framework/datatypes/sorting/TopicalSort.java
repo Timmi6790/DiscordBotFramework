@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.utilities.sorting;
+package de.timmi6790.discord_framework.datatypes.sorting;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;

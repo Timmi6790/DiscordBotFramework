@@ -10,7 +10,6 @@ import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.feedback.commands.FeedbackCommand;
 import de.timmi6790.discord_framework.modules.feedback.feedbacks.BugFeedbackHandler;
-import de.timmi6790.discord_framework.modules.feedback.feedbacks.SuggestionFeedbackHandler;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -43,8 +42,8 @@ public class FeedbackModule extends AbstractModule {
         );
 
         this.addFeedbackHandlers(
-                new BugFeedbackHandler(),
-                new SuggestionFeedbackHandler()
+                new BugFeedbackHandler()
+                //new SuggestionFeedbackHandler()
         );
     }
 
@@ -53,11 +52,12 @@ public class FeedbackModule extends AbstractModule {
     }
 
     public Optional<FeedbackHandler> getFeedbackHandler(final String name) {
+        System.out.println(this.feedbackMap);
         return Optional.ofNullable(this.feedbackMap.get(name.toLowerCase()));
     }
 
     public boolean addFeedbackHandler(final FeedbackHandler feedbackHandler) {
-        final String nameLower = feedbackHandler.getFeedbackName();
+        final String nameLower = feedbackHandler.getFeedbackName().toLowerCase();
         if (this.feedbackMap.containsKey(nameLower)) {
             return false;
         }
@@ -80,15 +80,30 @@ public class FeedbackModule extends AbstractModule {
         this.getModuleOrThrow(EventModule.class).addEventListeners(
                 new MessageListener()
         );
+
+        this.getModuleOrThrow(ConfigModule.class).registerConfig(
+                this,
+                new Config()
+        );
     }
 
     @Override
     public void onEnable() {
+        final Config config = this.getConfig();
 
+        for (final FeedbackHandler handler : this.feedbackMap.values()) {
+            config.getFeedbackConfigs().putIfAbsent(handler.getFeedbackName(), new Config.ChannelFeedbackConfig(-1L));
+        }
+
+        this.getModuleOrThrow(ConfigModule.class).saveConfig(this, Config.class);
     }
 
     @Override
     public void onDisable() {
 
+    }
+
+    public Config getConfig() {
+        return this.getModuleOrThrow(ConfigModule.class).getConfig(this, Config.class);
     }
 }

@@ -5,7 +5,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class UtilitiesStringTest {
+class StringUtilitiesTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", " test", "test", "test dsad s asdas sa asddasads ", "Hello", "HeLLO"})
@@ -14,7 +14,7 @@ class UtilitiesStringTest {
             return;
         }
 
-        final String result = UtilitiesString.capitalize(value);
+        final String result = StringUtilities.capitalize(value);
         assertThat(result).isEqualTo(value.substring(0, 1).toUpperCase() + value.substring(1));
     }
 }

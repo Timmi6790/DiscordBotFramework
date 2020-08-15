@@ -13,7 +13,7 @@ import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import de.timmi6790.discord_framework.utilities.UtilitiesData;
+import de.timmi6790.discord_framework.utilities.DataUtilities;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.Activity;
@@ -210,7 +210,7 @@ public class CommandModule extends AbstractModule {
     }
 
     public List<AbstractCommand<?>> getSimilarCommands(final CommandParameters commandParameters, final String name, final double similarity, final int limit) {
-        return UtilitiesData.getSimilarityList(
+        return DataUtilities.getSimilarityList(
                 name,
                 this.commands.values()
                         .stream()

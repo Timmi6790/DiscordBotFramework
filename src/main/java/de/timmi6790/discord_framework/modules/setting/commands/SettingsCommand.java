@@ -1,15 +1,16 @@
 package de.timmi6790.discord_framework.modules.setting.commands;
 
-import de.timmi6790.discord_framework.datatypes.StatEmbedBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.StatEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SettingsCommand extends AbstractCommand {
+public class SettingsCommand extends AbstractCommand<SettingModule> {
     public SettingsCommand() {
         super("settings", "Info", "Settings", "[setting] [value]", "", "st");
     }
@@ -36,6 +37,9 @@ public class SettingsCommand extends AbstractCommand {
             );
             return CommandResult.SUCCESS;
         }
+
+        this.checkArgLength(commandParameters, 2);
+
         return CommandResult.SUCCESS;
     }
 }

@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework;
 
-import de.timmi6790.discord_framework.datatypes.ListBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.ListBuilder;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.ModuleManager;
@@ -55,7 +55,7 @@ public class DiscordBot {
 
     public DiscordBot() {
         this.basePath = Paths.get(".").toAbsolutePath().normalize();
-        
+
         this.moduleManager = new ModuleManager();
         this.internalModules = new ListBuilder<AbstractModule>(ArrayList::new).addAll(
                 new DatabaseModule(),

@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.GuildChannel;
@@ -24,7 +25,7 @@ public class CommandParameters {
     private final ChannelDb channelDb;
     private final UserDb userDb;
 
-    public CommandParameters(final CommandParameters commandParameters, final String... newArgs) {
+    public CommandParameters(@NonNull final CommandParameters commandParameters, @NonNull final String... newArgs) {
         this.rawArgs = String.join(" ", newArgs);
         this.args = newArgs;
         this.guildCommand = commandParameters.isGuildCommand();
@@ -33,7 +34,7 @@ public class CommandParameters {
         this.userDb = commandParameters.getUserDb();
     }
 
-    public CommandParameters(final CommandParameters commandParameters, final CommandCause commandCause, final String... newArgs) {
+    public CommandParameters(@NonNull final CommandParameters commandParameters, @NonNull final CommandCause commandCause, @NonNull final String... newArgs) {
         this.rawArgs = String.join(" ", newArgs);
         this.args = newArgs;
         this.guildCommand = commandParameters.isGuildCommand();

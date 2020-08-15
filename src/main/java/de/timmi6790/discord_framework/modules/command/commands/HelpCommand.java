@@ -5,7 +5,7 @@ import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
-import de.timmi6790.discord_framework.utilities.UtilitiesString;
+import de.timmi6790.discord_framework.utilities.StringUtilities;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -33,7 +33,7 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
                     .setTitle("Commands")
                     .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
                     .setFooter("TIP: Use " + this.getModule().getMainCommand() + " help <command> to see more details");
-
+            
             this.getModule().getCommands()
                     .stream()
                     .filter(command -> command.hasPermission(commandParameters))
@@ -62,7 +62,7 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
         final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
 
         final EmbedBuilder message = this.getEmbedBuilder(commandParameters)
-                .setTitle("Commands " + UtilitiesString.capitalize(command.getName()))
+                .setTitle("Commands " + StringUtilities.capitalize(command.getName()))
                 .addField("Description", command.getDescription(), false, !command.getDescription().isEmpty())
                 .addField("Alias Names", String.join(", ", command.getAliasNames()), false, command.getAliasNames().length != 0)
                 .addField("Syntax", command.getSyntax(), false, !command.getSyntax().isEmpty())

@@ -1,14 +1,14 @@
 package de.timmi6790.discord_framework.modules.command;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.datatypes.ListBuilder;
-import de.timmi6790.discord_framework.datatypes.MapBuilder;
-import de.timmi6790.discord_framework.datatypes.StatEmbedBuilder;
-import de.timmi6790.discord_framework.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.datatypes.builders.ListBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.StatEmbedBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.command.events.CommandExecutionEvent;
+import de.timmi6790.discord_framework.modules.command.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
@@ -22,7 +22,7 @@ import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.utilities.EnumUtilities;
-import de.timmi6790.discord_framework.utilities.UtilitiesString;
+import de.timmi6790.discord_framework.utilities.StringUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import io.sentry.event.Breadcrumb;
@@ -171,6 +171,10 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
 
     public void runCommand(final CommandParameters commandParameters) {
+        if (this.getModule().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
+            return;
+        }
+
         // Server ban check
         if (commandParameters.getChannelDb().getGuildDb().isBanned()) {
             this.sendTimedMessage(
@@ -242,6 +246,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                 .ifPresent(eventModule -> eventModule.executeEvent(commandExecutionPre));
 
         // Run command
+        this.getModule().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
         final CommandResult commandResult = this.executeSave(commandParameters);
         this.logCommand(commandParameters, commandResult);
 
@@ -373,12 +378,12 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             }
         }
 
-        final CommandParameters newCommandParameters = new CommandParameters(commandParameters, newArgs);
         if (command != null) {
+            final CommandParameters newCommandParameters = new CommandParameters(commandParameters, newArgs);
             emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
         }
 
-        this.sendEmoteMessage(commandParameters, "Invalid " + UtilitiesString.capitalize(argName), description.toString(), emotes);
+        this.sendEmoteMessage(commandParameters, "Invalid " + StringUtilities.capitalize(argName), description.toString(), emotes);
     }
 
     // Checks

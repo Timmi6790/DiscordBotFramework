@@ -8,7 +8,7 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-class UtilitiesDataTest {
+class DataUtilitiesTest {
 
     @Test
     void getSimilarityListTest() {
@@ -27,15 +27,15 @@ class UtilitiesDataTest {
             values.add(String.valueOf(alphabet));
         }
 
-        final List<String> findExample = UtilitiesData.getSimilarityList("Example", values, 1, 1);
+        final List<String> findExample = DataUtilities.getSimilarityList("Example", values, 1, 1);
         assertThat(findExample).hasSize(1);
         assertThat(findExample.get(0)).isEqualTo("Example");
 
-        final List<String> findA = UtilitiesData.getSimilarityList("A", values, 0, 2);
+        final List<String> findA = DataUtilities.getSimilarityList("A", values, 0, 2);
         assertThat(findA).hasSize(2);
         assertThat(findA.get(0)).isEqualTo("A");
 
-        final List<String> findAZ = UtilitiesData.getSimilarityList("AZ", values, 1, 1);
+        final List<String> findAZ = DataUtilities.getSimilarityList("AZ", values, 1, 1);
         assertThat(findAZ).isEmpty();
     }
 }

@@ -1,10 +1,14 @@
 package de.timmi6790.discord_framework.utilities;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EnumUtilities {
     public static List<String> getPrettyNames(final Enum[] enumValue) {
         return Arrays.stream(enumValue)
@@ -25,7 +29,7 @@ public class EnumUtilities {
         final String[] nameParts = enumName.split("_");
         final StringBuilder prettyName = new StringBuilder(nameParts[0].toLowerCase());
         for (int index = 1; nameParts.length > index; index++) {
-            prettyName.append(UtilitiesString.capitalize(nameParts[index].toLowerCase()));
+            prettyName.append(StringUtilities.capitalize(nameParts[index].toLowerCase()));
         }
 
         return prettyName.toString();

@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.entities.User;
 public class SuggestionFeedbackHandler implements FeedbackHandler {
     @Override
     public String getFeedbackName() {
-        return "sugegstion";
+        return "Suggestion";
     }
 
     @Override
