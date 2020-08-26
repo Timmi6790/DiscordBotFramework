@@ -23,7 +23,7 @@ public class CoreModule extends AbstractModule {
     public CoreModule() {
         super("Core");
 
-        this.addLoadAfter(
+        this.addDependenciesAndLoadAfter(
                 ConfigModule.class,
                 CommandModule.class,
                 AchievementModule.class,

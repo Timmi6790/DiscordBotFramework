@@ -89,7 +89,11 @@ public class MessageListener extends GetModule<CommandModule> {
             }
         }
 
-        command.runCommand(commandParameters);
+        try {
+            command.runCommand(commandParameters);
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendIncorrectCommandHelpMessage(final MessageReceivedEvent event, final List<AbstractCommand<?>> similarCommands, final String firstArg, final CommandParameters commandParameters) {

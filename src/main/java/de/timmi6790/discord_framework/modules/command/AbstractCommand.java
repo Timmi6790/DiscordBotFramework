@@ -316,6 +316,18 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         );
     }
 
+    protected void throwInvalidArg(final CommandParameters commandParameters, final int argPos, final String argName) {
+        this.sendTimedMessage(
+                commandParameters,
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle("Invalid " + argName)
+                        .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid " + MarkdownUtil.bold(argName.toLowerCase()) + "."),
+                120
+        );
+
+        throw new CommandReturnException(CommandResult.INVALID_ARGS);
+    }
+
     protected void sendEmoteMessage(final CommandParameters commandParameters, final String title, final String description, final Map<String, AbstractEmoteReaction> emotes) {
         this.sendEmoteMessage(
                 commandParameters,

@@ -12,9 +12,22 @@ public abstract class GetModule<T extends AbstractModule> {
     protected Class<T> getModuleClass() {
         if (this.moduleClass == null) {
             try {
-                final String className = ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName();
-                this.moduleClass = (Class<T>) Class.forName(className);
+                final ParameterizedType type;
+                Class<?> clazz = this.getClass();
+                // Find Lowest extending class
+                while (true) {
+                    if (clazz.getGenericSuperclass() instanceof ParameterizedType) {
+                        type = (ParameterizedType) clazz.getGenericSuperclass();
+                        break;
+                    }
+
+                    clazz = (Class<?>) clazz.getGenericSuperclass();
+                }
+
+                final String className = type.getActualTypeArguments()[0].getTypeName();
+                this.moduleClass = (Class<T>) Class.forName(className, true, this.getClass().getClassLoader());
             } catch (final Exception e) {
+                e.printStackTrace();
                 throw new IllegalStateException("Class is not parametrized with generic type! Please use extends<>");
             }
         }
