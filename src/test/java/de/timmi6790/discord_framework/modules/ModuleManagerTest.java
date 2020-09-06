@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ModuleManagerTest {
+class ModuleManagerTest {
     private ModuleManager getModuleManager() {
         return new ModuleManager();
     }
