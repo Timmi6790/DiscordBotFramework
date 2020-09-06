@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.modules.command;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.builders.ListBuilder;
 import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
-import de.timmi6790.discord_framework.datatypes.builders.StatEmbedBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
@@ -21,6 +21,7 @@ import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.EnumUtilities;
 import de.timmi6790.discord_framework.utilities.StringUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
@@ -32,7 +33,6 @@ import io.sentry.event.EventBuilder;
 import io.sentry.event.interfaces.ExceptionInterface;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -42,6 +42,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -98,7 +99,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             this.sendErrorMessage(commandParameters, "Unknown");
 
             // Sentry error
-            final Map<String, String> data = new MapBuilder<String, String>(HashMap::new)
+            final Map<String, String> data = MapBuilder.<String, String>ofHashMap(4)
                     .put("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()))
                     .put("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
                     .put("args", Arrays.toString(commandParameters.getArgs()))
@@ -257,6 +258,10 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                 .ifPresent(eventModule -> eventModule.executeEvent(commandExecutionPost));
     }
 
+    public String[] getAliasNames() {
+        return this.aliasNames.clone();
+    }
+
     // Old Stuff
     public List<String> getFormattedExampleCommands() {
         final String mainCommand = this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
@@ -265,7 +270,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                 .collect(Collectors.toList());
     }
 
-    public StatEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
+    public MultiEmbedBuilder getEmbedBuilder(final CommandParameters commandParameters) {
         return DiscordMessagesUtilities.getEmbedBuilder(commandParameters);
     }
 
@@ -296,7 +301,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
-                        .setStatDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
+                        .setDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
                         .addField("Required Syntax", requiredSyntax.toString(), false)
                         .addField("Command Syntax", this.getSyntax(), false)
                         .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty()),
@@ -338,27 +343,32 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         );
     }
 
-    protected void sendEmoteMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getTextChannel().sendMessage(
-                embedBuilder.setFooter("↓ Click Me!").build())
-                .queue(message -> {
-                            if (!emotes.isEmpty()) {
-                                final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
-                                        commandParameters.getTextChannel().getIdLong());
-                                this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
-                            }
+    protected void sendEmoteMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
+        commandParameters.getTextChannel().sendMessage(embedBuilder.build()[0]).queue();
+        // TODO: Cosnumer only for last message
 
-                            message.delete().queueAfter(90, TimeUnit.SECONDS);
-                        }
-                );
+        commandParameters.getTextChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
+                .queue(message -> {
+                    if (!emotes.isEmpty()) {
+                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
+                                commandParameters.getTextChannel().getIdLong());
+                        this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
+                    }
+
+                    message.delete().queueAfter(90, TimeUnit.SECONDS, null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
+                });
     }
 
-    protected void sendTimedMessage(final CommandParameters commandParameters, final EmbedBuilder embedBuilder, final int deleteTime) {
-        commandParameters.getTextChannel()
-                .sendMessage(embedBuilder.build())
-                .delay(deleteTime, TimeUnit.SECONDS)
-                .flatMap(Message::delete)
-                .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
+    protected void sendTimedMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final int deleteTime) {
+        DiscordMessagesUtilities.sendMessageTimed(commandParameters.getTextChannel(), embedBuilder, deleteTime);
+    }
+
+    protected void sendMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder) {
+        DiscordMessagesUtilities.sendMessage(commandParameters.getTextChannel(), embedBuilder);
+    }
+
+    protected void sendMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final Consumer<Message> success) {
+        DiscordMessagesUtilities.sendMessage(commandParameters.getTextChannel(), embedBuilder, success);
     }
 
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
@@ -422,7 +432,6 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         throw new CommandReturnException();
     }
 
-
     protected <E extends Enum> E getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final E[] enumValue) {
         final String userArg = commandParameters.getArgs()[argPos];
         final Optional<E> arg = EnumUtilities.getIgnoreCase(userArg, enumValue);
@@ -430,7 +439,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             return arg.get();
         }
 
-        AbstractCommand.this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, EnumUtilities.getPrettyNames(enumValue));
+        this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, EnumUtilities.getPrettyNames(enumValue));
         throw new CommandReturnException();
     }
 
@@ -501,8 +510,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         final String name = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
         if (userIdMatcher.find()) {
-            // TODO: Change to queue instead of complete
-            final User user = this.getModule().getDiscord().retrieveUserById(userIdMatcher.group(2)).complete();
+            final User user = UserDb.getUserCache().get(Long.valueOf(userIdMatcher.group(2)));
             if (user != null) {
                 return user;
             }

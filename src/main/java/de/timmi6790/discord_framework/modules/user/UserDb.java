@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,11 @@ public class UserDb {
     private static final LoadingCache<Long, User> userCache = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .expireAfterAccess(1, TimeUnit.MINUTES)
-            .build(key -> DiscordBot.getInstance().getDiscord().retrieveUserById(key, false).complete());
+            .build(key -> {
+                final CompletableFuture<User> futureValue = new CompletableFuture<>();
+                DiscordBot.getInstance().getDiscord().retrieveUserById(key, false).queue(futureValue::complete);
+                return futureValue.get(1, TimeUnit.MINUTES);
+            });
 
     private final int databaseId;
     private final long discordId;

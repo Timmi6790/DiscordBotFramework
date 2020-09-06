@@ -17,6 +17,7 @@ public class EmoteReactionMessage {
     private final int deleteTime;
     private final boolean oneTimeUse;
     private final boolean deleteMessage;
+    private final Set<Long> relatedMessageIds = new HashSet<>();
 
     public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes, final Long userId, final long channelId, final int deleteTime) {
         this(emotes, userId, channelId, deleteTime, true, true);

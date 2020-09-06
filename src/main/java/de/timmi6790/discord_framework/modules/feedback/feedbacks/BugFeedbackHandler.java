@@ -37,25 +37,24 @@ public class BugFeedbackHandler extends GetModule<FeedbackModule> implements Fee
 
         final long channelId = this.getModule().getConfig().getFeedbackConfigs().get(this.getFeedbackName()).getChannelId();
         if (channelId != -1) {
-            DiscordBot.getInstance().getDiscord()
-                    .getTextChannelById(channelId)
-                    .sendMessage(
-                            DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                                    .setTitle(String.format("BugReport - %s", ticketId))
-                                    .setDescription(commandParameters.getRawArgs())
-                                    .setFooter(commandParameters.getUserDb().getDiscordId() + " | " + commandParameters.getUser().getAsTag())
-                                    .build()
-                    ).queue();
+            DiscordMessagesUtilities.sendMessage(
+                    DiscordBot.getInstance().getDiscord()
+                            .getTextChannelById(channelId),
+                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                            .setTitle(String.format("BugReport - %s", ticketId))
+                            .setDescription(commandParameters.getRawArgs())
+                            .setFooter(commandParameters.getUserDb().getDiscordId() + " | " + commandParameters.getUser().getAsTag())
+            );
         }
 
-        commandParameters.getTextChannel().sendMessage(
+        DiscordMessagesUtilities.sendMessage(
+                commandParameters.getTextChannel(),
                 DiscordMessagesUtilities
                         .getEmbedBuilder(commandParameters)
                         .setTitle("Bug Report")
                         .setDescription("Thx for submitting your bug report!")
                         .setFooter(ticketId.toString())
-                        .build()
-        ).queue();
+        );
         this.getModule().getActiveFeedbackCache().invalidate(commandParameters.getUserDb().getDiscordId());
     }
 }

@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.modules.setting.commands;
 
-import de.timmi6790.discord_framework.datatypes.builders.StatEmbedBuilder;
+import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
@@ -19,7 +19,7 @@ public class SettingsCommand extends AbstractCommand<SettingModule> {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All current settings
         if (commandParameters.getArgs().length == 0) {
-            final StatEmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
+            final MultiEmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
                     .setTitle("Settings");
 
             // TODO: Fix me after new settings module

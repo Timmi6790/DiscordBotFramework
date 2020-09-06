@@ -52,7 +52,6 @@ public class FeedbackModule extends AbstractModule {
     }
 
     public Optional<FeedbackHandler> getFeedbackHandler(final String name) {
-        System.out.println(this.feedbackMap);
         return Optional.ofNullable(this.feedbackMap.get(name.toLowerCase()));
     }
 

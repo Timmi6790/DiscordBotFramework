@@ -122,26 +122,26 @@ public class MessageListener extends GetModule<CommandModule> {
         this.getModule().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
 
         final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
+
         event.getChannel().sendMessage(
-                DiscordMessagesUtilities.getEmbedBuilder(event.getAuthor(), Optional.ofNullable(event.getMember()))
+                DiscordMessagesUtilities.getEmbedBuilder(event.getAuthor(), event.getMember())
                         .setTitle("Invalid Command")
                         .setDescription(description)
                         .setFooter("↓ Click Me!")
-                        .build())
-                .queue(sendMessage -> {
-                            this.getModule()
-                                    .getModuleOrThrow(EmoteReactionModule.class)
-                                    .addEmoteReactionMessage(sendMessage, emoteReactionMessage);
+                        .buildSingle()
+        ).queue(sendMessage -> {
+            this.getModule()
+                    .getModuleOrThrow(EmoteReactionModule.class)
+                    .addEmoteReactionMessage(sendMessage, emoteReactionMessage);
 
-                            sendMessage
-                                    .delete()
-                                    .queueAfter(
-                                            90,
-                                            TimeUnit.SECONDS,
-                                            null,
-                                            new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
-                                    );
-                        }
-                );
+            sendMessage
+                    .delete()
+                    .queueAfter(
+                            90,
+                            TimeUnit.SECONDS,
+                            null,
+                            new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
+                    );
+        });
     }
 }

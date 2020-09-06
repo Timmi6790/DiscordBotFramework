@@ -1,16 +1,19 @@
 package de.timmi6790.discord_framework.modules.guild;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,14 @@ public class GuildDb {
     private final Pattern commandAliasPattern;
 
     private final Map<String, AbstractSetting> properties;
+
+    private final LoadingCache<Long, Member> memberCache = Caffeine.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build(key -> {
+                final CompletableFuture<Member> futureValue = new CompletableFuture<>();
+                this.getGuild().retrieveMemberById(key, false).queue(futureValue::complete);
+                return futureValue.get(1, TimeUnit.MINUTES);
+            });
 
     public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames, final Map<String, AbstractSetting> properties) {
         this.databaseId = databaseId;
@@ -51,6 +62,14 @@ public class GuildDb {
 
     public Guild getGuild() {
         return DiscordBot.getInstance().getDiscord().getGuildById(this.discordId);
+    }
+
+    public Member getMember(@NonNull final User user) {
+        return this.getMember(user.getIdLong());
+    }
+
+    public Member getMember(final long userId) {
+        return this.memberCache.get(userId);
     }
 
     public Optional<Pattern> getCommandAliasPattern() {

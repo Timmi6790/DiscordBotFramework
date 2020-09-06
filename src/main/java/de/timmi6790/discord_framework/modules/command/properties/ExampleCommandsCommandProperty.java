@@ -11,6 +11,6 @@ public class ExampleCommandsCommandProperty extends CommandProperty<String[]> {
 
     @Override
     public String[] getValue() {
-        return this.exampleCommands;
+        return this.exampleCommands.clone();
     }
 }

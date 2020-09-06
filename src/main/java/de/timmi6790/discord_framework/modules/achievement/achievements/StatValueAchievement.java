@@ -2,12 +2,10 @@ package de.timmi6790.discord_framework.modules.achievement.achievements;
 
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
-import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
+import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import net.dv8tion.jda.api.entities.User;
-
-import java.util.Optional;
 
 public abstract class StatValueAchievement extends AbstractAchievement {
     private final Class<? extends AbstractStat> stat;
@@ -30,7 +28,7 @@ public abstract class StatValueAchievement extends AbstractAchievement {
             event.getUserDb().grantAchievement(this);
 
             final User user = event.getUserDb().getUser();
-            DiscordMessagesUtilities.sendPrivateMessage(user, DiscordMessagesUtilities.getEmbedBuilder(user, Optional.empty())
+            DiscordMessagesUtilities.sendPrivateMessage(user, DiscordMessagesUtilities.getEmbedBuilder(user, null)
                     .setTitle("Achievement Unlocked")
                     .setDescription("Unlocked: " + this.getName())
             );

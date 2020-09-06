@@ -117,7 +117,7 @@ public class EventModule extends AbstractModule {
                 DiscordBot.getLogger().error(e);
 
                 // Sentry error
-                final Map<String, String> data = new MapBuilder<String, String>(HashMap::new)
+                final Map<String, String> data = MapBuilder.<String, String>ofHashMap(2)
                         .put("Class", event.getClass().toString())
                         .put("Listener", listener.getMethod().getName())
                         .build();

@@ -11,11 +11,11 @@ import lombok.Data;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 @Data
 public class ModuleManager {
@@ -31,9 +31,11 @@ public class ModuleManager {
 
     public boolean registerModule(final AbstractModule module) {
         if (this.loadedModules.containsKey(module.getClass())) {
+            DiscordBot.getLogger().debug("{} is already registered!", module.getName());
             return false;
         }
 
+        DiscordBot.getLogger().debug("Registered {}[{}]", module.getName(), module.getClass());
         this.loadedModules.put(module.getClass(), module);
         return true;
     }
@@ -107,59 +109,56 @@ public class ModuleManager {
     private Set<AbstractModule> getExternalModules() {
         final Set<AbstractModule> abstractModules = new HashSet<>();
 
-        final File[] pluginJars = new File(DiscordBot.getInstance().getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+        File[] pluginJars = new File(DiscordBot.getInstance().getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+        if (pluginJars == null) {
+            pluginJars = new File[0];
+        }
+
         for (final File jar : pluginJars) {
             DiscordBot.getLogger().info("Checking {} for modules.", jar.getName());
-            try (final JarFile jarFile = new JarFile(jar)) {
-                final URL jarUrl = jar.toURI().toURL();
-                try (final URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, ClassLoader.getSystemClassLoader())) {
-                    final URL pluginUrl = classLoader.getResource("plugin.json");
-                    if (pluginUrl == null) {
-                        DiscordBot.getLogger().warn("Can't load {}, no plugins.json found.", jar.getName());
+
+            try {
+                // Add external jar to system classloader
+                final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+                final Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+                method.setAccessible(true);
+                method.invoke(classLoader, jar.toURI().toURL());
+
+                final URL pluginUrl = classLoader.getResource("plugin.json");
+                if (pluginUrl == null) {
+                    DiscordBot.getLogger().warn("Can't load {}, no plugins.json found.", jar.getName());
+                    continue;
+                }
+
+                final PluginConfig plugin = gson.fromJson(new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8), PluginConfig.class);
+                for (final String path : plugin.getModules()) {
+                    final Class<?> pluginClass;
+                    try {
+                        pluginClass = classLoader.loadClass(path);
+                    } catch (final ClassNotFoundException ignore) {
+                        DiscordBot.getLogger().warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
                         continue;
                     }
 
-                    final PluginConfig plugin = gson.fromJson(new InputStreamReader(pluginUrl.openStream()), PluginConfig.class);
-                    for (final String path : plugin.getModules()) {
-                        final Class<?> pluginClass;
-                        try {
-                            pluginClass = classLoader.loadClass(path);
-                        } catch (final ClassNotFoundException ignore) {
-                            DiscordBot.getLogger().warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
-                            continue;
-                        }
-                        if (!AbstractModule.class.isAssignableFrom(pluginClass)) {
-                            DiscordBot.getLogger().warn("Module {} inside {} is not extending AbstractModule!", path, jar.getName());
-                            continue;
-                        }
-
-                        final Class<?> clazz = Class.forName(path, true, classLoader);
-                        final Class<? extends AbstractModule> newClass = clazz.asSubclass(AbstractModule.class);
-                        final Constructor<? extends AbstractModule> constructor = newClass.getConstructor();
-                        final AbstractModule pluginModule = constructor.newInstance();
-
-                        if (abstractModules.contains(pluginModule)) {
-                            DiscordBot.getLogger().warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());
-                            continue;
-                        }
-
-                        // Load all module classes
-                        final Enumeration<JarEntry> entries = jarFile.entries();
-                        for (JarEntry entry = entries.nextElement(); entries.hasMoreElements(); entry = entries.nextElement()) {
-                            if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
-                                continue;
-                            }
-
-                            String className = entry.getName().substring(0, entry.getName().length() - 6);
-                            className = className.replace('/', '.');
-
-                            DiscordBot.getLogger().debug("Loading {} class from {}", className, pluginModule.getName());
-                            classLoader.loadClass(className);
-                        }
-
-                        abstractModules.add(pluginModule);
+                    if (!AbstractModule.class.isAssignableFrom(pluginClass)) {
+                        DiscordBot.getLogger().warn("Module {} inside {} is not extending AbstractModule!", path, jar.getName());
+                        continue;
                     }
+
+                    final Class<?> clazz = Class.forName(path, true, classLoader);
+                    final Class<? extends AbstractModule> newClass = clazz.asSubclass(AbstractModule.class);
+                    final Constructor<? extends AbstractModule> constructor = newClass.getConstructor();
+                    final AbstractModule pluginModule = constructor.newInstance();
+
+                    if (abstractModules.contains(pluginModule)) {
+                        DiscordBot.getLogger().warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());
+                        continue;
+                    }
+
+                    DiscordBot.getLogger().info("Found module {} inside {}", pluginModule.getName(), jar.getName());
+                    abstractModules.add(pluginModule);
                 }
+
             } catch (final Exception e) {
                 DiscordBot.getLogger().warn(e, "Error while trying to load modules from {}.", jar.getName());
             }

@@ -35,12 +35,12 @@ public class MessageListener extends GetModule<FeedbackModule> {
 
         if (content.replace(" ", "").equalsIgnoreCase("cancel")) {
             this.getModule().getActiveFeedbackCache().invalidate(userId);
-            commandParameters.getChannelDb().getChannel().sendMessage(
+            DiscordMessagesUtilities.sendMessage(
+                    event.getTextChannel(),
                     DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                             .setTitle("Canceled Feedback")
                             .setDescription("Your feedback input is now canceled.")
-                            .build()
-            ).queue();
+            );
             return;
         }
 

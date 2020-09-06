@@ -11,7 +11,6 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
 public class ReflectionUtilities {
     @SneakyThrows
     public static <O> O deepCopy(final O object) {

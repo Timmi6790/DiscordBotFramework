@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
+import de.timmi6790.discord_framework.modules.botlist.BotListModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
@@ -74,6 +75,7 @@ public class DiscordBot {
                 new AchievementModule(),
                 new SettingModule(),
                 new FeedbackModule(),
+                new BotListModule(),
 
                 new CoreModule()
         ).build();
@@ -129,7 +131,7 @@ public class DiscordBot {
 
         FileUtilities.saveToJsonIfChanged(configPath, config, newConfig);
         if (firstInnit) {
-            DiscordBot.getLogger().info("Created main logging file.");
+            DiscordBot.getLogger().info("Created main config file.");
             System.exit(1);
         }
     }

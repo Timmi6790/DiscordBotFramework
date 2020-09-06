@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -43,7 +43,7 @@ public class FileUtilities {
 
     @SneakyThrows
     public static <T> T readJsonFile(final Path path, final Class<T> clazz) {
-        final BufferedReader bufferedReader = new BufferedReader(new FileReader(path.toString()));
+        final BufferedReader bufferedReader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
         return FileUtilities.getGson().fromJson(bufferedReader, clazz);
     }
 }
