@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
-import com.google.common.io.Resources;
 import de.timmi6790.discord_framework.datatypes.Pair;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -8,9 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -77,6 +73,7 @@ class MultiEmbedBuilderTest {
                 .matches(new OrderPredicate(), "Order");
     }
 
+    /*
     @SuppressWarnings("UnstableApiUsage")
     @ParameterizedTest
     @ValueSource(strings = {"loremipsum/20k", "loremipsum/5k", "loremipsum/111k", "loremipsum/NewLineBug"})
@@ -99,6 +96,8 @@ class MultiEmbedBuilderTest {
                     return foundDescription.toString().equals(description);
                 }, "Input != Output description");
     }
+    
+     */
 
     @ParameterizedTest
     @ValueSource(ints = {MultiEmbedBuilder.EMBED_FIELD_MAX, MultiEmbedBuilder.EMBED_FIELD_MAX + 1, 1, 100, 200})
