@@ -32,21 +32,6 @@ public class PermissionsModule extends AbstractModule {
         );
     }
 
-    @Override
-    public void onInitialize() {
-
-    }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     private Optional<Integer> getDatabasePermissionId(final @NonNull String permission) {
         return this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PERMISSION_ID)

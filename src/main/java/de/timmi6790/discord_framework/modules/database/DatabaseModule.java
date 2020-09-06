@@ -25,13 +25,4 @@ public class DatabaseModule extends AbstractModule {
                 .registerAndGetConfig(this, new Config());
         this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
     }
-
-    @Override
-    public void onEnable() {
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
 }

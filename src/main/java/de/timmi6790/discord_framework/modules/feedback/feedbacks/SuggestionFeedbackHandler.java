@@ -22,11 +22,11 @@ public class SuggestionFeedbackHandler implements FeedbackHandler {
 
     @Override
     public void onInitialize(final User user) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onTextMessage(final CommandParameters commandParameters) {
-
+        throw new UnsupportedOperationException();
     }
 }

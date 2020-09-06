@@ -142,48 +142,48 @@ public class ConcurrentTwoLaneMap<K, V> extends AbstractMap<K, V> implements Ser
 
     @Override
     public void replaceAll(final BiFunction<? super K, ? super V, ? extends V> function) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Nullable
     @Override
     public V putIfAbsent(final K key, final V value) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean remove(final Object key, final Object value) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean replace(final K key, final V oldValue, final V newValue) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Nullable
     @Override
     public V replace(final K key, final V value) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public V computeIfAbsent(final K key, @NotNull final Function<? super K, ? extends V> mappingFunction) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public V computeIfPresent(final K key, @NotNull final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public V compute(final K key, @NotNull final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public V merge(final K key, @NotNull final V value, @NotNull final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        throw new RuntimeException("Not implemented");
+        throw new UnsupportedOperationException();
     }
 }

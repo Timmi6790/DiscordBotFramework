@@ -21,21 +21,6 @@ public class ConfigModule extends AbstractModule {
         super("Config");
     }
 
-    @Override
-    public void onInitialize() {
-
-    }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     private String getFormattedModuleName(final AbstractModule module) {
         return module.getName().replace(" ", "_").toLowerCase();
     }

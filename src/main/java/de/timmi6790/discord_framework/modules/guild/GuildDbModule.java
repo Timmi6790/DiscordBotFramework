@@ -42,16 +42,6 @@ public class GuildDbModule extends AbstractModule {
                 .registerRowMapper(GuildDb.class, new GuildDbMapper());
     }
 
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     private GuildDb create(final long discordId) {
         // Make sure that the guild is not present
         return this.get(discordId).orElseGet(() -> {

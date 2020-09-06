@@ -344,9 +344,6 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getTextChannel().sendMessage(embedBuilder.build()[0]).queue();
-        // TODO: Cosnumer only for last message
-
         commandParameters.getTextChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
                 .queue(message -> {
                     if (!emotes.isEmpty()) {

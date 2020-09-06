@@ -72,23 +72,6 @@ public class CoreModule extends AbstractModule {
                             );
                         }
                 );
-
-        this.getModule(AchievementModule.class)
-                .ifPresent(achievementModule ->
-                        achievementModule.registerAchievements(
-                                // new CommandAutoCorrectAchievement()
-                        )
-                );
-    }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
     }
 }
 

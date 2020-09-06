@@ -75,12 +75,8 @@ public class EmoteReactionModule extends AbstractModule {
                 channel.retrieveMessageById(key)
                         .queue(message -> value.getEmotes()
                                         .keySet()
-                                        .forEach(emote -> {
-                                            try {
-                                                message.removeReaction(emote).queue();
-                                            } catch (final Exception ignore) {
-                                            }
-                                        }),
+                                        .forEach(emote -> message.removeReaction(emote)
+                                                .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE, ErrorResponse.MISSING_PERMISSIONS))),
                                 new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
                         );
             })
@@ -97,16 +93,6 @@ public class EmoteReactionModule extends AbstractModule {
     @Override
     public void onInitialize() {
         this.getModuleOrThrow(EventModule.class).addEventListener(this);
-    }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
     }
 
     public void addEmoteReactionMessage(final Message message, final EmoteReactionMessage emoteReactionMessage) {

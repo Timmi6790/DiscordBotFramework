@@ -6,6 +6,8 @@ import lombok.Data;
 
 @Data
 public abstract class AbstractSetting<T> {
+    private static final String SETTING_NAME = "settingName";
+
     private static final String GET_SETTING_ID = "SELECT id FROM setting WHERE setting_name = :settingName LIMIT 1;";
     private static final String INSERT_SETTING = "INSERT INTO setting(setting_name) VALUES(:settingName);";
 
@@ -25,16 +27,16 @@ public abstract class AbstractSetting<T> {
         // Get current id or insert new
         return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_SETTING_ID)
-                        .bind("settingName", this.getInternalName())
+                        .bind(SETTING_NAME, this.getInternalName())
                         .mapTo(int.class)
                         .findFirst()
                         .orElseGet(() -> {
                             handle.createUpdate(INSERT_SETTING)
-                                    .bind("settingName", this.getInternalName())
+                                    .bind(SETTING_NAME, this.getInternalName())
                                     .execute();
 
                             return handle.createQuery(GET_SETTING_ID)
-                                    .bind("settingName", this.getInternalName())
+                                    .bind(SETTING_NAME, this.getInternalName())
                                     .mapTo(int.class)
                                     .first();
                         })

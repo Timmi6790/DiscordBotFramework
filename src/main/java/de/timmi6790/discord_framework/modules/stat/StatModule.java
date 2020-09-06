@@ -26,21 +26,6 @@ public class StatModule extends AbstractModule {
         );
     }
 
-    @Override
-    public void onInitialize() {
-
-    }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     public boolean hasStat(final AbstractStat stat) {
         return this.stats.containsKey(stat.getDatabaseId());
     }

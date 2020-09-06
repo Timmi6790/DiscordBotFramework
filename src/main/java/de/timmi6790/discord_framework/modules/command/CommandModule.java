@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 public class CommandModule extends AbstractModule {
+    private static final String COMMAND_NAME = "commandName";
+
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))(.*)$";
 
     private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :commandName LIMIT 1;";
@@ -108,12 +110,7 @@ public class CommandModule extends AbstractModule {
     public void onEnable() {
         this.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
     }
-
-    @Override
-    public void onDisable() {
-
-    }
-
+    
     public void innitDatabase() {
         // Db
         // CommandCause
@@ -156,16 +153,16 @@ public class CommandModule extends AbstractModule {
     private int getCommandDatabaseId(final AbstractCommand<?> command) {
         return this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_COMMAND_ID)
-                        .bind("commandName", command.getName())
+                        .bind(COMMAND_NAME, command.getName())
                         .mapTo(int.class)
                         .findFirst()
                         .orElseGet(() -> {
                             handle.createUpdate(INSERT_NEW_COMMAND)
-                                    .bind("commandName", command.getName())
+                                    .bind(COMMAND_NAME, command.getName())
                                     .execute();
 
                             return handle.createQuery(GET_COMMAND_ID)
-                                    .bind("commandName", command.getName())
+                                    .bind(COMMAND_NAME, command.getName())
                                     .mapTo(int.class)
                                     .first();
                         })

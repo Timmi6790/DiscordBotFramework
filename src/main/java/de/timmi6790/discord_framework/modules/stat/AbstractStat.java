@@ -7,6 +7,8 @@ import lombok.Data;
 
 @Data
 public class AbstractStat {
+    private static final String STAT_NAME = "statName";
+
     private static final String GET_STAT_ID = "SELECT id FROM `stat` WHERE stat_name = :statName LIMIT 1;";
     private static final String INSERT_NEW_STAT = "INSERT INTO stat(stat_name) VALUES(:statName);";
 
@@ -23,16 +25,16 @@ public class AbstractStat {
     private int getStatDbId() {
         return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_STAT_ID)
-                        .bind("statName", this.getInternalName())
+                        .bind(STAT_NAME, this.getInternalName())
                         .mapTo(int.class)
                         .findFirst()
                         .orElseGet(() -> {
                             handle.createUpdate(INSERT_NEW_STAT)
-                                    .bind("statName", this.getInternalName())
+                                    .bind(STAT_NAME, this.getInternalName())
                                     .execute();
 
                             return handle.createQuery(GET_STAT_ID)
-                                    .bind("statName", this.getInternalName())
+                                    .bind(STAT_NAME, this.getInternalName())
                                     .mapTo(int.class)
                                     .first();
                         })

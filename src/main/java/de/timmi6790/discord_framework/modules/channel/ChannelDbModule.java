@@ -43,16 +43,6 @@ public class ChannelDbModule extends AbstractModule {
                 .registerRowMapper(ChannelDb.class, new ChannelDbMapper());
     }
 
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     private ChannelDb create(final long discordId, final long guildId) {
         // Make sure that the channel is not present
         return this.get(discordId).orElseGet(() -> {

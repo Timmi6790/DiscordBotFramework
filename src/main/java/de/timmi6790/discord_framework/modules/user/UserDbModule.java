@@ -58,17 +58,7 @@ public class UserDbModule extends AbstractModule {
                         new UserCommand()
                 );
     }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
+    
     private UserDb create(final long discordId) {
         // Make sure that the user is not present
         return this.get(discordId).orElseGet(() -> {

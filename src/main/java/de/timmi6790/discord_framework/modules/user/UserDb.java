@@ -29,6 +29,9 @@ import java.util.stream.Collectors;
 
 @Data
 public class UserDb {
+    private static final String DATABASE_ID = "databaseId";
+    private static final String PLAYER_ID = "playerId";
+
     private static final String UPDATE_PLAYER_BAN_STATUS = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
 
     private static final String UPDATE_STAT_VALUE = "UPDATE player_stat SET `value` = :value WHERE player_id = :playerId AND stat_id = :statId LIMIT 1;";
@@ -103,7 +106,7 @@ public class UserDb {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(UPDATE_PLAYER_BAN_STATUS)
                         .bind("banned", banned ? 1 : 0)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .execute()
         );
         this.banned = banned;
@@ -137,7 +140,7 @@ public class UserDb {
         this.permissionIds.add(id);
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_PLAYER_PERMISSION)
-                        .bind("playerId", this.databaseId)
+                        .bind(PLAYER_ID, this.databaseId)
                         .bind("permissionId", id)
                         .execute()
         );
@@ -152,7 +155,7 @@ public class UserDb {
         this.permissionIds.remove(id);
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_PLAYER_PERMISSION)
-                        .bind("playerId", this.databaseId)
+                        .bind(PLAYER_ID, this.databaseId)
                         .bind("permissionId", id)
                         .execute()
         );
@@ -176,7 +179,7 @@ public class UserDb {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(SET_PRIMARY_RANK)
                         .bind("primaryRank", rankId)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .execute()
         );
         this.primaryRank = rankId;
@@ -204,7 +207,7 @@ public class UserDb {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(ADD_RANK)
                         .bind("rankId", rankId)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .execute()
         );
         this.ranks.add(rankId);
@@ -224,7 +227,7 @@ public class UserDb {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_RANK)
                         .bind("rankId", rankId)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .execute()
         );
         this.ranks.remove(rankId);
@@ -248,7 +251,7 @@ public class UserDb {
 
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_PLAYER_ACHIEVEMENT)
-                        .bind("playerId", this.getDatabaseId())
+                        .bind(PLAYER_ID, this.getDatabaseId())
                         .bind("achievementId", achievement.getDatabaseId())
                         .execute()
         );
@@ -273,7 +276,7 @@ public class UserDb {
         final String sqlQuery = currentValue == -1 ? INSERT_STAT_VALUE : UPDATE_STAT_VALUE;
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(sqlQuery)
-                        .bind("playerId", this.getDatabaseId())
+                        .bind(PLAYER_ID, this.getDatabaseId())
                         .bind("statId", stat.getDatabaseId())
                         .bind("value", value)
                         .execute()
@@ -321,7 +324,7 @@ public class UserDb {
         this.settings.put(setting.getDatabaseId(), defaultValue);
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_PLAYER_SETTING)
-                        .bind("playerId", this.getDatabaseId())
+                        .bind(PLAYER_ID, this.getDatabaseId())
                         .bind("settingId", setting.getDatabaseId())
                         .bind("setting", defaultValue)
                         .execute()

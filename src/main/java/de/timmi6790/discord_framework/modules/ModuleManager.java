@@ -6,12 +6,11 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.sorting.TopicalSort;
 import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
+import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
 import lombok.Data;
 
 import java.io.File;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -109,9 +108,9 @@ public class ModuleManager {
     private Set<AbstractModule> getExternalModules() {
         final Set<AbstractModule> abstractModules = new HashSet<>();
 
-        File[] pluginJars = new File(DiscordBot.getInstance().getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+        final File[] pluginJars = new File(DiscordBot.getInstance().getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
         if (pluginJars == null) {
-            pluginJars = new File[0];
+            return abstractModules;
         }
 
         for (final File jar : pluginJars) {
@@ -119,11 +118,9 @@ public class ModuleManager {
 
             try {
                 // Add external jar to system classloader
-                final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-                final Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-                method.setAccessible(true);
-                method.invoke(classLoader, jar.toURI().toURL());
+                ReflectionUtilities.addJarToSystemClassLoader(jar);
 
+                final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
                 final URL pluginUrl = classLoader.getResource("plugin.json");
                 if (pluginUrl == null) {
                     DiscordBot.getLogger().warn("Can't load {}, no plugins.json found.", jar.getName());
@@ -132,23 +129,21 @@ public class ModuleManager {
 
                 final PluginConfig plugin = gson.fromJson(new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8), PluginConfig.class);
                 for (final String path : plugin.getModules()) {
-                    final Class<?> pluginClass;
-                    try {
-                        pluginClass = classLoader.loadClass(path);
-                    } catch (final ClassNotFoundException ignore) {
+                    final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromSystemClassLoader(path);
+                    if (!pluginClassOpt.isPresent()) {
                         DiscordBot.getLogger().warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
                         continue;
                     }
 
-                    if (!AbstractModule.class.isAssignableFrom(pluginClass)) {
+                    if (!AbstractModule.class.isAssignableFrom(pluginClassOpt.get())) {
                         DiscordBot.getLogger().warn("Module {} inside {} is not extending AbstractModule!", path, jar.getName());
                         continue;
                     }
 
-                    final Class<?> clazz = Class.forName(path, true, classLoader);
-                    final Class<? extends AbstractModule> newClass = clazz.asSubclass(AbstractModule.class);
-                    final Constructor<? extends AbstractModule> constructor = newClass.getConstructor();
-                    final AbstractModule pluginModule = constructor.newInstance();
+                    final AbstractModule pluginModule = Class.forName(path, true, classLoader)
+                            .asSubclass(AbstractModule.class)
+                            .getConstructor()
+                            .newInstance();
 
                     if (abstractModules.contains(pluginModule)) {
                         DiscordBot.getLogger().warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());

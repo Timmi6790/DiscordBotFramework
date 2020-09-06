@@ -30,18 +30,32 @@ public class EventModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
-
-    }
-
-    @Override
     public void onEnable() {
         this.getDiscord().addEventListener(new DiscordEventListener());
     }
 
-    @Override
-    public void onDisable() {
+    private void handleEventException(final Exception exception, final GenericEvent event, final EventObject listener) {
+        DiscordBot.getLogger().error(exception);
 
+        // Sentry error
+        final Map<String, String> data = MapBuilder.<String, String>ofHashMap(2)
+                .put("Class", event.getClass().toString())
+                .put("Listener", listener.getMethod().getName())
+                .build();
+
+        final Breadcrumb breadcrumb = new BreadcrumbBuilder()
+                .setCategory("Event")
+                .setData(data)
+                .build();
+
+        final EventBuilder eventBuilder = new EventBuilder()
+                .withMessage("Event Exception")
+                .withLevel(io.sentry.event.Event.Level.ERROR)
+                .withBreadcrumbs(Collections.singletonList(breadcrumb))
+                .withLogger(AbstractCommand.class.getName())
+                .withSentryInterface(new ExceptionInterface(exception));
+
+        this.getSentry().sendEvent(eventBuilder);
     }
 
     public void addEventListener(final Object listener) {
@@ -106,37 +120,23 @@ public class EventModule extends AbstractModule {
                 continue;
             }
 
-            try {
-                // If there is no way to cancel the event, we can run it in multiple threads
-                if (canCancel) {
+            // If there is no way to cancel the event, we can run it in multiple threads
+            if (canCancel) {
+                try {
                     listener.getMethod().invoke(listener.getObject(), event);
-                } else {
-                    this.executorService.submit(() -> listener.getMethod().invoke(listener.getObject(), event));
+                } catch (final Exception e) {
+                    this.handleEventException(e, event, listener);
+
                 }
-            } catch (final Exception e) {
-                DiscordBot.getLogger().error(e);
-
-                // Sentry error
-                final Map<String, String> data = MapBuilder.<String, String>ofHashMap(2)
-                        .put("Class", event.getClass().toString())
-                        .put("Listener", listener.getMethod().getName())
-                        .build();
-
-                final Breadcrumb breadcrumb = new BreadcrumbBuilder()
-                        .setCategory("Event")
-                        .setData(data)
-                        .build();
-
-                final EventBuilder eventBuilder = new EventBuilder()
-                        .withMessage("Event Exception")
-                        .withLevel(io.sentry.event.Event.Level.ERROR)
-                        .withBreadcrumbs(Collections.singletonList(breadcrumb))
-                        .withLogger(AbstractCommand.class.getName())
-                        .withSentryInterface(new ExceptionInterface(e));
-
-                this.getSentry().sendEvent(eventBuilder);
+            } else {
+                this.executorService.execute(() -> {
+                    try {
+                        listener.getMethod().invoke(listener.getObject(), event);
+                    } catch (final Exception e) {
+                        this.handleEventException(e, event, listener);
+                    }
+                });
             }
         }
     }
-
 }

@@ -36,16 +36,6 @@ public class SettingModule extends AbstractModule {
                 );
     }
 
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     public void registerSetting(final AbstractSetting<?> setting) {
         this.settings.put(setting.getDatabaseId(), setting);
         this.nameIdMatching.put(setting.getInternalName(), setting.getDatabaseId());
@@ -64,7 +54,7 @@ public class SettingModule extends AbstractModule {
     }
 
     public <D extends AbstractSetting> Optional<AbstractSetting<D>> getSetting(final Class<D> clazz) {
-        return null;
+        return Optional.empty();
     }
 
     public Optional<AbstractSetting<?>> getSetting(final int dbId) {

@@ -27,7 +27,7 @@ public abstract class GetModule<T extends AbstractModule> {
                 final String className = type.getActualTypeArguments()[0].getTypeName();
                 this.moduleClass = (Class<T>) Class.forName(className, true, this.getClass().getClassLoader());
             } catch (final Exception e) {
-                e.printStackTrace();
+                DiscordBot.getLogger().error(e);
                 throw new IllegalStateException("Class is not parametrized with generic type! Please use extends<>");
             }
         }

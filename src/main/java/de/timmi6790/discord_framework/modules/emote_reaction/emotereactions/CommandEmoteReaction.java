@@ -12,11 +12,11 @@ import lombok.Data;
 
 @Data
 public class CommandEmoteReaction implements AbstractEmoteReaction {
-    private final Class<? extends AbstractCommand<?>> command;
+    private final Class<? extends AbstractCommand<?>> commandClass;
     private final Values values;
 
-    public CommandEmoteReaction(final AbstractCommand<?> command, final CommandParameters commandParameters) {
-        this.command = (Class<? extends AbstractCommand<?>>) command.getClass();
+    public CommandEmoteReaction(final AbstractCommand<?> commandClass, final CommandParameters commandParameters) {
+        this.commandClass = (Class<? extends AbstractCommand<?>>) commandClass.getClass();
         this.values = new Values(
                 commandParameters.getArgs(),
                 commandParameters.isGuildCommand(),
@@ -29,7 +29,7 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
     @Override
     public void onEmote() {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
-                .getCommand(this.command)
+                .getCommand(this.commandClass)
                 .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));
     }
 

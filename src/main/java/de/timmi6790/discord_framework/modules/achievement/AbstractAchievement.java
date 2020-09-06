@@ -7,6 +7,8 @@ import lombok.Data;
 
 @Data
 public abstract class AbstractAchievement {
+    private static final String ACHIEVEMENT_NAME = "achievementName";
+
     private static final String GET_ACHIEVEMENT_ID = "SELECT id FROM `achievement` WHERE achievement_name = :achievementName LIMIT 1;";
     private static final String INSERT_NEW_ACHIEVEMENT = "INSERT INTO achievement(achievement_name) VALUES(:achievementName);";
 
@@ -23,16 +25,16 @@ public abstract class AbstractAchievement {
     private int getStatDbId() {
         return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_ACHIEVEMENT_ID)
-                        .bind("achievementName", this.getInternalName())
+                        .bind(ACHIEVEMENT_NAME, this.getInternalName())
                         .mapTo(int.class)
                         .findFirst()
                         .orElseGet(() -> {
                             handle.createUpdate(INSERT_NEW_ACHIEVEMENT)
-                                    .bind("achievementName", this.getInternalName())
+                                    .bind(ACHIEVEMENT_NAME, this.getInternalName())
                                     .execute();
 
                             return handle.createQuery(GET_ACHIEVEMENT_ID)
-                                    .bind("achievementName", this.getInternalName())
+                                    .bind(ACHIEVEMENT_NAME, this.getInternalName())
                                     .mapTo(int.class)
                                     .first();
                         })

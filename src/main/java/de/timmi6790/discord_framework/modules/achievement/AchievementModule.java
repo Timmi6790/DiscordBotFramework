@@ -25,21 +25,6 @@ public class AchievementModule extends AbstractModule {
         );
     }
 
-    @Override
-    public void onInitialize() {
-
-    }
-
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     public void registerAchievements(final AbstractAchievement... achievements) {
         Arrays.stream(achievements)
                 .filter(abstractAchievement -> !this.achievements.containsKey(abstractAchievement.getDatabaseId()))

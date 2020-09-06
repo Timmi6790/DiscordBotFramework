@@ -12,6 +12,9 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import java.util.stream.Collectors;
 
 public class RankCommand extends AbstractCommand<RankModule> {
+    private static final String ERROR_TITLE = "Error";
+    private static final String RANK_FALLBACK_NAME = "Unknown";
+
     public RankCommand() {
         // TODO: Add a better command system, to support more complex commands
         super("rank", "Management", "Rank control command", "<rankName|list> <perms;extend;rename;rename;create;delete;info|> <add,remove;add,remove;newName|> <command,permNode;rankName|>");
@@ -79,7 +82,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " does already possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
                 );
@@ -103,7 +106,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " does not possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
                 );
@@ -137,7 +140,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
             this.sendTimedMessage(
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
+                            .setTitle(ERROR_TITLE)
                             .setDescription("You can't target the same rank"),
                     90
             );
@@ -149,7 +152,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " is already extending " + MarkdownUtil.monospace(extendedRank.getName())),
                         90
                 );
@@ -169,7 +172,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " is not extending " + MarkdownUtil.monospace(extendedRank.getName())),
                         90
                 );
@@ -242,7 +245,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
             this.sendTimedMessage(
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
+                            .setTitle(ERROR_TITLE)
                             .setDescription("Something went wrong while deleting " + MarkdownUtil.monospace(rank.getName() + "[" + rank.getDatabaseId() + "]") + "."),
                     90
             );
@@ -258,7 +261,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 .map(rankId ->
                         rankModule.getRank(rankId)
                                 .map(Rank::getName)
-                                .orElse("Unknown") + "[" + rankId + "]"
+                                .orElse(RANK_FALLBACK_NAME) + "[" + rankId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -266,7 +269,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
         final String perms = rank.getPermissions()
                 .stream()
                 .map(permId ->
-                        permissionsModule.getPermissionFromId(permId).orElse("Unknown") + "[" + permId + "]"
+                        permissionsModule.getPermissionFromId(permId).orElse(RANK_FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -274,7 +277,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 .stream()
                 .filter(permId -> !rank.getPermissions().contains(permId))
                 .map(permId ->
-                        permissionsModule.getPermissionFromId(permId).orElse("Unknown") + "[" + permId + "]"
+                        permissionsModule.getPermissionFromId(permId).orElse(RANK_FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 

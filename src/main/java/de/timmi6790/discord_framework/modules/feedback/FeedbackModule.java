@@ -97,11 +97,6 @@ public class FeedbackModule extends AbstractModule {
         this.getModuleOrThrow(ConfigModule.class).saveConfig(this, Config.class);
     }
 
-    @Override
-    public void onDisable() {
-
-    }
-
     public Config getConfig() {
         return this.getModuleOrThrow(ConfigModule.class).getConfig(this, Config.class);
     }

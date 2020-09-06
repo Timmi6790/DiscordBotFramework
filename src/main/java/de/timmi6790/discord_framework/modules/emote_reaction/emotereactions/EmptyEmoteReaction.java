@@ -6,6 +6,6 @@ import lombok.Data;
 public class EmptyEmoteReaction implements AbstractEmoteReaction {
     @Override
     public void onEmote() {
-
+        // Doing nothing is my entire purpose
     }
 }

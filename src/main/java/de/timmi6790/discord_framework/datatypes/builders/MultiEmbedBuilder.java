@@ -1,5 +1,6 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
+import lombok.ToString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+@ToString
 public class MultiEmbedBuilder {
     // Title, Description, Field, Footer.text, Author.name
     protected static final int EMBED_TOTAL_MAX = 6_000;
@@ -71,6 +73,28 @@ public class MultiEmbedBuilder {
     public MultiEmbedBuilder() {
     }
 
+    private String splitDescriptionTillOne(final List<MessageEmbed> embeds) {
+        String lastDescription = null;
+        int breakPoint;
+        for (int descriptionIndex = 0; this.description.length() > descriptionIndex; descriptionIndex = breakPoint) {
+            // Don't split if we have enough for the entire remaining message
+            if (descriptionIndex + EMBED_DESCRIPTION_MAX > this.description.length()) {
+                breakPoint = this.description.length();
+            } else {
+                breakPoint = findMessageBreakPoint(this.description, descriptionIndex + EMBED_DESCRIPTION_MAX);
+            }
+
+            lastDescription = this.description.substring(descriptionIndex, breakPoint);
+
+            // Exclude the last message
+            if (this.description.length() > breakPoint) {
+                embeds.add(this.createMessageEmbed(lastDescription, null, embeds.isEmpty(), false));
+            }
+        }
+
+        return lastDescription;
+    }
+
     public MultiEmbedBuilder(@Nullable final MultiEmbedBuilder builder) {
         if (builder != null) {
             this.setDescription(builder.description.toString());
@@ -98,11 +122,8 @@ public class MultiEmbedBuilder {
             this.author = embed.getAuthor();
             this.footer = embed.getFooter();
             this.image = embed.getImage();
-            if (embed.getFields() != null) {
-                this.fields.addAll(embed.getFields());
-            }
+            this.fields.addAll(embed.getFields());
         }
-
     }
 
     private int getFooterLength() {
@@ -142,18 +163,7 @@ public class MultiEmbedBuilder {
         final List<MessageEmbed> embeds = new ArrayList<>();
 
         // Descriptions
-        String lastDescription = null;
-        int breakPoint;
-        for (int descriptionIndex = 0; this.description.length() > descriptionIndex; descriptionIndex = breakPoint) {
-            final int maxBreakPoint = Math.min(descriptionIndex + EMBED_DESCRIPTION_MAX, this.description.length());
-            breakPoint = findMessageBreakPoint(this.description, maxBreakPoint);
-            lastDescription = this.description.substring(descriptionIndex, breakPoint);
-
-            // Exclude the last message
-            if (this.description.length() > breakPoint) {
-                embeds.add(this.createMessageEmbed(lastDescription, null, embeds.isEmpty(), false));
-            }
-        }
+        final String lastDescription = this.splitDescriptionTillOne(embeds);
 
         // Fields
         int currentEmbedSize = lastDescription != null ? lastDescription.length() : 0;

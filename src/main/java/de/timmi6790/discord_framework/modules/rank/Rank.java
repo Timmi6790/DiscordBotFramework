@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
 @Data
 @AllArgsConstructor
 public class Rank {
+    private static final String RANK_ID = "rankId";
+    private static final String DATABASE_ID = "databaseId";
+
     private static final String INSERT_RANK_PERMISSION = "INSERT INTO rank_permission(rank_id, permission_id) VALUES(:rankId, :permissionId);";
     private static final String DELETE_RANK_PERMISSION = "DELETE FROM rank_permission WHERE rank_id = :rankId AND permission_id = :permissionId LIMIT 1";
 
@@ -61,7 +64,7 @@ public class Rank {
 
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_PERMISSION)
-                        .bind("rankId", this.databaseId)
+                        .bind(RANK_ID, this.databaseId)
                         .bind("permissionId", permissionId)
                         .execute()
         );
@@ -79,7 +82,7 @@ public class Rank {
 
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_PERMISSION)
-                        .bind("rankId", this.databaseId)
+                        .bind(RANK_ID, this.databaseId)
                         .bind("permissionId", permissionId)
                         .execute()
         );
@@ -135,7 +138,7 @@ public class Rank {
 
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_RELATION)
-                        .bind("rankId", this.databaseId)
+                        .bind(RANK_ID, this.databaseId)
                         .bind("extendedRankId", rankId)
                         .execute()
         );
@@ -157,7 +160,7 @@ public class Rank {
 
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_RELATION)
-                        .bind("rankId", this.databaseId)
+                        .bind(RANK_ID, this.databaseId)
                         .bind("extendedRankId", rankId)
                         .execute()
         );
@@ -177,7 +180,7 @@ public class Rank {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
                 handle.createUpdate(SET_NAME)
                         .bind("newRankName", name)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .execute()
         );
         this.name = name;
@@ -187,7 +190,7 @@ public class Rank {
     public long retrievePlayerCount() {
         return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PLAYER_IDS_WITH_RANK)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .mapTo(long.class)
                         .list()
 
@@ -198,7 +201,7 @@ public class Rank {
         // I think it is the best solution to just get the discord ids
         final List<Long> playerIds = DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_PLAYER_IDS_WITH_RANK)
-                        .bind("databaseId", this.databaseId)
+                        .bind(DATABASE_ID, this.databaseId)
                         .mapTo(long.class)
                         .list()
         );

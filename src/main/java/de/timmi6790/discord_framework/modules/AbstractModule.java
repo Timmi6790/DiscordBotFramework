@@ -24,11 +24,14 @@ public abstract class AbstractModule {
         this.name = name;
     }
 
-    public abstract void onInitialize();
+    public void onInitialize() {
+    }
 
-    public abstract void onEnable();
+    public void onEnable() {
+    }
 
-    public abstract void onDisable();
+    public void onDisable() {
+    }
 
     protected final void addGatewayIntents(final GatewayIntent... gatewayIntents) {
         this.requiredGatewayIntents.addAll(Arrays.asList(gatewayIntents));

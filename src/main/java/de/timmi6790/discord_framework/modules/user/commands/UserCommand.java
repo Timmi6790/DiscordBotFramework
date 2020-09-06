@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class UserCommand extends AbstractCommand<UserDbModule> {
+    private static final String ERROR_TITLE = "Error";
+
     public UserCommand() {
         super("user", "Management", "User control command", "<discordUser> <perms|rank|achievement|setting|setPrimaryRank|ban|" +
                 "unBan|info|invalidate> <add;remove;list|add;remove|add|add|rank|||||> <command;permNode|rank|>");
@@ -149,7 +151,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             this.sendTimedMessage(
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
+                            .setTitle(ERROR_TITLE)
                             .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is not banned."),
                     90
             );
@@ -173,7 +175,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             this.sendTimedMessage(
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
+                            .setTitle(ERROR_TITLE)
                             .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is already banned."),
                     90
             );
@@ -200,7 +202,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             this.sendTimedMessage(
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
+                            .setTitle(ERROR_TITLE)
                             .setDescription("The user already has this rank."),
                     90
             );
@@ -231,7 +233,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription("The user already has this rank."),
                         90
                 );
@@ -253,7 +255,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription("The user is not in possession of this rank."),
                         90
                 );
@@ -287,7 +289,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " does already possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
                 );
@@ -309,7 +311,7 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
                 this.sendTimedMessage(
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " does not possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
                 );

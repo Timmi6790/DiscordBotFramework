@@ -18,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @EqualsAndHashCode(callSuper = true)
 
 public class RankModule extends AbstractModule {
+    private static final String DATABASE_ID = "databaseId";
+
     private static final RankMapper rankMapper = new RankMapper();
 
     private static final String GET_ALL_RANKS = "SELECT rank.id, rank_name rankName, GROUP_CONCAT(DISTINCT rank_permission.permission_id) permissions, GROUP_CONCAT(DISTINCT rank_relation.parent_rank_id) parentRanks " +
@@ -63,15 +65,6 @@ public class RankModule extends AbstractModule {
                         this,
                         new RankCommand()
                 );
-    }
-
-    @Override
-    public void onEnable() {
-    }
-
-    @Override
-    public void onDisable() {
-
     }
 
     public void loadRanksFromDatabase() {
@@ -133,7 +126,7 @@ public class RankModule extends AbstractModule {
                     .mapTo(int.class)
                     .first();
 
-            return handle.createQuery(GET_RANK_BY_ID).bind("databaseId", rankId)
+            return handle.createQuery(GET_RANK_BY_ID).bind(DATABASE_ID, rankId)
                     .map(rankMapper)
                     .first();
         });
@@ -150,10 +143,10 @@ public class RankModule extends AbstractModule {
 
         this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle -> {
             handle.createUpdate(SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE)
-                    .bind("databaseId", rankId)
+                    .bind(DATABASE_ID, rankId)
                     .execute();
             handle.createUpdate(DELETE_RANK)
-                    .bind("databaseId", rankId)
+                    .bind(DATABASE_ID, rankId)
                     .execute();
         });
         this.rankMap.remove(rankId);
