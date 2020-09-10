@@ -15,12 +15,18 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Optional;
 
+/**
+ * Several reflection related utility functions.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ReflectionUtilities {
-    private static URLClassLoader getSystemClassLoader() {
-        return (URLClassLoader) ClassLoader.getSystemClassLoader();
-    }
-
+    /**
+     * Creates a deep clone of the given object.
+     *
+     * @param <O>    the object you want to copy
+     * @param object the object you want to copy
+     * @return the deep cloned object
+     */
     @SneakyThrows
     public static <O> O deepCopy(final O object) {
         // TODO: Implement a version based on reflections
@@ -28,6 +34,14 @@ public class ReflectionUtilities {
         return gson.fromJson(gson.toJson(object), (Type) object.getClass());
     }
 
+    /**
+     * Convenient utility function that will search for the given annotation for the method, instead of throwing a NullPointerException.
+     *
+     * @param <T>             the required annotation
+     * @param method          the method of the wanted annotation
+     * @param annotationClass the required annotation class
+     * @return the found annotation
+     */
     public static <T extends Annotation> Optional<T> getAnnotation(final Method method, final Class<T> annotationClass) {
         try {
             final T annotation = method.getAnnotation(annotationClass);
@@ -37,23 +51,33 @@ public class ReflectionUtilities {
         }
     }
 
-    public static Optional<Method> getMethod(final Class clazz, final String name, final Class<?>... parameterTypes) {
-        try {
-            return Optional.of(clazz.getMethod(name, parameterTypes));
-        } catch (final NoSuchMethodException e) {
-            return Optional.empty();
-        }
-    }
-
-    public static void addJarToSystemClassLoader(final File jar) throws MalformedURLException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        final Method method = getMethod(URLClassLoader.class, "addUrl", URL.class).orElseThrow(NoSuchMethodException::new);
+    /**
+     * Adds a jar file to the given classLoader.
+     *
+     * @param jar            the jar
+     * @param urlClassLoader the url class loader
+     * @throws MalformedURLException     the malformed url exception
+     * @throws InvocationTargetException the invocation target exception
+     * @throws IllegalAccessException    the illegal access exception
+     * @throws NoSuchMethodException     the no such method exception
+     */
+    public static void addJarToClassLoader(final File jar, final URLClassLoader urlClassLoader) throws MalformedURLException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        final Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
-        method.invoke(getSystemClassLoader(), jar.toURI().toURL());
+        method.invoke(urlClassLoader, jar.toURI().toURL());
     }
 
-    public static Optional<Class<?>> loadClassFromSystemClassLoader(final String path) {
+    /**
+     * Tries to load the given class path from the given urlClassLoader.
+     * Instead of throwing a ClassNotFoundException, returns Optional::emtpy
+     *
+     * @param path           the path
+     * @param urlClassLoader the url class loader
+     * @return the optional
+     */
+    public static Optional<Class<?>> loadClassFromClassLoader(final String path, final URLClassLoader urlClassLoader) {
         try {
-            return Optional.of(getSystemClassLoader().loadClass(path));
+            return Optional.of(urlClassLoader.loadClass(path));
         } catch (final ClassNotFoundException ignore) {
             return Optional.empty();
         }

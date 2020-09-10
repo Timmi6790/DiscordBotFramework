@@ -113,14 +113,14 @@ public class ModuleManager {
             return abstractModules;
         }
 
+        final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         for (final File jar : pluginJars) {
             DiscordBot.getLogger().info("Checking {} for modules.", jar.getName());
 
             try {
                 // Add external jar to system classloader
-                ReflectionUtilities.addJarToSystemClassLoader(jar);
+                ReflectionUtilities.addJarToClassLoader(jar, classLoader);
 
-                final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
                 final URL pluginUrl = classLoader.getResource("plugin.json");
                 if (pluginUrl == null) {
                     DiscordBot.getLogger().warn("Can't load {}, no plugins.json found.", jar.getName());
@@ -129,7 +129,7 @@ public class ModuleManager {
 
                 final PluginConfig plugin = gson.fromJson(new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8), PluginConfig.class);
                 for (final String path : plugin.getModules()) {
-                    final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromSystemClassLoader(path);
+                    final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromClassLoader(path, classLoader);
                     if (!pluginClassOpt.isPresent()) {
                         DiscordBot.getLogger().warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
                         continue;

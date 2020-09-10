@@ -6,7 +6,7 @@ name: SentryRelease
 # events but only for the master branch
 on:
   release:
-    types: [published, prereleased]
+    types: [ published, prereleased ]
 
 jobs:
   createSentryRelease:

@@ -58,7 +58,7 @@ public class UserDbModule extends AbstractModule {
                         new UserCommand()
                 );
     }
-    
+
     private UserDb create(final long discordId) {
         // Make sure that the user is not present
         return this.get(discordId).orElseGet(() -> {

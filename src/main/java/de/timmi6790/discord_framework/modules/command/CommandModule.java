@@ -110,7 +110,7 @@ public class CommandModule extends AbstractModule {
     public void onEnable() {
         this.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
     }
-    
+
     public void innitDatabase() {
         // Db
         // CommandCause

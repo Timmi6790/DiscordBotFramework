@@ -25,7 +25,7 @@ public class FeedbackCommand extends AbstractCommand<FeedbackModule> {
     private FeedbackHandler getFeedbackHandlerThrow(final CommandParameters commandParameters, final int argPos) {
         final String userInput = commandParameters.getArgs()[argPos];
         final FeedbackModule module = this.getModule();
-        
+
         final Optional<FeedbackHandler> feedbackHandlerOpt = module.getFeedbackHandler(userInput);
         if (feedbackHandlerOpt.isPresent()) {
             return feedbackHandlerOpt.get();
