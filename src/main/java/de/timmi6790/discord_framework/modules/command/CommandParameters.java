@@ -2,6 +2,7 @@ package de.timmi6790.discord_framework.modules.command;
 
 import com.google.common.base.Splitter;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
@@ -9,12 +10,14 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.internal.utils.Checks;
 
 import javax.annotation.Nonnull;
 import java.util.EnumSet;
@@ -103,22 +106,39 @@ public class CommandParameters {
         return this.args.clone();
     }
 
+    public MessageChannel getGuildTextChannel() {
+        Checks.check(this.isGuildCommand(), "Can't get guild text channel, for dm messages");
+        return this.channelDb.getChannel();
+    }
+
     @SneakyThrows
-    public MessageChannel getTextChannel() {
+    public PrivateChannel getUserTextChannel() {
+        final CompletableFuture<PrivateChannel> futureValue = new CompletableFuture<>();
+        this.getUser().openPrivateChannel().queue(futureValue::complete);
+        return futureValue.get(1, TimeUnit.MINUTES);
+    }
+
+    public MessageChannel getLowestMessageChannel() {
         if (this.isGuildCommand()) {
-            return this.channelDb.getChannel();
+            return this.getGuildTextChannel();
         } else {
-            final CompletableFuture<TextChannel> futureValue = new CompletableFuture<>();
-            this.getUser().openPrivateChannel().queue(privateChannel -> futureValue.complete((TextChannel) privateChannel));
-            return futureValue.get(1, TimeUnit.MINUTES);
+            return this.getUserTextChannel();
         }
     }
 
     public Set<Permission> getDiscordPermissions() {
         if (this.isGuildCommand()) {
-            return this.channelDb.getGuildDb().getGuild().getSelfMember().getPermissions((GuildChannel) this.getTextChannel());
+            return this.channelDb.getGuildDb().getGuild().getSelfMember().getPermissions((GuildChannel) this.getGuildTextChannel());
         } else {
             return EnumSet.noneOf(Permission.class);
+        }
+    }
+
+    public void sendMessage(final MultiEmbedBuilder multiEmbedBuilder) {
+        if (this.isGuildCommand()) {
+            DiscordMessagesUtilities.sendMessage(this.getGuildTextChannel(), multiEmbedBuilder);
+        } else {
+            DiscordMessagesUtilities.sendMessage(this.getUserTextChannel(), multiEmbedBuilder);
         }
     }
 }

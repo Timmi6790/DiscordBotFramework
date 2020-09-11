@@ -344,11 +344,11 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void sendEmoteMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getTextChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
+        commandParameters.getLowestMessageChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
                 .queue(message -> {
                     if (!emotes.isEmpty()) {
                         final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
-                                commandParameters.getTextChannel().getIdLong());
+                                commandParameters.getLowestMessageChannel().getIdLong());
                         this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
                     }
 
@@ -357,15 +357,15 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void sendTimedMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final int deleteTime) {
-        DiscordMessagesUtilities.sendMessageTimed(commandParameters.getTextChannel(), embedBuilder, deleteTime);
+        DiscordMessagesUtilities.sendMessageTimed(commandParameters.getLowestMessageChannel(), embedBuilder, deleteTime);
     }
 
     protected void sendMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder) {
-        DiscordMessagesUtilities.sendMessage(commandParameters.getTextChannel(), embedBuilder);
+        DiscordMessagesUtilities.sendMessage(commandParameters.getLowestMessageChannel(), embedBuilder);
     }
 
     protected void sendMessage(final CommandParameters commandParameters, final MultiEmbedBuilder embedBuilder, final Consumer<Message> success) {
-        DiscordMessagesUtilities.sendMessage(commandParameters.getTextChannel(), embedBuilder, success);
+        DiscordMessagesUtilities.sendMessage(commandParameters.getLowestMessageChannel(), embedBuilder, success);
     }
 
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,

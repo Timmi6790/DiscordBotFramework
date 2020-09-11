@@ -47,8 +47,7 @@ public class BugFeedbackHandler extends GetModule<FeedbackModule> implements Fee
             );
         }
 
-        DiscordMessagesUtilities.sendMessage(
-                commandParameters.getTextChannel(),
+        commandParameters.sendMessage(
                 DiscordMessagesUtilities
                         .getEmbedBuilder(commandParameters)
                         .setTitle("Bug Report")
