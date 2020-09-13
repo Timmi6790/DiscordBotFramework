@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +57,7 @@ public class DiscordBot {
         this.basePath = Paths.get(".").toAbsolutePath().normalize();
 
         this.moduleManager = new ModuleManager();
-        this.internalModules = new ListBuilder<AbstractModule>(ArrayList::new).addAll(
+        this.internalModules = ListBuilder.<AbstractModule>ofArrayList().addAll(
                 new DatabaseModule(),
                 new EventModule(),
                 new CommandModule(),

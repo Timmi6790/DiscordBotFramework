@@ -4,17 +4,17 @@ import de.timmi6790.discord_framework.modules.command.CommandProperty;
 import net.dv8tion.jda.api.Permission;
 import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Arrays;
 
-import java.util.List;
+import java.util.EnumSet;
 
-public class RequiredDiscordBotPermsCommandProperty extends CommandProperty<List<Permission>> {
-    private final Permission[] permissions;
+public class RequiredDiscordBotPermsCommandProperty extends CommandProperty<EnumSet<Permission>> {
+    private final EnumSet<Permission> permissions = EnumSet.noneOf(Permission.class);
 
     public RequiredDiscordBotPermsCommandProperty(final Permission... permissions) {
-        this.permissions = permissions;
+        this.permissions.addAll(Arrays.asList(permissions));
     }
 
     @Override
-    public List<Permission> getValue() {
-        return Arrays.asList(this.permissions);
+    public EnumSet<Permission> getValue() {
+        return this.permissions;
     }
 }

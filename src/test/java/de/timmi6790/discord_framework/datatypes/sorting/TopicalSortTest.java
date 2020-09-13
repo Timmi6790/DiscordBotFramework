@@ -4,7 +4,6 @@ import de.timmi6790.discord_framework.datatypes.builders.ListBuilder;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +16,7 @@ class TopicalSortTest {
     @Test
     void simplePathSort() throws TopicalSortCycleException {
         final List<Integer> values = Arrays.asList(10, 2, 5, 1, 4, 3, 8, 6, 7, 9);
-        final List<TopicalSort.Dependency> dependencies = new ListBuilder<TopicalSort.Dependency>(ArrayList::new)
+        final List<TopicalSort.Dependency> dependencies = ListBuilder.<TopicalSort.Dependency>ofArrayList()
                 .add(new TopicalSort.Dependency(0, 9))
                 .add(new TopicalSort.Dependency(9, 6))
                 .add(new TopicalSort.Dependency(6, 8))
@@ -41,7 +40,7 @@ class TopicalSortTest {
     @Test
     void simpleLoopDetectionCheck() {
         final List<Integer> values = Arrays.asList(1, 2);
-        final List<TopicalSort.Dependency> dependencies = new ListBuilder<TopicalSort.Dependency>(ArrayList::new)
+        final List<TopicalSort.Dependency> dependencies = ListBuilder.<TopicalSort.Dependency>ofArrayList()
                 .add(new TopicalSort.Dependency(0, 1))
                 .add(new TopicalSort.Dependency(1, 0))
                 .build();

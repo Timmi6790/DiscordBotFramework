@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Data
 public class CommandParameters {
@@ -48,7 +49,7 @@ public class CommandParameters {
         this.userDb = userDb;
     }
 
-    public CommandParameters(@Nonnull final MessageReceivedEvent event, final String rawArgs) {
+    public CommandParameters(@Nonnull final MessageReceivedEvent event, @NonNull final String rawArgs) {
         final ModuleManager moduleManager = DiscordBot.getInstance().getModuleManager();
 
         final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
@@ -134,11 +135,11 @@ public class CommandParameters {
         }
     }
 
-    public void sendMessage(final MultiEmbedBuilder multiEmbedBuilder) {
-        if (this.isGuildCommand()) {
-            DiscordMessagesUtilities.sendMessage(this.getGuildTextChannel(), multiEmbedBuilder);
-        } else {
-            DiscordMessagesUtilities.sendMessage(this.getUserTextChannel(), multiEmbedBuilder);
-        }
+    public void sendMessage(@NonNull final MultiEmbedBuilder multiEmbedBuilder, @NonNull final Consumer<Message> success) {
+        DiscordMessagesUtilities.sendMessage(this.getLowestMessageChannel(), multiEmbedBuilder, success);
+    }
+
+    public void sendMessage(@NonNull final MultiEmbedBuilder multiEmbedBuilder) {
+        DiscordMessagesUtilities.sendMessage(this.getLowestMessageChannel(), multiEmbedBuilder);
     }
 }

@@ -19,7 +19,7 @@ public class SettingsCommand extends AbstractCommand<SettingModule> {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All current settings
         if (commandParameters.getArgs().length == 0) {
-            final MultiEmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
+            final MultiEmbedBuilder embedBuilder = getEmbedBuilder(commandParameters)
                     .setTitle("Settings");
 
             // TODO: Fix me after new settings module
@@ -30,7 +30,7 @@ public class SettingsCommand extends AbstractCommand<SettingModule> {
                 settingsMap.forEach((settings, value) -> embedBuilder.addField(settings.getName(), value, false));
             }
 
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
                     embedBuilder,
                     90

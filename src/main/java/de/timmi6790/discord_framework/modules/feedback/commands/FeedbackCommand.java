@@ -47,9 +47,9 @@ public class FeedbackCommand extends AbstractCommand<FeedbackModule> {
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         if (commandParameters.isGuildCommand()) {
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setDescription("This command can only be used in your pms with the bot!"),
                     90
             );
@@ -58,9 +58,9 @@ public class FeedbackCommand extends AbstractCommand<FeedbackModule> {
         }
 
         if (commandParameters.getArgs().length == 0) {
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setDescription("Available feedback categories.\n\n" +
                                     this.getModule().getFeedbackHandlers()
                                             .stream()
@@ -77,9 +77,9 @@ public class FeedbackCommand extends AbstractCommand<FeedbackModule> {
         this.getModule().getActiveFeedbackCache().put(commandParameters.getUserDb().getDiscordId(), feedbackHandler.getFeedbackName());
         feedbackHandler.onInitialize(commandParameters.getUser());
 
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Feedback Info")
                         .setDescription(feedbackHandler.getFeedbackInfoMessage())
                         .setFooter("Write cancel to cancel your feedback | You have " + FeedbackModule.getFEEDBACK_TIME() + " minutes to enter your feedback"),

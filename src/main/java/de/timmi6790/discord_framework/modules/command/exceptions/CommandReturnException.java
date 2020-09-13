@@ -4,18 +4,18 @@ import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.NonNull;
 
 import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
-@Getter
 @Data
 public class CommandReturnException extends RuntimeException {
+    private static final long serialVersionUID = -7239128594396319097L;
     private final MultiEmbedBuilder embedBuilder;
     private final CommandResult commandResult;
 
-    public CommandReturnException(final MultiEmbedBuilder embedBuilder, final CommandResult commandResult) {
+    public CommandReturnException(final MultiEmbedBuilder embedBuilder, @NonNull final CommandResult commandResult) {
         super("");
 
         this.embedBuilder = embedBuilder;
@@ -36,7 +36,7 @@ public class CommandReturnException extends RuntimeException {
         this.commandResult = CommandResult.INVALID_ARGS;
     }
 
-    public CommandReturnException(final CommandResult commandResult) {
+    public CommandReturnException(@NonNull final CommandResult commandResult) {
         super("");
 
         this.embedBuilder = null;

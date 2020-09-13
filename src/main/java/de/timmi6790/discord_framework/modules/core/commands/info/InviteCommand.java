@@ -18,8 +18,8 @@ public class InviteCommand extends AbstractCommand<CoreModule> {
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        this.sendTimedMessage(commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        sendTimedMessage(commandParameters,
+                getEmbedBuilder(commandParameters)
                         .setTitle("Invite Link")
                         .setDescription("[Click Me!](" + this.inviteUrl + ")"),
                 90);

@@ -29,7 +29,7 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
         // All info
         if (commandParameters.getArgs().length == 0) {
             final String mainCommand = this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand();
-            final MultiEmbedBuilder message = this.getEmbedBuilder(commandParameters)
+            final MultiEmbedBuilder message = getEmbedBuilder(commandParameters)
                     .setTitle("Commands")
                     .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
                     .setFooter("TIP: Use " + this.getModule().getMainCommand() + " help <command> to see more details");
@@ -52,7 +52,7 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
                             )
                     );
 
-            this.sendTimedMessage(commandParameters, message, 150);
+            sendTimedMessage(commandParameters, message, 150);
             return CommandResult.SUCCESS;
         }
 
@@ -61,14 +61,14 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
         final AbstractCommand<?> command = this.getCommandThrow(commandParameters, 0);
         final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
 
-        final MultiEmbedBuilder message = this.getEmbedBuilder(commandParameters)
+        final MultiEmbedBuilder message = getEmbedBuilder(commandParameters)
                 .setTitle("Commands " + StringUtilities.capitalize(command.getName()))
                 .addField("Description", command.getDescription(), false, !command.getDescription().isEmpty())
                 .addField("Alias Names", String.join(", ", command.getAliasNames()), false, command.getAliasNames().length != 0)
                 .addField("Syntax", command.getSyntax(), false, !command.getSyntax().isEmpty())
                 .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty());
 
-        this.sendTimedMessage(commandParameters, message, 90);
+        sendTimedMessage(commandParameters, message, 90);
 
         return CommandResult.SUCCESS;
     }

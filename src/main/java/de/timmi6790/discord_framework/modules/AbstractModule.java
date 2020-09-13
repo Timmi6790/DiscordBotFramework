@@ -7,10 +7,7 @@ import lombok.Data;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Data
 public abstract class AbstractModule {
@@ -18,7 +15,7 @@ public abstract class AbstractModule {
     private Set<Class<? extends AbstractModule>> dependencies = new HashSet<>();
     private Set<Class<? extends AbstractModule>> loadAfter = new HashSet<>();
     private Set<Class<? extends AbstractModule>> loadBefore = new HashSet<>();
-    private Set<GatewayIntent> requiredGatewayIntents = new HashSet<>();
+    private Set<GatewayIntent> requiredGatewayIntents = EnumSet.noneOf(GatewayIntent.class);
 
     public AbstractModule(final String name) {
         this.name = name;
@@ -37,19 +34,23 @@ public abstract class AbstractModule {
         this.requiredGatewayIntents.addAll(Arrays.asList(gatewayIntents));
     }
 
+    @SafeVarargs
     protected final void addDependencies(final Class<? extends AbstractModule>... dependencies) {
         this.dependencies.addAll(Arrays.asList(dependencies));
     }
 
+    @SafeVarargs
     protected final void addDependenciesAndLoadAfter(final Class<? extends AbstractModule>... dependencies) {
         this.addDependencies(dependencies);
         this.addLoadAfter(dependencies);
     }
 
+    @SafeVarargs
     protected final void addLoadAfter(final Class<? extends AbstractModule>... loadAfter) {
         this.loadAfter.addAll(Arrays.asList(loadAfter));
     }
 
+    @SafeVarargs
     protected final void addLoadBefore(final Class<? extends AbstractModule>... loadBefore) {
         this.loadBefore.addAll(Arrays.asList(loadBefore));
     }

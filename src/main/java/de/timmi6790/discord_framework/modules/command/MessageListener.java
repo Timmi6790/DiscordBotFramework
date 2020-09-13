@@ -1,10 +1,9 @@
 package de.timmi6790.discord_framework.modules.command;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.datatypes.Pair;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
-import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
-import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
@@ -12,36 +11,27 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import lombok.NonNull;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.exceptions.ErrorHandler;
-import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MessageListener extends GetModule<CommandModule> {
-    private static final Pattern FIRST_ARG_PATTERN = Pattern.compile("^([^\\s]+) ?(.*)");
-
-    private Optional<String> getParsedStart(final String rawMessage, final GuildDb guildDb) {
+    protected static Optional<Pair<String, String>> getParsedStart(@NonNull final String rawMessage, @NonNull final Pattern mainCommandPattern, final Pattern guildCommandAliasPattern) {
         // Check if the message matches the main or guild specific start regex
-
-        final Matcher mainMatcher = this.getModule().getMainCommandPattern().matcher(rawMessage);
+        final Matcher mainMatcher = mainCommandPattern.matcher(rawMessage);
         if (mainMatcher.find()) {
-            return Optional.of(mainMatcher.group(1).trim());
-
+            return Optional.of(new Pair<>(mainMatcher.group(1).trim(), mainMatcher.group(2).trim()));
         }
 
-        final Optional<Pattern> commandAliasPattern = guildDb.getCommandAliasPattern();
-        if (commandAliasPattern.isPresent()) {
-            final Matcher guildAliasMatcher = commandAliasPattern.get().matcher(rawMessage);
+        if (guildCommandAliasPattern != null) {
+            final Matcher guildAliasMatcher = guildCommandAliasPattern.matcher(rawMessage);
             if (guildAliasMatcher.find()) {
-                return Optional.of(guildAliasMatcher.group(1).trim());
+                return Optional.of(new Pair<>(guildAliasMatcher.group(1).trim(), guildAliasMatcher.group(2).trim()));
             }
         }
 
@@ -49,7 +39,7 @@ public class MessageListener extends GetModule<CommandModule> {
     }
 
     @SubscribeEvent
-    public void onTextMessage(final MessageReceivedEvent event) {
+    public void onTextMessage(@NonNull final MessageReceivedEvent event) {
         // Ignore yourself
         if (this.getModule().getBotId() == event.getAuthor().getIdLong()) {
             return;
@@ -58,29 +48,24 @@ public class MessageListener extends GetModule<CommandModule> {
         final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
         final GuildDb guildDb = this.getModuleManager().getModuleOrThrow(GuildDbModule.class).getOrCreate(guildId);
 
-        final String rawMessage = event.getMessage().getContentRaw().replace("\n", " ");
-        final Optional<String> parsedStart = this.getParsedStart(rawMessage, guildDb);
-
-        // Invalid start
+        final Optional<Pair<String, String>> parsedStart = getParsedStart(
+                event.getMessage().getContentRaw(),
+                this.getModule().getMainCommandPattern(),
+                guildDb.getCommandAliasPattern().orElse(null)
+        );
         if (!parsedStart.isPresent()) {
             return;
         }
 
-        final Matcher commandMatcher = FIRST_ARG_PATTERN.matcher(parsedStart.get());
-        final Optional<AbstractCommand<?>> commandOpt;
-        final String commandName;
-        final String rawArgs;
-        if (commandMatcher.find()) {
-            commandName = commandMatcher.group(1);
-            commandOpt = this.getModule().getCommand(commandName);
-            rawArgs = commandMatcher.group(2);
-        } else {
-            commandName = null;
-            commandOpt = this.getModule().getCommand(HelpCommand.class);
-            rawArgs = parsedStart.get();
-        }
+        final String commandName = parsedStart.get().getLeft();
+        final String rawArgs = parsedStart.get().getRight();
+        final Optional<AbstractCommand<?>> commandOpt = rawArgs.isEmpty() ? this.getModule().getCommand(HelpCommand.class) : this.getModule().getCommand(commandName);
 
         final CommandParameters commandParameters = new CommandParameters(event, rawArgs);
+        if (AbstractCommand.isServerBanned(commandParameters) || AbstractCommand.isUserBanned(commandParameters)) {
+            return;
+        }
+
         final AbstractCommand<?> command;
 
         if (commandOpt.isPresent()) {
@@ -91,7 +76,9 @@ public class MessageListener extends GetModule<CommandModule> {
                 command = similarCommands.get(0);
 
             } else {
-                this.sendIncorrectCommandHelpMessage(event, similarCommands, commandName, commandParameters);
+                if (AbstractCommand.hasRequiredDiscordPerms(commandParameters, EnumSet.noneOf(Permission.class))) {
+                    this.sendIncorrectCommandHelpMessage(commandParameters, similarCommands, commandName);
+                }
                 return;
             }
         }
@@ -103,7 +90,7 @@ public class MessageListener extends GetModule<CommandModule> {
         }
     }
 
-    private void sendIncorrectCommandHelpMessage(final MessageReceivedEvent event, final List<AbstractCommand<?>> similarCommands, final String firstArg, final CommandParameters commandParameters) {
+    private void sendIncorrectCommandHelpMessage(@NonNull final CommandParameters commandParameters, @NonNull final List<AbstractCommand<?>> similarCommands, @NonNull final String firstArg) {
         final StringBuilder description = new StringBuilder();
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
@@ -126,29 +113,17 @@ public class MessageListener extends GetModule<CommandModule> {
 
             description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
-        this.getModule().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
+        this.getModule().getModuleOrThrow(CommandModule.class)
+                .getCommand(HelpCommand.class)
+                .ifPresent(helpCommand -> emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(helpCommand, commandParameters)));
 
-        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, event.getAuthor().getIdLong(), event.getChannel().getIdLong());
-
-        event.getChannel().sendMessage(
-                DiscordMessagesUtilities.getEmbedBuilder(event.getAuthor(), event.getMember())
+        AbstractCommand.sendEmoteMessage(
+                commandParameters,
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                         .setTitle("Invalid Command")
                         .setDescription(description)
-                        .setFooter("↓ Click Me!")
-                        .buildSingle()
-        ).queue(sendMessage -> {
-            this.getModule()
-                    .getModuleOrThrow(EmoteReactionModule.class)
-                    .addEmoteReactionMessage(sendMessage, emoteReactionMessage);
-
-            sendMessage
-                    .delete()
-                    .queueAfter(
-                            90,
-                            TimeUnit.SECONDS,
-                            null,
-                            new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
-                    );
-        });
+                        .setFooter("↓ Click Me!"),
+                emotes
+        );
     }
 }

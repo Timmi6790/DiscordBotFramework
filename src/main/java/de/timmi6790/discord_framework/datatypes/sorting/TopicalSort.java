@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.datatypes.sorting;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class TopicalSort<T> {
         return result;
     }
 
-    private boolean hasDependency(final int mainIndex, final Queue<Integer> queue) {
+    private boolean hasDependency(final int mainIndex, @NonNull final Queue<Integer> queue) {
         return queue.stream()
                 .map(index -> this.adjacency[mainIndex][index])
                 .filter(bool -> bool)

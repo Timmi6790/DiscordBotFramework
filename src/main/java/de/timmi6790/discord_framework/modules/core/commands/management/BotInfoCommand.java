@@ -37,8 +37,8 @@ public class BotInfoCommand extends AbstractCommand<CoreModule> {
         final long queuedCommands = commandExecutor.getQueue().size();
         final long totalCommands = commandExecutor.getTaskCount();
 
-        this.sendTimedMessage(commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        sendTimedMessage(commandParameters,
+                getEmbedBuilder(commandParameters)
                         .setTitle("Bot Info")
                         .addField("Guilds", String.valueOf(guilds), true)
                         .addField("User Cache", userCacheSize + ";" + userCacheMissRate, true)

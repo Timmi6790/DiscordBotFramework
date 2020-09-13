@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.utilities.FileUtilities;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 import java.nio.file.FileSystems;
@@ -21,7 +22,7 @@ public class ConfigModule extends AbstractModule {
         super("Config");
     }
 
-    private String getFormattedModuleName(final AbstractModule module) {
+    private String getFormattedModuleName(@NonNull final AbstractModule module) {
         return module.getName().replace(" ", "_").toLowerCase();
     }
 
@@ -29,16 +30,16 @@ public class ConfigModule extends AbstractModule {
         return Paths.get(this.getDiscordBot().getBasePath() + "/configs/");
     }
 
-    private Path getModuleFolderPath(final AbstractModule module) {
+    private Path getModuleFolderPath(@NonNull final AbstractModule module) {
         return Paths.get(this.getBaseConfigPath() + FileSystems.getDefault().getSeparator() + this.getFormattedModuleName(module));
     }
 
-    private Path getModuleConfigPath(final AbstractModule module, final Class configClass) {
+    private Path getModuleConfigPath(@NonNull final AbstractModule module, @NonNull final Class configClass) {
         return Paths.get(this.getModuleFolderPath(module) + FileSystems.getDefault().getSeparator() + configClass.getSimpleName().toLowerCase() + ".json");
     }
 
     @SneakyThrows
-    public boolean registerConfig(final AbstractModule module, final Object config) {
+    public boolean registerConfig(@NonNull final AbstractModule module, @NonNull final Object config) {
         final Path configFolderPath = this.getModuleFolderPath(module);
         Files.createDirectories(configFolderPath);
 
@@ -57,7 +58,7 @@ public class ConfigModule extends AbstractModule {
     }
 
     @SneakyThrows
-    public <T> T getConfig(final AbstractModule module, final Class<T> configClass) {
+    public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
         if (this.configs.containsKey(configClass)) {
             return (T) this.configs.get(configClass);
         }
@@ -69,7 +70,7 @@ public class ConfigModule extends AbstractModule {
     }
 
     @SneakyThrows
-    public void saveConfig(final AbstractModule module, final Class<?> configClass) {
+    public void saveConfig(@NonNull final AbstractModule module, @NonNull final Class<?> configClass) {
         final Object currentConfig = this.getConfig(module, configClass);
         if (currentConfig == null) {
             return;
@@ -78,7 +79,7 @@ public class ConfigModule extends AbstractModule {
         FileUtilities.saveToJson(this.getModuleConfigPath(module, configClass), currentConfig);
     }
 
-    public <T> T registerAndGetConfig(final AbstractModule module, final T config) {
+    public <T> T registerAndGetConfig(@NonNull final AbstractModule module, @NonNull final T config) {
         this.registerConfig(module, config);
         return (T) this.getConfig(module, config.getClass());
     }

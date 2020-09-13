@@ -47,8 +47,8 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
             final String phrase = RANDOM_CONFIRM_PHRASES[phraseId];
 
             this.userDeleteConfirmCache.put(commandParameters.getUserDb().getDiscordId(), phraseId);
-            this.sendTimedMessage(commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+            sendTimedMessage(commandParameters,
+                    getEmbedBuilder(commandParameters)
                             .setTitle("How to delete my account")
                             .setDescription("If you really wish to delete your account, write the " + MarkdownUtil.monospace(CONFIRM_COMMAND_NAME) + " in the next 5 minutes.\n" +
                                     MarkdownUtil.bold("THERE IS NO WAY TO REVERT THIS ACTION"))
@@ -62,8 +62,8 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
         final String phrase = RANDOM_CONFIRM_PHRASES[confirmPhraseId];
         final String arg = commandParameters.getArgs().length != 0 ? commandParameters.getArgs()[0] : " ";
         if (!arg.equalsIgnoreCase(phrase)) {
-            this.sendTimedMessage(commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+            sendTimedMessage(commandParameters,
+                    getEmbedBuilder(commandParameters)
                             .setTitle("Incorrect confirm phrase")
                             .setDescription(MarkdownUtil.monospace(arg) + " is not your confirm phrase!\n" +
                                     "Please use the command in " + MarkdownUtil.monospace(CONFIRM_COMMAND_NAME) + " to delete your account")
@@ -80,8 +80,8 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
             return CommandResult.SUCCESS;
         }
 
-        this.sendTimedMessage(commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        sendTimedMessage(commandParameters,
+                getEmbedBuilder(commandParameters)
                         .setTitle("Bye")
                         .setDescription("It is sad to see you go USER_NAME, your data should be deleted in the next few seconds!"),
                 90

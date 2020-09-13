@@ -73,9 +73,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {
         this.getModule().getModuleOrThrow(UserDbModule.class).getCache().invalidate(userDb.getDiscordId());
 
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Invalidated Cache")
                         .setDescription(MarkdownUtil.monospace(String.valueOf(userDb.getDatabaseId())) + " was removed from the cache."),
                 90
@@ -129,8 +129,8 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
                 .map(Optional::get)
                 .collect(Collectors.joining("\n"));
 
-        this.sendTimedMessage(commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        sendTimedMessage(commandParameters,
+                getEmbedBuilder(commandParameters)
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
@@ -148,9 +148,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
     private CommandResult unBanCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
         if (!userDb.isBanned()) {
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle(ERROR_TITLE)
                             .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is not banned."),
                     90
@@ -158,9 +158,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             return CommandResult.SUCCESS;
         }
 
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Banned")
                         .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is now unBanned."),
                 90
@@ -172,9 +172,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
     private CommandResult banCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
         if (userDb.isBanned()) {
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle(ERROR_TITLE)
                             .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is already banned."),
                     90
@@ -182,9 +182,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             return CommandResult.SUCCESS;
         }
 
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Banned")
                         .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is now banned."),
                 90
@@ -199,9 +199,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         final Rank rank = this.getRankThrow(commandParameters, 2);
         if (userDb.hasPrimaryRank(rank)) {
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle(ERROR_TITLE)
                             .setDescription("The user already has this rank."),
                     90
@@ -211,9 +211,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
         }
 
         userDb.setPrimaryRank(rank);
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Set Primary Rank")
                         .setDescription("Set primary rank to " + MarkdownUtil.monospace(rank.getName()) + "."),
                 90
@@ -230,9 +230,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         if (AddRemoveArgs.ADD == mode) {
             if (userDb.hasRank(rank)) {
-                this.sendTimedMessage(
+                sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
+                        getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription("The user already has this rank."),
                         90
@@ -242,9 +242,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             }
 
             userDb.addRank(rank);
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle("Added Rank")
                             .setDescription("Added " + MarkdownUtil.monospace(rank.getName()) + " rank to the user."),
                     90
@@ -252,9 +252,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasRank(rank)) {
-                this.sendTimedMessage(
+                sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
+                        getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription("The user is not in possession of this rank."),
                         90
@@ -264,9 +264,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             }
 
             userDb.removeRank(rank);
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle("Removed Rank")
                             .setDescription("Removed " + MarkdownUtil.monospace(rank.getName()) + " rank from the user."),
                     90
@@ -286,9 +286,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         if (AddRemoveArgs.ADD == mode) {
             if (userDb.hasPermission(permissionId)) {
-                this.sendTimedMessage(
+                sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
+                        getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " does already possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
@@ -298,9 +298,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             }
 
             userDb.addPermission(permissionId);
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle("Added Permission")
                             .setDescription(MarkdownUtil.monospace(permissionNode) + " added to " + MarkdownUtil.monospace(discordUser.getAsTag())),
                     90
@@ -308,9 +308,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasPermission(permissionId)) {
-                this.sendTimedMessage(
+                sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
+                        getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " does not possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
@@ -320,9 +320,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
             }
 
             userDb.removePermission(permissionId);
-            this.sendTimedMessage(
+            sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
+                    getEmbedBuilder(commandParameters)
                             .setTitle("Removed Permission")
                             .setDescription(MarkdownUtil.monospace(permissionNode) + " removed from " + MarkdownUtil.monospace(discordUser.getAsTag())),
                     90
@@ -333,9 +333,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult settingCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Not implemented")
                         .setDescription("This is currently not implemented"),
                 90
@@ -344,9 +344,9 @@ public class UserCommand extends AbstractCommand<UserDbModule> {
     }
 
     private CommandResult achievementCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        this.sendTimedMessage(
+        sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
+                getEmbedBuilder(commandParameters)
                         .setTitle("Not implemented")
                         .setDescription("This is currently not implemented"),
                 90

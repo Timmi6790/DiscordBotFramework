@@ -1,5 +1,6 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
+import lombok.Getter;
 import lombok.ToString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
@@ -19,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @ToString
+@Getter
 public class MultiEmbedBuilder {
     // Title, Description, Field, Footer.text, Author.name
     protected static final int EMBED_TOTAL_MAX = 6_000;
@@ -44,55 +46,7 @@ public class MultiEmbedBuilder {
     private Footer footer;
     private ImageInfo image;
 
-    private static int getFieldLength(final Field field) {
-        int fieldSize = 0;
-        if (field.getValue() != null) {
-            fieldSize += field.getValue().length();
-        }
-        if (field.getName() != null) {
-            fieldSize += field.getName().length();
-        }
-        return fieldSize;
-    }
-
-    private static int findMessageBreakPoint(final StringBuilder description, final int maxCutPoint) {
-        final int newLineIndex = description.lastIndexOf("\n", maxCutPoint);
-        if (newLineIndex != -1 && 400 > maxCutPoint - newLineIndex) {
-            return newLineIndex + 1;
-        }
-
-        // Find space near break point
-        final int spaceLindeIndex = description.lastIndexOf(" ", maxCutPoint);
-        if (newLineIndex != -1 && 600 > maxCutPoint - spaceLindeIndex) {
-            return newLineIndex;
-        }
-
-        return maxCutPoint;
-    }
-
     public MultiEmbedBuilder() {
-    }
-
-    private String splitDescriptionTillOne(final List<MessageEmbed> embeds) {
-        String lastDescription = null;
-        int breakPoint;
-        for (int descriptionIndex = 0; this.description.length() > descriptionIndex; descriptionIndex = breakPoint) {
-            // Don't split if we have enough for the entire remaining message
-            if (descriptionIndex + EMBED_DESCRIPTION_MAX > this.description.length()) {
-                breakPoint = this.description.length();
-            } else {
-                breakPoint = findMessageBreakPoint(this.description, descriptionIndex + EMBED_DESCRIPTION_MAX);
-            }
-
-            lastDescription = this.description.substring(descriptionIndex, breakPoint);
-
-            // Exclude the last message
-            if (this.description.length() > breakPoint) {
-                embeds.add(this.createMessageEmbed(lastDescription, null, embeds.isEmpty(), false));
-            }
-        }
-
-        return lastDescription;
     }
 
     public MultiEmbedBuilder(@Nullable final MultiEmbedBuilder builder) {
@@ -124,6 +78,54 @@ public class MultiEmbedBuilder {
             this.image = embed.getImage();
             this.fields.addAll(embed.getFields());
         }
+    }
+
+    private static int getFieldLength(final Field field) {
+        int fieldSize = 0;
+        if (field.getValue() != null) {
+            fieldSize += field.getValue().length();
+        }
+        if (field.getName() != null) {
+            fieldSize += field.getName().length();
+        }
+        return fieldSize;
+    }
+
+    private static int findMessageBreakPoint(final StringBuilder description, final int maxCutPoint) {
+        final int newLineIndex = description.lastIndexOf("\n", maxCutPoint);
+        if (newLineIndex != -1 && 400 > maxCutPoint - newLineIndex) {
+            return newLineIndex + 1;
+        }
+
+        // Find space near break point
+        final int spaceLindeIndex = description.lastIndexOf(" ", maxCutPoint);
+        if (newLineIndex != -1 && 600 > maxCutPoint - spaceLindeIndex) {
+            return newLineIndex;
+        }
+
+        return maxCutPoint;
+    }
+
+    private String splitDescriptionTillOne(final List<MessageEmbed> embeds) {
+        String lastDescription = null;
+        int breakPoint;
+        for (int descriptionIndex = 0; this.description.length() > descriptionIndex; descriptionIndex = breakPoint) {
+            // Don't split if we have enough for the entire remaining message
+            if (descriptionIndex + EMBED_DESCRIPTION_MAX > this.description.length()) {
+                breakPoint = this.description.length();
+            } else {
+                breakPoint = findMessageBreakPoint(this.description, descriptionIndex + EMBED_DESCRIPTION_MAX);
+            }
+
+            lastDescription = this.description.substring(descriptionIndex, breakPoint);
+
+            // Exclude the last message
+            if (this.description.length() > breakPoint) {
+                embeds.add(this.createMessageEmbed(lastDescription, null, embeds.isEmpty(), false));
+            }
+        }
+
+        return lastDescription;
     }
 
     private int getFooterLength() {
@@ -457,11 +459,6 @@ public class MultiEmbedBuilder {
     public MultiEmbedBuilder clearFields() {
         this.fields.clear();
         return this;
-    }
-
-    @Nonnull
-    public List<Field> getFields() {
-        return this.fields;
     }
 
     private void urlCheck(@Nullable final String url) {

@@ -16,6 +16,7 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -30,8 +31,9 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class CommandModule extends AbstractModule {
     private static final String COMMAND_NAME = "commandName";
+    private static final String COMMAND_DEFAULT_PERMISSION_NAME = "%s.command.%s";
 
-    private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))(.*)$";
+    private static final String MAIN_COMMAND_PATTERN = "^((?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
 
     private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :commandName LIMIT 1;";
     private static final String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:commandName);";
@@ -83,6 +85,10 @@ public class CommandModule extends AbstractModule {
         );
     }
 
+    protected static Pattern compileMainCommandPattern(@NonNull final String mainCommand, final long botId) {
+        return Pattern.compile(String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), botId), Pattern.CASE_INSENSITIVE);
+    }
+
     @Override
     public void onInitialize() {
         final Config commandConfig = this.getModuleOrThrow(ConfigModule.class)
@@ -90,7 +96,7 @@ public class CommandModule extends AbstractModule {
 
         this.botId = this.getDiscord().getSelfUser().getIdLong();
         this.mainCommand = commandConfig.getMainCommand();
-        this.mainCommandPattern = Pattern.compile(String.format(MAIN_COMMAND_PATTERN, this.mainCommand.replace(" ", ""), this.botId), Pattern.CASE_INSENSITIVE);
+        this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
 
         this.getModuleOrThrow(EventModule.class)
                 .addEventListeners(
@@ -182,7 +188,9 @@ public class CommandModule extends AbstractModule {
         DiscordBot.getLogger().info("Registerd {} command.", command.getName());
 
         command.setDbId(this.getCommandDatabaseId(command));
-        final String defaultPermissionName = (module.getName() + ".command." + command.getName()).replace(" ", "_").toLowerCase();
+        final String defaultPermissionName = String.format(COMMAND_DEFAULT_PERMISSION_NAME, module.getName(), command.getName())
+                .replace(" ", "_")
+                .toLowerCase();
         command.setPermission(defaultPermissionName);
         command.setCommandModule(module.getClass());
         return true;
