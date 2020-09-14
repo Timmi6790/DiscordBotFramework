@@ -1,46 +1,32 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import de.timmi6790.discord_framework.datatypes.Pair;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class MessageListenerTest {
     private static final long TEST_BOT_ID = 300000;
     private static final String[] testArgs = new String[]{"sadsdasdasadsads sad as das asda sad dsa", "\n\nHey"};
-
+    
     private void runParsedStartTest(final Pattern mainPattern, final String mainMessage) {
         for (final String testArg : testArgs) {
             final String expectedArg = testArg.replace("\n", "");
-            final Optional<Pair<String, String>> resultNoSpace = MessageListener.getParsedStart(mainMessage + testArg, mainPattern, null);
+            final Optional<String> resultNoSpace = MessageListener.getParsedStart(mainMessage + testArg, mainPattern, null);
             assertThat(resultNoSpace)
                     .isPresent()
-                    .matches(stringStringPair -> {
-                        final Pair<String, String> values = stringStringPair.get();
-                        return values.getLeft().equalsIgnoreCase(mainMessage);
-                    }, "Main command is not matching")
-                    .matches(stringStringPair -> {
-                        final Pair<String, String> values = stringStringPair.get();
-                        return values.getRight().equalsIgnoreCase(expectedArg);
-                    }, "Args are not matching");
+                    .hasValue(expectedArg);
 
-            final Optional<Pair<String, String>> resultSpace = MessageListener.getParsedStart(mainMessage + " " + testArg, mainPattern, null);
+            final Optional<String> resultSpace = MessageListener.getParsedStart(mainMessage + " " + testArg, mainPattern, null);
             assertThat(resultSpace)
                     .isPresent()
-                    .matches(stringStringPair -> {
-                        final Pair<String, String> values = stringStringPair.get();
-                        return values.getLeft().equalsIgnoreCase(mainMessage);
-                    }, "Main command is not matching")
-                    .matches(stringStringPair -> {
-                        final Pair<String, String> values = stringStringPair.get();
-                        return values.getRight().equalsIgnoreCase(expectedArg);
-                    }, "Args are not matching");
+                    .hasValue(expectedArg);
         }
     }
+
 
     @ParameterizedTest
     @ValueSource(strings = {"stat", "!", "<@!" + TEST_BOT_ID + ">"})

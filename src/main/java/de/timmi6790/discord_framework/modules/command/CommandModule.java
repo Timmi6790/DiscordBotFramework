@@ -33,7 +33,7 @@ public class CommandModule extends AbstractModule {
     private static final String COMMAND_NAME = "commandName";
     private static final String COMMAND_DEFAULT_PERMISSION_NAME = "%s.command.%s";
 
-    private static final String MAIN_COMMAND_PATTERN = "^((?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
+    private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
 
     private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :commandName LIMIT 1;";
     private static final String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:commandName);";
@@ -213,7 +213,7 @@ public class CommandModule extends AbstractModule {
     }
 
 
-    public Optional<AbstractCommand<?>> getCommand(String name) {
+    public Optional<AbstractCommand<?>> getCommand(@NonNull String name) {
         name = this.commandAliases.getOrDefault(name.toLowerCase(), name.toLowerCase());
         return Optional.ofNullable(this.commands.get(name));
     }

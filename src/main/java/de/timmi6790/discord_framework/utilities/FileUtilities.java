@@ -3,7 +3,10 @@ package de.timmi6790.discord_framework.utilities;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.DiscordBot;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,10 +18,10 @@ import java.util.Collections;
 /**
  * File utilities.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class FileUtilities {
     @Getter
-    private static final Gson gson = new GsonBuilder()
+    private final Gson gson = new GsonBuilder()
             .enableComplexMapKeySerialization()
             .serializeNulls()
             .setPrettyPrinting()
@@ -33,7 +36,7 @@ public class FileUtilities {
      * @param newVersion the new object version
      * @return success status
      */
-    public static <T> boolean saveToJsonIfChanged(@NonNull final Path path, @NonNull final T oldVersion, @NonNull final T newVersion) {
+    public <T> boolean saveToJsonIfChanged(@NonNull final Path path, @NonNull final T oldVersion, @NonNull final T newVersion) {
         if (oldVersion.equals(newVersion)) {
             return false;
         }
@@ -49,7 +52,7 @@ public class FileUtilities {
      * @param path   the path
      * @param object the object
      */
-    public static <T> void saveToJson(@NonNull final Path path, @NonNull final T object) {
+    public <T> void saveToJson(@NonNull final Path path, @NonNull final T object) {
         try {
             Files.write(path, Collections.singleton(gson.toJson(object)));
         } catch (final IOException e) {
@@ -66,7 +69,7 @@ public class FileUtilities {
      * @return the parsed object
      */
     @SneakyThrows
-    public static <T> T readJsonFile(@NonNull final Path path, @NonNull final Class<T> clazz) {
+    public <T> T readJsonFile(@NonNull final Path path, @NonNull final Class<T> clazz) {
         final BufferedReader bufferedReader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
         return FileUtilities.getGson().fromJson(bufferedReader, clazz);
     }

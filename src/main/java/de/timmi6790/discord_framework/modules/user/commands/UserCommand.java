@@ -11,6 +11,7 @@ import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@EqualsAndHashCode(callSuper = true)
 public class UserCommand extends AbstractCommand<UserDbModule> {
     private static final String ERROR_TITLE = "Error";
 

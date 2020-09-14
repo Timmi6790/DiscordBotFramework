@@ -1,9 +1,8 @@
 package de.timmi6790.discord_framework.utilities;
 
 import com.google.gson.Gson;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -18,7 +17,7 @@ import java.util.Optional;
 /**
  * Several reflection related utility functions.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class ReflectionUtilities {
     /**
      * Creates a deep clone of the given object.
@@ -28,7 +27,7 @@ public class ReflectionUtilities {
      * @return the deep cloned object
      */
     @SneakyThrows
-    public static <O> O deepCopy(final O object) {
+    public <O> O deepCopy(final O object) {
         // TODO: Implement a version based on reflections
         final Gson gson = new Gson();
         return gson.fromJson(gson.toJson(object), (Type) object.getClass());
@@ -42,7 +41,7 @@ public class ReflectionUtilities {
      * @param annotationClass the required annotation class
      * @return the found annotation
      */
-    public static <T extends Annotation> Optional<T> getAnnotation(final Method method, final Class<T> annotationClass) {
+    public <T extends Annotation> Optional<T> getAnnotation(final Method method, final Class<T> annotationClass) {
         try {
             final T annotation = method.getAnnotation(annotationClass);
             return Optional.of(annotation);
@@ -61,7 +60,7 @@ public class ReflectionUtilities {
      * @throws IllegalAccessException    the illegal access exception
      * @throws NoSuchMethodException     the no such method exception
      */
-    public static void addJarToClassLoader(final File jar, final URLClassLoader urlClassLoader) throws MalformedURLException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+    public void addJarToClassLoader(final File jar, final URLClassLoader urlClassLoader) throws MalformedURLException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         final Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
         method.invoke(urlClassLoader, jar.toURI().toURL());
@@ -75,7 +74,7 @@ public class ReflectionUtilities {
      * @param urlClassLoader the url class loader
      * @return the optional
      */
-    public static Optional<Class<?>> loadClassFromClassLoader(final String path, final URLClassLoader urlClassLoader) {
+    public Optional<Class<?>> loadClassFromClassLoader(final String path, final URLClassLoader urlClassLoader) {
         try {
             return Optional.of(urlClassLoader.loadClass(path));
         } catch (final ClassNotFoundException ignore) {

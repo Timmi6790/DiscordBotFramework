@@ -1,11 +1,10 @@
 package de.timmi6790.discord_framework.utilities;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class StringUtilities {
-    public static String capitalize(final String string) {
+    public String capitalize(final String string) {
         if (string == null || string.isEmpty()) {
             return string;
         }

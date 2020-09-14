@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
 import lombok.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,12 +24,12 @@ public class MapBuilder<K, V> {
         this.map = mapFactory.get();
     }
 
-    public MapBuilder<K, V> put(final K key, final V value) {
+    public MapBuilder<K, V> put(@Nullable final K key, @Nullable final V value) {
         this.map.put(key, value);
         return this;
     }
 
-    public MapBuilder<K, V> put(final K key, final V value, final boolean ifCondition) {
+    public MapBuilder<K, V> put(@Nullable final K key, @Nullable final V value, final boolean ifCondition) {
         if (ifCondition) {
             this.map.put(key, value);
         }

@@ -50,6 +50,8 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public abstract class AbstractCommand<T extends AbstractModule> extends GetModule<T> {
+    private static final String ERROR = "Error";
+
     private static final int COMMAND_USER_RATE_LIMIT = 10;
     private static final String INSERT_COMMAND_LOG = "INSERT INTO command_log(command_id, command_cause_id, command_status_id, in_guild) VALUES(:commandId, " +
             "(SELECT id FROM command_cause WHERE cause_name = :causeName LIMIT 1), (SELECT id FROM command_status WHERE status_name = :statusName LIMIT 1), :inGuild);";
@@ -96,11 +98,11 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                                 .setDescription("The bot is missing " + perms + " permission(s).")
                 );
 
-                return true;
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     protected static boolean isUserBanned(@NonNull final CommandParameters commandParameters) {
@@ -355,11 +357,11 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
     protected void sendMissingArgsMessage(final CommandParameters commandParameters, final int requiredSyntaxLenght) {
         final String[] args = commandParameters.getArgs();
-        final String[] syntax = this.syntax.split(" ");
+        final String[] splitSyntax = this.syntax.split(" ");
 
         final StringJoiner requiredSyntax = new StringJoiner(" ");
-        for (int index = 0; Math.min(requiredSyntaxLenght, syntax.length) > index; index++) {
-            requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(syntax[index]));
+        for (int index = 0; Math.min(requiredSyntaxLenght, splitSyntax.length) > index; index++) {
+            requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(splitSyntax[index]));
         }
 
         final String exampleCommands = String.join("\n", this.getFormattedExampleCommands());
@@ -381,7 +383,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                         .setDescription("Something went wrong while executing this command.")
                         .addField("Command", this.getName(), false)
                         .addField("Args", String.join(" ", commandParameters.getArgs()), false)
-                        .addField("Error", error, false),
+                        .addField(ERROR, error, false),
                 90
         );
     }
@@ -389,20 +391,20 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
                                    final AbstractCommand<?> command, final String[] newArgs, final List<String> similarNames) {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-        final StringBuilder description = new StringBuilder();
-        description.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
+        final StringBuilder helpDescription = new StringBuilder();
+        helpDescription.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
         if (similarNames.isEmpty() && command != null) {
-            description.append("Use the ").append(MarkdownUtil.bold(this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
+            helpDescription.append("Use the ").append(MarkdownUtil.bold(this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
-            description.append("Is it possible that you wanted to write?\n\n");
+            helpDescription.append("Is it possible that you wanted to write?\n\n");
 
             for (int index = 0; similarNames.size() > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
 
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarNames.get(index))).append("\n");
+                helpDescription.append(emote).append(" ").append(MarkdownUtil.bold(similarNames.get(index))).append("\n");
 
                 final String[] newArgsParameter = commandParameters.getArgs();
                 newArgsParameter[argPos] = similarNames.get(index);
@@ -411,7 +413,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             }
 
             if (command != null) {
-                description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
+                helpDescription.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
             }
         }
 
@@ -420,7 +422,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
         }
 
-        sendEmoteMessage(commandParameters, "Invalid " + StringUtilities.capitalize(argName), description.toString(), emotes);
+        sendEmoteMessage(commandParameters, "Invalid " + StringUtilities.capitalize(argName), helpDescription.toString(), emotes);
     }
 
     // Checks
@@ -459,20 +461,20 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected AbstractCommand<? extends AbstractModule> getCommandThrow(final CommandParameters commandParameters, final int argPos) {
-        final String name = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand<?>> command = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(name);
+        final String commandName = commandParameters.getArgs()[argPos];
+        final Optional<AbstractCommand<?>> command = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(commandName);
         if (command.isPresent()) {
             return command.get();
         }
 
-        final List<AbstractCommand<?>> similarCommands = this.getModuleManager().getModuleOrThrow(CommandModule.class).getSimilarCommands(commandParameters, name, 0.6, 3);
+        final List<AbstractCommand<?>> similarCommands = this.getModuleManager().getModuleOrThrow(CommandModule.class).getSimilarCommands(commandParameters, commandName, 0.6, 3);
         if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarCommands.get(0);
         }
 
         AbstractCommand.this.sendHelpMessage(
                 commandParameters,
-                name,
+                commandName,
                 argPos,
                 "command",
                 this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).orElse(null),
@@ -491,7 +493,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                 .findAny()
                 .orElseThrow(() -> new CommandReturnException(
                         getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR)
                                 .setDescription(MarkdownUtil.monospace(userInput) + " is not a valid rank.")
                 ));
     }
@@ -505,7 +507,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             if (command.getPermissionId() == -1) {
                 throw new CommandReturnException(
                         getEmbedBuilder(commandParameters)
-                                .setTitle("Error")
+                                .setTitle(ERROR)
                                 .setDescription(MarkdownUtil.monospace(command.getName()) + " command has no permission.")
                 );
             }
@@ -515,15 +517,15 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             return this.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionId(permArg)
                     .orElseThrow(() -> new CommandReturnException(
                             getEmbedBuilder(commandParameters)
-                                    .setTitle("Error")
+                                    .setTitle(ERROR)
                                     .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
                     ));
         }
     }
 
     protected User getDiscordUserThrow(final CommandParameters commandParameters, final int argPos) {
-        final String name = commandParameters.getArgs()[argPos];
-        final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(name);
+        final String discordUserName = commandParameters.getArgs()[argPos];
+        final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
         if (userIdMatcher.find()) {
             final User user = UserDb.getUserCache().get(Long.valueOf(userIdMatcher.group(2)));
             if (user != null) {
@@ -531,8 +533,8 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
             }
         }
 
-        if (DISCORD_USER_TAG_PATTERN.matcher(name).find()) {
-            final User user = this.getModule().getDiscord().getUserByTag(name);
+        if (DISCORD_USER_TAG_PATTERN.matcher(discordUserName).find()) {
+            final User user = this.getModule().getDiscord().getUserByTag(discordUserName);
             if (user != null) {
                 return user;
             }
@@ -541,7 +543,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         throw new CommandReturnException(
                 getEmbedBuilder(commandParameters)
                         .setTitle("Invalid User")
-                        .setDescription(MarkdownUtil.monospace(name) + " is not a valid discord user.")
+                        .setDescription(MarkdownUtil.monospace(discordUserName) + " is not a valid discord user.")
         );
     }
 }

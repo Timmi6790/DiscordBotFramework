@@ -2,8 +2,7 @@ package de.timmi6790.discord_framework.utilities;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 import net.ricecode.similarity.LevenshteinDistanceStrategy;
 import net.ricecode.similarity.SimilarityStrategy;
 
@@ -17,9 +16,9 @@ import java.util.stream.Collectors;
 /**
  * Data utilities.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class DataUtilities {
-    private static final SimilarityStrategy SIMILARITY_STRATEGY = new LevenshteinDistanceStrategy();
+    private final SimilarityStrategy SIMILARITY_STRATEGY = new LevenshteinDistanceStrategy();
 
     /**
      * Returns values that are similar to the given source.
@@ -31,7 +30,7 @@ public class DataUtilities {
      * @param limit       limit of returned elements
      * @return similar values
      */
-    public static List<String> getSimilarityList(final String source, final Collection<String> values, final double minimumRate, final int limit) {
+    public List<String> getSimilarityList(final String source, final Collection<String> values, final double minimumRate, final int limit) {
         return getSimilarityList(source, values, String::toString, minimumRate, limit);
     }
 
@@ -47,7 +46,7 @@ public class DataUtilities {
      * @param limit       limit of returned elements
      * @return similar values
      */
-    public static <T> List<T> getSimilarityList(final String source, final Collection<T> values, final Function<T, String> toString, final double minimumRate, final int limit) {
+    public <T> List<T> getSimilarityList(final String source, final Collection<T> values, final Function<T, String> toString, final double minimumRate, final int limit) {
         if (1 > limit) {
             return new ArrayList<>();
         }

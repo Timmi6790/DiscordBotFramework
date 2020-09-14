@@ -7,6 +7,8 @@ import de.timmi6790.discord_framework.datatypes.sorting.TopicalSort;
 import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Cleanup;
 import lombok.Data;
 
 import java.io.File;
@@ -105,6 +107,7 @@ public class ModuleManager {
         return moduleSort.sort();
     }
 
+    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private Set<AbstractModule> getExternalModules() {
         final Set<AbstractModule> abstractModules = new HashSet<>();
 
@@ -127,7 +130,8 @@ public class ModuleManager {
                     continue;
                 }
 
-                final PluginConfig plugin = gson.fromJson(new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8), PluginConfig.class);
+                @Cleanup final InputStreamReader inputStream = new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8);
+                final PluginConfig plugin = gson.fromJson(inputStream, PluginConfig.class);
                 for (final String path : plugin.getModules()) {
                     final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromClassLoader(path, classLoader);
                     if (!pluginClassOpt.isPresent()) {

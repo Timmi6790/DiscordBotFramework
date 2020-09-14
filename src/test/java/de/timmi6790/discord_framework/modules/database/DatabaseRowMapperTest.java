@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.utilities.database;
+package de.timmi6790.discord_framework.modules.database;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.modules.command;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.datatypes.Pair;
 import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
@@ -21,17 +20,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MessageListener extends GetModule<CommandModule> {
-    protected static Optional<Pair<String, String>> getParsedStart(@NonNull final String rawMessage, @NonNull final Pattern mainCommandPattern, final Pattern guildCommandAliasPattern) {
+    private static final Pattern FIRST_SPACE_PATTERN = Pattern.compile("^([\\S]*)\\s*(.*)$");
+
+    protected static Optional<String> getParsedStart(@NonNull final String rawMessage, @NonNull final Pattern mainCommandPattern, final Pattern guildCommandAliasPattern) {
         // Check if the message matches the main or guild specific start regex
         final Matcher mainMatcher = mainCommandPattern.matcher(rawMessage);
         if (mainMatcher.find()) {
-            return Optional.of(new Pair<>(mainMatcher.group(1).trim(), mainMatcher.group(2).trim()));
+            return Optional.of(mainMatcher.group(1).trim());
         }
 
         if (guildCommandAliasPattern != null) {
             final Matcher guildAliasMatcher = guildCommandAliasPattern.matcher(rawMessage);
             if (guildAliasMatcher.find()) {
-                return Optional.of(new Pair<>(guildAliasMatcher.group(1).trim(), guildAliasMatcher.group(2).trim()));
+                return Optional.of(guildAliasMatcher.group(1).trim());
             }
         }
 
@@ -48,7 +49,7 @@ public class MessageListener extends GetModule<CommandModule> {
         final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
         final GuildDb guildDb = this.getModuleManager().getModuleOrThrow(GuildDbModule.class).getOrCreate(guildId);
 
-        final Optional<Pair<String, String>> parsedStart = getParsedStart(
+        final Optional<String> parsedStart = getParsedStart(
                 event.getMessage().getContentRaw(),
                 this.getModule().getMainCommandPattern(),
                 guildDb.getCommandAliasPattern().orElse(null)
@@ -57,9 +58,15 @@ public class MessageListener extends GetModule<CommandModule> {
             return;
         }
 
-        final String commandName = parsedStart.get().getLeft();
-        final String rawArgs = parsedStart.get().getRight();
-        final Optional<AbstractCommand<?>> commandOpt = rawArgs.isEmpty() ? this.getModule().getCommand(HelpCommand.class) : this.getModule().getCommand(commandName);
+        final Matcher spaceMatcher = FIRST_SPACE_PATTERN.matcher(parsedStart.get());
+        if (!spaceMatcher.find()) {
+            return;
+        }
+
+        final String commandName = spaceMatcher.group(1);
+        final String rawArgs = spaceMatcher.group(2);
+
+        final Optional<AbstractCommand<?>> commandOpt = commandName.isEmpty() ? this.getModule().getCommand(HelpCommand.class) : this.getModule().getCommand(commandName);
 
         final CommandParameters commandParameters = new CommandParameters(event, rawArgs);
         if (AbstractCommand.isServerBanned(commandParameters) || AbstractCommand.isUserBanned(commandParameters)) {
@@ -67,7 +74,6 @@ public class MessageListener extends GetModule<CommandModule> {
         }
 
         final AbstractCommand<?> command;
-
         if (commandOpt.isPresent()) {
             command = commandOpt.get();
         } else {

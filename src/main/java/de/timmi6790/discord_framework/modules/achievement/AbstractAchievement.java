@@ -1,12 +1,17 @@
 package de.timmi6790.discord_framework.modules.achievement;
 
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.discord_framework.modules.database.DatabaseGetId;
 import de.timmi6790.discord_framework.modules.user.UserDb;
-import lombok.Data;
+import lombok.*;
 
-@Data
-public abstract class AbstractAchievement {
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@ToString
+public abstract class AbstractAchievement extends DatabaseGetId {
     private static final String ACHIEVEMENT_NAME = "achievementName";
 
     private static final String GET_ACHIEVEMENT_ID = "SELECT id FROM `achievement` WHERE achievement_name = :achievementName LIMIT 1;";
@@ -17,28 +22,25 @@ public abstract class AbstractAchievement {
     private final String internalName;
 
     public AbstractAchievement(final String name, final String internalName) {
+        super(GET_ACHIEVEMENT_ID, INSERT_NEW_ACHIEVEMENT);
+
         this.name = name;
         this.internalName = internalName;
-        this.databaseId = this.getStatDbId();
+        this.databaseId = this.retrieveDatabaseId();
     }
 
-    private int getStatDbId() {
-        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
-                handle.createQuery(GET_ACHIEVEMENT_ID)
-                        .bind(ACHIEVEMENT_NAME, this.getInternalName())
-                        .mapTo(int.class)
-                        .findFirst()
-                        .orElseGet(() -> {
-                            handle.createUpdate(INSERT_NEW_ACHIEVEMENT)
-                                    .bind(ACHIEVEMENT_NAME, this.getInternalName())
-                                    .execute();
+    @Override
+    protected @NonNull Map<String, Object> getGetIdParameters() {
+        return MapBuilder.<String, Object>ofHashMap()
+                .put(ACHIEVEMENT_NAME, this.getInternalName())
+                .build();
+    }
 
-                            return handle.createQuery(GET_ACHIEVEMENT_ID)
-                                    .bind(ACHIEVEMENT_NAME, this.getInternalName())
-                                    .mapTo(int.class)
-                                    .first();
-                        })
-        );
+    @Override
+    protected @NonNull Map<String, Object> getInsertIdParameters() {
+        return MapBuilder.<String, Object>ofHashMap()
+                .put(ACHIEVEMENT_NAME, this.getInternalName())
+                .build();
     }
 
     public void unlockAchievement(final UserDb userDb) {

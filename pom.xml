@@ -33,10 +33,6 @@
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
-            <id>sponge</id>
-            <url>https://repo.spongepowered.org/maven</url>
-        </repository>
-        <repository>
             <id>jcenter</id>
             <name>jcenter-bintray</name>
             <url>https://jcenter.bintray.com</url>
@@ -67,12 +63,6 @@
             <groupId>io.sentry</groupId>
             <artifactId>sentry</artifactId>
             <version>1.7.30</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.12</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.dv8tion</groupId>
@@ -126,11 +116,6 @@
             <version>29.0-jre</version>
         </dependency>
         <dependency>
-            <groupId>org.knowm.xchart</groupId>
-            <artifactId>xchart</artifactId>
-            <version>3.6.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.7.0</version>
@@ -159,6 +144,12 @@
             <artifactId>spotbugs-annotations</artifactId>
             <version>RELEASE</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.12</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <build>

@@ -1,18 +1,18 @@
 package de.timmi6790.discord_framework.utilities;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 /**
  * Enum utilities.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class EnumUtilities {
     /**
      * Converts all enum value into a more readable name.
@@ -20,7 +20,7 @@ public class EnumUtilities {
      * @param enumValue the enum value
      * @return the pretty names
      */
-    public static List<String> getPrettyNames(@NonNull final Enum[] enumValue) {
+    public List<String> getPrettyNames(@NonNull final Enum[] enumValue) {
         return Arrays.stream(enumValue)
                 .map(EnumUtilities::getPrettyName)
                 .collect(Collectors.toList());
@@ -34,7 +34,7 @@ public class EnumUtilities {
      * @param enumValue the enum value
      * @return the pretty name
      */
-    public static String getPrettyName(@NonNull final Enum enumValue) {
+    public String getPrettyName(@NonNull final Enum enumValue) {
         final String enumName = enumValue.name();
         if (enumName.isEmpty()) {
             return enumName;
@@ -59,7 +59,7 @@ public class EnumUtilities {
      * @param enumValue the enum value
      * @return the found enum value
      */
-    public static <T extends Enum> Optional<T> getIgnoreCase(@NonNull final String search, @NonNull final T[] enumValue) {
+    public <T extends Enum> Optional<T> getIgnoreCase(@NonNull final String search, @NonNull final T[] enumValue) {
         return Arrays.stream(enumValue)
                 .filter(value -> getPrettyName(value).equalsIgnoreCase(search))
                 .findAny();

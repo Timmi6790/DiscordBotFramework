@@ -1,11 +1,16 @@
 package de.timmi6790.discord_framework.modules.setting;
 
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import lombok.Data;
+import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.discord_framework.modules.database.DatabaseGetId;
+import lombok.*;
 
-@Data
-public abstract class AbstractSetting<T> {
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@ToString
+public abstract class AbstractSetting<T> extends DatabaseGetId {
     private static final String SETTING_NAME = "settingName";
 
     private static final String GET_SETTING_ID = "SELECT id FROM setting WHERE setting_name = :settingName LIMIT 1;";
@@ -17,30 +22,26 @@ public abstract class AbstractSetting<T> {
     private final String defaultValue;
 
     public AbstractSetting(final String internalName, final String name, final String defaultValue) {
+        super(GET_SETTING_ID, INSERT_SETTING);
+
         this.name = name;
         this.internalName = internalName;
         this.defaultValue = defaultValue;
-        this.databaseId = this.getSettingDbId();
+        this.databaseId = this.retrieveDatabaseId();
     }
 
-    private int getSettingDbId() {
-        // Get current id or insert new
-        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
-                handle.createQuery(GET_SETTING_ID)
-                        .bind(SETTING_NAME, this.getInternalName())
-                        .mapTo(int.class)
-                        .findFirst()
-                        .orElseGet(() -> {
-                            handle.createUpdate(INSERT_SETTING)
-                                    .bind(SETTING_NAME, this.getInternalName())
-                                    .execute();
+    @Override
+    protected @NonNull Map<String, Object> getGetIdParameters() {
+        return MapBuilder.<String, Object>ofHashMap()
+                .put(SETTING_NAME, this.getInternalName())
+                .build();
+    }
 
-                            return handle.createQuery(GET_SETTING_ID)
-                                    .bind(SETTING_NAME, this.getInternalName())
-                                    .mapTo(int.class)
-                                    .first();
-                        })
-        );
+    @Override
+    protected @NonNull Map<String, Object> getInsertIdParameters() {
+        return MapBuilder.<String, Object>ofHashMap()
+                .put(SETTING_NAME, this.getInternalName())
+                .build();
     }
 
     public abstract boolean isAllowedValue(String value);

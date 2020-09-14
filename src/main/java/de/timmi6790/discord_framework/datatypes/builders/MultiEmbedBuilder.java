@@ -211,9 +211,12 @@ public class MultiEmbedBuilder {
         } else if (this.length() > EMBED_TOTAL_MAX) {
             throw new IllegalStateException("Cannot build an embed with more than 6000 characters!");
         } else {
-            final String description = this.description.length() < 1 ? null : this.description.toString();
-            return EntityBuilder.createMessageEmbed(this.url, this.title, description, EmbedType.RICH, this.timestamp, this.color, this.thumbnail,
-                    null, this.author, null, this.footer, this.image, this.fields);
+            return this.createMessageEmbed(
+                    this.description.length() < 1 ? null : this.description.toString(),
+                    this.fields,
+                    true,
+                    true
+            );
         }
     }
 

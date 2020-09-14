@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
 import lombok.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -27,7 +28,7 @@ public class ListBuilder<T> {
         this.list = listFactory.get();
     }
 
-    public ListBuilder<T> add(final T value, final boolean ifCondition) {
+    public ListBuilder<T> add(@Nullable final T value, final boolean ifCondition) {
         if (ifCondition) {
             this.add(value);
         }
@@ -40,12 +41,12 @@ public class ListBuilder<T> {
     }
 
     @SafeVarargs
-    public final ListBuilder<T> addAll(@NonNull final Predicate<T> ifCondition, final T... values) {
+    public final ListBuilder<T> addAll(@NonNull final Predicate<T> ifCondition, @Nullable final T... values) {
         return this.addAll(ifCondition, Arrays.asList(values));
     }
 
     @SafeVarargs
-    public final ListBuilder<T> addAll(final T... values) {
+    public final ListBuilder<T> addAll(@Nullable final T... values) {
         this.addAll(Arrays.asList(values));
         return this;
     }

@@ -1,12 +1,17 @@
 package de.timmi6790.discord_framework.modules.stat;
 
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.discord_framework.modules.database.DatabaseGetId;
 import de.timmi6790.discord_framework.modules.user.UserDb;
-import lombok.Data;
+import lombok.*;
 
-@Data
-public class AbstractStat {
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@ToString
+public class AbstractStat extends DatabaseGetId {
     private static final String STAT_NAME = "statName";
 
     private static final String GET_STAT_ID = "SELECT id FROM `stat` WHERE stat_name = :statName LIMIT 1;";
@@ -17,30 +22,27 @@ public class AbstractStat {
     private final String internalName;
 
     public AbstractStat(final String name, final String internalName) {
+        super(GET_STAT_ID, INSERT_NEW_STAT);
+
         this.name = name;
         this.internalName = internalName;
-        this.databaseId = this.getStatDbId();
+        this.databaseId = this.retrieveDatabaseId();
     }
 
-    private int getStatDbId() {
-        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
-                handle.createQuery(GET_STAT_ID)
-                        .bind(STAT_NAME, this.getInternalName())
-                        .mapTo(int.class)
-                        .findFirst()
-                        .orElseGet(() -> {
-                            handle.createUpdate(INSERT_NEW_STAT)
-                                    .bind(STAT_NAME, this.getInternalName())
-                                    .execute();
-
-                            return handle.createQuery(GET_STAT_ID)
-                                    .bind(STAT_NAME, this.getInternalName())
-                                    .mapTo(int.class)
-                                    .first();
-                        })
-        );
+    @Override
+    protected @NonNull Map<String, Object> getGetIdParameters() {
+        return MapBuilder.<String, Object>ofHashMap()
+                .put(STAT_NAME, this.getInternalName())
+                .build();
     }
 
+    @Override
+    protected @NonNull Map<String, Object> getInsertIdParameters() {
+        return MapBuilder.<String, Object>ofHashMap()
+                .put(STAT_NAME, this.getInternalName())
+                .build();
+    }
+    
     protected void increaseStat(final UserDb userDb) {
         this.increaseStat(userDb, 1);
     }

@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.modules.user;
 
-import de.timmi6790.discord_framework.utilities.database.DatabaseRowMapper;
+import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 

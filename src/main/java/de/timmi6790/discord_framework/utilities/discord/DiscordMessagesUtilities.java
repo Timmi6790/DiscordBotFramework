@@ -2,9 +2,8 @@ package de.timmi6790.discord_framework.utilities.discord;
 
 import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
@@ -13,10 +12,7 @@ import java.awt.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-/**
- * Discord messages utilities.
- */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class DiscordMessagesUtilities {
     /**
      * Gets the default embed builder.
@@ -26,7 +22,7 @@ public class DiscordMessagesUtilities {
      * @param commandParameters the command parameters
      * @return the embed builder
      */
-    public static MultiEmbedBuilder getEmbedBuilder(final @NonNull CommandParameters commandParameters) {
+    public MultiEmbedBuilder getEmbedBuilder(final @NonNull CommandParameters commandParameters) {
         if (commandParameters.isGuildCommand()) {
             return getEmbedBuilder(commandParameters.getUser(), commandParameters.getGuildMember());
         }
@@ -44,7 +40,7 @@ public class DiscordMessagesUtilities {
      * @param member the guild member, null for private messages
      * @return the embed builder
      */
-    public static MultiEmbedBuilder getEmbedBuilder(final @NonNull User user, final Member member) {
+    public MultiEmbedBuilder getEmbedBuilder(final @NonNull User user, final Member member) {
         return new MultiEmbedBuilder()
                 .setAuthor(user.getName(), null, user.getEffectiveAvatarUrl())
                 .setColor(member != null ? member.getColor() : Color.MAGENTA);
@@ -56,7 +52,7 @@ public class DiscordMessagesUtilities {
      * @param user         the user
      * @param embedBuilder the embed builder
      */
-    public static void sendPrivateMessage(final @NonNull User user, final @NonNull MultiEmbedBuilder embedBuilder) {
+    public void sendPrivateMessage(final @NonNull User user, final @NonNull MultiEmbedBuilder embedBuilder) {
         // We can't send private messages to other bots
         if (user.isBot()) {
             return;
@@ -77,7 +73,7 @@ public class DiscordMessagesUtilities {
      * @param embedBuilder the embed builder
      * @param success      consumer after message was send.
      */
-    public static void sendMessage(final @NonNull MessageChannel textChannel, final @NonNull MultiEmbedBuilder embedBuilder, final Consumer<Message> success) {
+    public void sendMessage(final @NonNull MessageChannel textChannel, final @NonNull MultiEmbedBuilder embedBuilder, final Consumer<Message> success) {
         for (final MessageEmbed message : embedBuilder.build()) {
             textChannel
                     .sendMessage(message)
@@ -91,7 +87,7 @@ public class DiscordMessagesUtilities {
      * @param textChannel  the text channel
      * @param embedBuilder the embed builder
      */
-    public static void sendMessage(final @NonNull MessageChannel textChannel, final @NonNull MultiEmbedBuilder embedBuilder) {
+    public void sendMessage(final @NonNull MessageChannel textChannel, final @NonNull MultiEmbedBuilder embedBuilder) {
         for (final MessageEmbed message : embedBuilder.build()) {
             textChannel
                     .sendMessage(message)
@@ -106,7 +102,7 @@ public class DiscordMessagesUtilities {
      * @param embedBuilder       the embed builder
      * @param deleteAfterSeconds the delete timer in seconds
      */
-    public static void sendMessageTimed(@NonNull final MessageChannel textChannel, @NonNull final MultiEmbedBuilder embedBuilder, final long deleteAfterSeconds) {
+    public void sendMessageTimed(@NonNull final MessageChannel textChannel, @NonNull final MultiEmbedBuilder embedBuilder, final long deleteAfterSeconds) {
         for (final MessageEmbed message : embedBuilder.build()) {
             textChannel
                     .sendMessage(message)
