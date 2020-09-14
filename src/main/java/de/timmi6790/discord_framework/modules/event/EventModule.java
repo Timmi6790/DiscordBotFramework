@@ -5,13 +5,15 @@ import com.google.common.collect.SetMultimap;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
 import io.sentry.event.Breadcrumb;
 import io.sentry.event.BreadcrumbBuilder;
+import io.sentry.event.Event;
 import io.sentry.event.EventBuilder;
 import io.sentry.event.interfaces.ExceptionInterface;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import net.dv8tion.jda.api.events.GenericEvent;
 
 import java.lang.reflect.Method;
@@ -21,6 +23,7 @@ import java.util.concurrent.Executors;
 
 @EqualsAndHashCode(callSuper = true)
 public class EventModule extends AbstractModule {
+    @Getter(value = AccessLevel.PROTECTED)
     private final Map<Class<GenericEvent>, SetMultimap<EventPriority, EventObject>> eventListeners = new HashMap<>();
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -50,15 +53,16 @@ public class EventModule extends AbstractModule {
 
         final EventBuilder eventBuilder = new EventBuilder()
                 .withMessage("Event Exception")
-                .withLevel(io.sentry.event.Event.Level.ERROR)
+                .withLevel(Event.Level.ERROR)
                 .withBreadcrumbs(Collections.singletonList(breadcrumb))
-                .withLogger(AbstractCommand.class.getName())
+                .withLogger(EventObject.class.getName())
                 .withSentryInterface(new ExceptionInterface(exception));
 
         this.getSentry().sendEvent(eventBuilder);
     }
 
-    public void addEventListener(final Object listener) {
+    public boolean addEventListener(final Object listener) {
+        final boolean[] registeredListener = new boolean[]{false};
         for (final Method method : listener.getClass().getMethods()) {
             ReflectionUtilities.getAnnotation(method, SubscribeEvent.class).ifPresent(annotation -> {
                         if (method.getParameterCount() != 1) {
@@ -74,6 +78,7 @@ public class EventModule extends AbstractModule {
                             return;
                         }
 
+                        registeredListener[0] = true;
                         this.eventListeners.computeIfAbsent(
                                 (Class<GenericEvent>) parameter,
                                 key -> MultimapBuilder.enumKeys(EventPriority.class).hashSetValues().build()
@@ -82,6 +87,8 @@ public class EventModule extends AbstractModule {
                     }
             );
         }
+
+        return registeredListener[0];
     }
 
     public void addEventListeners(final Object... listeners) {
@@ -93,7 +100,7 @@ public class EventModule extends AbstractModule {
             final Iterator<EventObject> valueIterator = value.values().iterator();
             while (valueIterator.hasNext()) {
                 final EventObject eventObject = valueIterator.next();
-                if (eventObject.getClass().equals(listener.getClass())) {
+                if (eventObject.getObject().equals(listener)) {
                     for (final Method method : listener.getClass().getMethods()) {
                         if (eventObject.getMethod().equals(method)) {
                             valueIterator.remove();

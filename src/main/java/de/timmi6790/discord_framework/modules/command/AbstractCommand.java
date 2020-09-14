@@ -62,7 +62,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     private final String syntax;
     private final String[] aliasNames;
     private Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> propertiesMap = new HashMap<>();
-    private int dbId;
+    private int dbId = -1;
     private Class<? extends AbstractModule> commandModule;
     private int permissionId = -1;
     private String category;

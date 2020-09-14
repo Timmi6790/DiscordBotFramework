@@ -176,7 +176,7 @@ public class CommandModule extends AbstractModule {
     }
 
     public boolean registerCommand(final AbstractModule module, final AbstractCommand<?> command) {
-        if (this.commands.containsKey(command.getName())) {
+        if (this.commands.containsKey(command.getName().toLowerCase())) {
             DiscordBot.getLogger().error("{} is already registered.", command.getName());
             return false;
         }
@@ -187,11 +187,15 @@ public class CommandModule extends AbstractModule {
 
         DiscordBot.getLogger().info("Registerd {} command.", command.getName());
 
-        command.setDbId(this.getCommandDatabaseId(command));
-        final String defaultPermissionName = String.format(COMMAND_DEFAULT_PERMISSION_NAME, module.getName(), command.getName())
-                .replace(" ", "_")
-                .toLowerCase();
-        command.setPermission(defaultPermissionName);
+        if (command.getDbId() == -1) {
+            command.setDbId(this.getCommandDatabaseId(command));
+        }
+        if (command.getPermissionId() == -1) {
+            final String defaultPermissionName = String.format(COMMAND_DEFAULT_PERMISSION_NAME, module.getName(), command.getName())
+                    .replace(" ", "_")
+                    .toLowerCase();
+            command.setPermission(defaultPermissionName);
+        }
         command.setCommandModule(module.getClass());
         return true;
     }

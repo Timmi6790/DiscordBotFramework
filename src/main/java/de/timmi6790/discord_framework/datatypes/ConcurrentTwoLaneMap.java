@@ -112,19 +112,16 @@ public class ConcurrentTwoLaneMap<K, V> extends AbstractMap<K, V> implements Ser
         this.valueToKeyMap.clear();
     }
 
-    @NotNull
     @Override
     public Set<K> keySet() {
         return this.keyToValueMap.keySet();
     }
 
-    @NotNull
     @Override
     public Collection<V> values() {
         return this.valueToKeyMap.keySet();
     }
 
-    @NotNull
     @Override
     public Set<Entry<K, V>> entrySet() {
         return this.keyToValueMap.entrySet();

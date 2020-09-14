@@ -99,6 +99,7 @@ public class DiscordBot {
         return FileUtilities.readJsonFile(mainConfigPath, Config.class);
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
     private void setup() throws IOException {
         // Plugins
         final Path pluginsFolderPath = Paths.get(this.basePath + "/plugins/");

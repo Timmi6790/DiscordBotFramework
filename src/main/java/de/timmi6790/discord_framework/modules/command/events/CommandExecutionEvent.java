@@ -23,7 +23,7 @@ public class CommandExecutionEvent extends Event {
     }
 
     public static class Pre extends CommandExecutionEvent {
-        public Pre(@NonNull final AbstractCommand<?> command, @NonNull final CommandParameters parameters) {
+        public Pre(final AbstractCommand<?> command, final CommandParameters parameters) {
             super(command, parameters);
         }
     }
@@ -33,7 +33,7 @@ public class CommandExecutionEvent extends Event {
         @Getter
         private final CommandResult commandResult;
 
-        public Post(@NonNull final AbstractCommand<?> command, @NonNull final CommandParameters parameters, @NonNull final CommandResult commandResult) {
+        public Post(final AbstractCommand<?> command, final CommandParameters parameters, @NonNull final CommandResult commandResult) {
             super(command, parameters);
 
             this.commandResult = commandResult;

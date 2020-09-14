@@ -67,7 +67,7 @@ class ModuleManagerTest {
         commandManager.registerModule(countdownModule);
 
         commandManager.initialize(CountdownModule.class);
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
         assertThat(commandManager.getInitializedModules())
                 .hasSize(1)
@@ -87,7 +87,7 @@ class ModuleManagerTest {
         commandManager.initialize(CountdownModule.class);
         commandManager.start(CountdownModule.class);
 
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
         assertThat(commandManager.getStartedModules())
                 .hasSize(1)
@@ -125,7 +125,7 @@ class ModuleManagerTest {
 
         commandManager.initializeAll();
 
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
         assertThat(commandManager.getInitializedModules())
                 .hasSize(2)
@@ -152,7 +152,7 @@ class ModuleManagerTest {
         commandManager.initializeAll();
         commandManager.startAll();
 
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
         assertThat(commandManager.getStartedModules())
                 .hasSize(2)
@@ -175,7 +175,7 @@ class ModuleManagerTest {
         commandManager.start(CountdownModule.class);
         commandManager.stopModule(CountdownModule.class);
 
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
         assertThat(commandManager.getStartedModules())
                 .isEmpty();
@@ -190,7 +190,7 @@ class ModuleManagerTest {
         private boolean callOnEnable = false;
         private boolean callOnDisable = false;
 
-        public CountdownModule(@NonNull final CountDownLatch countDownLatch) {
+        public CountdownModule(final CountDownLatch countDownLatch) {
             this("CountdownModule", countDownLatch);
         }
 
@@ -223,7 +223,7 @@ class ModuleManagerTest {
     }
 
     private static class CountdownModule2 extends CountdownModule {
-        public CountdownModule2(@NonNull final CountDownLatch countDownLatch) {
+        public CountdownModule2(final CountDownLatch countDownLatch) {
             super("CountdownModule2", countDownLatch);
         }
     }
