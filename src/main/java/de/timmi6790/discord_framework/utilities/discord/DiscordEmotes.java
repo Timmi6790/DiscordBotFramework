@@ -1,7 +1,10 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum DiscordEmotes {
     ZERO("0️⃣"),
     ONE("1️⃣"),
@@ -24,10 +27,6 @@ public enum DiscordEmotes {
 
     @Getter
     private final String emote;
-
-    DiscordEmotes(final String emote) {
-        this.emote = emote;
-    }
 
     public static DiscordEmotes getNumberEmote(final int number) {
         switch (number) {

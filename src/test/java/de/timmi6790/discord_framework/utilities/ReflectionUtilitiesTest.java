@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ReflectionUtilitiesTest {
 
@@ -74,11 +73,6 @@ class ReflectionUtilitiesTest {
     }
 
      */
-
-    @Test
-    void loadClassFromClassLoaderNullCheck() {
-        assertThrows(IllegalArgumentException.class, () -> ReflectionUtilities.loadClassFromClassLoader(null, null));
-    }
 
     @Data
     @AllArgsConstructor

@@ -11,7 +11,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Testcontainers
 class UserDbModuleTest {
@@ -74,11 +73,6 @@ class UserDbModuleTest {
 
         final Optional<UserDb> deletedUser = userDbModule.get(TEST_DISCORD_ID);
         assertThat(deletedUser).isNotPresent();
-    }
-
-    @Test
-    void deleteUserNullCheck() {
-        assertThrows(IllegalArgumentException.class, () -> userDbModule.delete(null));
     }
 
     @Test
