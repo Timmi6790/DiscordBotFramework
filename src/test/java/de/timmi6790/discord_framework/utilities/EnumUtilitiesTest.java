@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EnumUtilitiesTest {
     @Test
@@ -48,6 +49,14 @@ class EnumUtilitiesTest {
 
         assertThat(EnumUtilities.getIgnoreCase("", TestEnum.values()))
                 .isNotPresent();
+    }
+
+    @Test
+    void nullChecks() {
+        assertThrows(IllegalArgumentException.class, () -> EnumUtilities.getPrettyName(null));
+        assertThrows(IllegalArgumentException.class, () -> EnumUtilities.getIgnoreCase(null, null));
+        assertThrows(IllegalArgumentException.class, () -> EnumUtilities.getPrettyNames(null));
+
     }
 
     private enum TestEnum {

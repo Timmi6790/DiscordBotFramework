@@ -20,39 +20,47 @@ class ModuleManagerTest {
 
     @Test
     void registerModule() {
-        final ModuleManager commandManager = this.getModuleManager();
+        final ModuleManager moduleManager = this.getModuleManager();
         final AbstractModule module = new ExampleModule();
-        assertThat(commandManager.registerModule(module)).isTrue();
-        assertThat(commandManager.getLoadedModules()).hasSize(1);
+        assertThat(moduleManager.registerModule(module)).isTrue();
+        assertThat(moduleManager.getLoadedModules()).hasSize(1);
+    }
+
+    @Test
+    void registerAlreadyRegisteredModule() {
+        final ModuleManager moduleManager = this.getModuleManager();
+        final AbstractModule module = new ExampleModule();
+        moduleManager.registerModule(module);
+        assertThat(moduleManager.registerModule(module)).isFalse();
     }
 
     @Test
     void registerModules() {
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModules(
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModules(
                 new ExampleModule(),
                 new ExampleModule2()
         );
-        assertThat(commandManager.getLoadedModules()).hasSize(2);
+        assertThat(moduleManager.getLoadedModules()).hasSize(2);
     }
 
     @Test
     void getModule() {
-        final ModuleManager commandManager = this.getModuleManager();
+        final ModuleManager moduleManager = this.getModuleManager();
         final ExampleModule module = new ExampleModule();
-        commandManager.registerModule(module);
+        moduleManager.registerModule(module);
 
-        final Optional<ExampleModule> found = commandManager.getModule(ExampleModule.class);
+        final Optional<ExampleModule> found = moduleManager.getModule(ExampleModule.class);
         assertThat(found).isPresent().hasValue(module);
     }
 
     @Test
     void getModuleOrThrow() {
-        final ModuleManager commandManager = this.getModuleManager();
-        assertThrows(ModuleGetException.class, () -> commandManager.getModuleOrThrow(ExampleModule.class));
+        final ModuleManager moduleManager = this.getModuleManager();
+        assertThrows(ModuleGetException.class, () -> moduleManager.getModuleOrThrow(ExampleModule.class));
 
-        commandManager.registerModule(new ExampleModule());
-        final Optional<ExampleModule> found = commandManager.getModule(ExampleModule.class);
+        moduleManager.registerModule(new ExampleModule());
+        final Optional<ExampleModule> found = moduleManager.getModule(ExampleModule.class);
         assertThat(found).isPresent();
     }
 
@@ -63,15 +71,46 @@ class ModuleManagerTest {
         final CountdownModule countdownModule = new CountdownModule(countDownLatch);
         countdownModule.setCallOnInitialize(true);
 
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModule(countdownModule);
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModule(countdownModule);
 
-        commandManager.initialize(CountdownModule.class);
+        moduleManager.initialize(CountdownModule.class);
         assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
-        assertThat(commandManager.getInitializedModules())
+        assertThat(moduleManager.getInitializedModules())
                 .hasSize(1)
                 .contains(CountdownModule.class);
+    }
+
+    @Test
+    void initializeMissingDependency() throws TopicalSortCycleException {
+        final DependencyModule dependencyModule = new DependencyModule();
+        final ModuleManager moduleManager = new ModuleManager();
+        moduleManager.registerModule(dependencyModule);
+        moduleManager.initializeAll();
+
+        assertThat(moduleManager.getInitializedModules()).isEmpty();
+    }
+
+    @Test
+    void initializeWhileStarted() throws TopicalSortCycleException {
+        final ExampleModule exampleModule = new ExampleModule();
+        final ModuleManager moduleManager = new ModuleManager();
+        moduleManager.registerModule(exampleModule);
+        moduleManager.initializeAll();
+        moduleManager.startAll();
+
+        assertThat(moduleManager.initialize(ExampleModule.class)).isFalse();
+    }
+
+    @Test
+    void initializeWhileInitilized() throws TopicalSortCycleException {
+        final ExampleModule exampleModule = new ExampleModule();
+        final ModuleManager moduleManager = new ModuleManager();
+        moduleManager.registerModule(exampleModule);
+        moduleManager.initializeAll();
+
+        assertThat(moduleManager.initialize(ExampleModule.class)).isFalse();
     }
 
     @Test
@@ -81,15 +120,15 @@ class ModuleManagerTest {
         final CountdownModule countdownModule = new CountdownModule(countDownLatch);
         countdownModule.setCallOnEnable(true);
 
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModule(countdownModule);
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModule(countdownModule);
 
-        commandManager.initialize(CountdownModule.class);
-        commandManager.start(CountdownModule.class);
+        moduleManager.initialize(CountdownModule.class);
+        moduleManager.start(CountdownModule.class);
 
         assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
-        assertThat(commandManager.getStartedModules())
+        assertThat(moduleManager.getStartedModules())
                 .hasSize(1)
                 .contains(CountdownModule.class);
     }
@@ -98,12 +137,12 @@ class ModuleManagerTest {
     void startWithoutInitialize() {
         final ExampleModule countdownModule = new ExampleModule();
 
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModule(countdownModule);
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModule(countdownModule);
 
-        assertThat(commandManager.start(CountdownModule.class))
+        assertThat(moduleManager.start(CountdownModule.class))
                 .isFalse();
-        assertThat(commandManager.getStartedModules())
+        assertThat(moduleManager.getStartedModules())
                 .isEmpty();
     }
 
@@ -117,17 +156,17 @@ class ModuleManagerTest {
         final CountdownModule countdownModule2 = new CountdownModule2(countDownLatch);
         countdownModule2.setCallOnInitialize(true);
 
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModules(
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModules(
                 countdownModule,
                 countdownModule2
         );
 
-        commandManager.initializeAll();
+        moduleManager.initializeAll();
 
         assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
-        assertThat(commandManager.getInitializedModules())
+        assertThat(moduleManager.getInitializedModules())
                 .hasSize(2)
                 .contains(CountdownModule.class)
                 .contains(CountdownModule2.class);
@@ -143,18 +182,18 @@ class ModuleManagerTest {
         final CountdownModule countdownModule2 = new CountdownModule2(countDownLatch);
         countdownModule.setCallOnEnable(true);
 
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModules(
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModules(
                 countdownModule,
                 countdownModule2
         );
 
-        commandManager.initializeAll();
-        commandManager.startAll();
+        moduleManager.initializeAll();
+        moduleManager.startAll();
 
         assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
-        assertThat(commandManager.getStartedModules())
+        assertThat(moduleManager.getStartedModules())
                 .hasSize(2)
                 .contains(CountdownModule.class)
                 .contains(CountdownModule2.class);
@@ -168,19 +207,25 @@ class ModuleManagerTest {
         final CountdownModule countdownModule = new CountdownModule(countDownLatch);
         countdownModule.setCallOnDisable(true);
 
-        final ModuleManager commandManager = this.getModuleManager();
-        commandManager.registerModule(countdownModule);
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModule(countdownModule);
 
-        commandManager.initialize(CountdownModule.class);
-        commandManager.start(CountdownModule.class);
-        commandManager.stopModule(CountdownModule.class);
+        moduleManager.initialize(CountdownModule.class);
+        moduleManager.start(CountdownModule.class);
+        moduleManager.stopModule(CountdownModule.class);
 
         assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
         assertThat(countDownLatch.getCount()).isZero();
-        assertThat(commandManager.getStartedModules())
+        assertThat(moduleManager.getStartedModules())
                 .isEmpty();
-        assertThat(commandManager.getInitializedModules())
+        assertThat(moduleManager.getInitializedModules())
                 .isEmpty();
+    }
+
+    @Test
+    void stopNotLoadedModule() {
+        final ModuleManager moduleManager = this.getModuleManager();
+        assertThat(moduleManager.stopModule(ExampleModule.class)).isFalse();
     }
 
     @Setter
@@ -230,5 +275,15 @@ class ModuleManagerTest {
 
     private static class ExampleModule2 extends ExampleModule {
 
+    }
+
+    private static class DependencyModule extends AbstractModule {
+        public DependencyModule() {
+            super("DependencyModule");
+
+            this.addDependenciesAndLoadAfter(
+                    ExampleModule2.class
+            );
+        }
     }
 }

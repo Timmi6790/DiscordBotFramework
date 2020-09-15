@@ -7,6 +7,7 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,8 @@ public class GuildDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
+    protected Jdbi database;
+
     public GuildDbModule() {
         super("Guild");
 
@@ -37,15 +40,14 @@ public class GuildDbModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.getModuleOrThrow(DatabaseModule.class)
-                .getJdbi()
-                .registerRowMapper(GuildDb.class, new GuildDbMapper());
+        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
+        this.database.registerRowMapper(GuildDb.class, new GuildDbMapper());
     }
 
-    private GuildDb create(final long discordId) {
+    protected GuildDb create(final long discordId) {
         // Make sure that the guild is not present
         return this.get(discordId).orElseGet(() -> {
-            this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+            this.database.useHandle(handle ->
                     handle.createUpdate(INSERT_GUILD)
                             .bind("discordId", discordId)
                             .execute()
@@ -62,7 +64,7 @@ public class GuildDbModule extends AbstractModule {
             return Optional.of(guildDbCache);
         }
 
-        final Optional<GuildDb> guildDbOpt = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final Optional<GuildDb> guildDbOpt = this.database.withHandle(handle ->
                 handle.createQuery(GET_GUILD)
                         .bind("discordId", discordId)
                         .mapTo(GuildDb.class)

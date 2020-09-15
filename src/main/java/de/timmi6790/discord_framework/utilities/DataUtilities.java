@@ -2,6 +2,7 @@ package de.timmi6790.discord_framework.utilities;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import net.ricecode.similarity.LevenshteinDistanceStrategy;
 import net.ricecode.similarity.SimilarityStrategy;
@@ -30,7 +31,7 @@ public class DataUtilities {
      * @param limit       limit of returned elements
      * @return similar values
      */
-    public List<String> getSimilarityList(final String source, final Collection<String> values, final double minimumRate, final int limit) {
+    public List<String> getSimilarityList(@NonNull final String source, @NonNull final Collection<String> values, final double minimumRate, final int limit) {
         return getSimilarityList(source, values, String::toString, minimumRate, limit);
     }
 
@@ -46,7 +47,8 @@ public class DataUtilities {
      * @param limit       limit of returned elements
      * @return similar values
      */
-    public <T> List<T> getSimilarityList(final String source, final Collection<T> values, final Function<T, String> toString, final double minimumRate, final int limit) {
+    public <T> List<T> getSimilarityList(@NonNull final String source, @NonNull final Collection<T> values, @NonNull final Function<T, String> toString,
+                                         final double minimumRate, final int limit) {
         if (1 > limit) {
             return new ArrayList<>();
         }

@@ -35,13 +35,8 @@ public class EnumUtilities {
      * @return the pretty name
      */
     public String getPrettyName(@NonNull final Enum enumValue) {
-        final String enumName = enumValue.name();
-        if (enumName.isEmpty()) {
-            return enumName;
-        }
-
         // Remove _ and capitalize after the first part
-        final String[] nameParts = enumName.split("_");
+        final String[] nameParts = enumValue.name().split("_");
         final StringBuilder prettyName = new StringBuilder();
         for (final String namePart : nameParts) {
             prettyName.append(StringUtilities.capitalize(namePart.toLowerCase()));

@@ -24,6 +24,13 @@ class GetModuleTest {
         assertThrows(IllegalStateException.class, illegalExtend::getModuleClass);
     }
 
+    @Test
+    void getModuleClassCache() {
+        final FirstExtend firstExtend = new FirstExtend();
+        firstExtend.getModuleClass();
+        assertThat(firstExtend.getModuleClass()).isEqualTo(ExampleModule.class);
+    }
+
     private static class FirstExtend extends GetModule<ExampleModule> {
 
     }

@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.utilities;
 
 import com.google.gson.Gson;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
@@ -74,7 +75,7 @@ public class ReflectionUtilities {
      * @param urlClassLoader the url class loader
      * @return the optional
      */
-    public Optional<Class<?>> loadClassFromClassLoader(final String path, final URLClassLoader urlClassLoader) {
+    public Optional<Class<?>> loadClassFromClassLoader(@NonNull final String path, @NonNull final URLClassLoader urlClassLoader) {
         try {
             return Optional.of(urlClassLoader.loadClass(path));
         } catch (final ClassNotFoundException ignore) {

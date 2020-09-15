@@ -1,11 +1,12 @@
 package de.timmi6790.discord_framework.utilities;
 
+import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class StringUtilities {
-    public String capitalize(final String string) {
-        if (string == null || string.isEmpty()) {
+    public String capitalize(@NonNull final String string) {
+        if (string.isEmpty()) {
             return string;
         }
 

@@ -4,12 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URLClassLoader;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ReflectionUtilitiesTest {
 
@@ -50,6 +49,24 @@ class ReflectionUtilitiesTest {
         assertThat(copiedObject.getTestMap()).isNotEqualTo(originalObject.getTestMap());
 
         assertThat(copiedObject).isNotEqualTo(originalObject);
+    }
+
+    @Test
+    void loadClassFromClassLoader() {
+        final URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        final Optional<Class<?>> stringClass = ReflectionUtilities.loadClassFromClassLoader("java.lang.String", systemClassLoader);
+        assertThat(stringClass)
+                .isPresent()
+                .contains(String.class);
+
+        final Optional<Class<?>> nonExistingClass = ReflectionUtilities.loadClassFromClassLoader("random.d.A", systemClassLoader);
+        assertThat(nonExistingClass)
+                .isEmpty();
+    }
+
+    @Test
+    void loadClassFromClassLoaderNullCheck() {
+        assertThrows(IllegalArgumentException.class, () -> ReflectionUtilities.loadClassFromClassLoader(null, null));
     }
 
     @Data

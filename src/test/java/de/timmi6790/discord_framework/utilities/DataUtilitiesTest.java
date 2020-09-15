@@ -38,4 +38,9 @@ class DataUtilitiesTest {
         final List<String> findAZ = DataUtilities.getSimilarityList("AZ", values, 1, 1);
         assertThat(findAZ).isEmpty();
     }
+
+    @Test
+    void getSimilarityList0Limit() {
+        assertThat(DataUtilities.getSimilarityList("", new ArrayList<>(), 0.1, 0)).isEmpty();
+    }
 }

@@ -251,3 +251,6 @@ ALTER TABLE `setting_log`
 ALTER TABLE `setting_log`
     ADD CONSTRAINT `setting_log_player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 
+# Default Values
+INSERT INTO `rank`(rank_name)
+VALUES ('User');
