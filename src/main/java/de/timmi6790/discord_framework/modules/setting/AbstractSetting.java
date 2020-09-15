@@ -1,8 +1,11 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.database.DatabaseGetId;
+import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.*;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.Map;
 
@@ -44,9 +47,19 @@ public abstract class AbstractSetting<T> extends DatabaseGetId {
                 .build();
     }
 
-    public abstract boolean isAllowedValue(String value);
+    public abstract void handleCommand(CommandParameters commandParameters, String newValue);
 
     public abstract String toDatabaseValue(T value);
 
     public abstract T fromDatabaseValue(String value);
+
+    protected void sendChangedValueMessage(final CommandParameters commandParameters, final String oldValue, final String newValue) {
+        DiscordMessagesUtilities.sendMessageTimed(
+                commandParameters.getLowestMessageChannel(),
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                        .setTitle("Changed Setting")
+                        .setDescription("Changed value from %s to %s.", MarkdownUtil.monospace(oldValue), MarkdownUtil.monospace(newValue)),
+                300
+        );
+    }
 }

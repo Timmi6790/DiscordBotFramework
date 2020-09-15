@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -52,8 +53,8 @@ public class CommandModule extends AbstractModule {
             .maximumSize(10_000)
             .expireAfterWrite(30, TimeUnit.SECONDS)
             .build(key -> new AtomicInteger(0));
-    private final Map<String, AbstractCommand<?>> commands = new HashMap<>();
-    private final Map<String, String> commandAliases = new HashMap<>();
+    private final Map<String, AbstractCommand<?>> commands = new CaseInsensitiveMap<>();
+    private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
     @Getter
     private Pattern mainCommandPattern;
     @Getter
@@ -156,7 +157,7 @@ public class CommandModule extends AbstractModule {
         );
     }
 
-    private int getCommandDatabaseId(final AbstractCommand<?> command) {
+    private int getCommandDatabaseId(@NonNull final AbstractCommand<?> command) {
         return this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
                 handle.createQuery(GET_COMMAND_ID)
                         .bind(COMMAND_NAME, command.getName())
@@ -175,17 +176,28 @@ public class CommandModule extends AbstractModule {
         );
     }
 
-    public boolean registerCommand(final AbstractModule module, final AbstractCommand<?> command) {
-        if (this.commands.containsKey(command.getName().toLowerCase())) {
+    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand<?>... commands) {
+        for (final AbstractCommand<?> command : commands) {
+            this.registerCommand(module, command);
+        }
+    }
+
+    public boolean registerCommand(@NonNull final AbstractModule module, @NonNull final AbstractCommand<?> command) {
+        if (this.commands.containsKey(command.getName())) {
             DiscordBot.getLogger().error("{} is already registered.", command.getName());
             return false;
         }
-        this.commands.put(command.getName().toLowerCase(), command);
-        Arrays.stream(command.getAliasNames())
-                .filter(alias -> !this.commandAliases.containsKey(alias))
-                .forEach(alias -> this.commandAliases.put(alias.toLowerCase(), command.getName().toLowerCase()));
 
         DiscordBot.getLogger().info("Registerd {} command.", command.getName());
+        this.commands.put(command.getName(), command);
+        for (final String aliasName : command.getAliasNames()) {
+            if (this.commandAliases.containsKey(aliasName)) {
+                DiscordBot.getLogger().warn("Can't register alias name {} for {}, it already exists.", aliasName, command.getName());
+                continue;
+            }
+
+            this.commandAliases.put(aliasName, command.getName());
+        }
 
         if (command.getDbId() == -1) {
             command.setDbId(this.getCommandDatabaseId(command));
@@ -200,13 +212,7 @@ public class CommandModule extends AbstractModule {
         return true;
     }
 
-    public void registerCommands(final AbstractModule module, final AbstractCommand<?>... commands) {
-        Arrays.stream(commands)
-                .parallel()
-                .forEach(command -> this.registerCommand(module, command));
-    }
-
-    public Optional<AbstractCommand<?>> getCommand(final Class<? extends AbstractCommand<?>> clazz) {
+    public Optional<AbstractCommand<?>> getCommand(@NonNull final Class<? extends AbstractCommand<?>> clazz) {
         return this.commands.values().stream()
                 .filter(command -> command.getClass().equals(clazz))
                 .findAny();
@@ -214,11 +220,12 @@ public class CommandModule extends AbstractModule {
 
 
     public Optional<AbstractCommand<?>> getCommand(@NonNull String name) {
-        name = this.commandAliases.getOrDefault(name.toLowerCase(), name.toLowerCase());
+        name = this.commandAliases.getOrDefault(name, name);
         return Optional.ofNullable(this.commands.get(name));
     }
 
-    public List<AbstractCommand<?>> getSimilarCommands(final CommandParameters commandParameters, final String name, final double similarity, final int limit) {
+    public List<AbstractCommand<?>> getSimilarCommands(@NonNull final CommandParameters commandParameters, @NonNull final String name,
+                                                       final double similarity, final int limit) {
         return DataUtilities.getSimilarityList(
                 name,
                 this.commands.values()

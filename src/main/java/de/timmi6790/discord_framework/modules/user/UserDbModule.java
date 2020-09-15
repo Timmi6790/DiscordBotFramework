@@ -9,6 +9,8 @@ import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,8 @@ public class UserDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
+    protected Jdbi database;
+
     public UserDbModule() {
         super("UserDb");
 
@@ -49,8 +53,8 @@ public class UserDbModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.getModuleOrThrow(DatabaseModule.class).getJdbi()
-                .registerRowMapper(UserDb.class, new UserDbMapper());
+        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
+        this.database.registerRowMapper(UserDb.class, new UserDbMapper(this.database));
 
         this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
@@ -59,10 +63,10 @@ public class UserDbModule extends AbstractModule {
                 );
     }
 
-    private UserDb create(final long discordId) {
+    protected UserDb create(final long discordId) {
         // Make sure that the user is not present
         return this.get(discordId).orElseGet(() -> {
-            this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+            this.database.useHandle(handle ->
                     handle.createUpdate(INSERT_PLAYER)
                             .bind("discordId", discordId)
                             .execute()
@@ -79,7 +83,7 @@ public class UserDbModule extends AbstractModule {
             return Optional.of(userDbCache);
         }
 
-        final Optional<UserDb> userDbOpt = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final Optional<UserDb> userDbOpt = this.database.withHandle(handle ->
                 handle.createQuery(GET_PLAYER)
                         .bind("discordId", discordId)
                         .mapTo(UserDb.class)
@@ -94,16 +98,16 @@ public class UserDbModule extends AbstractModule {
         return this.get(discordId).orElseGet(() -> this.create(discordId));
     }
 
-    public void delete(final UserDb userDb) {
-        this.delete(userDb.getDiscordId());
+    public void delete(final long discordId) {
+        this.get(discordId).ifPresent(this::delete);
     }
 
-    public void delete(final long discordId) {
-        this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+    public void delete(@NonNull final UserDb userDb) {
+        this.database.useHandle(handle ->
                 handle.createUpdate(REMOVE_PLAYER)
-                        .bind("dbId", discordId)
+                        .bind("dbId", userDb.getDatabaseId())
                         .execute()
         );
-        this.cache.invalidate(discordId);
+        this.cache.invalidate(userDb.getDiscordId());
     }
 }

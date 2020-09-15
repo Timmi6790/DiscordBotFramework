@@ -88,7 +88,7 @@ public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
         );
 
         this.userDeleteConfirmCache.invalidate(userId);
-        this.getModule().getModuleOrThrow(UserDbModule.class).delete(userId);
+        this.getModule().getModuleOrThrow(UserDbModule.class).delete(commandParameters.getUserDb());
 
         return CommandResult.SUCCESS;
     }

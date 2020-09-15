@@ -12,6 +12,7 @@ import de.timmi6790.discord_framework.modules.feedback.commands.FeedbackCommand;
 import de.timmi6790.discord_framework.modules.feedback.feedbacks.BugFeedbackHandler;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,7 @@ public class FeedbackModule extends AbstractModule {
     @Getter
     private static final int FEEDBACK_TIME = 10;
 
-    private final Map<String, FeedbackHandler> feedbackMap = new HashMap<>();
+    private final Map<String, FeedbackHandler> feedbackMap = new CaseInsensitiveMap<>();
 
     @Getter
     private final Cache<Long, String> activeFeedbackCache = Caffeine.newBuilder()
@@ -52,16 +53,15 @@ public class FeedbackModule extends AbstractModule {
     }
 
     public Optional<FeedbackHandler> getFeedbackHandler(final String name) {
-        return Optional.ofNullable(this.feedbackMap.get(name.toLowerCase()));
+        return Optional.ofNullable(this.feedbackMap.get(name));
     }
 
     public boolean addFeedbackHandler(final FeedbackHandler feedbackHandler) {
-        final String nameLower = feedbackHandler.getFeedbackName().toLowerCase();
-        if (this.feedbackMap.containsKey(nameLower)) {
+        if (this.feedbackMap.containsKey(feedbackHandler.getFeedbackName())) {
             return false;
         }
 
-        this.feedbackMap.put(nameLower, feedbackHandler);
+        this.feedbackMap.put(feedbackHandler.getFeedbackName(), feedbackHandler);
         return true;
     }
 
