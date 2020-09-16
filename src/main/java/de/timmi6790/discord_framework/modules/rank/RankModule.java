@@ -4,10 +4,11 @@ import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.commands.RankCommand;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,8 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RankModule extends AbstractModule {
     private static final String DATABASE_ID = "databaseId";
-
-    private static final RankMapper rankMapper = new RankMapper();
 
     private static final String GET_ALL_RANKS = "SELECT rank.id, rank_name rankName, GROUP_CONCAT(DISTINCT rank_permission.permission_id) permissions, GROUP_CONCAT(DISTINCT rank_relation.parent_rank_id) parentRanks " +
             "FROM rank " +
@@ -43,21 +42,38 @@ public class RankModule extends AbstractModule {
     private final ConcurrentHashMap<Integer, Rank> rankMap = new ConcurrentHashMap<>();
     private final ConcurrentTwoLaneMap<Integer, String> rankMappingMap = new ConcurrentTwoLaneMap<>();
 
+    private Jdbi database;
+
     public RankModule() {
         super("Rank");
 
-        this.addDependenciesAndLoadAfter(DatabaseModule.class,
-
-                PermissionsModule.class,
+        this.addDependenciesAndLoadAfter(
+                DatabaseModule.class,
+                UserDbModule.class,
                 CommandModule.class
         );
     }
 
+    private void loadRanksFromDatabase() {
+        final List<Rank> rankList = this.database.withHandle(handle ->
+                handle.createQuery(GET_ALL_RANKS)
+                        .mapTo(Rank.class)
+                        .list()
+        );
+
+        rankList.forEach(this::addRank);
+    }
+
+    private void addRank(@NonNull final Rank rank) {
+        this.rankMappingMap.put(rank.getDatabaseId(), rank.getName());
+        this.rankMap.put(rank.getDatabaseId(), rank);
+        this.invalidateAllPermCaches();
+    }
+
     @Override
     public void onInitialize() {
-        this.getModuleOrThrow(DatabaseModule.class)
-                .getJdbi()
-                .registerRowMapper(Rank.class, new RankMapper());
+        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
+        this.database.registerRowMapper(Rank.class, new RankMapper(this.database, this, this.getModuleOrThrow(UserDbModule.class)));
         this.loadRanksFromDatabase();
 
         this.getModuleOrThrow(CommandModule.class)
@@ -67,31 +83,15 @@ public class RankModule extends AbstractModule {
                 );
     }
 
-    public void loadRanksFromDatabase() {
-        final List<Rank> rankList = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
-                handle.createQuery(GET_ALL_RANKS)
-                        .map(rankMapper)
-                        .list()
-        );
-
-        rankList.forEach(this::addRank);
-    }
-
     public void invalidateAllPermCaches() {
         this.rankMap.values().forEach(Rank::invalidateCachedPermissions);
-    }
-
-    public void addRank(final Rank rank) {
-        this.rankMappingMap.put(rank.getDatabaseId(), rank.getName());
-        this.rankMap.put(rank.getDatabaseId(), rank);
-        this.invalidateAllPermCaches();
     }
 
     public boolean hasRank(final int id) {
         return this.rankMap.containsKey(id);
     }
 
-    public boolean hasRank(final String name) {
+    public boolean hasRank(@NonNull final String name) {
         return this.rankMappingMap.containsValue(name);
     }
 
@@ -99,7 +99,7 @@ public class RankModule extends AbstractModule {
         return Optional.ofNullable(this.rankMap.get(id));
     }
 
-    public Optional<Rank> getRank(final String name) {
+    public Optional<Rank> getRank(@NonNull final String name) {
         final Optional<Integer> rankId = this.rankMappingMap.getKeyOptional(name);
         if (!rankId.isPresent()) {
             return Optional.empty();
@@ -112,12 +112,12 @@ public class RankModule extends AbstractModule {
         return new HashSet<>(this.rankMap.values());
     }
 
-    public boolean createRank(final String name) {
+    public boolean createRank(@NonNull final String name) {
         if (this.hasRank(name)) {
             return false;
         }
 
-        final Rank newRank = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle -> {
+        final Rank newRank = this.database.withHandle(handle -> {
             handle.createUpdate(INSERT_RANK)
                     .bind("rankName", name)
                     .execute();
@@ -127,12 +127,16 @@ public class RankModule extends AbstractModule {
                     .first();
 
             return handle.createQuery(GET_RANK_BY_ID).bind(DATABASE_ID, rankId)
-                    .map(rankMapper)
+                    .mapTo(Rank.class)
                     .first();
         });
         this.addRank(newRank);
 
         return true;
+    }
+
+    public boolean deleteRank(@NonNull final Rank rank) {
+        return this.deleteRank(rank.getDatabaseId());
     }
 
     public boolean deleteRank(final int rankId) {
@@ -141,7 +145,7 @@ public class RankModule extends AbstractModule {
             return false;
         }
 
-        this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle -> {
+        this.database.useHandle(handle -> {
             handle.createUpdate(SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE)
                     .bind(DATABASE_ID, rankId)
                     .execute();
@@ -155,9 +159,5 @@ public class RankModule extends AbstractModule {
         this.invalidateAllPermCaches();
 
         return true;
-    }
-
-    public boolean deleteRank(@NonNull final Rank rank) {
-        return this.deleteRank(rank.getDatabaseId());
     }
 }

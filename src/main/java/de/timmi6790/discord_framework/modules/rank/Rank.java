@@ -1,12 +1,11 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -41,7 +40,15 @@ public class Rank {
     private String name;
     private Set<Integer> cachedAllPermissions;
 
-    public Rank(final int databaseId, final String name, final Set<Integer> extendedRanks, final Set<Integer> permissions) {
+    private final Jdbi database;
+    private final RankModule rankModule;
+    private final UserDbModule userDbModule;
+
+    public Rank(final Jdbi database, final RankModule rankModule, final UserDbModule userDbModule, final int databaseId, final String name,
+                final Set<Integer> extendedRanks, final Set<Integer> permissions) {
+        this.database = database;
+        this.rankModule = rankModule;
+        this.userDbModule = userDbModule;
         this.databaseId = databaseId;
         this.name = name;
         this.extendedRanks = extendedRanks;
@@ -62,7 +69,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_PERMISSION)
                         .bind(RANK_ID, this.databaseId)
                         .bind("permissionId", permissionId)
@@ -70,7 +77,7 @@ public class Rank {
         );
         this.permissions.add(permissionId);
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
+        this.rankModule.invalidateAllPermCaches();
 
         return true;
     }
@@ -80,7 +87,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_PERMISSION)
                         .bind(RANK_ID, this.databaseId)
                         .bind("permissionId", permissionId)
@@ -88,7 +95,7 @@ public class Rank {
         );
         this.permissions.remove(permissionId);
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
+        this.rankModule.invalidateAllPermCaches();
 
         return true;
     }
@@ -99,13 +106,11 @@ public class Rank {
         }
 
         final Set<Integer> foundPermissions = new HashSet<>(this.permissions);
-        final RankModule rankModule = DiscordBot.getInstance().getModuleManager().getModuleOrThrow(RankModule.class);
-
         final Set<Integer> seen = new HashSet<>();
         final ArrayDeque<Integer> queue = new ArrayDeque<>(this.extendedRanks);
 
         while (!queue.isEmpty()) {
-            rankModule.getRank(queue.pop()).ifPresent(rank -> {
+            this.rankModule.getRank(queue.pop()).ifPresent(rank -> {
                 foundPermissions.addAll(rank.getPermissions());
 
                 rank.getExtendedRanks()
@@ -136,7 +141,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_RELATION)
                         .bind(RANK_ID, this.databaseId)
                         .bind("extendedRankId", rankId)
@@ -144,7 +149,7 @@ public class Rank {
         );
         this.extendedRanks.add(rankId);
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
+        this.rankModule.invalidateAllPermCaches();
 
         return true;
     }
@@ -158,7 +163,7 @@ public class Rank {
             return false;
         }
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_RELATION)
                         .bind(RANK_ID, this.databaseId)
                         .bind("extendedRankId", rankId)
@@ -166,7 +171,7 @@ public class Rank {
         );
         this.extendedRanks.remove(rankId);
 
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(RankModule.class).invalidateAllPermCaches();
+        this.rankModule.invalidateAllPermCaches();
 
         return true;
     }
@@ -177,7 +182,7 @@ public class Rank {
 
     // Name
     public void setName(final String name) {
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 handle.createUpdate(SET_NAME)
                         .bind("newRankName", name)
                         .bind(DATABASE_ID, this.databaseId)
@@ -188,7 +193,7 @@ public class Rank {
 
     // Players
     public long retrievePlayerCount() {
-        return DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        return this.database.withHandle(handle ->
                 handle.createQuery(GET_PLAYER_IDS_WITH_RANK)
                         .bind(DATABASE_ID, this.databaseId)
                         .mapTo(long.class)
@@ -199,7 +204,7 @@ public class Rank {
 
     public Set<UserDb> retrieveAllPlayers() {
         // I think it is the best solution to just get the discord ids
-        final List<Long> playerIds = DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final List<Long> playerIds = this.database.withHandle(handle ->
                 handle.createQuery(GET_PLAYER_IDS_WITH_RANK)
                         .bind(DATABASE_ID, this.databaseId)
                         .mapTo(long.class)
@@ -207,7 +212,7 @@ public class Rank {
         );
 
         return playerIds.parallelStream()
-                .map(DiscordBot.getInstance().getModuleManager().getModuleOrThrow(UserDbModule.class)::getOrCreate)
+                .map(this.userDbModule::getOrCreate)
                 .collect(Collectors.toSet());
     }
 }

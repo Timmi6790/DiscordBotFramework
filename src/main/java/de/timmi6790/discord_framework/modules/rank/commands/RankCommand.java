@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class RankCommand extends AbstractCommand<RankModule> {
     private static final String ERROR_TITLE = "Error";
-    private static final String RANK_FALLBACK_NAME = "Unknown";
+    private static final String FALLBACK_NAME = "Unknown";
 
     public RankCommand() {
         // TODO: Add a better command system, to support more complex commands
@@ -261,7 +261,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 .map(rankId ->
                         rankModule.getRank(rankId)
                                 .map(Rank::getName)
-                                .orElse(RANK_FALLBACK_NAME) + "[" + rankId + "]"
+                                .orElse(FALLBACK_NAME) + "[" + rankId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -269,7 +269,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
         final String perms = rank.getPermissions()
                 .stream()
                 .map(permId ->
-                        permissionsModule.getPermissionFromId(permId).orElse(RANK_FALLBACK_NAME) + "[" + permId + "]"
+                        permissionsModule.getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -277,7 +277,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 .stream()
                 .filter(permId -> !rank.getPermissions().contains(permId))
                 .map(permId ->
-                        permissionsModule.getPermissionFromId(permId).orElse(RANK_FALLBACK_NAME) + "[" + permId + "]"
+                        permissionsModule.getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
