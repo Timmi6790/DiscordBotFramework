@@ -21,7 +21,6 @@ public class ChannelDb {
         this.disabled = disabled;
     }
 
-
     public MessageChannel getChannel() {
         return DiscordBot.getInstance().getDiscord().getTextChannelById(this.discordId);
     }

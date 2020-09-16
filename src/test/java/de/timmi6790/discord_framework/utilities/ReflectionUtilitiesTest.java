@@ -2,12 +2,11 @@ package de.timmi6790.discord_framework.utilities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URLClassLoader;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -58,7 +57,8 @@ class ReflectionUtilitiesTest {
     (jdk.internal.loader.ClassLoaders$AppClassLoader and java.net.URLClassLoader are in module java.base of loader 'bootstrap')
 	at de.timmi6790.discord_framework.utilities.ReflectionUtilitiesTest.loadClassFromClassLoader(ReflectionUtilitiesTest.java:56)
      */
-    /*
+
+    @Disabled("Broken with github actions")
     @Test
     void loadClassFromClassLoader() {
         final URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
@@ -72,7 +72,6 @@ class ReflectionUtilitiesTest {
                 .isEmpty();
     }
 
-     */
 
     @Data
     @AllArgsConstructor

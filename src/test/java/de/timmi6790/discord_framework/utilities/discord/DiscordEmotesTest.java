@@ -21,6 +21,7 @@ class DiscordEmotesTest {
         this.checkNumberAgainstEmote(7, DiscordEmotes.SEVEN);
         this.checkNumberAgainstEmote(8, DiscordEmotes.EIGHT);
         this.checkNumberAgainstEmote(9, DiscordEmotes.NINE);
+        this.checkNumberAgainstEmote(10, DiscordEmotes.TEN);
         this.checkNumberAgainstEmote(-1, DiscordEmotes.ZERO);
     }
 }

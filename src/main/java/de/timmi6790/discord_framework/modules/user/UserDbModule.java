@@ -39,7 +39,7 @@ public class UserDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
-    protected Jdbi database;
+    private Jdbi database;
 
     public UserDbModule() {
         super("UserDb");

@@ -16,6 +16,16 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MultiEmbedBuilderTest {
+    private static MultiEmbedBuilder getFilledEmbedBuilder() {
+        return new MultiEmbedBuilder()
+                .setDescription("Description")
+                .setTitle("Title")
+                .setFooter("Footer")
+                .setAuthor("Author")
+                .addField("Field", "Value")
+                .addField("D", "A");
+    }
+
     private static String getRandomString(final int size) {
         final StringBuilder stringBuilder = new StringBuilder(size);
         final String abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -73,11 +83,12 @@ class MultiEmbedBuilderTest {
                 .matches(new OrderPredicate(), "Order");
     }
 
-    // TODO: Fix me: Issues with github actions not finding files
-    /*
+    // TODO: Github actions broken
     @SuppressWarnings("UnstableApiUsage")
+    /*
     @ParameterizedTest
     @ValueSource(strings = {"loremipsum/20k", "loremipsum/5k", "loremipsum/111k", "loremipsum/NewLineBug"})
+    @Disabled("Broken with github actions")
     void correctDescriptions(final String filePath) throws IOException, URISyntaxException {
         final List<String> lines = Resources.readLines(Resources.getResource(filePath).toURI().toURL(), StandardCharsets.UTF_8);
         final String description = String.join("", lines);
@@ -177,6 +188,89 @@ class MultiEmbedBuilderTest {
         assertThat(messageEmbeds)
                 .matches(new TotalSizePredicate(), "Total size")
                 .matches(new OrderPredicate(), "Order");
+    }
+
+    @Test
+    void constructorMultiEmbedBuilder() {
+        final MultiEmbedBuilder original = getFilledEmbedBuilder();
+        final MultiEmbedBuilder copy = new MultiEmbedBuilder(original);
+
+        assertThat(copy).isEqualTo(original);
+    }
+
+    @Test
+    void constructorMessageEmbed() {
+        final MultiEmbedBuilder original = getFilledEmbedBuilder();
+        final MultiEmbedBuilder copy = new MultiEmbedBuilder(original.buildSingle());
+
+        assertThat(copy).isEqualTo(original);
+    }
+
+    @Test
+    void clear() {
+        final MultiEmbedBuilder filledEmbedBuilder = getFilledEmbedBuilder();
+        filledEmbedBuilder.clear();
+        assertThat(filledEmbedBuilder).isEqualTo(new MultiEmbedBuilder());
+    }
+
+    @Test
+    void clearFields() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder()
+                .addField("D", "A")
+                .addField("C", "f");
+        embedBuilder.clearFields();
+        assertThat(embedBuilder.getFields()).isEmpty();
+    }
+
+    @Test
+    void addBlankField() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder().addBlankField(true);
+        assertThat(embedBuilder.getFields()).hasSize(1);
+    }
+
+    @Test
+    void addFieldIfConditionFalse() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.addField("A", "A", true, false);
+        assertThat(embedBuilder.getFields()).isEmpty();
+    }
+
+    @Test
+    void addFieldIfConditionTrue() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.addField("A", "A", false, true);
+        assertThat(embedBuilder.getFields()).hasSize(1);
+    }
+
+    @Test
+    void setFooterNull() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setFooter(null);
+        assertThat(embedBuilder.getFooter()).isNull();
+    }
+
+    @Test
+    void setFooter() {
+        final String footerText = "AAAAAAA";
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setFooter(footerText);
+
+        assertThat(embedBuilder.getFooter()).isNotNull();
+        assertThat(embedBuilder.getFooter().getText()).isEqualTo(footerText);
+    }
+
+    @Test
+    void setAuthorNull() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setAuthor(null);
+        assertThat(embedBuilder.getAuthor()).isNull();
+    }
+
+    @Test
+    void setAuthor() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setAuthor(null);
+        assertThat(embedBuilder.getAuthor()).isNull();
     }
 
     private static class TotalSizePredicate implements Predicate<MessageEmbed[]> {

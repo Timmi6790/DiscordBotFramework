@@ -1,6 +1,9 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
+import com.google.common.base.Objects;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
@@ -9,9 +12,8 @@ import net.dv8tion.jda.api.entities.MessageEmbed.*;
 import net.dv8tion.jda.internal.entities.EntityBuilder;
 import net.dv8tion.jda.internal.utils.Checks;
 import net.dv8tion.jda.internal.utils.Helpers;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.time.*;
 import java.time.temporal.TemporalAccessor;
@@ -21,6 +23,7 @@ import java.util.List;
 
 @ToString
 @Getter
+@NoArgsConstructor
 public class MultiEmbedBuilder {
     // Title, Description, Field, Footer.text, Author.name
     protected static final int EMBED_TOTAL_MAX = 6_000;
@@ -46,41 +49,40 @@ public class MultiEmbedBuilder {
     private Footer footer;
     private ImageInfo image;
 
-    public MultiEmbedBuilder() {
+    public MultiEmbedBuilder(@NonNull final MultiEmbedBuilder builder) {
+        this.setDescription(builder.description.toString());
+        this.fields.addAll(builder.fields);
+        this.url = builder.url;
+        this.title = builder.title;
+        this.timestamp = builder.timestamp;
+        this.color = builder.color;
+        this.thumbnail = builder.thumbnail;
+        this.author = builder.author;
+        this.footer = builder.footer;
+        this.image = builder.image;
     }
 
-    public MultiEmbedBuilder(@Nullable final MultiEmbedBuilder builder) {
-        if (builder != null) {
-            this.setDescription(builder.description.toString());
-            this.fields.addAll(builder.fields);
-            this.url = builder.url;
-            this.title = builder.title;
-            this.timestamp = builder.timestamp;
-            this.color = builder.color;
-            this.thumbnail = builder.thumbnail;
-            this.author = builder.author;
-            this.footer = builder.footer;
-            this.image = builder.image;
+    public MultiEmbedBuilder(@NonNull final MessageEmbed embed) {
+        this.setDescription(embed.getDescription());
+        this.url = embed.getUrl();
+        this.title = embed.getTitle();
+        this.timestamp = embed.getTimestamp();
+        this.color = embed.getColorRaw();
+        this.thumbnail = embed.getThumbnail();
+        this.author = embed.getAuthor();
+        this.footer = embed.getFooter();
+        this.image = embed.getImage();
+        this.fields.addAll(embed.getFields());
+    }
+
+    private static void urlCheck(@Nullable final String url) {
+        if (url != null) {
+            Checks.check(url.length() <= EMBED_URL_MAX, "URL cannot be longer than %d characters.", EMBED_URL_MAX);
+            Checks.check(EmbedBuilder.URL_PATTERN.matcher(url).matches(), "URL must be a valid http(s) or attachment url.");
         }
-
     }
 
-    public MultiEmbedBuilder(@Nullable final MessageEmbed embed) {
-        if (embed != null) {
-            this.setDescription(embed.getDescription());
-            this.url = embed.getUrl();
-            this.title = embed.getTitle();
-            this.timestamp = embed.getTimestamp();
-            this.color = embed.getColorRaw();
-            this.thumbnail = embed.getThumbnail();
-            this.author = embed.getAuthor();
-            this.footer = embed.getFooter();
-            this.image = embed.getImage();
-            this.fields.addAll(embed.getFields());
-        }
-    }
-
-    private static int getFieldLength(final Field field) {
+    private static int getFieldLength(@NonNull final Field field) {
         int fieldSize = 0;
         if (field.getValue() != null) {
             fieldSize += field.getValue().length();
@@ -91,7 +93,7 @@ public class MultiEmbedBuilder {
         return fieldSize;
     }
 
-    private static int findMessageBreakPoint(final StringBuilder description, final int maxCutPoint) {
+    private static int findMessageBreakPoint(@NonNull final StringBuilder description, final int maxCutPoint) {
         final int newLineIndex = description.lastIndexOf("\n", maxCutPoint);
         if (newLineIndex != -1 && 400 > maxCutPoint - newLineIndex) {
             return newLineIndex + 1;
@@ -106,7 +108,7 @@ public class MultiEmbedBuilder {
         return maxCutPoint;
     }
 
-    private String splitDescriptionTillOne(final List<MessageEmbed> embeds) {
+    private String splitDescriptionTillOne(@NonNull final List<MessageEmbed> embeds) {
         String lastDescription = null;
         int breakPoint;
         for (int descriptionIndex = 0; this.description.length() > descriptionIndex; descriptionIndex = breakPoint) {
@@ -140,7 +142,7 @@ public class MultiEmbedBuilder {
         return this.title == null ? 0 : this.title.length();
     }
 
-    private MessageEmbed createMessageEmbed(final String description, final List<Field> fields, final boolean includeHeader, final boolean includeFooter) {
+    private MessageEmbed createMessageEmbed(@Nullable final String description, @Nullable final List<Field> fields, final boolean includeHeader, final boolean includeFooter) {
         return EntityBuilder.createMessageEmbed(
                 includeHeader ? this.url : null,
                 includeHeader ? this.title : null,
@@ -158,7 +160,6 @@ public class MultiEmbedBuilder {
         );
     }
 
-    @Nonnull
     public MessageEmbed[] build() {
         Checks.check(!this.isEmpty(), "Cannot build an empty embed!");
 
@@ -202,7 +203,6 @@ public class MultiEmbedBuilder {
         return embeds.toArray(new MessageEmbed[0]);
     }
 
-    @Nonnull
     public MessageEmbed buildSingle() {
         if (this.isEmpty()) {
             throw new IllegalStateException("Cannot build an empty embed!");
@@ -220,7 +220,6 @@ public class MultiEmbedBuilder {
         }
     }
 
-    @Nonnull
     public MultiEmbedBuilder clear() {
         this.description.setLength(0);
         this.fields.clear();
@@ -259,12 +258,10 @@ public class MultiEmbedBuilder {
         return length;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setTitle(@Nullable final String title) {
         return this.setTitle(title, null);
     }
 
-    @Nonnull
     public MultiEmbedBuilder setTitle(@Nullable final String title, @Nullable String url) {
         if (title == null) {
             this.title = null;
@@ -276,7 +273,7 @@ public class MultiEmbedBuilder {
                 url = null;
             }
 
-            this.urlCheck(url);
+            urlCheck(url);
             this.title = title;
             this.url = url;
         }
@@ -284,17 +281,14 @@ public class MultiEmbedBuilder {
         return this;
     }
 
-    @Nonnull
     public StringBuilder getDescriptionBuilder() {
         return this.description;
     }
 
-    @Nonnull
-    public MultiEmbedBuilder setDescription(final String format, final Object... objects) {
+    public MultiEmbedBuilder setDescription(@NonNull final String format, final Object... objects) {
         return this.setDescription(String.format(format, objects));
     }
 
-    @Nonnull
     public MultiEmbedBuilder setDescription(@Nullable final CharSequence description) {
         this.description.setLength(0);
         if (description != null && description.length() >= 1) {
@@ -304,19 +298,16 @@ public class MultiEmbedBuilder {
         return this;
     }
 
-    @Nonnull
-    public MultiEmbedBuilder appendDescription(final String format, final Object... object) {
+    public MultiEmbedBuilder appendDescription(@NonNull final String format, final Object... object) {
         return this.appendDescription(String.format(format, object));
     }
 
-    @Nonnull
-    public MultiEmbedBuilder appendDescription(@Nonnull final CharSequence description) {
+    public MultiEmbedBuilder appendDescription(@NonNull final CharSequence description) {
         Checks.notNull(description, "description");
         this.description.append(description);
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setTimestamp(@Nullable final TemporalAccessor temporal) {
         if (temporal == null) {
             this.timestamp = null;
@@ -346,85 +337,76 @@ public class MultiEmbedBuilder {
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setColor(@Nullable final Color color) {
         this.color = color == null ? EMBED_DEFAULT_COLOUR : color.getRGB();
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setColor(final int color) {
         this.color = color;
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setThumbnail(@Nullable final String url) {
         if (url == null) {
             this.thumbnail = null;
         } else {
-            this.urlCheck(url);
+            urlCheck(url);
             this.thumbnail = new Thumbnail(url, null, 0, 0);
         }
 
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setImage(@Nullable final String url) {
         if (url == null) {
             this.image = null;
         } else {
-            this.urlCheck(url);
+            urlCheck(url);
             this.image = new ImageInfo(url, null, 0, 0);
         }
 
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setAuthor(@Nullable final String name) {
         return this.setAuthor(name, null, null);
     }
 
-    @Nonnull
     public MultiEmbedBuilder setAuthor(@Nullable final String name, @Nullable final String url) {
         return this.setAuthor(name, url, null);
     }
 
-    @Nonnull
     public MultiEmbedBuilder setAuthor(@Nullable final String name, @Nullable final String url, @Nullable final String iconUrl) {
         if (name == null) {
             this.author = null;
         } else {
             Checks.check(name.length() <= EMBED_AUTHOR_MAX, "Author name cannot be longer than %d characters.", EMBED_AUTHOR_MAX);
-            this.urlCheck(url);
-            this.urlCheck(iconUrl);
+            urlCheck(url);
+            urlCheck(iconUrl);
             this.author = new AuthorInfo(name, url, iconUrl, null);
         }
 
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder setFooter(@Nullable final String text) {
         return this.setFooter(text, null);
     }
 
-    @Nonnull
     public MultiEmbedBuilder setFooter(@Nullable final String text, @Nullable final String iconUrl) {
         if (text == null) {
             this.footer = null;
         } else {
             Checks.check(text.length() <= EMBED_FOOTER_MAX, "Text cannot be longer than %d characters.", EMBED_FOOTER_MAX);
-            this.urlCheck(iconUrl);
+            urlCheck(iconUrl);
             this.footer = new Footer(text, iconUrl, null);
         }
 
         return this;
     }
 
-    public MultiEmbedBuilder addField(@Nullable final String name, @Nullable final String value, final boolean inline, final boolean ifCondition) {
+    public MultiEmbedBuilder addField(@NonNull final String name, @NonNull final String value, final boolean inline, final boolean ifCondition) {
         if (ifCondition) {
             this.addField(name, value, inline);
         }
@@ -432,42 +414,60 @@ public class MultiEmbedBuilder {
         return this;
     }
 
-    @Nonnull
-    public MultiEmbedBuilder addField(@Nullable final Field field) {
-        return field == null ? this : this.addField(field.getName(), field.getValue(), field.isInline());
+    public MultiEmbedBuilder addField(@NonNull final Field field) {
+        if (field.getValue() != null && field.getName() != null) {
+            this.addField(field.getName(), field.getValue(), field.isInline());
+        }
+        return this;
     }
 
-    public MultiEmbedBuilder addField(final String name, final String value) {
+    public MultiEmbedBuilder addField(@NonNull final String name, @NonNull final String value) {
         return this.addField(name, value, false);
     }
 
-    @Nonnull
-    public MultiEmbedBuilder addField(@Nullable final String name, @Nullable final String value, final boolean inline) {
-        if (name != null || value != null) {
-            Checks.check(name == null || name.length() <= EMBED_FIELD_NAME_MAX, "Name cannot be longer than %d characters.", EMBED_FIELD_NAME_MAX);
-            Checks.check(value == null || value.length() <= EMBED_FIELD_VALUE_MAX, "Value cannot be longer than %d characters.", EMBED_FIELD_VALUE_MAX);
-            this.fields.add(new Field(name, value, inline));
-        }
+    public MultiEmbedBuilder addField(@NonNull final String name, @NonNull final String value, final boolean inline) {
+        Checks.check(name.length() <= EMBED_FIELD_NAME_MAX, "Name cannot be longer than %d characters.", EMBED_FIELD_NAME_MAX);
+        Checks.check(value.length() <= EMBED_FIELD_VALUE_MAX, "Value cannot be longer than %d characters.", EMBED_FIELD_VALUE_MAX);
+        this.fields.add(new Field(name, value, inline));
 
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder addBlankField(final boolean inline) {
         this.fields.add(new Field(EmbedBuilder.ZERO_WIDTH_SPACE, EmbedBuilder.ZERO_WIDTH_SPACE, inline));
         return this;
     }
 
-    @Nonnull
     public MultiEmbedBuilder clearFields() {
         this.fields.clear();
         return this;
     }
 
-    private void urlCheck(@Nullable final String url) {
-        if (url != null) {
-            Checks.check(url.length() <= EMBED_URL_MAX, "URL cannot be longer than %d characters.", EMBED_URL_MAX);
-            Checks.check(EmbedBuilder.URL_PATTERN.matcher(url).matches(), "URL must be a valid http(s) or attachment url.");
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
+        if (!(o instanceof MultiEmbedBuilder)) {
+            return false;
+        }
+        final MultiEmbedBuilder that = (MultiEmbedBuilder) o;
+        return this.getColor() == that.getColor() &&
+                Objects.equal(this.getFields(), that.getFields()) &&
+                Objects.equal(this.getDescription().toString(), that.getDescription().toString()) &&
+                Objects.equal(this.getUrl(), that.getUrl()) &&
+                Objects.equal(this.getTitle(), that.getTitle()) &&
+                Objects.equal(this.getTimestamp(), that.getTimestamp()) &&
+                Objects.equal(this.getThumbnail(), that.getThumbnail()) &&
+                Objects.equal(this.getAuthor(), that.getAuthor()) &&
+                Objects.equal(this.getFooter(), that.getFooter()) &&
+                Objects.equal(this.getImage(), that.getImage());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.getFields(), this.getDescription().toString(), this.getColor(), this.getUrl(), this.getTitle(), this.getTimestamp(),
+                this.getThumbnail(), this.getAuthor(), this.getFooter(), this.getImage());
     }
 }

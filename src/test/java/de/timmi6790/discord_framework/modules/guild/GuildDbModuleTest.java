@@ -1,8 +1,13 @@
 package de.timmi6790.discord_framework.modules.guild;
 
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.BeforeAll;
+import de.timmi6790.discord_framework.fake_modules.FakeDatabaseModel;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -12,7 +17,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.doReturn;
 
+@ExtendWith(MockitoExtension.class)
 @Testcontainers
 class GuildDbModuleTest {
     @Container
@@ -22,44 +29,45 @@ class GuildDbModuleTest {
             BindMode.READ_ONLY
     );
     private static final AtomicLong DISCORD_IDS = new AtomicLong(0);
-    private static GuildDbModule guildDbModule;
+    @Spy
+    private final GuildDbModule guildDbModule = new GuildDbModule();
 
-    @BeforeAll
-    static void setUp() {
-        guildDbModule = new GuildDbModule();
+    @BeforeEach
+    void setUp() {
+        final FakeDatabaseModel fakeDatabaseModel = new FakeDatabaseModel(MARIA_DB_CONTAINER);
 
-        guildDbModule.database = Jdbi.create(MARIA_DB_CONTAINER.getJdbcUrl(), MARIA_DB_CONTAINER.getUsername(), MARIA_DB_CONTAINER.getPassword());
-        guildDbModule.database.registerRowMapper(GuildDb.class, new GuildDbMapper());
+        doReturn(fakeDatabaseModel).when(this.guildDbModule).getModuleOrThrow(DatabaseModule.class);
+        this.guildDbModule.onInitialize();
     }
 
     @Test
     void get() {
         final long discordId = DISCORD_IDS.getAndIncrement();
 
-        final Optional<GuildDb> guildNotFound = guildDbModule.get(discordId);
+        final Optional<GuildDb> guildNotFound = this.guildDbModule.get(discordId);
         assertThat(guildNotFound).isNotPresent();
 
-        guildDbModule.create(discordId);
+        this.guildDbModule.create(discordId);
 
-        final Optional<GuildDb> guildFound = guildDbModule.get(discordId);
+        final Optional<GuildDb> guildFound = this.guildDbModule.get(discordId);
         assertThat(guildFound).isPresent();
-        assertThat(guildFound.get().getDiscordId()).isEqualTo(discordId);
-    }
-
-    @Test
-    void getOrCreate() {
-        final long discordId = DISCORD_IDS.getAndIncrement();
-
-        final GuildDb guildDb = guildDbModule.getOrCreate(discordId);
-        assertThat(guildDb.getDiscordId()).isEqualTo(discordId);
     }
 
     @Test
     void getCacheCheck() {
         final long discordId = DISCORD_IDS.getAndIncrement();
 
-        guildDbModule.getOrCreate(discordId);
-        final Optional<GuildDb> guildFound = guildDbModule.get(discordId);
-        assertThat(guildFound).isPresent();
+        final GuildDb guildDbCreate = this.guildDbModule.getOrCreate(discordId);
+
+        final Optional<GuildDb> guildDbCache = this.guildDbModule.get(discordId);
+        assertThat(guildDbCache).isPresent();
+
+        this.guildDbModule.getCache().invalidate(discordId);
+        final Optional<GuildDb> guildldDatabase = this.guildDbModule.get(discordId);
+        assertThat(guildldDatabase).isPresent();
+
+        AssertionsForClassTypes.assertThat(guildDbCreate.getDatabaseId())
+                .isEqualTo(guildDbCache.get().getDatabaseId())
+                .isEqualTo(guildldDatabase.get().getDatabaseId());
     }
 }

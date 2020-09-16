@@ -1,8 +1,14 @@
 package de.timmi6790.discord_framework.modules.user;
 
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.BeforeAll;
+import de.timmi6790.discord_framework.fake_modules.FakeDatabaseModel;
+import de.timmi6790.discord_framework.fake_modules.FakeEmptyCommandModule;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -11,7 +17,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.doReturn;
 
+@ExtendWith(MockitoExtension.class)
 @Testcontainers
 class UserDbModuleTest {
     private static final long TEST_DISCORD_ID = 305911488697204736L;
@@ -23,23 +31,25 @@ class UserDbModuleTest {
             "/docker-entrypoint-initdb.d/createTables.sql",
             BindMode.READ_ONLY
     );
-    private static UserDbModule userDbModule;
+    @Spy
+    private final UserDbModule userDbModule = new UserDbModule();
 
-    @BeforeAll
-    static void setUp() {
-        userDbModule = new UserDbModule();
+    @BeforeEach
+    void setUp() {
+        final FakeDatabaseModel fakeDatabaseModel = new FakeDatabaseModel(MARIA_DB_CONTAINER);
+        doReturn(fakeDatabaseModel).when(this.userDbModule).getModuleOrThrow(DatabaseModule.class);
 
-        userDbModule.database = Jdbi.create(MARIA_DB_CONTAINER.getJdbcUrl(), MARIA_DB_CONTAINER.getUsername(), MARIA_DB_CONTAINER.getPassword());
-        userDbModule.database.registerRowMapper(UserDb.class, new UserDbMapper(userDbModule.database));
+        doReturn(new FakeEmptyCommandModule()).when(this.userDbModule).getModuleOrThrow(CommandModule.class);
+        this.userDbModule.onInitialize();
     }
 
     @Test
     void get() {
-        final Optional<UserDb> userDbNotFound = userDbModule.get(TEST_DISCORD_ID);
+        final Optional<UserDb> userDbNotFound = this.userDbModule.get(TEST_DISCORD_ID);
         assertThat(userDbNotFound).isNotPresent();
 
-        userDbModule.create(TEST_DISCORD_ID);
-        final Optional<UserDb> userDbFound = userDbModule.get(TEST_DISCORD_ID);
+        this.userDbModule.create(TEST_DISCORD_ID);
+        final Optional<UserDb> userDbFound = this.userDbModule.get(TEST_DISCORD_ID);
         assertThat(userDbFound).isPresent();
         assertThat(userDbFound.get().getDiscordId()).isEqualTo(TEST_DISCORD_ID);
     }
@@ -47,41 +57,41 @@ class UserDbModuleTest {
     @Test
     void getOrCreate() {
         // Should create them
-        final UserDb userDb = userDbModule.getOrCreate(TEST_DISCORD_ID2);
+        final UserDb userDb = this.userDbModule.getOrCreate(TEST_DISCORD_ID2);
         assertThat(userDb).isNotNull();
         assertThat(userDb.getDiscordId()).isEqualTo(TEST_DISCORD_ID2);
 
         // Should get it without creation
-        final UserDb userDb2 = userDbModule.getOrCreate(TEST_DISCORD_ID2);
+        final UserDb userDb2 = this.userDbModule.getOrCreate(TEST_DISCORD_ID2);
         assertThat(userDb2).isNotNull();
         assertThat(userDb2.getDiscordId()).isEqualTo(TEST_DISCORD_ID2);
     }
 
     @Test
     void deleteUser() {
-        final UserDb userDb = userDbModule.getOrCreate(TEST_DISCORD_ID);
-        userDbModule.delete(userDb);
+        final UserDb userDb = this.userDbModule.getOrCreate(TEST_DISCORD_ID);
+        this.userDbModule.delete(userDb);
 
-        final Optional<UserDb> deletedUser = userDbModule.get(TEST_DISCORD_ID);
+        final Optional<UserDb> deletedUser = this.userDbModule.get(TEST_DISCORD_ID);
         assertThat(deletedUser).isNotPresent();
     }
 
     @Test
     void deleteId() {
-        final UserDb userDb = userDbModule.getOrCreate(TEST_DISCORD_ID);
-        userDbModule.delete(userDb.getDiscordId());
+        final UserDb userDb = this.userDbModule.getOrCreate(TEST_DISCORD_ID);
+        this.userDbModule.delete(userDb.getDiscordId());
 
-        final Optional<UserDb> deletedUser = userDbModule.get(TEST_DISCORD_ID);
+        final Optional<UserDb> deletedUser = this.userDbModule.get(TEST_DISCORD_ID);
         assertThat(deletedUser).isNotPresent();
     }
 
     @Test
     void checkIncorrectCache() {
-        userDbModule.create(TEST_DISCORD_ID);
-        final UserDb cachedUser = userDbModule.getCache().getIfPresent(TEST_DISCORD_ID);
+        this.userDbModule.create(TEST_DISCORD_ID);
+        final UserDb cachedUser = this.userDbModule.getCache().getIfPresent(TEST_DISCORD_ID);
 
-        userDbModule.getCache().invalidate(TEST_DISCORD_ID);
-        final UserDb dbUser = userDbModule.getOrCreate(TEST_DISCORD_ID);
+        this.userDbModule.getCache().invalidate(TEST_DISCORD_ID);
+        final UserDb dbUser = this.userDbModule.getOrCreate(TEST_DISCORD_ID);
 
         assertThat(cachedUser).isEqualTo(dbUser);
     }

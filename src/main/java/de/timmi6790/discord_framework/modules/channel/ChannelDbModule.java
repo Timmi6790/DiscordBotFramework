@@ -8,6 +8,7 @@ import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,8 @@ public class ChannelDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
+    private Jdbi database;
+
     public ChannelDbModule() {
         super("ChannelDb");
 
@@ -38,15 +41,14 @@ public class ChannelDbModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.getModuleOrThrow(DatabaseModule.class)
-                .getJdbi()
-                .registerRowMapper(ChannelDb.class, new ChannelDbMapper());
+        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
+        this.database.registerRowMapper(ChannelDb.class, new ChannelDbMapper(this.getModuleOrThrow(GuildDbModule.class)));
     }
 
-    private ChannelDb create(final long discordId, final long guildId) {
+    protected ChannelDb create(final long discordId, final long guildId) {
         // Make sure that the channel is not present
         return this.get(discordId).orElseGet(() -> {
-            this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+            this.database.useHandle(handle ->
                     handle.createUpdate(INSERT_CHANNEL)
                             .bind("discordId", discordId)
                             .bind("guildId", guildId)
@@ -64,7 +66,7 @@ public class ChannelDbModule extends AbstractModule {
             return Optional.of(channelDbCache);
         }
 
-        final Optional<ChannelDb> channelDbOpt = this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        final Optional<ChannelDb> channelDbOpt = this.database.withHandle(handle ->
                 handle.createQuery(GET_CHANNEL)
                         .bind("discordId", discordId)
                         .mapTo(ChannelDb.class)
