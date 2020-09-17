@@ -86,4 +86,13 @@ class PermissionsModuleTest {
                 .isPresent()
                 .contains(permissionNode);
     }
+
+    @Test
+    void addPermissionCache() {
+        final String permissionNode = getPermissionNode();
+        final int permissionIdFirst = this.permissionsModule.addPermission(permissionNode);
+        final int permissionIdSecond = this.permissionsModule.addPermission(permissionNode);
+
+        assertThat(permissionIdFirst).isEqualTo(permissionIdSecond);
+    }
 }

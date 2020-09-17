@@ -155,4 +155,9 @@ class RankModuleTest {
         assertThat(this.rankModule.deleteRank(rank.get().getDatabaseId())).isTrue();
         assertThat(this.rankModule.hasRank(rankName)).isFalse();
     }
+
+    @Test
+    void deleteDefaultRank() {
+        assertThat(this.rankModule.deleteRank(1)).isFalse();
+    }
 }
