@@ -3,9 +3,11 @@ package de.timmi6790.discord_framework.modules.channel;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.entities.MessageChannel;
 
 @Data
+@EqualsAndHashCode(exclude = {"guildDb"})
 public class ChannelDb {
     private final int databaseId;
     private final long discordId;

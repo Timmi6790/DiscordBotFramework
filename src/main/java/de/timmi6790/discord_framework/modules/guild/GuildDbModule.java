@@ -12,7 +12,7 @@ import org.jdbi.v3.core.Jdbi;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(exclude = {"database"}, callSuper = true)
 public class GuildDbModule extends AbstractModule {
     private static final String GET_GUILD = "SELECT guild.id, discordId, banned, GROUP_CONCAT(alias.alias) aliases FROM guild " +
             "LEFT JOIN guild_command_alias alias ON alias.guild_id = guild.id " +

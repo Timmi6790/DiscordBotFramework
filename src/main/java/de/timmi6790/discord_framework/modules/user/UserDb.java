@@ -15,6 +15,7 @@ import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.User;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 
 @Data
+@EqualsAndHashCode(exclude = {"database"})
 public class UserDb {
     private static final String DATABASE_ID = "databaseId";
     private static final String PLAYER_ID = "playerId";

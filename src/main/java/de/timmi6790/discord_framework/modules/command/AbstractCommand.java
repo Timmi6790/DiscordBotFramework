@@ -330,7 +330,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         // Run command
         this.getModule().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
         final CommandResult commandResult = this.executeSave(commandParameters);
-        this.logCommand(commandParameters, commandResult);
+        this.logCommand(commandParameters, commandResult == null ? CommandResult.MISSING : commandResult);
 
         // Command post event
         eventModuleOpt.ifPresent(eventModule -> {

@@ -7,28 +7,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static de.timmi6790.discord_framework.AbstractIntegrationTest.MARIA_DB_CONTAINER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
-@Testcontainers
 class PermissionsModuleTest {
     private static final AtomicInteger permissionNodeId = new AtomicInteger(0);
-
-    @Container
-    private static final MariaDBContainer MARIA_DB_CONTAINER = (MariaDBContainer) new MariaDBContainer().withClasspathResourceMapping(
-            "tables.sql",
-            "/docker-entrypoint-initdb.d/createTables.sql",
-            BindMode.READ_ONLY
-    );
 
     @Spy
     private final PermissionsModule permissionsModule = new PermissionsModule();

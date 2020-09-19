@@ -8,31 +8,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Optional;
 
+import static de.timmi6790.discord_framework.AbstractIntegrationTest.MARIA_DB_CONTAINER;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
-@Testcontainers
 class ChannelDbModuleTest {
     private static final long TEST_GUILD_ID = 405911488697204736L;
 
     private static final long TEST_CHANNEL_ID = 305911488697204736L;
     private static final long TEST_CHANNEL_ID2 = 168049519831810048L;
     private static final long TEST_CHANNEL_ID3 = 308911488647204736L;
-
-    @Container
-    private static final MariaDBContainer MARIA_DB_CONTAINER = (MariaDBContainer) new MariaDBContainer().withClasspathResourceMapping(
-            "tables.sql",
-            "/docker-entrypoint-initdb.d/createTables.sql",
-            BindMode.READ_ONLY
-    );
 
     @Spy
     private final GuildDbModule guildDbModule = new GuildDbModule();

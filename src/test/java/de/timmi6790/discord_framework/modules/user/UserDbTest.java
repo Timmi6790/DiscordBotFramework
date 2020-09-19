@@ -10,26 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static de.timmi6790.discord_framework.AbstractIntegrationTest.MARIA_DB_CONTAINER;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
-@Testcontainers
 class UserDbTest {
-    @Container
-    private static final MariaDBContainer MARIA_DB_CONTAINER = (MariaDBContainer) new MariaDBContainer().withClasspathResourceMapping(
-            "tables.sql",
-            "/docker-entrypoint-initdb.d/createTables.sql",
-            BindMode.READ_ONLY
-    );
-
     private static final AtomicLong DISCORD_ID = new AtomicLong(0);
     @Spy
     private final UserDbModule userDbModule = new UserDbModule();

@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = {"database", "rankModule", "userDbModule"})
 public class Rank {
     private static final String RANK_ID = "rankId";
     private static final String DATABASE_ID = "databaseId";
@@ -159,7 +161,7 @@ public class Rank {
     }
 
     public boolean removeExtendedRank(final int rankId) {
-        if (!this.extendedRanks.contains(rankId)) {
+        if (!this.extendedRanks.contains(rankId) || rankId == this.databaseId) {
             return false;
         }
 

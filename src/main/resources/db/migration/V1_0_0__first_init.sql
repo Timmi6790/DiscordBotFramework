@@ -72,15 +72,6 @@ CREATE TABLE `guild_command_alias`
     PRIMARY KEY (`id`)
 );
 
-CREATE TABLE `guild_setting`
-(
-    `id`         int UNSIGNED     NOT NULL AUTO_INCREMENT,
-    `guild_id`   int(11) UNSIGNED NOT NULL,
-    `setting_id` int(11) UNSIGNED NOT NULL,
-    `setting`    varchar(255)     NOT NULL,
-    PRIMARY KEY (`id`)
-);
-
 CREATE TABLE `permission`
 (
     `id`                 int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -210,12 +201,8 @@ ALTER TABLE `command_log`
     ADD CONSTRAINT `command_log_command_cause` FOREIGN KEY (`command_cause_id`) REFERENCES `command_cause` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 ALTER TABLE `guild_command_alias`
     ADD CONSTRAINT `guild_command_alias_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `guild` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
-ALTER TABLE `guild_setting`
-    ADD CONSTRAINT `guild_setting_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `guild` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
-ALTER TABLE `guild_setting`
-    ADD CONSTRAINT `guild_setting_setting_id` FOREIGN KEY (`setting_id`) REFERENCES `setting` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 ALTER TABLE `player`
-    ADD CONSTRAINT `player_primary_rank` FOREIGN KEY (`primary_rank`) REFERENCES `rank` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
+    ADD CONSTRAINT `player_primary_rank` FOREIGN KEY (`primary_rank`) REFERENCES `rank` (`id`) ON DELETE RESTRICT ON UPDATE NO ACTION;
 ALTER TABLE `player_achievement`
     ADD CONSTRAINT `player_achievement_player_id` FOREIGN KEY (`player_id`) REFERENCES `player` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 ALTER TABLE `player_achievement`

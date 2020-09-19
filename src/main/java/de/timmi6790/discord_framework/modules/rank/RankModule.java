@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @EqualsAndHashCode(callSuper = true)
-
 public class RankModule extends AbstractModule {
     private static final String DATABASE_ID = "databaseId";
 
