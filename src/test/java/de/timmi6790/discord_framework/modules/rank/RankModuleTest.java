@@ -1,14 +1,15 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.fake_modules.FakeDatabaseModel;
+import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.fake_modules.FakeEmptyCommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -18,7 +19,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static de.timmi6790.discord_framework.AbstractIntegrationTest.MARIA_DB_CONTAINER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -27,54 +27,52 @@ class RankModuleTest {
     private static final AtomicInteger RANK_NAME_NUMBER = new AtomicInteger(0);
 
     @Spy
-    private final RankModule rankModule = new RankModule();
+    private static final RankModule rankModule = Mockito.spy(new RankModule());
     @Spy
-    private final PermissionsModule permissionsModule = new PermissionsModule();
+    private static final PermissionsModule permissionsModule = Mockito.spy(new PermissionsModule());
     @Spy
-    private final UserDbModule userDbModule = new UserDbModule();
+    private static final UserDbModule userDbModule = Mockito.spy(new UserDbModule());
 
     private static String getRankName() {
         return "RandomRank" + RANK_NAME_NUMBER.getAndIncrement();
     }
 
-    @BeforeEach
-    void setup() {
-        final FakeDatabaseModel fakeDatabaseModel = new FakeDatabaseModel(MARIA_DB_CONTAINER);
+    @BeforeAll
+    static void setup() {
+        doReturn(AbstractIntegrationTest.databaseModule).when(permissionsModule).getModuleOrThrow(DatabaseModule.class);
+        permissionsModule.onInitialize();
 
-        doReturn(fakeDatabaseModel).when(this.permissionsModule).getModuleOrThrow(DatabaseModule.class);
-        this.permissionsModule.onInitialize();
+        doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
+        doReturn(new FakeEmptyCommandModule()).when(userDbModule).getModuleOrThrow(CommandModule.class);
+        userDbModule.onInitialize();
 
-        doReturn(fakeDatabaseModel).when(this.userDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(new FakeEmptyCommandModule()).when(this.userDbModule).getModuleOrThrow(CommandModule.class);
-        this.userDbModule.onInitialize();
+        doReturn(AbstractIntegrationTest.databaseModule).when(rankModule).getModuleOrThrow(DatabaseModule.class);
+        doReturn(userDbModule).when(rankModule).getModuleOrThrow(UserDbModule.class);
+        doReturn(new FakeEmptyCommandModule()).when(rankModule).getModuleOrThrow(CommandModule.class);
 
-        doReturn(fakeDatabaseModel).when(this.rankModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(this.userDbModule).when(this.rankModule).getModuleOrThrow(UserDbModule.class);
-        doReturn(new FakeEmptyCommandModule()).when(this.rankModule).getModuleOrThrow(CommandModule.class);
-
-        this.rankModule.onInitialize();
+        rankModule.onInitialize();
     }
 
     @Test
     void hasRank() {
         final String rankName = getRankName();
-        this.rankModule.createRank(rankName);
+        rankModule.createRank(rankName);
 
-        final Optional<Rank> rankByName = this.rankModule.getRank(rankName);
+        final Optional<Rank> rankByName = rankModule.getRank(rankName);
         assertThat(rankByName).isPresent();
 
-        assertThat(this.rankModule.hasRank(rankByName.get().getDatabaseId())).isTrue();
+        assertThat(rankModule.hasRank(rankByName.get().getDatabaseId())).isTrue();
     }
 
     @Test
     void getRankId() {
         final String rankName = getRankName();
-        this.rankModule.createRank(rankName);
+        rankModule.createRank(rankName);
 
-        final Optional<Rank> rankByName = this.rankModule.getRank(rankName);
+        final Optional<Rank> rankByName = rankModule.getRank(rankName);
         assertThat(rankByName).isPresent();
 
-        final Optional<Rank> rankById = this.rankModule.getRank(rankByName.get().getDatabaseId());
+        final Optional<Rank> rankById = rankModule.getRank(rankByName.get().getDatabaseId());
         assertThat(rankById)
                 .isPresent()
                 .hasValue(rankByName.get());
@@ -83,9 +81,9 @@ class RankModuleTest {
     @Test
     void getRankByName() {
         final String rankName = getRankName();
-        this.rankModule.createRank(rankName);
+        rankModule.createRank(rankName);
 
-        final Optional<Rank> rank = this.rankModule.getRank(rankName);
+        final Optional<Rank> rank = rankModule.getRank(rankName);
         assertThat(rank).isPresent();
         assertThat(rank.get().getName()).isEqualTo(rankName);
     }
@@ -98,10 +96,10 @@ class RankModuleTest {
         }
 
         for (final String rankName : rankNames) {
-            this.rankModule.createRank(rankName);
+            rankModule.createRank(rankName);
         }
 
-        final List<String> foundRankNames = this.rankModule.getRanks().stream()
+        final List<String> foundRankNames = rankModule.getRanks().stream()
                 .map(Rank::getName)
                 .collect(Collectors.toList());
         assertThat(foundRankNames).containsAll(rankNames);
@@ -110,15 +108,15 @@ class RankModuleTest {
     @Test
     void createRank() {
         final String rankName = getRankName();
-        assertThat(this.rankModule.hasRank(rankName)).isFalse();
+        assertThat(rankModule.hasRank(rankName)).isFalse();
 
-        final boolean rankCreated = this.rankModule.createRank(rankName);
+        final boolean rankCreated = rankModule.createRank(rankName);
         assertThat(rankCreated).isTrue();
 
-        final boolean alreadyCreated = this.rankModule.createRank(rankName);
+        final boolean alreadyCreated = rankModule.createRank(rankName);
         assertThat(alreadyCreated).isFalse();
 
-        final Optional<Rank> rank = this.rankModule.getRank(rankName);
+        final Optional<Rank> rank = rankModule.getRank(rankName);
         assertThat(rank).isPresent();
         assertThat(rank.get().getName()).isEqualTo(rankName);
     }
@@ -126,27 +124,27 @@ class RankModuleTest {
     @Test
     void deleteRankRank() {
         final String rankName = getRankName();
-        this.rankModule.createRank(rankName);
-        final Optional<Rank> rank = this.rankModule.getRank(rankName);
+        rankModule.createRank(rankName);
+        final Optional<Rank> rank = rankModule.getRank(rankName);
 
         assertThat(rank).isPresent();
-        assertThat(this.rankModule.deleteRank(rank.get())).isTrue();
-        assertThat(this.rankModule.hasRank(rankName)).isFalse();
+        assertThat(rankModule.deleteRank(rank.get())).isTrue();
+        assertThat(rankModule.hasRank(rankName)).isFalse();
     }
 
     @Test
     void deleteRankId() {
         final String rankName = getRankName();
-        this.rankModule.createRank(rankName);
-        final Optional<Rank> rank = this.rankModule.getRank(rankName);
+        rankModule.createRank(rankName);
+        final Optional<Rank> rank = rankModule.getRank(rankName);
 
         assertThat(rank).isPresent();
-        assertThat(this.rankModule.deleteRank(rank.get().getDatabaseId())).isTrue();
-        assertThat(this.rankModule.hasRank(rankName)).isFalse();
+        assertThat(rankModule.deleteRank(rank.get().getDatabaseId())).isTrue();
+        assertThat(rankModule.hasRank(rankName)).isFalse();
     }
 
     @Test
     void deleteDefaultRank() {
-        assertThat(this.rankModule.deleteRank(1)).isFalse();
+        assertThat(rankModule.deleteRank(1)).isFalse();
     }
 }

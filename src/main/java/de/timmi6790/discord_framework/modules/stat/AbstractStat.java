@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.modules.stat;
 
-import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.database.DatabaseGetId;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.*;
@@ -42,7 +42,7 @@ public class AbstractStat extends DatabaseGetId {
                 .put(STAT_NAME, this.getInternalName())
                 .build();
     }
-    
+
     protected void increaseStat(final UserDb userDb) {
         this.increaseStat(userDb, 1);
     }

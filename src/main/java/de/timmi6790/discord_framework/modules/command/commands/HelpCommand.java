@@ -1,12 +1,12 @@
 package de.timmi6790.discord_framework.modules.command.commands;
 
+import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
-import de.timmi6790.discord_framework.utilities.StringUtilities;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.Comparator;

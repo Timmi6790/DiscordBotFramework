@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.modules.setting;
 
-import de.timmi6790.discord_framework.datatypes.builders.MapBuilder;
+import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.database.DatabaseGetId;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;

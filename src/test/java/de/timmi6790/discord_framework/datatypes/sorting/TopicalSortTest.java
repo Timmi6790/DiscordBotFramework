@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.datatypes.sorting;
 
-import de.timmi6790.discord_framework.datatypes.builders.ListBuilder;
+import de.timmi6790.commons.builders.ListBuilder;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import org.junit.jupiter.api.Test;
 

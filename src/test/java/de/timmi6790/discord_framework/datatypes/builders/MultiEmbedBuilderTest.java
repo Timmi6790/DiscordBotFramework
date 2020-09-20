@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
-import de.timmi6790.discord_framework.datatypes.Pair;
+import de.timmi6790.commons.Pair;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;

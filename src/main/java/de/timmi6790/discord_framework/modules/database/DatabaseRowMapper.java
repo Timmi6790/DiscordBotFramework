@@ -1,5 +1,8 @@
 package de.timmi6790.discord_framework.modules.database;
 
+import lombok.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,7 +19,7 @@ public abstract class DatabaseRowMapper {
      * @param typeFunction function to convert string input into wanted set type
      * @return the splitted set
      */
-    protected <T> Set<T> toSet(final String string, final Function<String, T> typeFunction) {
+    protected <T> Set<T> toSet(@Nullable final String string, @NonNull final Function<String, T> typeFunction) {
         return this.toSet(string, typeFunction, ",");
     }
 
@@ -29,7 +32,7 @@ public abstract class DatabaseRowMapper {
      * @param splitter     the splitter
      * @return the splitted set
      */
-    protected <T> Set<T> toSet(final String string, final Function<String, T> typeFunction, final String splitter) {
+    protected <T> Set<T> toSet(@Nullable final String string, @NonNull final Function<String, T> typeFunction, @NonNull final String splitter) {
         if (string == null) {
             return new HashSet<>();
         }
@@ -52,7 +55,8 @@ public abstract class DatabaseRowMapper {
      * @param valueFunction function to convert string input into the wanted value type
      * @return the parsed database map
      */
-    protected <K, V> Map<K, V> toMap(final String string, final Function<String, K> keyFunction, final Function<String, V> valueFunction) {
+    protected <K, V> Map<K, V> toMap(@Nullable final String string, @NonNull final Function<String, K> keyFunction,
+                                     @NonNull final Function<String, V> valueFunction) {
         return this.toMap(string, keyFunction, valueFunction, ";", ",");
     }
 
@@ -70,8 +74,8 @@ public abstract class DatabaseRowMapper {
      * @param keyValueSeparator the key value separator
      * @return the parsed database map
      */
-    protected <K, V> Map<K, V> toMap(final String string, final Function<String, K> keyFunction, final Function<String, V> valueFunction,
-                                     final String listSeparator, final String keyValueSeparator) {
+    protected <K, V> Map<K, V> toMap(@Nullable final String string, @NonNull final Function<String, K> keyFunction, @NonNull final Function<String, V> valueFunction,
+                                     @NonNull final String listSeparator, @NonNull final String keyValueSeparator) {
         if (string == null) {
             return new HashMap<>();
         }

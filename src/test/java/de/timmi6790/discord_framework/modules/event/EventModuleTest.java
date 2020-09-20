@@ -21,7 +21,6 @@ class EventModuleTest {
         final EventModule eventModule = this.getEventModule();
         final TestEventListener testEventListener = new TestEventListener();
 
-
         final boolean registered = eventModule.addEventListener(testEventListener);
         assertThat(registered).isTrue();
         assertThat(eventModule.getEventListeners()).hasSize(1);

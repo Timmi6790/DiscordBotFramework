@@ -2,11 +2,11 @@ package de.timmi6790.discord_framework.modules;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.sorting.TopicalSort;
 import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Cleanup;
 import lombok.Data;

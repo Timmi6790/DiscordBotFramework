@@ -1,17 +1,17 @@
 package de.timmi6790.discord_framework.modules.channel;
 
-import de.timmi6790.discord_framework.fake_modules.FakeDatabaseModel;
+import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static de.timmi6790.discord_framework.AbstractIntegrationTest.MARIA_DB_CONTAINER;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -24,32 +24,30 @@ class ChannelDbModuleTest {
     private static final long TEST_CHANNEL_ID3 = 308911488647204736L;
 
     @Spy
-    private final GuildDbModule guildDbModule = new GuildDbModule();
+    private static final GuildDbModule guildDbModule = Mockito.spy(new GuildDbModule());
     @Spy
-    private final ChannelDbModule channelDbModule = new ChannelDbModule();
+    private static final ChannelDbModule channelDbModule = Mockito.spy(new ChannelDbModule());
 
-    @BeforeEach
-    void setup() {
-        final FakeDatabaseModel fakeDatabaseModel = new FakeDatabaseModel(MARIA_DB_CONTAINER);
+    @BeforeAll
+    static void setup() {
+        doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
+        guildDbModule.onInitialize();
 
-        doReturn(fakeDatabaseModel).when(this.guildDbModule).getModuleOrThrow(DatabaseModule.class);
-        this.guildDbModule.onInitialize();
+        doReturn(AbstractIntegrationTest.databaseModule).when(channelDbModule).getModuleOrThrow(DatabaseModule.class);
+        doReturn(guildDbModule).when(channelDbModule).getModuleOrThrow(GuildDbModule.class);
 
-        doReturn(fakeDatabaseModel).when(this.channelDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(this.guildDbModule).when(this.channelDbModule).getModuleOrThrow(GuildDbModule.class);
-
-        this.channelDbModule.onInitialize();
+        channelDbModule.onInitialize();
 
         // We need this to exist;
-        this.guildDbModule.getOrCreate(TEST_GUILD_ID);
+        guildDbModule.getOrCreate(TEST_GUILD_ID);
     }
 
     @Test
     void get() {
-        final Optional<ChannelDb> channelNotFound = this.channelDbModule.get(TEST_CHANNEL_ID);
+        final Optional<ChannelDb> channelNotFound = channelDbModule.get(TEST_CHANNEL_ID);
         assertThat(channelNotFound).isEmpty();
 
-        final ChannelDb channelFound = this.channelDbModule.create(TEST_CHANNEL_ID, TEST_GUILD_ID);
+        final ChannelDb channelFound = channelDbModule.create(TEST_CHANNEL_ID, TEST_GUILD_ID);
 
         assertThat(channelFound.getDiscordId()).isEqualTo(TEST_CHANNEL_ID);
         assertThat(channelFound.getGuildDb().getDiscordId()).isEqualTo(TEST_GUILD_ID);
@@ -58,8 +56,8 @@ class ChannelDbModuleTest {
 
     @Test
     void getOrCreate() {
-        final ChannelDb channelDbCreate = this.channelDbModule.getOrCreate(TEST_CHANNEL_ID2, TEST_GUILD_ID);
-        final ChannelDb channelDbCreate2 = this.channelDbModule.getOrCreate(TEST_CHANNEL_ID2, TEST_GUILD_ID);
+        final ChannelDb channelDbCreate = channelDbModule.getOrCreate(TEST_CHANNEL_ID2, TEST_GUILD_ID);
+        final ChannelDb channelDbCreate2 = channelDbModule.getOrCreate(TEST_CHANNEL_ID2, TEST_GUILD_ID);
 
         assertThat(channelDbCreate.getDiscordId()).isEqualTo(channelDbCreate2.getDiscordId());
         assertThat(channelDbCreate.getDatabaseId()).isEqualTo(channelDbCreate2.getDatabaseId());
@@ -67,13 +65,13 @@ class ChannelDbModuleTest {
 
     @Test
     void getCacheCheck() {
-        final ChannelDb channelDbCreate = this.channelDbModule.getOrCreate(TEST_CHANNEL_ID3, TEST_GUILD_ID);
+        final ChannelDb channelDbCreate = channelDbModule.getOrCreate(TEST_CHANNEL_ID3, TEST_GUILD_ID);
 
-        final Optional<ChannelDb> channelDbCache = this.channelDbModule.get(TEST_CHANNEL_ID3);
+        final Optional<ChannelDb> channelDbCache = channelDbModule.get(TEST_CHANNEL_ID3);
         assertThat(channelDbCache).isPresent();
 
-        this.channelDbModule.getCache().invalidate(TEST_CHANNEL_ID3);
-        final Optional<ChannelDb> channelDbDatabase = this.channelDbModule.get(TEST_CHANNEL_ID3);
+        channelDbModule.getCache().invalidate(TEST_CHANNEL_ID3);
+        final Optional<ChannelDb> channelDbDatabase = channelDbModule.get(TEST_CHANNEL_ID3);
         assertThat(channelDbDatabase).isPresent();
 
         assertThat(channelDbCreate).isEqualTo(channelDbCache.get()).isEqualTo(channelDbDatabase.get());

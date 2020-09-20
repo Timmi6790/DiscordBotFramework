@@ -1,6 +1,8 @@
 package de.timmi6790.discord_framework;
 
-import de.timmi6790.discord_framework.datatypes.builders.ListBuilder;
+import de.timmi6790.commons.builders.ListBuilder;
+import de.timmi6790.commons.utilities.GsonUtilities;
+import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.ModuleManager;
@@ -20,8 +22,6 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import de.timmi6790.discord_framework.utilities.FileUtilities;
-import de.timmi6790.discord_framework.utilities.ReflectionUtilities;
 import io.sentry.SentryClient;
 import io.sentry.SentryClientFactory;
 import lombok.Getter;
@@ -96,7 +96,7 @@ public class DiscordBot {
     @SneakyThrows
     private Config getConfig() {
         final Path mainConfigPath = Paths.get(this.basePath + "/configs/config.json");
-        return FileUtilities.readJsonFile(mainConfigPath, Config.class);
+        return GsonUtilities.readJsonFile(mainConfigPath, Config.class);
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
@@ -129,7 +129,7 @@ public class DiscordBot {
             newConfig.getEnabledModules().putIfAbsent(module.getName(), true);
         }
 
-        FileUtilities.saveToJsonIfChanged(configPath, config, newConfig);
+        GsonUtilities.saveToJsonIfChanged(configPath, config, newConfig);
         if (firstInnit) {
             DiscordBot.getLogger().info("Created main config file.");
             System.exit(1);

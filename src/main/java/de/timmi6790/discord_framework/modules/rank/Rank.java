@@ -161,7 +161,7 @@ public class Rank {
     }
 
     public boolean removeExtendedRank(final int rankId) {
-        if (!this.extendedRanks.contains(rankId) || rankId == this.databaseId) {
+        if (!this.extendedRanks.contains(rankId)) {
             return false;
         }
 

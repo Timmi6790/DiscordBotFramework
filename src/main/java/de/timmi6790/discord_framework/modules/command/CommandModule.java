@@ -20,6 +20,7 @@ import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -62,6 +63,8 @@ public class CommandModule extends AbstractModule {
     @Getter
     private long botId;
 
+    private Jdbi database;
+
     public CommandModule() {
         super("Command");
 
@@ -92,6 +95,7 @@ public class CommandModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
+        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
         final Config commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
@@ -105,6 +109,7 @@ public class CommandModule extends AbstractModule {
                 );
 
         this.innitDatabase();
+
 
         this.registerCommands(
                 this,
@@ -121,7 +126,7 @@ public class CommandModule extends AbstractModule {
     public void innitDatabase() {
         // Db
         // CommandCause
-        this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 Arrays.stream(CommandCause.values())
                         .parallel()
                         .map(commandCause -> commandCause.name().toLowerCase())
@@ -139,7 +144,7 @@ public class CommandModule extends AbstractModule {
         );
 
         // CommandStatus
-        this.getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.database.useHandle(handle ->
                 Arrays.stream(CommandResult.values())
                         .parallel()
                         .map(commandResult -> commandResult.name().toLowerCase())
@@ -158,7 +163,7 @@ public class CommandModule extends AbstractModule {
     }
 
     private int getCommandDatabaseId(@NonNull final AbstractCommand<?> command) {
-        return this.getModuleOrThrow(DatabaseModule.class).getJdbi().withHandle(handle ->
+        return this.database.withHandle(handle ->
                 handle.createQuery(GET_COMMAND_ID)
                         .bind(COMMAND_NAME, command.getName())
                         .mapTo(int.class)

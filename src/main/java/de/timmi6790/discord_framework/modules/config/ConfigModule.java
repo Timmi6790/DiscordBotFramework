@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.modules.config;
 
+import de.timmi6790.commons.utilities.GsonUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.utilities.FileUtilities;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -46,7 +46,7 @@ public class ConfigModule extends AbstractModule {
         final Path configPath = this.getModuleConfigPath(module, config.getClass());
         if (!Files.exists(configPath)) {
             // New file
-            FileUtilities.saveToJson(configPath, config);
+            GsonUtilities.saveToJson(configPath, config);
             DiscordBot.getLogger().info("Created {} config file {}", module.getName(), config.getClass().getSimpleName());
         } else {
             // TODO: Add a better verify method
@@ -63,7 +63,7 @@ public class ConfigModule extends AbstractModule {
             return (T) this.configs.get(configClass);
         }
 
-        final T config = FileUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
+        final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
         DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getName());
         this.configs.put(configClass, config);
         return config;
@@ -76,7 +76,7 @@ public class ConfigModule extends AbstractModule {
             return;
         }
 
-        FileUtilities.saveToJson(this.getModuleConfigPath(module, configClass), currentConfig);
+        GsonUtilities.saveToJson(this.getModuleConfigPath(module, configClass), currentConfig);
     }
 
     public <T> T registerAndGetConfig(@NonNull final AbstractModule module, @NonNull final T config) {
