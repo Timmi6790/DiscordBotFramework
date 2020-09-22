@@ -13,6 +13,7 @@ import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.core.CoreModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.feedback.FeedbackModule;
@@ -76,7 +77,8 @@ public class DiscordBot {
                 new FeedbackModule(),
                 new BotListModule(),
 
-                new CoreModule()
+                new CoreModule(),
+                new DsgvoModule()
         ).build();
     }
 

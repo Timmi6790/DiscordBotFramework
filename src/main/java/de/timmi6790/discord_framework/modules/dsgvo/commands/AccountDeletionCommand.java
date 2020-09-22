@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.core.commands.info;
+package de.timmi6790.discord_framework.modules.dsgvo.commands;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -7,7 +7,7 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.core.CoreModule;
+import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @EqualsAndHashCode(callSuper = true)
-public class AccountDeletionCommand extends AbstractCommand<CoreModule> {
+public class AccountDeletionCommand extends AbstractCommand<DsgvoModule> {
     private static final String CONFIRM_COMMAND_NAME = "Confirm Command";
 
     private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"PutMeDown", "SaveMeImBeingHeldCaptive", "GodSaveTheBot"};

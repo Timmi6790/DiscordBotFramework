@@ -6,7 +6,6 @@ import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.core.commands.info.AboutCommand;
-import de.timmi6790.discord_framework.modules.core.commands.info.AccountDeletionCommand;
 import de.timmi6790.discord_framework.modules.core.commands.info.InviteCommand;
 import de.timmi6790.discord_framework.modules.core.commands.management.BotInfoCommand;
 import de.timmi6790.discord_framework.modules.core.settings.CommandAutoCorrectSetting;
@@ -37,8 +36,7 @@ public class CoreModule extends AbstractModule {
         this.getModuleOrThrow(CommandModule.class).registerCommands(
                 this,
                 new AboutCommand(),
-                new BotInfoCommand(),
-                new AccountDeletionCommand()
+                new BotInfoCommand()
         );
 
         final String inviteUrl = this.getModuleOrThrow(ConfigModule.class)
