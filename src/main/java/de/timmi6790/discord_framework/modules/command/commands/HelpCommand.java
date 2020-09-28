@@ -59,6 +59,11 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
 
         // Command specific
         final AbstractCommand<?> command = this.getCommandThrow(commandParameters, 0);
+        if (!command.hasPermission(commandParameters)) {
+            sendMissingPermissionMessage(commandParameters);
+            return CommandResult.SUCCESS;
+        }
+
         final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
 
         final MultiEmbedBuilder message = getEmbedBuilder(commandParameters)

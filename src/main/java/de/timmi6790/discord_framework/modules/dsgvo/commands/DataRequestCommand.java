@@ -26,7 +26,7 @@ public class DataRequestCommand extends AbstractCommand<DsgvoModule> {
             .create();
 
     public DataRequestCommand() {
-        super("giveMeMyData", "Info", "description", "Get all my data!");
+        super("giveMeMyData", "Info", "Get all my data!", "");
     }
 
     private String getFormattedCooldownTime(final long timeLeft) {

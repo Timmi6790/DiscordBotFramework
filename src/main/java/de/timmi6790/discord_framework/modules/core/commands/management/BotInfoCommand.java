@@ -22,13 +22,10 @@ public class BotInfoCommand extends AbstractCommand<CoreModule> {
         final int guilds = this.getModule().getDiscord().getSelfUser().getMutualGuilds().size();
 
         final long userCacheSize = this.getModule().getModuleOrThrow(UserDbModule.class).getCache().estimatedSize();
-        final double userCacheMissRate = this.getModule().getModuleOrThrow(UserDbModule.class).getCache().stats().missRate();
 
         final long channelCacheSize = this.getModule().getModuleOrThrow(ChannelDbModule.class).getCache().estimatedSize();
-        final double channelCacheMissRate = this.getModule().getModuleOrThrow(ChannelDbModule.class).getCache().stats().missRate();
 
         final long guildCacheSize = this.getModule().getModuleOrThrow(GuildDbModule.class).getCache().estimatedSize();
-        final double guildCacheMissRate = this.getModule().getModuleOrThrow(GuildDbModule.class).getCache().stats().missRate();
 
         final long emoteListenerSize = this.getModule().getModuleOrThrow(EmoteReactionModule.class).getEmoteMessageCache().estimatedSize();
 
@@ -41,9 +38,9 @@ public class BotInfoCommand extends AbstractCommand<CoreModule> {
                 getEmbedBuilder(commandParameters)
                         .setTitle("Bot Info")
                         .addField("Guilds", String.valueOf(guilds), true)
-                        .addField("User Cache", userCacheSize + ";" + userCacheMissRate, true)
-                        .addField("Channel Cache", channelCacheSize + ";" + channelCacheMissRate, true)
-                        .addField("Guild Cache", guildCacheSize + ";" + guildCacheMissRate, true)
+                        .addField("User Cache", String.valueOf(userCacheSize), true)
+                        .addField("Channel Cache", String.valueOf(channelCacheSize), true)
+                        .addField("Guild Cache", String.valueOf(guildCacheSize), true)
                         .addField("Active Emotes", String.valueOf(emoteListenerSize), true)
                         .addField("Commands", activeCommands + ";" + queuedCommands + ";" + totalCommands, true),
                 90

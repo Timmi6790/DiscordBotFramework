@@ -180,47 +180,6 @@ class CommandModuleTest {
                 .contains(testCommand);
     }
 
-    @Test
-    void compileMainCommandPattern() {
-    }
-
-    @Test
-    void onInitialize() {
-    }
-
-    @Test
-    void onEnable() {
-    }
-
-    @Test
-    void innitDatabase() {
-    }
-
-    @Test
-    void testRegisterCommands() {
-    }
-
-    @Test
-    void testRegisterCommand() {
-    }
-
-    @Test
-    void getCommand() {
-    }
-
-    @Test
-    void testGetCommand() {
-    }
-
-    @Test
-    void getSimilarCommands() {
-    }
-
-    @Test
-    void testGetCommands() {
-    }
-
-
     private static class TestModule extends AbstractModule {
         public TestModule() {
             super("TestModule");
