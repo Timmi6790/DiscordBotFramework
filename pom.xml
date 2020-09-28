@@ -108,7 +108,7 @@
         <dependency>
             <groupId>org.ocpsoft.prettytime</groupId>
             <artifactId>prettytime-nlp</artifactId>
-            <version>4.0.5.Final</version>
+            <version>4.0.6.Final</version>
         </dependency>
         <dependency>
             <groupId>org.discordbots</groupId>
