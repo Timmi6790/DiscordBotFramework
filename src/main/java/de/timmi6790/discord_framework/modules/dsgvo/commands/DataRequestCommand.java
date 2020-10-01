@@ -14,7 +14,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import java.util.concurrent.TimeUnit;
 
 @EqualsAndHashCode(callSuper = true)
-public class DataRequestCommand extends AbstractCommand<DsgvoModule> {
+public class DataRequestCommand extends AbstractCommand {
     private final Cache<Long, Long> cooldownCache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(1, TimeUnit.DAYS)
@@ -25,8 +25,12 @@ public class DataRequestCommand extends AbstractCommand<DsgvoModule> {
             .enableComplexMapKeySerialization()
             .create();
 
+    private final DsgvoModule dsgvoModule;
+
     public DataRequestCommand() {
         super("giveMeMyData", "Info", "Get all my data!", "");
+
+        this.dsgvoModule = getModuleManager().getModuleOrThrow(DsgvoModule.class);
     }
 
     private String getFormattedCooldownTime(final long timeLeft) {
@@ -72,7 +76,7 @@ public class DataRequestCommand extends AbstractCommand<DsgvoModule> {
         }
 
 
-        final String userData = this.gson.toJson(this.getModule().getUserData(userId));
+        final String userData = this.gson.toJson(this.dsgvoModule.getUserData(userId));
         commandParameters.getUserTextChannel().sendFile(
                 userData.getBytes(),
                 "Your-personal-data.json"

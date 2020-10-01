@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
-import de.timmi6790.discord_framework.modules.command.commands.CommandCommand;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class CommandModule extends AbstractModule {
     private static final String COMMAND_NAME = "commandName";
-    private static final String COMMAND_DEFAULT_PERMISSION_NAME = "%s.command.%s";
 
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
 
@@ -54,7 +52,7 @@ public class CommandModule extends AbstractModule {
             .maximumSize(10_000)
             .expireAfterWrite(30, TimeUnit.SECONDS)
             .build(key -> new AtomicInteger(0));
-    private final Map<String, AbstractCommand<?>> commands = new CaseInsensitiveMap<>();
+    private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
     @Getter
     private Pattern mainCommandPattern;
@@ -64,6 +62,7 @@ public class CommandModule extends AbstractModule {
     private long botId;
 
     private Jdbi database;
+    private Config commandConfig;
 
     public CommandModule() {
         super("Command");
@@ -96,31 +95,36 @@ public class CommandModule extends AbstractModule {
     @Override
     public void onInitialize() {
         this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        final Config commandConfig = this.getModuleOrThrow(ConfigModule.class)
+        this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
         this.botId = this.getDiscord().getSelfUser().getIdLong();
-        this.mainCommand = commandConfig.getMainCommand();
+        this.mainCommand = this.commandConfig.getMainCommand();
         this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
-
-        this.getModuleOrThrow(EventModule.class)
-                .addEventListeners(
-                        new MessageListener()
-                );
 
         this.innitDatabase();
 
-
+        final HelpCommand helpCommand = new HelpCommand(this);
         this.registerCommands(
                 this,
-                new HelpCommand(),
-                new CommandCommand()
+                helpCommand
         );
+
+        this.getModuleOrThrow(EventModule.class)
+                .addEventListeners(
+                        new MessageListener(
+                                this,
+                                this.getModuleOrThrow(GuildDbModule.class),
+                                helpCommand
+                        )
+                );
     }
 
     @Override
     public void onEnable() {
-        this.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
+        if (this.commandConfig.isSetDiscordActivity()) {
+            this.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
+        }
     }
 
     public void innitDatabase() {
@@ -162,7 +166,7 @@ public class CommandModule extends AbstractModule {
         );
     }
 
-    private int getCommandDatabaseId(@NonNull final AbstractCommand<?> command) {
+    private int getCommandDatabaseId(@NonNull final AbstractCommand command) {
         return this.database.withHandle(handle ->
                 handle.createQuery(GET_COMMAND_ID)
                         .bind(COMMAND_NAME, command.getName())
@@ -181,13 +185,13 @@ public class CommandModule extends AbstractModule {
         );
     }
 
-    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand<?>... commands) {
-        for (final AbstractCommand<?> command : commands) {
+    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand... commands) {
+        for (final AbstractCommand command : commands) {
             this.registerCommand(module, command);
         }
     }
 
-    public boolean registerCommand(@NonNull final AbstractModule module, @NonNull final AbstractCommand<?> command) {
+    public boolean registerCommand(@NonNull final AbstractModule module, @NonNull final AbstractCommand command) {
         if (this.commands.containsKey(command.getName())) {
             DiscordBot.getLogger().error("{} is already registered.", command.getName());
             return false;
@@ -208,29 +212,35 @@ public class CommandModule extends AbstractModule {
             command.setDbId(this.getCommandDatabaseId(command));
         }
         if (command.getPermissionId() == -1) {
-            final String defaultPermissionName = String.format(COMMAND_DEFAULT_PERMISSION_NAME, module.getName(), command.getName())
+            final String defaultPermissionName = String.format("%s.command.%s", module.getName(), command.getName())
                     .replace(" ", "_")
                     .toLowerCase();
             command.setPermission(defaultPermissionName);
         }
-        command.setCommandModule(module.getClass());
+        command.setRegisteredModule(module.getClass());
         return true;
     }
 
-    public Optional<AbstractCommand<?>> getCommand(@NonNull final Class<? extends AbstractCommand<?>> clazz) {
-        return this.commands.values().stream()
-                .filter(command -> command.getClass().equals(clazz))
-                .findAny();
+    public Optional<AbstractCommand> getCommand(@NonNull final Class<? extends AbstractCommand> clazz) {
+        for (final AbstractCommand command : this.commands.values()) {
+            if (command.getClass().equals(clazz)) {
+                return Optional.of(command);
+            }
+        }
+
+        return Optional.empty();
     }
 
 
-    public Optional<AbstractCommand<?>> getCommand(@NonNull String name) {
+    public Optional<AbstractCommand> getCommand(@NonNull String name) {
         name = this.commandAliases.getOrDefault(name, name);
         return Optional.ofNullable(this.commands.get(name));
     }
 
-    public List<AbstractCommand<?>> getSimilarCommands(@NonNull final CommandParameters commandParameters, @NonNull final String name,
-                                                       final double similarity, final int limit) {
+    public List<AbstractCommand> getSimilarCommands(@NonNull final CommandParameters commandParameters,
+                                                    @NonNull final String name,
+                                                    final double similarity,
+                                                    final int limit) {
         return DataUtilities.getSimilarityList(
                 name,
                 this.commands.values()
@@ -243,7 +253,7 @@ public class CommandModule extends AbstractModule {
         );
     }
 
-    public Collection<AbstractCommand<?>> getCommands() {
+    public Collection<AbstractCommand> getCommands() {
         return this.commands.values();
     }
 }

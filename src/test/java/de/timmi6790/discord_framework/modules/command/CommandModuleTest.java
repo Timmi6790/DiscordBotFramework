@@ -91,7 +91,7 @@ class CommandModuleTest {
         final TestCommand testCommand = new TestCommand();
 
         commandModule.registerCommands(testModule, testCommand);
-        final Optional<AbstractCommand<?>> commandFound = commandModule.getCommand(TestCommand.class);
+        final Optional<AbstractCommand> commandFound = commandModule.getCommand(TestCommand.class);
         assertThat(commandFound)
                 .isPresent()
                 .hasValue(testCommand);
@@ -101,7 +101,7 @@ class CommandModuleTest {
     void getCommandClassEmpty() {
         final CommandModule commandModule = this.getCommandModule();
 
-        final Optional<AbstractCommand<?>> commandFound = commandModule.getCommand(TestCommand.class);
+        final Optional<AbstractCommand> commandFound = commandModule.getCommand(TestCommand.class);
         assertThat(commandFound)
                 .isNotPresent();
     }
@@ -113,7 +113,7 @@ class CommandModuleTest {
         final TestCommand testCommand = new TestCommand();
 
         commandModule.registerCommands(testModule, testCommand);
-        final Optional<AbstractCommand<?>> commandFound = commandModule.getCommand(testCommand.getName());
+        final Optional<AbstractCommand> commandFound = commandModule.getCommand(testCommand.getName());
         assertThat(commandFound)
                 .isPresent()
                 .hasValue(testCommand);
@@ -124,7 +124,7 @@ class CommandModuleTest {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
 
-        final List<AbstractCommand<?>> addedCommands = new ArrayList<>();
+        final List<AbstractCommand> addedCommands = new ArrayList<>();
         Collections.addAll(
                 addedCommands,
                 new TestCommand(),
@@ -186,7 +186,7 @@ class CommandModuleTest {
         }
     }
 
-    private static class TestCommand extends AbstractCommand<TestModule> {
+    private static class TestCommand extends AbstractCommand {
         public TestCommand(final String name) {
             super(name, "", "", "");
 

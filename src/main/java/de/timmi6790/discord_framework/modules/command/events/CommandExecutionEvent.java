@@ -12,10 +12,10 @@ import net.dv8tion.jda.api.events.Event;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class CommandExecutionEvent extends Event {
-    private final AbstractCommand<?> command;
+    private final AbstractCommand command;
     private final CommandParameters parameters;
 
-    public CommandExecutionEvent(@NonNull final AbstractCommand<?> command, @NonNull final CommandParameters parameters) {
+    public CommandExecutionEvent(@NonNull final AbstractCommand command, @NonNull final CommandParameters parameters) {
         super(DiscordBot.getInstance().getDiscord());
 
         this.command = command;
@@ -23,17 +23,17 @@ public class CommandExecutionEvent extends Event {
     }
 
     public static class Pre extends CommandExecutionEvent {
-        public Pre(final AbstractCommand<?> command, final CommandParameters parameters) {
+        public Pre(final AbstractCommand command, final CommandParameters parameters) {
             super(command, parameters);
         }
     }
 
     @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class Post extends CommandExecutionEvent {
-        @Getter
         private final CommandResult commandResult;
 
-        public Post(final AbstractCommand<?> command, final CommandParameters parameters, @NonNull final CommandResult commandResult) {
+        public Post(final AbstractCommand command, final CommandParameters parameters, @NonNull final CommandResult commandResult) {
             super(command, parameters);
 
             this.commandResult = commandResult;

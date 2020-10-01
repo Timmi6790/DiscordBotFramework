@@ -3,15 +3,13 @@ package de.timmi6790.discord_framework.modules.rank.commands;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.command.property.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.rank.Rank;
-import de.timmi6790.discord_framework.modules.rank.RankModule;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.stream.Collectors;
 
-public class RankCommand extends AbstractCommand<RankModule> {
+public class RankCommand extends AbstractCommand {
     private static final String ERROR_TITLE = "Error";
     private static final String FALLBACK_NAME = "Unknown";
 
@@ -74,7 +72,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = this.getModule().getModuleOrThrow(PermissionsModule.class).getPermissionFromId(permissionId)
+        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {
@@ -210,7 +208,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult createCommand(final CommandParameters commandParameters, final String rankName) {
-        final boolean success = this.getModule().getModuleOrThrow(RankModule.class).createRank(rankName);
+        final boolean success = this.getRankModule().createRank(rankName);
         if (success) {
             sendTimedMessage(
                     commandParameters,
@@ -232,7 +230,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult deleteCommand(final CommandParameters commandParameters, final Rank rank) {
-        final boolean success = this.getModule().getModuleOrThrow(RankModule.class).deleteRank(rank);
+        final boolean success = this.getRankModule().deleteRank(rank);
         if (success) {
             sendTimedMessage(
                     commandParameters,
@@ -255,21 +253,19 @@ public class RankCommand extends AbstractCommand<RankModule> {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final Rank rank) {
-        final RankModule rankModule = this.getModule().getModuleOrThrow(RankModule.class);
         final String extendedRanks = rank.getExtendedRanks()
                 .stream()
                 .map(rankId ->
-                        rankModule.getRank(rankId)
+                        this.getRankModule().getRank(rankId)
                                 .map(Rank::getName)
                                 .orElse(FALLBACK_NAME) + "[" + rankId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
-        final PermissionsModule permissionsModule = this.getModule().getModuleOrThrow(PermissionsModule.class);
         final String perms = rank.getPermissions()
                 .stream()
                 .map(permId ->
-                        permissionsModule.getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
+                        this.getPermissionsModule().getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -277,7 +273,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 .stream()
                 .filter(permId -> !rank.getPermissions().contains(permId))
                 .map(permId ->
-                        permissionsModule.getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
+                        this.getPermissionsModule().getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -305,7 +301,7 @@ public class RankCommand extends AbstractCommand<RankModule> {
                 getEmbedBuilder(commandParameters)
                         .setTitle("Ranks")
                         .setDescription(
-                                this.getModule().getModuleOrThrow(RankModule.class).getRanks()
+                                this.getRankModule().getRanks()
                                         .stream()
                                         .map(Rank::getName)
                                         .sorted()

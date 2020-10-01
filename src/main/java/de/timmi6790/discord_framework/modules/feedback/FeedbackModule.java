@@ -43,7 +43,7 @@ public class FeedbackModule extends AbstractModule {
         );
 
         this.addFeedbackHandlers(
-                new BugFeedbackHandler()
+                new BugFeedbackHandler(this)
                 //new SuggestionFeedbackHandler()
         );
     }
@@ -77,7 +77,7 @@ public class FeedbackModule extends AbstractModule {
         );
 
         this.getModuleOrThrow(EventModule.class).addEventListeners(
-                new MessageListener()
+                new MessageListener(this)
         );
 
         this.getModuleOrThrow(ConfigModule.class).registerConfig(

@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class Config {
     private String mainCommand = "stat ";
+    private boolean setDiscordActivity = true;
 }

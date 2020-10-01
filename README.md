@@ -20,6 +20,10 @@ A discord bot framework used in my bot projects.
 </dependency>
 ```
 
+## Example Modules
+- [MineplexStatsDiscordModule](https://github.com/Timmi6790/MineplexStatsDiscordModule)
+- [ServerManagementDiscordModule](https://github.com/Timmi6790/ServerManagementDiscordModule)
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 

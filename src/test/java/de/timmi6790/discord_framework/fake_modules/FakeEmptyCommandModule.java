@@ -7,6 +7,6 @@ import lombok.NonNull;
 
 public class FakeEmptyCommandModule extends CommandModule {
     @Override
-    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand<?>... commands) {
+    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand... commands) {
     }
 }
