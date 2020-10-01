@@ -1,16 +1,19 @@
 package de.timmi6790.discord_framework.modules.feedback.feedbacks;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.feedback.FeedbackHandler;
 import de.timmi6790.discord_framework.modules.feedback.FeedbackModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.entities.User;
 
 import java.util.UUID;
 
-public class BugFeedbackHandler extends GetModule<FeedbackModule> implements FeedbackHandler {
+@AllArgsConstructor
+public class BugFeedbackHandler implements FeedbackHandler {
+    private final FeedbackModule feedbackModule;
+
     @Override
     public String getFeedbackName() {
         return "Bug";
@@ -35,7 +38,7 @@ public class BugFeedbackHandler extends GetModule<FeedbackModule> implements Fee
     public void onTextMessage(final CommandParameters commandParameters) {
         final UUID ticketId = UUID.randomUUID();
 
-        final long channelId = this.getModule().getConfig().getFeedbackConfigs().get(this.getFeedbackName()).getChannelId();
+        final long channelId = this.feedbackModule.getConfig().getFeedbackConfigs().get(this.getFeedbackName()).getChannelId();
         if (channelId != -1) {
             DiscordMessagesUtilities.sendMessage(
                     DiscordBot.getInstance().getDiscord()
@@ -47,13 +50,14 @@ public class BugFeedbackHandler extends GetModule<FeedbackModule> implements Fee
             );
         }
 
-        commandParameters.sendMessage(
+        DiscordMessagesUtilities.sendMessage(
+                commandParameters.getLowestMessageChannel(),
                 DiscordMessagesUtilities
                         .getEmbedBuilder(commandParameters)
                         .setTitle("Bug Report")
                         .setDescription("Thx for submitting your bug report!")
                         .setFooter(ticketId.toString())
         );
-        this.getModule().getActiveFeedbackCache().invalidate(commandParameters.getUserDb().getDiscordId());
+        this.feedbackModule.getActiveFeedbackCache().invalidate(commandParameters.getUserDb().getDiscordId());
     }
 }

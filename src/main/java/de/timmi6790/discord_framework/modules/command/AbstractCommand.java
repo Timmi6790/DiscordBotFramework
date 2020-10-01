@@ -6,13 +6,14 @@ import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.GetModule;
+import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.command.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.command.exceptions.CommandReturnException;
-import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
-import de.timmi6790.discord_framework.modules.command.properties.MinArgCommandProperty;
-import de.timmi6790.discord_framework.modules.command.properties.RequiredDiscordBotPermsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.property.CommandProperty;
+import de.timmi6790.discord_framework.modules.command.property.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.property.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.modules.command.property.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
@@ -31,14 +32,16 @@ import io.sentry.event.Event;
 import io.sentry.event.EventBuilder;
 import io.sentry.event.interfaces.ExceptionInterface;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -47,9 +50,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public abstract class AbstractCommand<T extends AbstractModule> extends GetModule<T> {
+public abstract class AbstractCommand {
     private static final String ERROR = "Error";
 
     private static final int COMMAND_USER_RATE_LIMIT = 10;
@@ -65,10 +67,23 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     private final String[] aliasNames;
     private Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> propertiesMap = new HashMap<>();
     private int dbId = -1;
-    private Class<? extends AbstractModule> commandModule;
+    private Class<? extends AbstractModule> registeredModule;
     private int permissionId = -1;
     private String category;
     private String description;
+
+    @Getter(lazy = true)
+    private final Jdbi database = getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi();
+    @Getter(lazy = true)
+    private final CommandModule commandModule = getModuleManager().getModuleOrThrow(CommandModule.class);
+    @Getter(lazy = true)
+    private final PermissionsModule permissionsModule = getModuleManager().getModuleOrThrow(PermissionsModule.class);
+    @Getter(lazy = true)
+    private final EventModule eventModule = getModuleManager().getModuleOrThrow(EventModule.class);
+    @Getter(lazy = true)
+    private final RankModule rankModule = getModuleManager().getModuleOrThrow(RankModule.class);
+    @Getter(lazy = true)
+    private final JDA discord = DiscordBot.getInstance().getDiscord();
 
     public AbstractCommand(@NonNull final String name, @NonNull final String category, @NonNull final String description, @NonNull final String syntax, final String... aliasNames) {
         this.name = name;
@@ -76,6 +91,10 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         this.description = description;
         this.syntax = syntax;
         this.aliasNames = aliasNames;
+    }
+
+    protected static ModuleManager getModuleManager() {
+        return DiscordBot.getInstance().getModuleManager();
     }
 
     protected static boolean hasRequiredDiscordPerms(@NonNull final CommandParameters commandParameters, @NonNull final EnumSet<Permission> requiredPermissions) {
@@ -196,7 +215,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     private void logCommand(final CommandParameters commandParameters, final CommandResult commandResult) {
-        this.getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi().useHandle(handle ->
+        this.getDatabase().useHandle(handle ->
                 handle.createUpdate(INSERT_COMMAND_LOG)
                         .bind("commandId", this.dbId)
                         .bind("causeName", commandParameters.getCommandCause().name().toLowerCase())
@@ -237,8 +256,8 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                     .withLogger(AbstractCommand.class.getName())
                     .withSentryInterface(new ExceptionInterface(e));
 
-            if (this.getModule().getSentry() != null) {
-                this.getModule().getSentry().sendEvent(eventBuilder);
+            if (DiscordBot.getInstance().getSentry() != null) {
+                DiscordBot.getInstance().getSentry().sendEvent(eventBuilder);
             }
 
             return CommandResult.ERROR;
@@ -284,13 +303,11 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void setPermission(final String permission) {
-        this.permissionId = this.getModuleManager()
-                .getModuleOrThrow(PermissionsModule.class)
-                .addPermission(permission);
+        this.permissionId = this.getPermissionsModule().addPermission(permission);
     }
 
     public void runCommand(final CommandParameters commandParameters) {
-        if (this.getModule().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
+        if (this.getCommandModule().getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
             return;
         }
 
@@ -321,22 +338,21 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         }
 
         // Command pre event
-        final Optional<EventModule> eventModuleOpt = this.getModuleManager().getModule(EventModule.class);
-        eventModuleOpt.ifPresent(eventModule -> {
-            final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
-            eventModule.executeEvent(commandExecutionPre);
-        });
+        final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
+        this.getEventModule().executeEvent(commandExecutionPre);
 
         // Run command
-        this.getModule().getModuleOrThrow(CommandModule.class).getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
+        this.getCommandModule().getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
         final CommandResult commandResult = this.executeSave(commandParameters);
         this.logCommand(commandParameters, commandResult == null ? CommandResult.MISSING : commandResult);
 
         // Command post event
-        eventModuleOpt.ifPresent(eventModule -> {
-            final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(this, commandParameters, commandResult);
-            eventModule.executeEvent(commandExecutionPost);
-        });
+        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(
+                this,
+                commandParameters,
+                commandResult == null ? CommandResult.MISSING : commandResult
+        );
+        this.getEventModule().executeEvent(commandExecutionPost);
     }
 
     public String[] getAliasNames() {
@@ -345,7 +361,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
     // Old Stuff
     public List<String> getFormattedExampleCommands() {
-        final String mainCommand = this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand();
+        final String mainCommand = this.getCommandModule().getMainCommand();
         return Arrays.stream(this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0]))
                 .map(exampleCommand -> mainCommand + " " + this.name + " " + exampleCommand)
                 .collect(Collectors.toList());
@@ -389,13 +405,13 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     }
 
     protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
-                                   final AbstractCommand<?> command, final String[] newArgs, final List<String> similarNames) {
+                                   final AbstractCommand command, final String[] newArgs, final List<String> similarNames) {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
         final StringBuilder helpDescription = new StringBuilder();
         helpDescription.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
         if (similarNames.isEmpty() && command != null) {
-            helpDescription.append("Use the ").append(MarkdownUtil.bold(this.getModuleManager().getModuleOrThrow(CommandModule.class).getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
+            helpDescription.append("Use the ").append(MarkdownUtil.bold(this.getCommandModule().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
@@ -408,7 +424,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
                 final String[] newArgsParameter = commandParameters.getArgs();
                 newArgsParameter[argPos] = similarNames.get(index);
-                final CommandParameters newCommandParameters = new CommandParameters(commandParameters, newArgsParameter);
+                final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgsParameter);
                 emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
             }
 
@@ -418,7 +434,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         }
 
         if (command != null) {
-            final CommandParameters newCommandParameters = new CommandParameters(commandParameters, newArgs);
+            final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgs);
             emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
         }
 
@@ -460,14 +476,14 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         throw new CommandReturnException();
     }
 
-    protected AbstractCommand<? extends AbstractModule> getCommandThrow(final CommandParameters commandParameters, final int argPos) {
+    protected AbstractCommand getCommandThrow(final CommandParameters commandParameters, final int argPos) {
         final String commandName = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand<?>> command = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(commandName);
+        final Optional<AbstractCommand> command = this.getCommandModule().getCommand(commandName);
         if (command.isPresent()) {
             return command.get();
         }
 
-        final List<AbstractCommand<?>> similarCommands = this.getModuleManager().getModuleOrThrow(CommandModule.class).getSimilarCommands(commandParameters, commandName, 0.6, 3);
+        final List<AbstractCommand> similarCommands = this.getCommandModule().getSimilarCommands(commandParameters, commandName, 0.6, 3);
         if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarCommands.get(0);
         }
@@ -477,7 +493,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
                 commandName,
                 argPos,
                 "command",
-                this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(HelpCommand.class).orElse(null),
+                this.getCommandModule().getCommand(HelpCommand.class).orElse(null),
                 new String[0],
                 similarCommands.stream().map(AbstractCommand::getName).collect(Collectors.toList())
         );
@@ -487,7 +503,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
     protected Rank getRankThrow(final CommandParameters commandParameters, final int position) {
         final String userInput = commandParameters.getArgs()[position];
 
-        return this.getModuleManager().getModuleOrThrow(RankModule.class).getRanks()
+        return this.getRankModule().getRanks()
                 .stream()
                 .filter(rank -> rank.getName().equalsIgnoreCase(userInput))
                 .findAny()
@@ -500,10 +516,10 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
     public int getPermissionIdThrow(final CommandParameters commandParameters, final int argPos) {
         final String permArg = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand<?>> commandOpt = this.getModuleManager().getModuleOrThrow(CommandModule.class).getCommand(permArg);
+        final Optional<AbstractCommand> commandOpt = this.getCommandModule().getCommand(permArg);
 
         if (commandOpt.isPresent()) {
-            final AbstractCommand<?> command = commandOpt.get();
+            final AbstractCommand command = commandOpt.get();
             if (command.getPermissionId() == -1) {
                 throw new CommandReturnException(
                         getEmbedBuilder(commandParameters)
@@ -514,7 +530,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
 
             return command.getPermissionId();
         } else {
-            return this.getModuleManager().getModuleOrThrow(PermissionsModule.class).getPermissionId(permArg)
+            return this.getPermissionsModule().getPermissionId(permArg)
                     .orElseThrow(() -> new CommandReturnException(
                             getEmbedBuilder(commandParameters)
                                     .setTitle(ERROR)
@@ -534,7 +550,7 @@ public abstract class AbstractCommand<T extends AbstractModule> extends GetModul
         }
 
         if (DISCORD_USER_TAG_PATTERN.matcher(discordUserName).find()) {
-            final User user = this.getModule().getDiscord().getUserByTag(discordUserName);
+            final User user = this.getDiscord().getUserByTag(discordUserName);
             if (user != null) {
                 return user;
             }

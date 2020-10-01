@@ -1,22 +1,32 @@
 package de.timmi6790.discord_framework.modules.command.commands;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.command.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.command.property.properties.ExampleCommandsCommandProperty;
+import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.Comparator;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.*;
 
-public class HelpCommand extends AbstractCommand<CommandModule> {
-    public HelpCommand() {
+@EqualsAndHashCode(callSuper = true)
+public class HelpCommand extends AbstractCommand {
+    private final CommandModule commandModule;
+
+    /**
+     * Instantiates a new Help command.
+     *
+     * @param commandModule the command module
+     */
+    public HelpCommand(final CommandModule commandModule) {
         super("help", "Info", "In need of help", "[command]", "h");
 
+        this.commandModule = commandModule;
         this.addProperties(
                 new ExampleCommandsCommandProperty(
                         "help"
@@ -28,44 +38,72 @@ public class HelpCommand extends AbstractCommand<CommandModule> {
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // All info
         if (commandParameters.getArgs().length == 0) {
-            final String mainCommand = this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand();
-            final MultiEmbedBuilder message = getEmbedBuilder(commandParameters)
-                    .setTitle("Commands")
-                    .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
-                    .setFooter("TIP: Use " + this.getModule().getMainCommand() + " help <command> to see more details");
-
-            this.getModule().getCommands()
-                    .stream()
-                    .filter(command -> command.hasPermission(commandParameters))
-                    .collect(Collectors.groupingBy(AbstractCommand::getCategory, TreeMap::new, Collectors.toList()))
-                    .forEach((key, value) ->
-                            message.addField(
-                                    key,
-                                    value.stream()
-                                            .sorted(Comparator.comparing(AbstractCommand::getName))
-                                            .map(command -> {
-                                                final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
-                                                return MarkdownUtil.monospace(mainCommand + command.getName() + syntax) + " " + command.getDescription();
-                                            })
-                                            .collect(Collectors.joining("\n")),
-                                    false
-                            )
-                    );
-
-            sendTimedMessage(commandParameters, message, 150);
-            return CommandResult.SUCCESS;
+            return this.showAllCommandHelpMessage(commandParameters);
         }
 
-
         // Command specific
-        final AbstractCommand<?> command = this.getCommandThrow(commandParameters, 0);
+        return this.showCommandHelpMessage(commandParameters);
+    }
+
+    /**
+     * Shows a general help message to the user with all commands he can execute. The help message is split into the the
+     * command categories.
+     *
+     * @param commandParameters the command parameters
+     * @return the command result
+     */
+    protected CommandResult showAllCommandHelpMessage(final CommandParameters commandParameters) {
+        final MultiEmbedBuilder message = getEmbedBuilder(commandParameters)
+                .setTitle("Commands")
+                .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
+                .setFooter("TIP: Use " + this.commandModule.getMainCommand() + " help <command> to see more details");
+
+        final Multimap<String, AbstractCommand> sortedCommands = MultimapBuilder.treeKeys()
+                .arrayListValues()
+                .build();
+
+        // Group all commands via their category
+        for (final AbstractCommand command : this.commandModule.getCommands()) {
+            if (command.hasPermission(commandParameters)) {
+                sortedCommands.put(command.getCategory(), command);
+            }
+        }
+
+        // Sort the command after name
+        for (final Map.Entry<String, Collection<AbstractCommand>> entry : sortedCommands.asMap().entrySet()) {
+            final List<AbstractCommand> commands = new ArrayList<>(entry.getValue());
+            commands.sort(Comparator.comparing(AbstractCommand::getName));
+
+            final List<String> lines = new ArrayList<>();
+            for (final AbstractCommand command : commands) {
+                final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
+                lines.add(MarkdownUtil.monospace(this.commandModule.getMainCommand() + command.getName() + syntax) + " " + command.getDescription());
+            }
+
+            message.addField(
+                    entry.getKey(),
+                    String.join("\n", lines)
+            );
+        }
+
+        sendTimedMessage(commandParameters, message, 150);
+        return CommandResult.SUCCESS;
+    }
+
+    /**
+     * Shows the help message for a specific command declared at argument position 0
+     *
+     * @param commandParameters the command parameters
+     * @return the command result
+     */
+    protected CommandResult showCommandHelpMessage(final CommandParameters commandParameters) {
+        final AbstractCommand command = this.getCommandThrow(commandParameters, 0);
         if (!command.hasPermission(commandParameters)) {
             sendMissingPermissionMessage(commandParameters);
             return CommandResult.SUCCESS;
         }
 
         final String exampleCommands = String.join("\n", command.getFormattedExampleCommands());
-
         final MultiEmbedBuilder message = getEmbedBuilder(commandParameters)
                 .setTitle("Commands " + StringUtilities.capitalize(command.getName()))
                 .addField("Description", command.getDescription(), false, !command.getDescription().isEmpty())

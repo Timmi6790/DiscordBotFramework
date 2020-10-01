@@ -1,15 +1,18 @@
 package de.timmi6790.discord_framework.modules.event;
 
-import de.timmi6790.discord_framework.modules.GetModule;
+import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 
 import javax.annotation.Nonnull;
 
-public class DiscordEventListener extends GetModule<EventModule> implements EventListener {
+@AllArgsConstructor
+public class DiscordEventListener implements EventListener {
+    private final EventModule eventModule;
+
     @Override
     public void onEvent(@Nonnull final GenericEvent event) {
-        this.getModule().executeEvent(event);
+        this.eventModule.executeEvent(event);
     }
 }
 

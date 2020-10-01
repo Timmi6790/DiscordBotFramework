@@ -1,8 +1,8 @@
-package de.timmi6790.discord_framework.modules.command.properties;
+package de.timmi6790.discord_framework.modules.command.property.properties;
 
-import de.timmi6790.discord_framework.modules.command.CommandProperty;
+import de.timmi6790.discord_framework.modules.command.property.CommandProperty;
 
-public class ExampleCommandsCommandProperty extends CommandProperty<String[]> {
+public class ExampleCommandsCommandProperty implements CommandProperty<String[]> {
     private final String[] exampleCommands;
 
     public ExampleCommandsCommandProperty(final String... exampleCommands) {

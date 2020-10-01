@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules.command;
 
 import com.google.common.base.Splitter;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
@@ -10,7 +9,6 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -24,7 +22,6 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 @Data
 public class CommandParameters {
@@ -39,17 +36,7 @@ public class CommandParameters {
     private final ChannelDb channelDb;
     private final UserDb userDb;
 
-    public CommandParameters(@NonNull final String rawArgs, @NonNull final String[] args, final boolean guildCommand, @NonNull final CommandCause commandCause,
-                             @NonNull final ChannelDb channelDb, @NonNull final UserDb userDb) {
-        this.rawArgs = rawArgs;
-        this.args = args.clone();
-        this.guildCommand = guildCommand;
-        this.commandCause = commandCause;
-        this.channelDb = channelDb;
-        this.userDb = userDb;
-    }
-
-    public CommandParameters(@Nonnull final MessageReceivedEvent event, @NonNull final String rawArgs) {
+    public static CommandParameters of(@Nonnull final MessageReceivedEvent event, @NonNull final String rawArgs) {
         final ModuleManager moduleManager = DiscordBot.getInstance().getModuleManager();
 
         final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
@@ -61,30 +48,49 @@ public class CommandParameters {
             guildDb.getMemberCache().put(event.getMember().getIdLong(), event.getMember());
         }
 
+        return new CommandParameters(
+                rawArgs,
+                SPLITTER.splitToList(rawArgs).toArray(new String[0]),
+                event.isFromGuild(),
+                CommandCause.USER,
+                moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
+                moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong())
+        );
+    }
+
+    public static CommandParameters of(@NonNull final CommandParameters commandParameters, @NonNull final String... newArgs) {
+        return CommandParameters.of(
+                commandParameters,
+                commandParameters.getCommandCause(),
+                newArgs
+        );
+    }
+
+    public static CommandParameters of(@NonNull final CommandParameters commandParameters,
+                                       @NonNull final CommandCause commandCause,
+                                       @NonNull final String... newArgs) {
+        return new CommandParameters(
+                String.join(" ", newArgs),
+                newArgs,
+                commandParameters.isGuildCommand(),
+                commandCause,
+                commandParameters.getChannelDb(),
+                commandParameters.getUserDb()
+        );
+    }
+
+    public CommandParameters(@NonNull final String rawArgs,
+                             @NonNull final String[] args,
+                             final boolean guildCommand,
+                             @NonNull final CommandCause commandCause,
+                             @NonNull final ChannelDb channelDb,
+                             @NonNull final UserDb userDb) {
         this.rawArgs = rawArgs;
-        this.args = SPLITTER.splitToList(rawArgs).toArray(new String[0]);
-        this.guildCommand = event.isFromGuild();
-        this.commandCause = CommandCause.USER;
-        this.channelDb = moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId());
-        this.userDb = moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong());
-    }
-
-    public CommandParameters(@NonNull final CommandParameters commandParameters, @NonNull final String... newArgs) {
-        this.rawArgs = String.join(" ", newArgs);
-        this.args = newArgs.clone();
-        this.guildCommand = commandParameters.isGuildCommand();
-        this.commandCause = commandParameters.commandCause;
-        this.channelDb = commandParameters.getChannelDb();
-        this.userDb = commandParameters.getUserDb();
-    }
-
-    public CommandParameters(@NonNull final CommandParameters commandParameters, @NonNull final CommandCause commandCause, @NonNull final String... newArgs) {
-        this.rawArgs = String.join(" ", newArgs);
-        this.args = newArgs.clone();
-        this.guildCommand = commandParameters.isGuildCommand();
+        this.args = args.clone();
+        this.guildCommand = guildCommand;
         this.commandCause = commandCause;
-        this.channelDb = commandParameters.getChannelDb();
-        this.userDb = commandParameters.getUserDb();
+        this.channelDb = channelDb;
+        this.userDb = userDb;
     }
 
     public User getUser() {
@@ -119,6 +125,11 @@ public class CommandParameters {
         return futureValue.get(1, TimeUnit.MINUTES);
     }
 
+    /**
+     * Returns the guild channel if it is send from a guild, otherwise it will return the user channel
+     *
+     * @return the lowest message channel
+     */
     public MessageChannel getLowestMessageChannel() {
         if (this.isGuildCommand()) {
             return this.getGuildTextChannel();
@@ -133,13 +144,5 @@ public class CommandParameters {
         } else {
             return EnumSet.noneOf(Permission.class);
         }
-    }
-
-    public void sendMessage(@NonNull final MultiEmbedBuilder multiEmbedBuilder, @NonNull final Consumer<Message> success) {
-        DiscordMessagesUtilities.sendMessage(this.getLowestMessageChannel(), multiEmbedBuilder, success);
-    }
-
-    public void sendMessage(@NonNull final MultiEmbedBuilder multiEmbedBuilder) {
-        DiscordMessagesUtilities.sendMessage(this.getLowestMessageChannel(), multiEmbedBuilder);
     }
 }

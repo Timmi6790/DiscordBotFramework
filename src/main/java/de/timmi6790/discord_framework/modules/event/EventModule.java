@@ -34,7 +34,7 @@ public class EventModule extends AbstractModule {
 
     @Override
     public void onEnable() {
-        this.getDiscord().addEventListener(new DiscordEventListener());
+        this.getDiscord().addEventListener(new DiscordEventListener(this));
     }
 
     private void handleEventException(final Exception exception, final GenericEvent event, final EventObject listener) {

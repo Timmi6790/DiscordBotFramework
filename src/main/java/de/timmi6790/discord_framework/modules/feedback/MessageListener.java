@@ -1,24 +1,25 @@
 package de.timmi6790.discord_framework.modules.feedback;
 
-import de.timmi6790.discord_framework.modules.GetModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
-import lombok.EqualsAndHashCode;
+import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.util.regex.Pattern;
 
-@EqualsAndHashCode(callSuper = true)
-public class MessageListener extends GetModule<FeedbackModule> {
+@AllArgsConstructor
+public class MessageListener {
     private static final Pattern MESSAGE_SPLIT_PATTERN = Pattern.compile("\\s+");
+
+    private final FeedbackModule feedbackModule;
 
     @SubscribeEvent
     public void onTextMessage(final MessageReceivedEvent event) {
-        if (event.isFromGuild() || this.getModule().getActiveFeedbackCache().getIfPresent(event.getAuthor().getIdLong()) == null) {
+        if (event.isFromGuild() || this.feedbackModule.getActiveFeedbackCache().getIfPresent(event.getAuthor().getIdLong()) == null) {
             return;
         }
 
@@ -29,12 +30,12 @@ public class MessageListener extends GetModule<FeedbackModule> {
                 MESSAGE_SPLIT_PATTERN.split(content),
                 event.isFromGuild(),
                 CommandCause.USER,
-                this.getModuleManager().getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), 0),
-                this.getModuleManager().getModuleOrThrow(UserDbModule.class).getOrCreate(userId)
+                this.feedbackModule.getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), 0),
+                this.feedbackModule.getModuleOrThrow(UserDbModule.class).getOrCreate(userId)
         );
 
         if (content.replace(" ", "").equalsIgnoreCase("cancel")) {
-            this.getModule().getActiveFeedbackCache().invalidate(userId);
+            this.feedbackModule.getActiveFeedbackCache().invalidate(userId);
             DiscordMessagesUtilities.sendMessage(
                     event.getTextChannel(),
                     DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
@@ -44,6 +45,6 @@ public class MessageListener extends GetModule<FeedbackModule> {
             return;
         }
 
-        this.getModule().getFeedbackHandler(this.getModule().getActiveFeedbackCache().getIfPresent(userId)).ifPresent(feedbackHandler -> feedbackHandler.onTextMessage(commandParameters));
+        this.feedbackModule.getFeedbackHandler(this.feedbackModule.getActiveFeedbackCache().getIfPresent(userId)).ifPresent(feedbackHandler -> feedbackHandler.onTextMessage(commandParameters));
     }
 }

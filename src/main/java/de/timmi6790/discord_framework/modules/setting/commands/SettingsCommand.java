@@ -5,12 +5,11 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
-import de.timmi6790.discord_framework.modules.setting.SettingModule;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SettingsCommand extends AbstractCommand<SettingModule> {
+public class SettingsCommand extends AbstractCommand {
     public SettingsCommand() {
         super("settings", "Info", "Settings", "[setting] [value]", "", "st");
     }

@@ -4,10 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -17,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @EqualsAndHashCode(callSuper = true)
-public class AccountDeletionCommand extends AbstractCommand<DsgvoModule> {
+public class AccountDeletionCommand extends AbstractCommand {
     private static final String CONFIRM_COMMAND_NAME = "Confirm Command";
 
     private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"PutMeDown", "SaveMeImBeingHeldCaptive", "GodSaveTheBot"};
@@ -35,8 +33,12 @@ public class AccountDeletionCommand extends AbstractCommand<DsgvoModule> {
             .expireAfterWrite(30, TimeUnit.DAYS)
             .build(key -> new AtomicInteger(0));
 
+    private final UserDbModule userDbModule;
+
     public AccountDeletionCommand() {
         super("deleteMyAccount", "Info", "Wipe all my data!", "");
+
+        this.userDbModule = getModuleManager().getModuleOrThrow(UserDbModule.class);
     }
 
     @Override
@@ -52,7 +54,7 @@ public class AccountDeletionCommand extends AbstractCommand<DsgvoModule> {
                             .setTitle("How to delete my account")
                             .setDescription("If you really wish to delete your account, write the " + MarkdownUtil.monospace(CONFIRM_COMMAND_NAME) + " in the next 5 minutes.\n" +
                                     MarkdownUtil.bold("THERE IS NO WAY TO REVERT THIS ACTION"))
-                            .addField(CONFIRM_COMMAND_NAME, this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand() + " deleteMyAccount " + phrase, false),
+                            .addField(CONFIRM_COMMAND_NAME, this.getCommandModule().getMainCommand() + " deleteMyAccount " + phrase, false),
                     300
             );
 
@@ -67,7 +69,7 @@ public class AccountDeletionCommand extends AbstractCommand<DsgvoModule> {
                             .setTitle("Incorrect confirm phrase")
                             .setDescription(MarkdownUtil.monospace(arg) + " is not your confirm phrase!\n" +
                                     "Please use the command in " + MarkdownUtil.monospace(CONFIRM_COMMAND_NAME) + " to delete your account")
-                            .addField(CONFIRM_COMMAND_NAME, this.getModule().getModuleOrThrow(CommandModule.class).getMainCommand() + " deleteMyAccount " + phrase, false),
+                            .addField(CONFIRM_COMMAND_NAME, this.getCommandModule().getMainCommand() + " deleteMyAccount " + phrase, false),
                     90
             );
 
@@ -88,7 +90,7 @@ public class AccountDeletionCommand extends AbstractCommand<DsgvoModule> {
         );
 
         this.userDeleteConfirmCache.invalidate(userId);
-        this.getModule().getModuleOrThrow(UserDbModule.class).delete(commandParameters.getUserDb());
+        this.userDbModule.delete(commandParameters.getUserDb());
 
         return CommandResult.SUCCESS;
     }

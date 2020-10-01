@@ -12,11 +12,11 @@ import lombok.Data;
 
 @Data
 public class CommandEmoteReaction implements AbstractEmoteReaction {
-    private final Class<? extends AbstractCommand<?>> commandClass;
+    private final Class<? extends AbstractCommand> commandClass;
     private final Values values;
 
-    public CommandEmoteReaction(final AbstractCommand<?> commandClass, final CommandParameters commandParameters) {
-        this.commandClass = (Class<? extends AbstractCommand<?>>) commandClass.getClass();
+    public CommandEmoteReaction(final AbstractCommand commandClass, final CommandParameters commandParameters) {
+        this.commandClass = (Class<? extends AbstractCommand>) commandClass.getClass();
         this.values = new Values(
                 commandParameters.getArgs(),
                 commandParameters.isGuildCommand(),
