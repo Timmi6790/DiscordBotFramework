@@ -6,8 +6,10 @@ import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.dsgvo.commands.AccountDeletionCommand;
 import de.timmi6790.discord_framework.modules.dsgvo.commands.DataRequestCommand;
+import lombok.EqualsAndHashCode;
 import org.jdbi.v3.core.Jdbi;
 
+@EqualsAndHashCode(callSuper = true)
 public class DsgvoModule extends AbstractModule {
     private static final String GET_USER_DATA = "SELECT player.discordId, player.register_date registerDate, player.shop_points shopPoints, player.banned isBanned, mainRank.rank_name mainRank, " +
             "GROUP_CONCAT(DISTINCT CONCAT(achievement.achievement_name, ':', pachievement.date)) achievements, " +

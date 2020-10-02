@@ -23,8 +23,7 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import io.sentry.SentryClient;
-import io.sentry.SentryClientFactory;
+import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.JDA;
@@ -51,7 +50,6 @@ public class DiscordBot {
     private final ModuleManager moduleManager;
     private final Path basePath;
     private final List<AbstractModule> internalModules;
-    private SentryClient sentry;
     private JDA discord;
 
     public DiscordBot() {
@@ -143,8 +141,10 @@ public class DiscordBot {
 
         final Config mainConfig = this.getConfig();
         if (!mainConfig.getSentry().isEmpty()) {
-            this.sentry = SentryClientFactory.sentryClient(mainConfig.getSentry());
-            this.sentry.setRelease(BOT_VERSION);
+            Sentry.init(options -> {
+                options.setDsn(mainConfig.getSentry());
+                options.setRelease(BOT_VERSION);
+            });
         }
 
         // Modules

@@ -8,6 +8,7 @@ import de.timmi6790.discord_framework.datatypes.sorting.TopicalSort;
 import de.timmi6790.discord_framework.exceptions.ModuleGetException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.sentry.Sentry;
 import lombok.Cleanup;
 import lombok.Data;
 
@@ -198,7 +199,7 @@ public class ModuleManager {
             return true;
         } catch (final Exception e) {
             DiscordBot.getLogger().error(module.getName(), e);
-            DiscordBot.getInstance().getSentry().sendException(e);
+            Sentry.captureException(e);
 
             return false;
         }
@@ -237,7 +238,7 @@ public class ModuleManager {
             return true;
         } catch (final Exception e) {
             DiscordBot.getLogger().error(module.getName(), e);
-            DiscordBot.getInstance().getSentry().sendException(e);
+            Sentry.captureException(e);
 
             return false;
         }
@@ -267,7 +268,8 @@ public class ModuleManager {
             return true;
         } catch (final Exception e) {
             DiscordBot.getLogger().error(module.getName(), e);
-            DiscordBot.getInstance().getSentry().sendException(e);
+            Sentry.captureException(e);
+
             return false;
         }
     }

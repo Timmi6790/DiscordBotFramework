@@ -30,7 +30,7 @@ public class GuildDb {
     private final Set<String> commandAliasNames;
     private final Pattern commandAliasPattern;
 
-    private final Map<String, AbstractSetting> properties;
+    private final Map<String, AbstractSetting<?>> properties;
 
     private final LoadingCache<Long, Member> memberCache = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
@@ -40,7 +40,8 @@ public class GuildDb {
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
-    public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames, final Map<String, AbstractSetting> properties) {
+    public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames,
+                   final Map<String, AbstractSetting<?>> properties) {
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.banned = banned;

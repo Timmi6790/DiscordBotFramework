@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.commons.utilities.EnumUtilities;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
@@ -26,11 +25,10 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
-import io.sentry.event.Breadcrumb;
-import io.sentry.event.BreadcrumbBuilder;
-import io.sentry.event.Event;
-import io.sentry.event.EventBuilder;
-import io.sentry.event.interfaces.ExceptionInterface;
+import io.sentry.Breadcrumb;
+import io.sentry.Sentry;
+import io.sentry.SentryEvent;
+import io.sentry.SentryLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
@@ -237,28 +235,23 @@ public abstract class AbstractCommand {
             this.sendErrorMessage(commandParameters, "Unknown");
 
             // Sentry error
-            final Map<String, String> data = MapBuilder.<String, String>ofHashMap(4)
-                    .put("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()))
-                    .put("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
-                    .put("args", Arrays.toString(commandParameters.getArgs()))
-                    .put("command", this.name)
-                    .build();
+            final Breadcrumb breadcrumb = new Breadcrumb();
+            breadcrumb.setCategory("Command");
+            breadcrumb.setData("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()));
+            breadcrumb.setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()));
+            breadcrumb.setData("args", Arrays.toString(commandParameters.getArgs()));
+            breadcrumb.setData("command", this.name);
 
-            final Breadcrumb breadcrumb = new BreadcrumbBuilder()
-                    .setCategory("Command")
-                    .setData(data)
-                    .build();
+            final SentryEvent sentryEvent = new SentryEvent();
+            sentryEvent.addBreadcrumb(breadcrumb);
+            sentryEvent.setLevel(SentryLevel.ERROR);
+            final io.sentry.protocol.Message sentryMessage = new io.sentry.protocol.Message();
+            sentryMessage.setMessage("Command Exception");
+            sentryEvent.setMessage(sentryMessage);
+            sentryEvent.setLogger(AbstractCommand.class.getName());
+            sentryEvent.setThrowable(e);
 
-            final EventBuilder eventBuilder = new EventBuilder()
-                    .withMessage("Command Exception")
-                    .withLevel(Event.Level.ERROR)
-                    .withBreadcrumbs(Collections.singletonList(breadcrumb))
-                    .withLogger(AbstractCommand.class.getName())
-                    .withSentryInterface(new ExceptionInterface(e));
-
-            if (DiscordBot.getInstance().getSentry() != null) {
-                DiscordBot.getInstance().getSentry().sendEvent(eventBuilder);
-            }
+            Sentry.captureEvent(sentryEvent);
 
             return CommandResult.ERROR;
         }

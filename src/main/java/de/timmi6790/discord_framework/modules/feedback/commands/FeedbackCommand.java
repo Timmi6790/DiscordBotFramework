@@ -8,11 +8,13 @@ import de.timmi6790.discord_framework.modules.command.property.properties.AllowB
 import de.timmi6790.discord_framework.modules.feedback.FeedbackHandler;
 import de.timmi6790.discord_framework.modules.feedback.FeedbackModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@EqualsAndHashCode(callSuper = true)
 public class FeedbackCommand extends AbstractCommand {
     private final FeedbackModule feedbackModule;
 

@@ -2,22 +2,23 @@ package de.timmi6790.discord_framework.modules.event;
 
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
-import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import io.sentry.event.Breadcrumb;
-import io.sentry.event.BreadcrumbBuilder;
-import io.sentry.event.Event;
-import io.sentry.event.EventBuilder;
-import io.sentry.event.interfaces.ExceptionInterface;
+import io.sentry.Breadcrumb;
+import io.sentry.Sentry;
+import io.sentry.SentryEvent;
+import io.sentry.SentryLevel;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.events.GenericEvent;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,24 +42,21 @@ public class EventModule extends AbstractModule {
         DiscordBot.getLogger().error(exception);
 
         // Sentry error
-        final Map<String, String> data = MapBuilder.<String, String>ofHashMap(2)
-                .put("Class", event.getClass().toString())
-                .put("Listener", listener.getMethod().getName())
-                .build();
+        final Breadcrumb breadcrumb = new Breadcrumb();
+        breadcrumb.setCategory("Event");
+        breadcrumb.setData("Class", event.getClass().toString());
+        breadcrumb.setData("Listener", listener.getMethod().getName());
 
-        final Breadcrumb breadcrumb = new BreadcrumbBuilder()
-                .setCategory("Event")
-                .setData(data)
-                .build();
+        final SentryEvent sentryEvent = new SentryEvent();
+        sentryEvent.addBreadcrumb(breadcrumb);
+        sentryEvent.setLevel(SentryLevel.ERROR);
+        final io.sentry.protocol.Message sentryMessage = new io.sentry.protocol.Message();
+        sentryMessage.setMessage("Event");
+        sentryEvent.setMessage(sentryMessage);
+        sentryEvent.setLogger(EventObject.class.getName());
+        sentryEvent.setThrowable(exception);
 
-        final EventBuilder eventBuilder = new EventBuilder()
-                .withMessage("Event Exception")
-                .withLevel(Event.Level.ERROR)
-                .withBreadcrumbs(Collections.singletonList(breadcrumb))
-                .withLogger(EventObject.class.getName())
-                .withSentryInterface(new ExceptionInterface(exception));
-
-        this.getSentry().sendEvent(eventBuilder);
+        Sentry.captureEvent(sentryEvent);
     }
 
     public boolean addEventListener(final Object listener) {

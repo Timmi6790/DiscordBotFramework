@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.core.commands.management;
+package de.timmi6790.discord_framework.modules.core.commands.info;
 
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
@@ -7,9 +7,11 @@ import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import lombok.EqualsAndHashCode;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
+@EqualsAndHashCode(callSuper = true)
 public class BotInfoCommand extends AbstractCommand {
     private final UserDbModule userDbModule;
     private final ChannelDbModule channelDbModule;

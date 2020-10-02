@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules;
 
 
 import de.timmi6790.discord_framework.DiscordBot;
-import io.sentry.SentryClient;
 import lombok.Data;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -69,10 +68,6 @@ public abstract class AbstractModule {
 
     public JDA getDiscord() {
         return this.getDiscordBot().getDiscord();
-    }
-
-    public SentryClient getSentry() {
-        return this.getDiscordBot().getSentry();
     }
 
     public ModuleManager getModuleManager() {
