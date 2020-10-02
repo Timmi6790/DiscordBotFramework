@@ -1,10 +1,11 @@
 package de.timmi6790.discord_framework.modules;
 
-import de.timmi6790.discord_framework.exceptions.ModuleGetException;
+import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import lombok.NonNull;
 import lombok.Setter;
 import org.junit.jupiter.api.Test;
+import org.tinylog.Logger;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ModuleManagerTest {
     private ModuleManager getModuleManager() {
-        return new ModuleManager();
+        return new ModuleManager(Logger.tag(""));
     }
 
     @Test
@@ -57,7 +58,7 @@ class ModuleManagerTest {
     @Test
     void getModuleOrThrow() {
         final ModuleManager moduleManager = this.getModuleManager();
-        assertThrows(ModuleGetException.class, () -> moduleManager.getModuleOrThrow(ExampleModule.class));
+        assertThrows(ModuleNotFoundException.class, () -> moduleManager.getModuleOrThrow(ExampleModule.class));
 
         moduleManager.registerModule(new ExampleModule());
         final Optional<ExampleModule> found = moduleManager.getModule(ExampleModule.class);
@@ -85,7 +86,7 @@ class ModuleManagerTest {
     @Test
     void initializeMissingDependency() throws TopicalSortCycleException {
         final DependencyModule dependencyModule = new DependencyModule();
-        final ModuleManager moduleManager = new ModuleManager();
+        final ModuleManager moduleManager = new ModuleManager(Logger.tag(""));
         moduleManager.registerModule(dependencyModule);
         moduleManager.initializeAll();
 
@@ -95,7 +96,7 @@ class ModuleManagerTest {
     @Test
     void initializeWhileStarted() throws TopicalSortCycleException {
         final ExampleModule exampleModule = new ExampleModule();
-        final ModuleManager moduleManager = new ModuleManager();
+        final ModuleManager moduleManager = new ModuleManager(Logger.tag(""));
         moduleManager.registerModule(exampleModule);
         moduleManager.initializeAll();
         moduleManager.startAll();
@@ -104,9 +105,9 @@ class ModuleManagerTest {
     }
 
     @Test
-    void initializeWhileInitilized() throws TopicalSortCycleException {
+    void initializeWhileInitialized() throws TopicalSortCycleException {
         final ExampleModule exampleModule = new ExampleModule();
-        final ModuleManager moduleManager = new ModuleManager();
+        final ModuleManager moduleManager = new ModuleManager(Logger.tag(""));
         moduleManager.registerModule(exampleModule);
         moduleManager.initializeAll();
 

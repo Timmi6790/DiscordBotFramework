@@ -1,18 +1,18 @@
 package de.timmi6790.discord_framework.modules.permisssion;
 
 
-import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Stores the permission nodes for all perms(player, group).
- * With id and perm_node
+ * Stores the permission nodes for all perms(player, group). With id and perm_node
  */
 @EqualsAndHashCode(callSuper = true)
 public class PermissionsModule extends AbstractModule {
@@ -23,7 +23,7 @@ public class PermissionsModule extends AbstractModule {
             "LIMIT 1;";
     private static final String INSERT_PERMISSION = "INSERT INTO permission(permission_node, default_permission) VALUES(:permNode, 0);";
 
-    private final ConcurrentTwoLaneMap<Integer, String> permissionsMap = new ConcurrentTwoLaneMap<>();
+    private final Map<Integer, String> permissionsMap = new HashMap<>();
 
     private Jdbi database;
 
@@ -86,10 +86,16 @@ public class PermissionsModule extends AbstractModule {
     }
 
     public Optional<Integer> getPermissionId(@NonNull final String permissionNode) {
-        return this.permissionsMap.getKeyOptional(permissionNode);
+        for (final Map.Entry<Integer, String> entry : this.permissionsMap.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(permissionNode)) {
+                return Optional.of(entry.getKey());
+            }
+        }
+
+        return Optional.empty();
     }
 
     public Optional<String> getPermissionFromId(final int id) {
-        return this.permissionsMap.getValueOptional(id);
+        return Optional.ofNullable(this.permissionsMap.get(id));
     }
 }

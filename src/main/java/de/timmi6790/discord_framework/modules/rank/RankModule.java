@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.datatypes.ConcurrentTwoLaneMap;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -10,10 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @EqualsAndHashCode(callSuper = true)
@@ -39,7 +35,7 @@ public class RankModule extends AbstractModule {
             "GROUP BY rank.id;";
 
     private final ConcurrentHashMap<Integer, Rank> rankMap = new ConcurrentHashMap<>();
-    private final ConcurrentTwoLaneMap<Integer, String> rankMappingMap = new ConcurrentTwoLaneMap<>();
+    private final Map<Integer, String> rankMappingMap = new HashMap<>();
 
     private Jdbi database;
 
@@ -99,12 +95,12 @@ public class RankModule extends AbstractModule {
     }
 
     public Optional<Rank> getRank(@NonNull final String name) {
-        final Optional<Integer> rankId = this.rankMappingMap.getKeyOptional(name);
-        if (!rankId.isPresent()) {
-            return Optional.empty();
+        for (final Map.Entry<Integer, String> entry : this.rankMappingMap.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(name)) {
+                return this.getRank(entry.getKey());
+            }
         }
-
-        return this.getRank(rankId.get());
+        return Optional.empty();
     }
 
     public Set<Rank> getRanks() {

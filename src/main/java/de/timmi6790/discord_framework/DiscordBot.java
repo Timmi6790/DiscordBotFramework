@@ -55,7 +55,7 @@ public class DiscordBot {
     public DiscordBot() {
         this.basePath = Paths.get(".").toAbsolutePath().normalize();
 
-        this.moduleManager = new ModuleManager();
+        this.moduleManager = new ModuleManager(getLogger());
         this.internalModules = ListBuilder.<AbstractModule>ofArrayList().addAll(
                 new DatabaseModule(),
                 new EventModule(),

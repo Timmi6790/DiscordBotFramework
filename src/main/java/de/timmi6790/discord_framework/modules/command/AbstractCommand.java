@@ -257,10 +257,6 @@ public abstract class AbstractCommand {
         }
     }
 
-    protected boolean customPermissionCheck(final CommandParameters commandParameters) {
-        return true;
-    }
-
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
     public boolean hasPermission(final CommandParameters commandParameters) {
@@ -272,11 +268,7 @@ public abstract class AbstractCommand {
         }
 
         // Permission check
-        if (this.permissionId != -1 && !commandParameters.getUserDb().getAllPermissionIds().contains(this.permissionId)) {
-            return false;
-        }
-
-        return this.customPermissionCheck(commandParameters);
+        return this.permissionId == -1 || commandParameters.getUserDb().getAllPermissionIds().contains(this.permissionId);
     }
 
     protected void addProperty(final CommandProperty<?> property) {
@@ -324,8 +316,6 @@ public abstract class AbstractCommand {
         // Property checks
         for (final CommandProperty<?> commandProperty : this.propertiesMap.values()) {
             if (!commandProperty.onCommandExecution(this, commandParameters)) {
-                // TODO: Add proper result logging
-                //            this.logCommand(commandParameters, CommandResult.MISSING_ARGS);
                 return;
             }
         }

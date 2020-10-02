@@ -11,6 +11,7 @@ import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @EqualsAndHashCode(callSuper = true)
@@ -78,7 +79,7 @@ public class DataRequestCommand extends AbstractCommand {
 
         final String userData = this.gson.toJson(this.dsgvoModule.getUserData(userId));
         commandParameters.getUserTextChannel().sendFile(
-                userData.getBytes(),
+                userData.getBytes(StandardCharsets.UTF_8),
                 "Your-personal-data.json"
         ).queue();
 
