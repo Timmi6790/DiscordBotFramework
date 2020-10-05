@@ -43,7 +43,7 @@ public class CommandParameters {
         final GuildDb guildDb = moduleManager.getModuleOrThrow(GuildDbModule.class).getOrCreate(guildId);
 
         // Add already obtained elements to cache
-        UserDb.getUserCache().put(event.getAuthor().getIdLong(), event.getAuthor());
+        UserDb.getUSER_CACHE().put(event.getAuthor().getIdLong(), event.getAuthor());
         if (event.getMember() != null) {
             guildDb.getMemberCache().put(event.getMember().getIdLong(), event.getMember());
         }

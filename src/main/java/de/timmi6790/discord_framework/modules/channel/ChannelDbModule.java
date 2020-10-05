@@ -15,7 +15,8 @@ import java.util.concurrent.TimeUnit;
 
 @EqualsAndHashCode(callSuper = true)
 public class ChannelDbModule extends AbstractModule {
-    private static final String GET_CHANNEL = "SELECT channel.id, channel.discordId, disabled, guild.discordId serverDiscordId FROM channel " +
+    private static final String GET_CHANNEL = "SELECT channel.id, channel.discordId, disabled, guild.discordId serverDiscordId " +
+            "FROM channel " +
             "INNER JOIN guild ON guild.id = channel.guild_id " +
             "WHERE channel.discordId = :discordId " +
             "LIMIT 1;";

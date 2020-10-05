@@ -74,7 +74,7 @@ public class HelpCommand extends AbstractCommand {
             final List<AbstractCommand> commands = new ArrayList<>(entry.getValue());
             commands.sort(Comparator.comparing(AbstractCommand::getName));
 
-            final List<String> lines = new ArrayList<>();
+            final StringJoiner lines = new StringJoiner("\n");
             for (final AbstractCommand command : commands) {
                 final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
                 lines.add(MarkdownUtil.monospace(this.commandModule.getMainCommand() + command.getName() + syntax) + " " + command.getDescription());
@@ -82,7 +82,7 @@ public class HelpCommand extends AbstractCommand {
 
             message.addField(
                     entry.getKey(),
-                    String.join("\n", lines)
+                    lines.toString()
             );
         }
 

@@ -1,28 +1,10 @@
 package de.timmi6790.discord_framework;
 
-import de.timmi6790.commons.builders.ListBuilder;
 import de.timmi6790.commons.utilities.GsonUtilities;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.ModuleManager;
-import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.modules.botlist.BotListModule;
-import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.config.ConfigModule;
-import de.timmi6790.discord_framework.modules.core.CoreModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
-import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
-import de.timmi6790.discord_framework.modules.event.EventModule;
-import de.timmi6790.discord_framework.modules.feedback.FeedbackModule;
-import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.modules.rank.RankModule;
-import de.timmi6790.discord_framework.modules.setting.SettingModule;
-import de.timmi6790.discord_framework.modules.stat.StatModule;
-import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -30,6 +12,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.reflections.Reflections;
 import org.tinylog.Logger;
 import org.tinylog.TaggedLogger;
 
@@ -39,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -49,36 +31,8 @@ public class DiscordBot {
 
     private final ModuleManager moduleManager;
     private final Path basePath;
-    private final List<AbstractModule> internalModules;
+    private final Set<AbstractModule> internalModules = new HashSet<>();
     private JDA discord;
-
-    public DiscordBot() {
-        this.basePath = Paths.get(".").toAbsolutePath().normalize();
-
-        this.moduleManager = new ModuleManager(getLogger());
-        this.internalModules = ListBuilder.<AbstractModule>ofArrayList().addAll(
-                new DatabaseModule(),
-                new EventModule(),
-                new CommandModule(),
-                new ConfigModule(),
-
-                new PermissionsModule(),
-                new RankModule(),
-                new UserDbModule(),
-                new GuildDbModule(),
-                new ChannelDbModule(),
-                new EmoteReactionModule(),
-
-                new StatModule(),
-                new AchievementModule(),
-                new SettingModule(),
-                new FeedbackModule(),
-                new BotListModule(),
-
-                new CoreModule(),
-                new DsgvoModule()
-        ).build();
-    }
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
         instance = new DiscordBot();
@@ -93,6 +47,23 @@ public class DiscordBot {
         return Logger.tag("DiscordFramework");
     }
 
+    public DiscordBot() {
+        this.basePath = Paths.get(".").toAbsolutePath().normalize();
+
+        this.moduleManager = new ModuleManager(getLogger());
+
+        // Find all internal modules
+        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.modules");
+        final Set<Class<? extends AbstractModule>> modules = reflections.getSubTypesOf(AbstractModule.class);
+        for (final Class<? extends AbstractModule> module : modules) {
+            try {
+                this.internalModules.add(module.getConstructor().newInstance());
+            } catch (final Exception e) {
+                getLogger().error(e, "Trying to initialize {}", module);
+            }
+        }
+    }
+
     @SneakyThrows
     private Config getConfig() {
         final Path mainConfigPath = Paths.get(this.basePath + "/configs/config.json");
@@ -101,29 +72,14 @@ public class DiscordBot {
 
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
     private void setup() throws IOException {
-        // Plugins
-        final Path pluginsFolderPath = Paths.get(this.basePath + "/plugins/");
-        Files.createDirectories(pluginsFolderPath);
-
-        // Logs
-        final Path logsFolderPath = Paths.get(this.basePath + "/logs/");
-        Files.createDirectories(logsFolderPath);
-
         // Config
         final Path configFolderPath = Paths.get(this.basePath + "/configs/");
         Files.createDirectories(configFolderPath);
         final Path configPath = Paths.get(configFolderPath + "/config.json");
 
-        final boolean firstInnit;
-        final Config config;
-        if (!Files.exists(configPath)) {
-            firstInnit = true;
-            config = new Config();
-        } else {
-            firstInnit = false;
-            config = this.getConfig();
-        }
-
+        final boolean firstInnit = !Files.exists(configPath);
+        
+        final Config config = firstInnit ? new Config() : this.getConfig();
         final Config newConfig = ReflectionUtilities.deepCopy(config);
         for (final AbstractModule module : this.internalModules) {
             newConfig.getEnabledModules().putIfAbsent(module.getName(), true);
@@ -148,10 +104,12 @@ public class DiscordBot {
         }
 
         // Modules
-        this.internalModules.stream()
-                .filter(module -> mainConfig.getEnabledModules().containsKey(module.getName()))
-                .filter(module -> mainConfig.getEnabledModules().get(module.getName()))
-                .forEach(this.moduleManager::registerModule);
+        for (final AbstractModule module : this.internalModules) {
+            if (Boolean.TRUE.equals(mainConfig.getEnabledModules().getOrDefault(module.getName(), false))) {
+                this.moduleManager.registerModule(module);
+            }
+        }
+
         this.moduleManager.loadExternalModules();
 
         // Discord

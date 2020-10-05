@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.sorting.TopicalSort;
 import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
@@ -11,6 +10,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.sentry.Sentry;
 import lombok.Cleanup;
 import lombok.Data;
+import lombok.SneakyThrows;
 import org.tinylog.TaggedLogger;
 
 import java.io.File;
@@ -18,6 +18,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -36,6 +39,15 @@ public class ModuleManager {
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
 
     private final TaggedLogger logger;
+    private final Path pluginPath;
+
+    @SneakyThrows
+    public ModuleManager(final TaggedLogger logger) {
+        this.logger = logger;
+
+        this.pluginPath = Paths.get(Paths.get(".").toAbsolutePath().normalize() + "/plugins/");
+        Files.createDirectories(this.pluginPath);
+    }
 
     private List<Class<? extends AbstractModule>> getSortedModules() throws TopicalSortCycleException {
         final List<AbstractModule> modules = new ArrayList<>(this.loadedModules.values());
@@ -95,7 +107,7 @@ public class ModuleManager {
     private Set<AbstractModule> getExternalModules() {
         final Set<AbstractModule> abstractModules = new HashSet<>();
 
-        final File[] pluginJars = new File(DiscordBot.getInstance().getBasePath().toString() + "/plugins/").listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+        final File[] pluginJars = this.pluginPath.toFile().listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
         if (pluginJars == null) {
             return abstractModules;
         }

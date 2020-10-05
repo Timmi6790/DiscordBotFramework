@@ -3,16 +3,26 @@ package de.timmi6790.discord_framework.modules.botlist;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import lombok.EqualsAndHashCode;
+import net.dv8tion.jda.api.JDA;
 import org.discordbots.api.client.DiscordBotListAPI;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This module is currently only used to sync the guild count with top.gg every 30 minutes
+ */
 @EqualsAndHashCode(callSuper = true)
 public class BotListModule extends AbstractModule {
     private ScheduledFuture<?> updateTask;
 
+    private JDA discord;
+    private DiscordBotListAPI botListAPI;
+
+    /**
+     * Instantiates a new Bot list module.
+     */
     public BotListModule() {
         super("BotList");
 
@@ -23,24 +33,24 @@ public class BotListModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.getModuleOrThrow(ConfigModule.class).registerAndGetConfig(this, new Config());
+        this.discord = this.getDiscord();
     }
 
     @Override
     public void onEnable() {
         // Bot list server count update task
         final String discordListToken = this.getModuleOrThrow(ConfigModule.class)
-                .getConfig(this, Config.class)
+                .registerAndGetConfig(this, new Config())
                 .getDiscordListToken();
         if (!discordListToken.isEmpty()) {
-            final DiscordBotListAPI botListAPI = new DiscordBotListAPI.Builder()
+            this.botListAPI = new DiscordBotListAPI.Builder()
                     .token(discordListToken)
-                    .botId(this.getDiscord().getSelfUser().getId())
+                    .botId(this.discord.getSelfUser().getId())
                     .build();
 
             this.updateTask = Executors.newScheduledThreadPool(1)
                     .scheduleAtFixedRate(
-                            () -> botListAPI.setStats(this.getDiscord().getGuilds().size()),
+                            () -> this.botListAPI.setStats(this.getDiscord().getGuilds().size()),
                             0,
                             30,
                             TimeUnit.MINUTES

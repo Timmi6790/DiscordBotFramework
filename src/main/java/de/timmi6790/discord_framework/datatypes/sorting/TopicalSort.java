@@ -43,7 +43,7 @@ public class TopicalSort<T> {
             }
 
             if (cycle) {
-                throw new TopicalSortCycleException("Cycle detected");
+                throw new TopicalSortCycleException();
             }
         }
 

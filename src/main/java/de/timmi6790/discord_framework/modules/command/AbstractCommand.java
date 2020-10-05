@@ -88,7 +88,7 @@ public abstract class AbstractCommand {
         this.category = category;
         this.description = description;
         this.syntax = syntax;
-        this.aliasNames = aliasNames;
+        this.aliasNames = aliasNames.clone();
     }
 
     protected static ModuleManager getModuleManager() {
@@ -526,7 +526,7 @@ public abstract class AbstractCommand {
         final String discordUserName = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
         if (userIdMatcher.find()) {
-            final User user = UserDb.getUserCache().get(Long.valueOf(userIdMatcher.group(2)));
+            final User user = UserDb.getUSER_CACHE().get(Long.valueOf(userIdMatcher.group(2)));
             if (user != null) {
                 return user;
             }

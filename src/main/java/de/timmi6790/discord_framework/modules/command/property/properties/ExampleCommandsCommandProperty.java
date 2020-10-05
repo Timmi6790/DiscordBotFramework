@@ -6,7 +6,7 @@ public class ExampleCommandsCommandProperty implements CommandProperty<String[]>
     private final String[] exampleCommands;
 
     public ExampleCommandsCommandProperty(final String... exampleCommands) {
-        this.exampleCommands = exampleCommands;
+        this.exampleCommands = exampleCommands.clone();
     }
 
     @Override

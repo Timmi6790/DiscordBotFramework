@@ -51,7 +51,7 @@ public class UserDb {
     private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
 
     @Getter
-    private static final LoadingCache<Long, User> userCache = Caffeine.newBuilder()
+    private static final LoadingCache<Long, User> USER_CACHE = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .expireAfterAccess(1, TimeUnit.MINUTES)
             .build(key -> {
@@ -90,7 +90,7 @@ public class UserDb {
     }
 
     public User getUser() {
-        return userCache.get(this.getDiscordId());
+        return USER_CACHE.get(this.getDiscordId());
     }
 
     public void ban(final CommandParameters commandParameters, final String reason) {
