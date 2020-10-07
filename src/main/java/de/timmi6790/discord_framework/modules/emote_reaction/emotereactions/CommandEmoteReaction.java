@@ -16,7 +16,7 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
     private final Values values;
 
     public CommandEmoteReaction(final AbstractCommand commandClass, final CommandParameters commandParameters) {
-        this.commandClass = (Class<? extends AbstractCommand>) commandClass.getClass();
+        this.commandClass = commandClass.getClass();
         this.values = new Values(
                 commandParameters.getArgs(),
                 commandParameters.isGuildCommand(),

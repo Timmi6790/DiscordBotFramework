@@ -1,6 +1,9 @@
-package de.timmi6790.discord_framework.modules.command;
+package de.timmi6790.discord_framework.modules.command.listeners;
 
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
+import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
@@ -15,12 +18,16 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @AllArgsConstructor
 public class MessageListener {
     private static final Pattern FIRST_SPACE_PATTERN = Pattern.compile("^([\\S]*)\\s*(.*)$");
+
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
     private final CommandModule commandModule;
     private final GuildDbModule guildDbModule;
@@ -132,7 +139,7 @@ public class MessageListener {
         final String commandName = spaceMatcher.group(1);
         try {
             this.getCommand(commandName, commandParameters)
-                    .ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
+                    .ifPresent(abstractCommand -> this.executor.execute(() -> abstractCommand.runCommand(commandParameters)));
         } catch (final Exception e) {
             DiscordBot.getLogger().error(e);
         }

@@ -16,6 +16,10 @@ public class AllowBotCommandProperty implements CommandProperty<Boolean> {
 
     @Override
     public boolean onPermissionCheck(final AbstractCommand command, final CommandParameters commandParameters) {
-        return !this.allowBot && !commandParameters.getUser().isBot();
+        if (this.allowBot) {
+            return true;
+        }
+
+        return !commandParameters.getUser().isBot();
     }
 }

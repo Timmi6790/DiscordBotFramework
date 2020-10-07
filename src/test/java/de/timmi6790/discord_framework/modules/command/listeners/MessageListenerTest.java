@@ -1,5 +1,6 @@
-package de.timmi6790.discord_framework.modules.command;
+package de.timmi6790.discord_framework.modules.command.listeners;
 
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -11,7 +12,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 class MessageListenerTest {
     private static final long TEST_BOT_ID = 300000;
     private static final String[] testArgs = new String[]{"sadsdasdasadsads sad as das asda sad dsa", "\n\nHey"};
-    
+
     private void runParsedStartTest(final Pattern mainPattern, final String mainMessage) {
         for (final String testArg : testArgs) {
             final String expectedArg = testArg.replace("\n", "");

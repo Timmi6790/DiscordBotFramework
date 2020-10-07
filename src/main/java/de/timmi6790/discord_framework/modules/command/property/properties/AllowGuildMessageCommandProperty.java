@@ -11,6 +11,16 @@ import lombok.NonNull;
 public class AllowGuildMessageCommandProperty implements CommandProperty<Boolean> {
     private final boolean allowGuildMessage;
 
+    protected void sendErrorMessage(final CommandParameters commandParameters) {
+        DiscordMessagesUtilities.sendMessageTimed(
+                commandParameters.getLowestMessageChannel(),
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                        .setTitle("Error")
+                        .appendDescription("You can not execute this command in a guild."),
+                90
+        );
+    }
+
     @Override
     public Boolean getValue() {
         return this.allowGuildMessage;
@@ -18,17 +28,15 @@ public class AllowGuildMessageCommandProperty implements CommandProperty<Boolean
 
     @Override
     public boolean onCommandExecution(@NonNull final AbstractCommand command, @NonNull final CommandParameters commandParameters) {
-        final boolean success = !this.allowGuildMessage && commandParameters.isGuildCommand();
-        if (!success) {
-            DiscordMessagesUtilities.sendMessageTimed(
-                    commandParameters.getLowestMessageChannel(),
-                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
-                            .appendDescription("You can not execute this command in a guild."),
-                    90
-            );
+        if (this.allowGuildMessage) {
+            return true;
         }
 
-        return success;
+        final boolean guildMessage = commandParameters.isGuildCommand();
+        if (guildMessage) {
+            this.sendErrorMessage(commandParameters);
+        }
+
+        return !guildMessage;
     }
 }

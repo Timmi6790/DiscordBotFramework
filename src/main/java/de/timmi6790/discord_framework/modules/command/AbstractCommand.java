@@ -1,5 +1,7 @@
 package de.timmi6790.discord_framework.modules.command;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.commons.utilities.EnumUtilities;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
@@ -14,8 +16,6 @@ import de.timmi6790.discord_framework.modules.command.property.properties.Exampl
 import de.timmi6790.discord_framework.modules.command.property.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.command.property.properties.RequiredDiscordBotPermsCommandProperty;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
-import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.EventModule;
@@ -36,13 +36,12 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.exceptions.ErrorHandler;
-import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,14 +51,32 @@ import java.util.stream.Collectors;
 public abstract class AbstractCommand {
     private static final String ERROR = "Error";
 
+    private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
+    private static final Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
+
     private static final int COMMAND_USER_RATE_LIMIT = 10;
-    private static final String INSERT_COMMAND_LOG = "INSERT INTO command_log(command_id, command_cause_id, command_status_id, in_guild) VALUES(:commandId, " +
-            "(SELECT id FROM command_cause WHERE cause_name = :causeName LIMIT 1), (SELECT id FROM command_status WHERE status_name = :statusName LIMIT 1), :inGuild);";
 
     private static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
 
-    private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
-    private static final Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
+    @Getter
+    private static final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .expireAfterWrite(30, TimeUnit.SECONDS)
+            .build(key -> new AtomicInteger(0));
+
+    @Getter(lazy = true)
+    private static final Jdbi database = getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi();
+    @Getter(lazy = true)
+    private static final CommandModule commandModule = getModuleManager().getModuleOrThrow(CommandModule.class);
+    @Getter(lazy = true)
+    private static final PermissionsModule permissionsModule = getModuleManager().getModuleOrThrow(PermissionsModule.class);
+    @Getter(lazy = true)
+    private static final EventModule eventModule = getModuleManager().getModuleOrThrow(EventModule.class);
+    @Getter(lazy = true)
+    private static final RankModule rankModule = getModuleManager().getModuleOrThrow(RankModule.class);
+    @Getter(lazy = true)
+    private static final JDA discord = DiscordBot.getInstance().getDiscord();
+
     private final String name;
     private final String syntax;
     private final String[] aliasNames;
@@ -70,20 +87,11 @@ public abstract class AbstractCommand {
     private String category;
     private String description;
 
-    @Getter(lazy = true)
-    private final Jdbi database = getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi();
-    @Getter(lazy = true)
-    private final CommandModule commandModule = getModuleManager().getModuleOrThrow(CommandModule.class);
-    @Getter(lazy = true)
-    private final PermissionsModule permissionsModule = getModuleManager().getModuleOrThrow(PermissionsModule.class);
-    @Getter(lazy = true)
-    private final EventModule eventModule = getModuleManager().getModuleOrThrow(EventModule.class);
-    @Getter(lazy = true)
-    private final RankModule rankModule = getModuleManager().getModuleOrThrow(RankModule.class);
-    @Getter(lazy = true)
-    private final JDA discord = DiscordBot.getInstance().getDiscord();
-
-    public AbstractCommand(@NonNull final String name, @NonNull final String category, @NonNull final String description, @NonNull final String syntax, final String... aliasNames) {
+    public AbstractCommand(@NonNull final String name,
+                           @NonNull final String category,
+                           @NonNull final String description,
+                           @NonNull final String syntax,
+                           final String... aliasNames) {
         this.name = name;
         this.category = category;
         this.description = description;
@@ -95,7 +103,9 @@ public abstract class AbstractCommand {
         return DiscordBot.getInstance().getModuleManager();
     }
 
-    protected static boolean hasRequiredDiscordPerms(@NonNull final CommandParameters commandParameters, @NonNull final EnumSet<Permission> requiredPermissions) {
+    // Other
+    public static boolean hasRequiredDiscordPerms(@NonNull final CommandParameters commandParameters,
+                                                  @NonNull final Set<Permission> requiredPermissions) {
         if (commandParameters.isGuildCommand()) {
             final EnumSet<Permission> wantedDiscordPerms = EnumSet.copyOf(MINIMUM_DISCORD_PERMISSIONS);
             wantedDiscordPerms.addAll(requiredPermissions);
@@ -104,9 +114,10 @@ public abstract class AbstractCommand {
             wantedDiscordPerms.removeIf(permissions::contains);
 
             if (!wantedDiscordPerms.isEmpty()) {
-                final String perms = wantedDiscordPerms.stream()
-                        .map(perm -> MarkdownUtil.monospace(perm.getName()))
-                        .collect(Collectors.joining(","));
+                final StringJoiner perms = new StringJoiner(",");
+                for (final Permission permission : wantedDiscordPerms) {
+                    perms.add(MarkdownUtil.monospace(permission.getName()));
+                }
 
                 DiscordMessagesUtilities.sendPrivateMessage(
                         commandParameters.getUser(),
@@ -122,7 +133,7 @@ public abstract class AbstractCommand {
         return true;
     }
 
-    protected static boolean isUserBanned(@NonNull final CommandParameters commandParameters) {
+    public static boolean isUserBanned(@NonNull final CommandParameters commandParameters) {
         if (commandParameters.getUserDb().isBanned()) {
             DiscordMessagesUtilities.sendPrivateMessage(
                     commandParameters.getUser(),
@@ -135,7 +146,7 @@ public abstract class AbstractCommand {
         return false;
     }
 
-    protected static boolean isServerBanned(@NonNull final CommandParameters commandParameters) {
+    public static boolean isServerBanned(@NonNull final CommandParameters commandParameters) {
         if (commandParameters.getChannelDb().getGuildDb().isBanned()) {
             DiscordMessagesUtilities.sendMessageTimed(
                     commandParameters.getLowestMessageChannel(),
@@ -150,49 +161,62 @@ public abstract class AbstractCommand {
         return false;
     }
 
-    protected static MultiEmbedBuilder getEmbedBuilder(@NonNull final CommandParameters commandParameters) {
+    public static void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
+                                        @NonNull final MultiEmbedBuilder embedBuilder,
+                                        @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+        DiscordMessagesUtilities.sendEmoteMessage(commandParameters, embedBuilder, emotes);
+    }
+
+    protected static void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
+                                           @NonNull final String title,
+                                           @NonNull final String description,
+                                           @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+        sendEmoteMessage(
+                commandParameters,
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                        .setTitle(title)
+                        .setDescription(description),
+                emotes
+        );
+    }
+
+    protected MultiEmbedBuilder getEmbedBuilder(@NonNull final CommandParameters commandParameters) {
         return DiscordMessagesUtilities.getEmbedBuilder(commandParameters);
     }
 
-    protected static void sendMissingPermissionMessage(@NonNull final CommandParameters commandParameters) {
-        sendTimedMessage(
+    protected void sendMissingPermissionMessage(@NonNull final CommandParameters commandParameters) {
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Missing perms")
                         .setDescription("You don't have the permissions to run this command."),
                 90
         );
     }
 
-    protected static void sendEmoteMessage(@NonNull final CommandParameters commandParameters, @NonNull final MultiEmbedBuilder embedBuilder, @NonNull final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getLowestMessageChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
-                .queue(message -> {
-                    if (!emotes.isEmpty()) {
-                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
-                                commandParameters.getLowestMessageChannel().getIdLong());
-                        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
-                    }
-
-                    message.delete().queueAfter(90, TimeUnit.SECONDS, null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
-                });
-    }
-
-    protected static void sendTimedMessage(@NonNull final CommandParameters commandParameters, @NonNull final MultiEmbedBuilder embedBuilder, final int deleteTime) {
+    protected void sendTimedMessage(@NonNull final CommandParameters commandParameters,
+                                    @NonNull final MultiEmbedBuilder embedBuilder,
+                                    final int deleteTime) {
         DiscordMessagesUtilities.sendMessageTimed(commandParameters.getLowestMessageChannel(), embedBuilder, deleteTime);
     }
 
-    protected static void sendMessage(@NonNull final CommandParameters commandParameters, @NonNull final MultiEmbedBuilder embedBuilder) {
+    protected void sendMessage(@NonNull final CommandParameters commandParameters,
+                               @NonNull final MultiEmbedBuilder embedBuilder) {
         DiscordMessagesUtilities.sendMessage(commandParameters.getLowestMessageChannel(), embedBuilder);
     }
 
-    protected static void sendMessage(@NonNull final CommandParameters commandParameters, @NonNull final MultiEmbedBuilder embedBuilder, @NonNull final Consumer<Message> success) {
+    protected void sendMessage(@NonNull final CommandParameters commandParameters,
+                               @NonNull final MultiEmbedBuilder embedBuilder,
+                               @NonNull final Consumer<Message> success) {
         DiscordMessagesUtilities.sendMessage(commandParameters.getLowestMessageChannel(), embedBuilder, success);
     }
 
-    protected static void throwInvalidArg(@NonNull final CommandParameters commandParameters, final int argPos, @NonNull final String argName) {
-        sendTimedMessage(
+    protected void throwInvalidArg(@NonNull final CommandParameters commandParameters,
+                                   final int argPos,
+                                   @NonNull final String argName) {
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Invalid " + argName)
                         .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid " + MarkdownUtil.bold(argName.toLowerCase()) + "."),
                 120
@@ -201,33 +225,13 @@ public abstract class AbstractCommand {
         throw new CommandReturnException(CommandResult.INVALID_ARGS);
     }
 
-    protected static void sendEmoteMessage(@NonNull final CommandParameters commandParameters, @NonNull final String title, @NonNull final String description,
-                                           @NonNull final Map<String, AbstractEmoteReaction> emotes) {
-        sendEmoteMessage(
-                commandParameters,
-                getEmbedBuilder(commandParameters)
-                        .setTitle(title)
-                        .setDescription(description),
-                emotes
-        );
-    }
-
-    private void logCommand(final CommandParameters commandParameters, final CommandResult commandResult) {
-        this.getDatabase().useHandle(handle ->
-                handle.createUpdate(INSERT_COMMAND_LOG)
-                        .bind("commandId", this.dbId)
-                        .bind("causeName", commandParameters.getCommandCause().name().toLowerCase())
-                        .bind("statusName", commandResult.name().toLowerCase())
-                        .bind("inGuild", commandParameters.isGuildCommand())
-                        .execute()
-        );
-    }
+    protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
     private CommandResult executeSave(final CommandParameters commandParameters) {
         try {
             return this.onCommand(commandParameters);
         } catch (final CommandReturnException e) {
-            e.getEmbedBuilder().ifPresent(embedBuilder -> sendTimedMessage(commandParameters, embedBuilder, 90));
+            e.getEmbedBuilder().ifPresent(embedBuilder -> this.sendTimedMessage(commandParameters, embedBuilder, 90));
             return e.getCommandResult();
 
         } catch (final Exception e) {
@@ -257,7 +261,50 @@ public abstract class AbstractCommand {
         }
     }
 
-    protected abstract CommandResult onCommand(CommandParameters commandParameters);
+    public void runCommand(final CommandParameters commandParameters) {
+        if (commandSpamCache.get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
+            return;
+        }
+
+        // Ban checks
+        if (isUserBanned(commandParameters) || isServerBanned(commandParameters)) {
+            return;
+        }
+
+        final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(RequiredDiscordBotPermsCommandProperty.class, EnumSet.noneOf(Permission.class));
+        final boolean hasDiscordPerms = hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms);
+        if (!hasDiscordPerms) {
+            return;
+        }
+
+        if (!this.hasPermission(commandParameters)) {
+            this.sendMissingPermissionMessage(commandParameters);
+            return;
+        }
+
+        // Property checks
+        for (final CommandProperty<?> commandProperty : this.propertiesMap.values()) {
+            if (!commandProperty.onCommandExecution(this, commandParameters)) {
+                return;
+            }
+        }
+
+        // Command pre event
+        final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
+        AbstractCommand.getEventModule().executeEvent(commandExecutionPre);
+
+        // Run command
+        commandSpamCache.get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
+        final CommandResult commandResult = this.executeSave(commandParameters);
+
+        // Command post event
+        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(
+                this,
+                commandParameters,
+                commandResult == null ? CommandResult.MISSING : commandResult
+        );
+        AbstractCommand.getEventModule().executeEvent(commandExecutionPost);
+    }
 
     public boolean hasPermission(final CommandParameters commandParameters) {
         // Properties Check
@@ -287,64 +334,18 @@ public abstract class AbstractCommand {
         return defaultValue;
     }
 
-    protected void setPermission(final String permission) {
-        this.permissionId = this.getPermissionsModule().addPermission(permission);
-    }
-
-    public void runCommand(final CommandParameters commandParameters) {
-        if (this.getCommandModule().getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
-            return;
-        }
-
-        // Ban checks
-        if (isUserBanned(commandParameters) || isServerBanned(commandParameters)) {
-            return;
-        }
-
-        final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(RequiredDiscordBotPermsCommandProperty.class, EnumSet.noneOf(Permission.class));
-        final boolean hasDiscordPerms = hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms);
-        if (!hasDiscordPerms) {
-            return;
-        }
-
-        if (!this.hasPermission(commandParameters)) {
-            sendMissingPermissionMessage(commandParameters);
-            this.logCommand(commandParameters, CommandResult.NO_PERMS);
-            return;
-        }
-
-        // Property checks
-        for (final CommandProperty<?> commandProperty : this.propertiesMap.values()) {
-            if (!commandProperty.onCommandExecution(this, commandParameters)) {
-                return;
-            }
-        }
-
-        // Command pre event
-        final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
-        this.getEventModule().executeEvent(commandExecutionPre);
-
-        // Run command
-        this.getCommandModule().getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
-        final CommandResult commandResult = this.executeSave(commandParameters);
-        this.logCommand(commandParameters, commandResult == null ? CommandResult.MISSING : commandResult);
-
-        // Command post event
-        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(
-                this,
-                commandParameters,
-                commandResult == null ? CommandResult.MISSING : commandResult
-        );
-        this.getEventModule().executeEvent(commandExecutionPost);
-    }
-
     public String[] getAliasNames() {
         return this.aliasNames.clone();
     }
 
+    protected void setPermission(final String permission) {
+        this.permissionId = AbstractCommand.getPermissionsModule().addPermission(permission);
+    }
+
+
     // Old Stuff
     public List<String> getFormattedExampleCommands() {
-        final String mainCommand = this.getCommandModule().getMainCommand();
+        final String mainCommand = AbstractCommand.getCommandModule().getMainCommand();
         return Arrays.stream(this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0]))
                 .map(exampleCommand -> mainCommand + " " + this.name + " " + exampleCommand)
                 .collect(Collectors.toList());
@@ -364,9 +365,9 @@ public abstract class AbstractCommand {
         }
 
         final String exampleCommands = String.join("\n", this.getFormattedExampleCommands());
-        sendTimedMessage(
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters).setTitle("Missing Args")
+                this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
                         .setDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
                         .addField("Required Syntax", requiredSyntax.toString(), false)
                         .addField("Command Syntax", this.getSyntax(), false)
@@ -376,9 +377,9 @@ public abstract class AbstractCommand {
     }
 
     protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
-        sendTimedMessage(
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters).setTitle("Something went wrong")
+                this.getEmbedBuilder(commandParameters).setTitle("Something went wrong")
                         .setDescription("Something went wrong while executing this command.")
                         .addField("Command", this.getName(), false)
                         .addField("Args", String.join(" ", commandParameters.getArgs()), false)
@@ -394,7 +395,7 @@ public abstract class AbstractCommand {
         helpDescription.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
 
         if (similarNames.isEmpty() && command != null) {
-            helpDescription.append("Use the ").append(MarkdownUtil.bold(this.getCommandModule().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
+            helpDescription.append("Use the ").append(MarkdownUtil.bold(AbstractCommand.getCommandModule().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
                     .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
 
         } else {
@@ -432,9 +433,32 @@ public abstract class AbstractCommand {
         }
     }
 
+    // Args
+    public User getDiscordUserThrow(final CommandParameters commandParameters, final int argPos) {
+        final String discordUserName = commandParameters.getArgs()[argPos];
+        final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
+        if (userIdMatcher.find()) {
+            final User user = UserDb.getUSER_CACHE().get(Long.valueOf(userIdMatcher.group(2)));
+            if (user != null) {
+                return user;
+            }
+        }
 
-    // Arg parser
-    protected String getFromListIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {
+        if (DISCORD_USER_TAG_PATTERN.matcher(discordUserName).find()) {
+            final User user = DiscordBot.getInstance().getDiscord().getUserByTag(discordUserName);
+            if (user != null) {
+                return user;
+            }
+        }
+
+        throw new CommandReturnException(
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                        .setTitle("Invalid User")
+                        .setDescription(MarkdownUtil.monospace(discordUserName) + " is not a valid discord user.")
+        );
+    }
+
+    public String getFromListIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {
         final String userArg = commandParameters.getArgs()[argPos];
         final Optional<String> arg = possibleArguments.stream()
                 .filter(possibleArg -> possibleArg.equalsIgnoreCase(userArg))
@@ -448,7 +472,7 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    protected <E extends Enum> E getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final E[] enumValue) {
+    public <E extends Enum> E getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final E[] enumValue) {
         final String userArg = commandParameters.getArgs()[argPos];
         final Optional<E> arg = EnumUtilities.getIgnoreCase(userArg, enumValue);
         if (arg.isPresent()) {
@@ -459,14 +483,14 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    protected AbstractCommand getCommandThrow(final CommandParameters commandParameters, final int argPos) {
+    public AbstractCommand getCommandThrow(final CommandParameters commandParameters, final int argPos) {
         final String commandName = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand> command = this.getCommandModule().getCommand(commandName);
+        final Optional<AbstractCommand> command = AbstractCommand.getCommandModule().getCommand(commandName);
         if (command.isPresent()) {
             return command.get();
         }
 
-        final List<AbstractCommand> similarCommands = this.getCommandModule().getSimilarCommands(commandParameters, commandName, 0.6, 3);
+        final List<AbstractCommand> similarCommands = AbstractCommand.getCommandModule().getSimilarCommands(commandParameters, commandName, 0.6, 3);
         if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarCommands.get(0);
         }
@@ -476,22 +500,22 @@ public abstract class AbstractCommand {
                 commandName,
                 argPos,
                 "command",
-                this.getCommandModule().getCommand(HelpCommand.class).orElse(null),
+                AbstractCommand.getCommandModule().getCommand(HelpCommand.class).orElse(null),
                 new String[0],
                 similarCommands.stream().map(AbstractCommand::getName).collect(Collectors.toList())
         );
         throw new CommandReturnException();
     }
 
-    protected Rank getRankThrow(final CommandParameters commandParameters, final int position) {
+    public Rank getRankThrow(final CommandParameters commandParameters, final int position) {
         final String userInput = commandParameters.getArgs()[position];
 
-        return this.getRankModule().getRanks()
+        return AbstractCommand.getRankModule().getRanks()
                 .stream()
                 .filter(rank -> rank.getName().equalsIgnoreCase(userInput))
                 .findAny()
                 .orElseThrow(() -> new CommandReturnException(
-                        getEmbedBuilder(commandParameters)
+                        DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR)
                                 .setDescription(MarkdownUtil.monospace(userInput) + " is not a valid rank.")
                 ));
@@ -499,13 +523,13 @@ public abstract class AbstractCommand {
 
     public int getPermissionIdThrow(final CommandParameters commandParameters, final int argPos) {
         final String permArg = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand> commandOpt = this.getCommandModule().getCommand(permArg);
+        final Optional<AbstractCommand> commandOpt = AbstractCommand.getCommandModule().getCommand(permArg);
 
         if (commandOpt.isPresent()) {
             final AbstractCommand command = commandOpt.get();
             if (command.getPermissionId() == -1) {
                 throw new CommandReturnException(
-                        getEmbedBuilder(commandParameters)
+                        DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR)
                                 .setDescription(MarkdownUtil.monospace(command.getName()) + " command has no permission.")
                 );
@@ -513,36 +537,12 @@ public abstract class AbstractCommand {
 
             return command.getPermissionId();
         } else {
-            return this.getPermissionsModule().getPermissionId(permArg)
+            return AbstractCommand.getPermissionsModule().getPermissionId(permArg)
                     .orElseThrow(() -> new CommandReturnException(
-                            getEmbedBuilder(commandParameters)
+                            DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                                     .setTitle(ERROR)
                                     .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
                     ));
         }
-    }
-
-    protected User getDiscordUserThrow(final CommandParameters commandParameters, final int argPos) {
-        final String discordUserName = commandParameters.getArgs()[argPos];
-        final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
-        if (userIdMatcher.find()) {
-            final User user = UserDb.getUSER_CACHE().get(Long.valueOf(userIdMatcher.group(2)));
-            if (user != null) {
-                return user;
-            }
-        }
-
-        if (DISCORD_USER_TAG_PATTERN.matcher(discordUserName).find()) {
-            final User user = this.getDiscord().getUserByTag(discordUserName);
-            if (user != null) {
-                return user;
-            }
-        }
-
-        throw new CommandReturnException(
-                getEmbedBuilder(commandParameters)
-                        .setTitle("Invalid User")
-                        .setDescription(MarkdownUtil.monospace(discordUserName) + " is not a valid discord user.")
-        );
     }
 }

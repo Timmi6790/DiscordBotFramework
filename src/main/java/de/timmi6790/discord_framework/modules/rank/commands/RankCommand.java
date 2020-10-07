@@ -72,14 +72,14 @@ public class RankCommand extends AbstractCommand {
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
+        final String permissionNode = getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {
             if (rank.hasPermission(permissionId)) {
-                sendTimedMessage(
+                this.sendTimedMessage(
                         commandParameters,
-                        getEmbedBuilder(commandParameters)
+                        this.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " does already possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
@@ -89,9 +89,9 @@ public class RankCommand extends AbstractCommand {
             }
 
             rank.addPermission(permissionId);
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Added Permission")
                             .setDescription(MarkdownUtil.monospace(permissionNode) + " added to " + MarkdownUtil.monospace(rank.getName())),
                     90
@@ -101,9 +101,9 @@ public class RankCommand extends AbstractCommand {
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!rank.hasPermission(permissionId)) {
-                sendTimedMessage(
+                this.sendTimedMessage(
                         commandParameters,
-                        getEmbedBuilder(commandParameters)
+                        this.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " does not possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
                         90
@@ -113,9 +113,9 @@ public class RankCommand extends AbstractCommand {
             }
 
             rank.removePermission(permissionId);
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Removed Permission")
                             .setDescription(MarkdownUtil.monospace(permissionNode) + " removed from " + MarkdownUtil.monospace(rank.getName())),
                     90
@@ -135,9 +135,9 @@ public class RankCommand extends AbstractCommand {
 
         // Can't target the same rank
         if (rank.getDatabaseId() == extendedRank.getDatabaseId()) {
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle(ERROR_TITLE)
                             .setDescription("You can't target the same rank"),
                     90
@@ -147,9 +147,9 @@ public class RankCommand extends AbstractCommand {
 
         if (AddRemoveArgs.ADD == mode) {
             if (rank.hasExtendedRank(extendedRank)) {
-                sendTimedMessage(
+                this.sendTimedMessage(
                         commandParameters,
-                        getEmbedBuilder(commandParameters)
+                        this.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " is already extending " + MarkdownUtil.monospace(extendedRank.getName())),
                         90
@@ -158,18 +158,18 @@ public class RankCommand extends AbstractCommand {
             }
 
             rank.addExtendedRank(extendedRank);
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle(rank.getName() + " - Extended Rank")
                             .setDescription(MarkdownUtil.monospace(extendedRank.getName()) + " added to " + MarkdownUtil.monospace(rank.getName())),
                     90
             );
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!rank.hasExtendedRank(extendedRank)) {
-                sendTimedMessage(
+                this.sendTimedMessage(
                         commandParameters,
-                        getEmbedBuilder(commandParameters)
+                        this.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
                                 .setDescription(MarkdownUtil.monospace(rank.getName()) + " is not extending " + MarkdownUtil.monospace(extendedRank.getName())),
                         90
@@ -178,9 +178,9 @@ public class RankCommand extends AbstractCommand {
             }
 
             rank.removeExtendedRank(extendedRank);
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle(rank.getName() + " - Extended Rank")
                             .setDescription(MarkdownUtil.monospace(extendedRank.getName()) + " removed from " + MarkdownUtil.monospace(rank.getName())),
                     90
@@ -197,9 +197,9 @@ public class RankCommand extends AbstractCommand {
         final String newName = commandParameters.getArgs()[2];
         rank.setName(newName);
 
-        sendTimedMessage(
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle(rank.getName())
                         .setDescription(MarkdownUtil.monospace(oldName) + " changed to " + MarkdownUtil.monospace(newName)),
                 90
@@ -208,19 +208,19 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult createCommand(final CommandParameters commandParameters, final String rankName) {
-        final boolean success = this.getRankModule().createRank(rankName);
+        final boolean success = getRankModule().createRank(rankName);
         if (success) {
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Created")
                             .setDescription("Successfully created " + MarkdownUtil.monospace(rankName) + "."),
                     90
             );
         } else {
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Created")
                             .setDescription("Something went wrong while creating " + MarkdownUtil.monospace(rankName) + "."),
                     90
@@ -230,19 +230,19 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult deleteCommand(final CommandParameters commandParameters, final Rank rank) {
-        final boolean success = this.getRankModule().deleteRank(rank);
+        final boolean success = getRankModule().deleteRank(rank);
         if (success) {
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle("Deleted")
                             .setDescription("Successfully deleted " + MarkdownUtil.monospace(rank.getName() + "[" + rank.getDatabaseId() + "]") + "."),
                     90
             );
         } else {
-            sendTimedMessage(
+            this.sendTimedMessage(
                     commandParameters,
-                    getEmbedBuilder(commandParameters)
+                    this.getEmbedBuilder(commandParameters)
                             .setTitle(ERROR_TITLE)
                             .setDescription("Something went wrong while deleting " + MarkdownUtil.monospace(rank.getName() + "[" + rank.getDatabaseId() + "]") + "."),
                     90
@@ -256,7 +256,7 @@ public class RankCommand extends AbstractCommand {
         final String extendedRanks = rank.getExtendedRanks()
                 .stream()
                 .map(rankId ->
-                        this.getRankModule().getRank(rankId)
+                        getRankModule().getRank(rankId)
                                 .map(Rank::getName)
                                 .orElse(FALLBACK_NAME) + "[" + rankId + "]"
                 )
@@ -265,7 +265,7 @@ public class RankCommand extends AbstractCommand {
         final String perms = rank.getPermissions()
                 .stream()
                 .map(permId ->
-                        this.getPermissionsModule().getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
+                        getPermissionsModule().getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
@@ -273,15 +273,15 @@ public class RankCommand extends AbstractCommand {
                 .stream()
                 .filter(permId -> !rank.getPermissions().contains(permId))
                 .map(permId ->
-                        this.getPermissionsModule().getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
+                        getPermissionsModule().getPermissionFromId(permId).orElse(FALLBACK_NAME) + "[" + permId + "]"
                 )
                 .collect(Collectors.joining("\n"));
 
         final String userCount = String.valueOf(rank.retrievePlayerCount());
 
-        sendTimedMessage(
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle(rank.getName() + " - Rank")
                         .addField("DatabaseId", String.valueOf(rank.getDatabaseId()), true)
                         .addField("Name", rank.getName(), true)
@@ -296,12 +296,12 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult listCommand(final CommandParameters commandParameters) {
-        sendTimedMessage(
+        this.sendTimedMessage(
                 commandParameters,
-                getEmbedBuilder(commandParameters)
+                this.getEmbedBuilder(commandParameters)
                         .setTitle("Ranks")
                         .setDescription(
-                                this.getRankModule().getRanks()
+                                getRankModule().getRanks()
                                         .stream()
                                         .map(Rank::getName)
                                         .sorted()

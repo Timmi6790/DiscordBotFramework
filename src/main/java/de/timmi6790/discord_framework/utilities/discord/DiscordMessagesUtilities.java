@@ -1,7 +1,11 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionMessage;
+import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
+import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import net.dv8tion.jda.api.entities.*;
@@ -9,15 +13,15 @@ import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 
 import java.awt.*;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @UtilityClass
 public class DiscordMessagesUtilities {
     /**
-     * Gets the default embed builder.
-     * With the author of the user and
-     * the colour is either the member guild colour of his highest role or for private messages Color.MAGENTA
+     * Gets the default embed builder. With the author of the user and the colour is either the member guild colour of
+     * his highest role or for private messages Color.MAGENTA
      *
      * @param commandParameters the command parameters
      * @return the embed builder
@@ -32,9 +36,8 @@ public class DiscordMessagesUtilities {
 
 
     /**
-     * Gets the default embed builder.
-     * With the author of the user and
-     * the colour is either the member guild colour of his highest role or for private messages Color.MAGENTA
+     * Gets the default embed builder. With the author of the user and the colour is either the member guild colour of
+     * his highest role or for private messages Color.MAGENTA
      *
      * @param user   the wanted user
      * @param member the guild member, null for private messages
@@ -66,14 +69,16 @@ public class DiscordMessagesUtilities {
     }
 
     /**
-     * Send the embedBuilder into the give textChannel.
-     * The success consumer will be consumed on each individual message after send.
+     * Send the embedBuilder into the give textChannel. The success consumer will be consumed on each individual message
+     * after send.
      *
      * @param textChannel  the text channel
      * @param embedBuilder the embed builder
      * @param success      consumer after message was send.
      */
-    public void sendMessage(final @NonNull MessageChannel textChannel, final @NonNull MultiEmbedBuilder embedBuilder, final Consumer<Message> success) {
+    public void sendMessage(final @NonNull MessageChannel textChannel,
+                            final @NonNull MultiEmbedBuilder embedBuilder,
+                            final @NonNull Consumer<Message> success) {
         for (final MessageEmbed message : embedBuilder.build()) {
             textChannel
                     .sendMessage(message)
@@ -102,7 +107,9 @@ public class DiscordMessagesUtilities {
      * @param embedBuilder       the embed builder
      * @param deleteAfterSeconds the delete timer in seconds
      */
-    public void sendMessageTimed(@NonNull final MessageChannel textChannel, @NonNull final MultiEmbedBuilder embedBuilder, final long deleteAfterSeconds) {
+    public void sendMessageTimed(@NonNull final MessageChannel textChannel,
+                                 @NonNull final MultiEmbedBuilder embedBuilder,
+                                 final long deleteAfterSeconds) {
         for (final MessageEmbed message : embedBuilder.build()) {
             textChannel
                     .sendMessage(message)
@@ -110,5 +117,20 @@ public class DiscordMessagesUtilities {
                     .flatMap(Message::delete)
                     .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
         }
+    }
+
+    public static void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
+                                        @NonNull final MultiEmbedBuilder embedBuilder,
+                                        @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+        commandParameters.getLowestMessageChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
+                .queue(message -> {
+                    if (!emotes.isEmpty()) {
+                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
+                                commandParameters.getLowestMessageChannel().getIdLong());
+                        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
+                    }
+
+                    message.delete().queueAfter(90, TimeUnit.SECONDS, null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
+                });
     }
 }

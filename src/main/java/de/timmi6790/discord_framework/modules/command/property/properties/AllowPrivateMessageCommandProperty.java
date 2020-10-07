@@ -11,6 +11,16 @@ import lombok.NonNull;
 public class AllowPrivateMessageCommandProperty implements CommandProperty<Boolean> {
     private final boolean allowPrivateMessage;
 
+    protected void sendErrorMessage(final CommandParameters commandParameters) {
+        DiscordMessagesUtilities.sendMessageTimed(
+                commandParameters.getLowestMessageChannel(),
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                        .setTitle("Error")
+                        .appendDescription("You can not execute this command in your private messages with this bot."),
+                90
+        );
+    }
+
     @Override
     public Boolean getValue() {
         return this.allowPrivateMessage;
@@ -18,17 +28,15 @@ public class AllowPrivateMessageCommandProperty implements CommandProperty<Boole
 
     @Override
     public boolean onCommandExecution(@NonNull final AbstractCommand command, @NonNull final CommandParameters commandParameters) {
-        final boolean success = !this.allowPrivateMessage && !commandParameters.isGuildCommand();
-        if (!success) {
-            DiscordMessagesUtilities.sendMessageTimed(
-                    commandParameters.getLowestMessageChannel(),
-                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                            .setTitle("Error")
-                            .appendDescription("You can not execute this command in your private messages with this bot."),
-                    90
-            );
+        if (this.allowPrivateMessage) {
+            return true;
         }
 
-        return success;
+        final boolean privateMessage = !commandParameters.isGuildCommand();
+        if (privateMessage) {
+            this.sendErrorMessage(commandParameters);
+        }
+
+        return !privateMessage;
     }
 }

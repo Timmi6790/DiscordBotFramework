@@ -39,12 +39,11 @@ public class Rank {
     private final int databaseId;
     private final Set<Integer> extendedRanks;
     private final Set<Integer> permissions;
-    private String name;
-    private Set<Integer> cachedAllPermissions;
-
     private final Jdbi database;
     private final RankModule rankModule;
     private final UserDbModule userDbModule;
+    private String name;
+    private Set<Integer> cachedAllPermissions;
 
     public Rank(final Jdbi database, final RankModule rankModule, final UserDbModule userDbModule, final int databaseId, final String name,
                 final Set<Integer> extendedRanks, final Set<Integer> permissions) {

@@ -68,10 +68,9 @@ public class UserDb {
     private final Map<Integer, String> settings;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
+    private final Jdbi database;
     private int primaryRank;
     private boolean banned;
-
-    private final Jdbi database;
 
     public UserDb(final Jdbi database, final int databaseId, final long discordId, final int primaryRank, final Set<Integer> ranks, final boolean banned,
                   final long points, final Set<Integer> permissionIds, final Map<Integer, String> settings, final Map<Integer, Integer> stats,

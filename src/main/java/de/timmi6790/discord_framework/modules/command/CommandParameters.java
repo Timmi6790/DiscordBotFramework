@@ -36,6 +36,20 @@ public class CommandParameters {
     private final ChannelDb channelDb;
     private final UserDb userDb;
 
+    public CommandParameters(@NonNull final String rawArgs,
+                             @NonNull final String[] args,
+                             final boolean guildCommand,
+                             @NonNull final CommandCause commandCause,
+                             @NonNull final ChannelDb channelDb,
+                             @NonNull final UserDb userDb) {
+        this.rawArgs = rawArgs;
+        this.args = args.clone();
+        this.guildCommand = guildCommand;
+        this.commandCause = commandCause;
+        this.channelDb = channelDb;
+        this.userDb = userDb;
+    }
+
     public static CommandParameters of(@Nonnull final MessageReceivedEvent event, @NonNull final String rawArgs) {
         final ModuleManager moduleManager = DiscordBot.getInstance().getModuleManager();
 
@@ -77,20 +91,6 @@ public class CommandParameters {
                 commandParameters.getChannelDb(),
                 commandParameters.getUserDb()
         );
-    }
-
-    public CommandParameters(@NonNull final String rawArgs,
-                             @NonNull final String[] args,
-                             final boolean guildCommand,
-                             @NonNull final CommandCause commandCause,
-                             @NonNull final ChannelDb channelDb,
-                             @NonNull final UserDb userDb) {
-        this.rawArgs = rawArgs;
-        this.args = args.clone();
-        this.guildCommand = guildCommand;
-        this.commandCause = commandCause;
-        this.channelDb = channelDb;
-        this.userDb = userDb;
     }
 
     public User getUser() {

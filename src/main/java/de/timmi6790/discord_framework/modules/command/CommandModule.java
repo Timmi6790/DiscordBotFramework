@@ -1,11 +1,11 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
+import de.timmi6790.discord_framework.modules.command.listeners.CommandLoggingListener;
+import de.timmi6790.discord_framework.modules.command.listeners.MessageListener;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
@@ -22,10 +22,6 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -44,14 +40,6 @@ public class CommandModule extends AbstractModule {
     private static final String GET_COMMAND_STATUS_COUNT = "SELECT COUNT(*) FROM `command_status` WHERE status_name = :statusName LIMIT 1;";
     private static final String INSERT_COMMAND_STATUS = "INSERT INTO command_status(status_name) VALUES(:statusName);";
 
-    @Getter
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-
-    @Getter
-    private final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(30, TimeUnit.SECONDS)
-            .build(key -> new AtomicInteger(0));
     private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
     @Getter
@@ -88,7 +76,7 @@ public class CommandModule extends AbstractModule {
         );
     }
 
-    protected static Pattern compileMainCommandPattern(@NonNull final String mainCommand, final long botId) {
+    public static Pattern compileMainCommandPattern(@NonNull final String mainCommand, final long botId) {
         return Pattern.compile(String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), botId), Pattern.CASE_INSENSITIVE);
     }
 
@@ -116,7 +104,8 @@ public class CommandModule extends AbstractModule {
                                 this,
                                 this.getModuleOrThrow(GuildDbModule.class),
                                 helpCommand
-                        )
+                        ),
+                        new CommandLoggingListener(this.database)
                 );
     }
 

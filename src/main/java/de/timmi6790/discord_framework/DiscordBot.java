@@ -29,10 +29,23 @@ public class DiscordBot {
     public static final String BOT_VERSION = "3.0.6";
     private static DiscordBot instance;
 
-    private final ModuleManager moduleManager;
-    private final Path basePath;
+    private final ModuleManager moduleManager = new ModuleManager(getLogger());
+    private final Path basePath = Paths.get(".").toAbsolutePath().normalize();
     private final Set<AbstractModule> internalModules = new HashSet<>();
     private JDA discord;
+
+    public DiscordBot() {
+        // Find all internal modules
+        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.modules");
+        final Set<Class<? extends AbstractModule>> modules = reflections.getSubTypesOf(AbstractModule.class);
+        for (final Class<? extends AbstractModule> module : modules) {
+            try {
+                this.internalModules.add(module.getConstructor().newInstance());
+            } catch (final Exception e) {
+                getLogger().error(e, "Trying to initialize {}", module);
+            }
+        }
+    }
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
         instance = new DiscordBot();
@@ -45,23 +58,6 @@ public class DiscordBot {
 
     public static TaggedLogger getLogger() {
         return Logger.tag("DiscordFramework");
-    }
-
-    public DiscordBot() {
-        this.basePath = Paths.get(".").toAbsolutePath().normalize();
-
-        this.moduleManager = new ModuleManager(getLogger());
-
-        // Find all internal modules
-        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.modules");
-        final Set<Class<? extends AbstractModule>> modules = reflections.getSubTypesOf(AbstractModule.class);
-        for (final Class<? extends AbstractModule> module : modules) {
-            try {
-                this.internalModules.add(module.getConstructor().newInstance());
-            } catch (final Exception e) {
-                getLogger().error(e, "Trying to initialize {}", module);
-            }
-        }
     }
 
     @SneakyThrows
@@ -78,7 +74,7 @@ public class DiscordBot {
         final Path configPath = Paths.get(configFolderPath + "/config.json");
 
         final boolean firstInnit = !Files.exists(configPath);
-        
+
         final Config config = firstInnit ? new Config() : this.getConfig();
         final Config newConfig = ReflectionUtilities.deepCopy(config);
         for (final AbstractModule module : this.internalModules) {

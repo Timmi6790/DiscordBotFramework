@@ -44,9 +44,8 @@ public abstract class DatabaseRowMapper {
 
 
     /**
-     * Converts the given database input into a map of K and V.
-     * The listSeparator defines how the input is split the first time and
-     * the keyValueSeparator defines how the key and value is required to be split.
+     * Converts the given database input into a map of K and V. The listSeparator defines how the input is split the
+     * first time and the keyValueSeparator defines how the key and value is required to be split.
      *
      * @param <K>           key type parameter
      * @param <V>           value type parameter
@@ -61,9 +60,8 @@ public abstract class DatabaseRowMapper {
     }
 
     /**
-     * Converts the given database input into a map of K and V.
-     * The listSeparator defines how the input is split the first time and
-     * the keyValueSeparator defines how the key and value is required to be split.
+     * Converts the given database input into a map of K and V. The listSeparator defines how the input is split the
+     * first time and the keyValueSeparator defines how the key and value is required to be split.
      *
      * @param <K>               key type parameter
      * @param <V>               value type parameter
