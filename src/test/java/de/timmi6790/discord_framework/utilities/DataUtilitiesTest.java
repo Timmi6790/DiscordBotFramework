@@ -9,7 +9,6 @@ import java.util.List;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 class DataUtilitiesTest {
-
     @Test
     void getSimilarityListTest() {
         final List<String> values = new ArrayList<>();

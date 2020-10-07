@@ -72,7 +72,8 @@ public class CommandParameters {
         );
     }
 
-    public static CommandParameters of(@NonNull final CommandParameters commandParameters, @NonNull final String... newArgs) {
+    public static CommandParameters of(@NonNull final CommandParameters commandParameters,
+                                       @NonNull final String... newArgs) {
         return CommandParameters.of(
                 commandParameters,
                 commandParameters.getCommandCause(),

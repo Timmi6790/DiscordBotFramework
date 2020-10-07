@@ -4,10 +4,8 @@ import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-@ExtendWith(MockitoExtension.class)
 class PermissionsModuleTest {
     private static final AtomicInteger permissionNodeId = new AtomicInteger(0);
 

@@ -3,8 +3,6 @@ package de.timmi6790.discord_framework.modules.command;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,7 +11,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-@ExtendWith(MockitoExtension.class)
 class CommandModuleTest {
     @SneakyThrows
     private CommandModule getCommandModule() {

@@ -7,17 +7,14 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-@ExtendWith(MockitoExtension.class)
 class UserDbTest {
     private static final AtomicLong DISCORD_ID = new AtomicLong(0);
     @Spy
