@@ -56,7 +56,7 @@ public abstract class AbstractCommand {
 
     private static final int COMMAND_USER_RATE_LIMIT = 10;
 
-    private static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
+    protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
 
     @Getter
     private static final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
@@ -308,22 +308,24 @@ public abstract class AbstractCommand {
 
     public boolean hasPermission(final CommandParameters commandParameters) {
         // Properties Check
-        for (final CommandProperty<?> commandProperty : this.propertiesMap.values()) {
+        for (final CommandProperty<?> commandProperty : this.getPropertiesMap().values()) {
             if (!commandProperty.onPermissionCheck(this, commandParameters)) {
                 return false;
             }
         }
 
         // Permission check
-        return this.permissionId == -1 || commandParameters.getUserDb().getAllPermissionIds().contains(this.permissionId);
+        return this.getPermissionId() == -1 || commandParameters.getUserDb().getAllPermissionIds().contains(this.getPermissionId());
     }
 
     protected void addProperty(final CommandProperty<?> property) {
-        this.propertiesMap.put((Class<? extends CommandProperty<?>>) property.getClass(), property);
+        this.getPropertiesMap().put((Class<? extends CommandProperty<?>>) property.getClass(), property);
     }
 
     protected void addProperties(final CommandProperty<?>... properties) {
-        Arrays.stream(properties).forEach(this::addProperty);
+        for (final CommandProperty<?> property : properties) {
+            this.addProperty(property);
+        }
     }
 
     public <V> V getPropertyValueOrDefault(final Class<? extends CommandProperty<V>> propertyClass, final V defaultValue) {
@@ -335,7 +337,7 @@ public abstract class AbstractCommand {
     }
 
     public String[] getAliasNames() {
-        return this.aliasNames.clone();
+        return this.getAliasNames().clone();
     }
 
     protected void setPermission(final String permission) {
@@ -472,14 +474,23 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    public <E extends Enum> E getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final E[] enumValue) {
+    public <E extends Enum> E getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters,
+                                                         final int argPos,
+                                                         final E[] enumValue) {
         final String userArg = commandParameters.getArgs()[argPos];
         final Optional<E> arg = EnumUtilities.getIgnoreCase(userArg, enumValue);
         if (arg.isPresent()) {
             return arg.get();
         }
 
-        this.sendHelpMessage(commandParameters, userArg, argPos, "argument", null, null, EnumUtilities.getPrettyNames(enumValue));
+        this.sendHelpMessage(commandParameters,
+                userArg,
+                argPos,
+                "argument",
+                null,
+                null,
+                EnumUtilities.getPrettyNames(enumValue)
+        );
         throw new CommandReturnException();
     }
 
@@ -490,7 +501,12 @@ public abstract class AbstractCommand {
             return command.get();
         }
 
-        final List<AbstractCommand> similarCommands = AbstractCommand.getCommandModule().getSimilarCommands(commandParameters, commandName, 0.6, 3);
+        final List<AbstractCommand> similarCommands = AbstractCommand.getCommandModule().getSimilarCommands(
+                commandParameters,
+                commandName,
+                0.6,
+                3
+        );
         if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
             return similarCommands.get(0);
         }
