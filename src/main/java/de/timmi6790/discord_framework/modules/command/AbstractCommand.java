@@ -337,7 +337,7 @@ public abstract class AbstractCommand {
     }
 
     public String[] getAliasNames() {
-        return this.getAliasNames().clone();
+        return this.aliasNames.clone();
     }
 
     protected void setPermission(final String permission) {
