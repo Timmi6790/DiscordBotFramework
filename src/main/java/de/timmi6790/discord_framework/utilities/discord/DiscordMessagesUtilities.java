@@ -11,6 +11,7 @@ import lombok.experimental.UtilityClass;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.awt.*;
 import java.util.Map;
@@ -19,6 +20,8 @@ import java.util.function.Consumer;
 
 @UtilityClass
 public class DiscordMessagesUtilities {
+    protected final Color DEFAULT_EMBED_COLOUR = Color.MAGENTA;
+
     /**
      * Gets the default embed builder. With the author of the user and the colour is either the member guild colour of
      * his highest role or for private messages Color.MAGENTA
@@ -27,11 +30,10 @@ public class DiscordMessagesUtilities {
      * @return the embed builder
      */
     public MultiEmbedBuilder getEmbedBuilder(final @NonNull CommandParameters commandParameters) {
-        if (commandParameters.isGuildCommand()) {
-            return getEmbedBuilder(commandParameters.getUser(), commandParameters.getGuildMember());
-        }
-
-        return getEmbedBuilder(commandParameters.getUser(), null);
+        return getEmbedBuilder(
+                commandParameters.getUser(),
+                commandParameters.isGuildCommand() ? commandParameters.getGuildMember() : null
+        );
     }
 
 
@@ -43,10 +45,10 @@ public class DiscordMessagesUtilities {
      * @param member the guild member, null for private messages
      * @return the embed builder
      */
-    public MultiEmbedBuilder getEmbedBuilder(final @NonNull User user, final Member member) {
+    public MultiEmbedBuilder getEmbedBuilder(final @NonNull User user, @Nullable final Member member) {
         return new MultiEmbedBuilder()
                 .setAuthor(user.getName(), null, user.getEffectiveAvatarUrl())
-                .setColor(member != null ? member.getColor() : Color.MAGENTA);
+                .setColor(member != null ? member.getColor() : DEFAULT_EMBED_COLOUR);
     }
 
     /**
@@ -54,11 +56,12 @@ public class DiscordMessagesUtilities {
      *
      * @param user         the user
      * @param embedBuilder the embed builder
+     * @return will return false for bot users
      */
-    public void sendPrivateMessage(final @NonNull User user, final @NonNull MultiEmbedBuilder embedBuilder) {
+    public boolean sendPrivateMessage(final @NonNull User user, final @NonNull MultiEmbedBuilder embedBuilder) {
         // We can't send private messages to other bots
         if (user.isBot()) {
-            return;
+            return false;
         }
 
         user.openPrivateChannel().queue(privateChannel -> {
@@ -66,6 +69,8 @@ public class DiscordMessagesUtilities {
                 privateChannel.sendMessage(message).queue();
             }
         });
+
+        return true;
     }
 
     /**
@@ -92,7 +97,8 @@ public class DiscordMessagesUtilities {
      * @param textChannel  the text channel
      * @param embedBuilder the embed builder
      */
-    public void sendMessage(final @NonNull MessageChannel textChannel, final @NonNull MultiEmbedBuilder embedBuilder) {
+    public void sendMessage(final @NonNull MessageChannel textChannel,
+                            final @NonNull MultiEmbedBuilder embedBuilder) {
         for (final MessageEmbed message : embedBuilder.build()) {
             textChannel
                     .sendMessage(message)
@@ -119,18 +125,36 @@ public class DiscordMessagesUtilities {
         }
     }
 
-    public static void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
-                                        @NonNull final MultiEmbedBuilder embedBuilder,
-                                        @NonNull final Map<String, AbstractEmoteReaction> emotes) {
-        commandParameters.getLowestMessageChannel().sendMessage(embedBuilder.setFooter("↓ Click Me!").buildSingle())
-                .queue(message -> {
-                    if (!emotes.isEmpty()) {
-                        final EmoteReactionMessage emoteReactionMessage = new EmoteReactionMessage(emotes, commandParameters.getUser().getIdLong(),
-                                commandParameters.getLowestMessageChannel().getIdLong());
-                        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(EmoteReactionModule.class).addEmoteReactionMessage(message, emoteReactionMessage);
-                    }
+    public void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
+                                 @NonNull final MultiEmbedBuilder embedBuilder,
+                                 @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+        commandParameters.getLowestMessageChannel()
+                .sendMessage(
+                        embedBuilder
+                                .setFooter("↓ Click Me!")
+                                .buildSingle()
+                ).queue(message -> {
+            if (!emotes.isEmpty()) {
+                DiscordBot.getInstance()
+                        .getModuleManager()
+                        .getModuleOrThrow(EmoteReactionModule.class)
+                        .addEmoteReactionMessage(
+                                message,
+                                new EmoteReactionMessage(
+                                        emotes,
+                                        commandParameters.getUser().getIdLong(),
+                                        commandParameters.getLowestMessageChannel().getIdLong()
+                                )
+                        );
+            }
 
-                    message.delete().queueAfter(90, TimeUnit.SECONDS, null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
-                });
+            message.delete()
+                    .queueAfter(
+                            90,
+                            TimeUnit.SECONDS,
+                            null,
+                            new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
+                    );
+        });
     }
 }

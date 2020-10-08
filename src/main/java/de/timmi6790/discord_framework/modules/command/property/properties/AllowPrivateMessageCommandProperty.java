@@ -11,7 +11,7 @@ import lombok.NonNull;
 public class AllowPrivateMessageCommandProperty implements CommandProperty<Boolean> {
     private final boolean allowPrivateMessage;
 
-    protected void sendErrorMessage(final CommandParameters commandParameters) {
+    private void sendErrorMessage(final CommandParameters commandParameters) {
         DiscordMessagesUtilities.sendMessageTimed(
                 commandParameters.getLowestMessageChannel(),
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
