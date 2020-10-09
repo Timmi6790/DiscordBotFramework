@@ -1,10 +1,6 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
-import com.google.common.base.Objects;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.ToString;
+import lombok.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -24,6 +20,7 @@ import java.util.List;
 @ToString
 @Getter
 @NoArgsConstructor
+@EqualsAndHashCode
 public class MultiEmbedBuilder {
     // Title, Description, Field, Footer.text, Author.name
     protected static final int EMBED_TOTAL_MAX = 6_000;
@@ -285,6 +282,10 @@ public class MultiEmbedBuilder {
         return this.description;
     }
 
+    public String getDescription() {
+        return this.getDescriptionBuilder().toString();
+    }
+
     public MultiEmbedBuilder setDescription(@NonNull final String format, final Object... objects) {
         return this.setDescription(String.format(format, objects));
     }
@@ -441,32 +442,5 @@ public class MultiEmbedBuilder {
     public MultiEmbedBuilder clearFields() {
         this.fields.clear();
         return this;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MultiEmbedBuilder)) {
-            return false;
-        }
-        final MultiEmbedBuilder that = (MultiEmbedBuilder) o;
-        return this.getColor() == that.getColor() &&
-                Objects.equal(this.getFields(), that.getFields()) &&
-                Objects.equal(this.getDescription().toString(), that.getDescription().toString()) &&
-                Objects.equal(this.getUrl(), that.getUrl()) &&
-                Objects.equal(this.getTitle(), that.getTitle()) &&
-                Objects.equal(this.getTimestamp(), that.getTimestamp()) &&
-                Objects.equal(this.getThumbnail(), that.getThumbnail()) &&
-                Objects.equal(this.getAuthor(), that.getAuthor()) &&
-                Objects.equal(this.getFooter(), that.getFooter()) &&
-                Objects.equal(this.getImage(), that.getImage());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(this.getFields(), this.getDescription().toString(), this.getColor(), this.getUrl(), this.getTitle(), this.getTimestamp(),
-                this.getThumbnail(), this.getAuthor(), this.getFooter(), this.getImage());
     }
 }

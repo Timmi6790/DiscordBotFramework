@@ -37,6 +37,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
@@ -49,15 +50,11 @@ import java.util.stream.Collectors;
 
 @Data
 public abstract class AbstractCommand {
-    private static final String ERROR = "Error";
-
-    private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
-    private static final Pattern DISCORD_USER_TAG_PATTERN = Pattern.compile("^(.{2,32})#(\\d{4})$");
-
-    private static final int COMMAND_USER_RATE_LIMIT = 10;
-
     protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
-
+    private static final String ERROR = "Error";
+    private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
+    @Getter
+    private static final int COMMAND_USER_RATE_LIMIT = 10;
     @Getter
     private static final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
             .maximumSize(10_000)
@@ -87,11 +84,11 @@ public abstract class AbstractCommand {
     private String category;
     private String description;
 
-    public AbstractCommand(@NonNull final String name,
-                           @NonNull final String category,
-                           @NonNull final String description,
-                           @NonNull final String syntax,
-                           final String... aliasNames) {
+    protected AbstractCommand(@NonNull final String name,
+                              @NonNull final String category,
+                              @NonNull final String description,
+                              @NonNull final String syntax,
+                              final String... aliasNames) {
         this.name = name;
         this.category = category;
         this.description = description;
@@ -227,7 +224,7 @@ public abstract class AbstractCommand {
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
-    private CommandResult executeSave(final CommandParameters commandParameters) {
+    private CommandResult executeSave(@Nullable final CommandParameters commandParameters) {
         try {
             return this.onCommand(commandParameters);
         } catch (final CommandReturnException e) {
@@ -261,8 +258,8 @@ public abstract class AbstractCommand {
         }
     }
 
-    public void runCommand(final CommandParameters commandParameters) {
-        if (commandSpamCache.get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
+    public void runCommand(final @NonNull CommandParameters commandParameters) {
+        if (getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
             return;
         }
 
@@ -272,8 +269,7 @@ public abstract class AbstractCommand {
         }
 
         final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(RequiredDiscordBotPermsCommandProperty.class, EnumSet.noneOf(Permission.class));
-        final boolean hasDiscordPerms = hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms);
-        if (!hasDiscordPerms) {
+        if (!hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms)) {
             return;
         }
 
@@ -283,30 +279,28 @@ public abstract class AbstractCommand {
         }
 
         // Property checks
-        for (final CommandProperty<?> commandProperty : this.propertiesMap.values()) {
+        for (final CommandProperty<?> commandProperty : this.getPropertiesMap().values()) {
             if (!commandProperty.onCommandExecution(this, commandParameters)) {
                 return;
             }
         }
 
         // Command pre event
-        final CommandExecutionEvent.Pre commandExecutionPre = new CommandExecutionEvent.Pre(this, commandParameters);
-        AbstractCommand.getEventModule().executeEvent(commandExecutionPre);
+        AbstractCommand.getEventModule().executeEvent(new CommandExecutionEvent.Pre(this, commandParameters));
 
         // Run command
-        commandSpamCache.get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
+        getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
         final CommandResult commandResult = this.executeSave(commandParameters);
 
         // Command post event
-        final CommandExecutionEvent.Post commandExecutionPost = new CommandExecutionEvent.Post(
+        AbstractCommand.getEventModule().executeEvent(new CommandExecutionEvent.Post(
                 this,
                 commandParameters,
                 commandResult == null ? CommandResult.MISSING : commandResult
-        );
-        AbstractCommand.getEventModule().executeEvent(commandExecutionPost);
+        ));
     }
 
-    public boolean hasPermission(final CommandParameters commandParameters) {
+    public boolean hasPermission(@NonNull final CommandParameters commandParameters) {
         // Properties Check
         for (final CommandProperty<?> commandProperty : this.getPropertiesMap().values()) {
             if (!commandProperty.onPermissionCheck(this, commandParameters)) {
@@ -318,7 +312,7 @@ public abstract class AbstractCommand {
         return this.getPermissionId() == -1 || commandParameters.getUserDb().getAllPermissionIds().contains(this.getPermissionId());
     }
 
-    protected void addProperty(final CommandProperty<?> property) {
+    protected void addProperty(final @Nullable CommandProperty<?> property) {
         this.getPropertiesMap().put((Class<? extends CommandProperty<?>>) property.getClass(), property);
     }
 
@@ -328,7 +322,8 @@ public abstract class AbstractCommand {
         }
     }
 
-    public <V> V getPropertyValueOrDefault(final Class<? extends CommandProperty<V>> propertyClass, final V defaultValue) {
+    public <V> V getPropertyValueOrDefault(@NonNull final Class<? extends CommandProperty<V>> propertyClass,
+                                           @Nullable final V defaultValue) {
         final CommandProperty<V> property = (CommandProperty<V>) this.propertiesMap.get(propertyClass);
         if (property != null) {
             return property.getValue();
@@ -340,7 +335,7 @@ public abstract class AbstractCommand {
         return this.aliasNames.clone();
     }
 
-    protected void setPermission(final String permission) {
+    protected void setPermission(@NonNull final String permission) {
         this.permissionId = AbstractCommand.getPermissionsModule().addPermission(permission);
     }
 
@@ -353,16 +348,17 @@ public abstract class AbstractCommand {
                 .collect(Collectors.toList());
     }
 
-    public void sendMissingArgsMessage(final CommandParameters commandParameters) {
+    public void sendMissingArgsMessage(@NonNull final CommandParameters commandParameters) {
         this.sendMissingArgsMessage(commandParameters, this.getPropertyValueOrDefault(MinArgCommandProperty.class, 0));
     }
 
-    protected void sendMissingArgsMessage(final CommandParameters commandParameters, final int requiredSyntaxLenght) {
+    protected void sendMissingArgsMessage(@NonNull final CommandParameters commandParameters,
+                                          final int requiredSyntaxLength) {
         final String[] args = commandParameters.getArgs();
         final String[] splitSyntax = this.syntax.split(" ");
 
         final StringJoiner requiredSyntax = new StringJoiner(" ");
-        for (int index = 0; Math.min(requiredSyntaxLenght, splitSyntax.length) > index; index++) {
+        for (int index = 0; Math.min(requiredSyntaxLength, splitSyntax.length) > index; index++) {
             requiredSyntax.add(args.length > index ? args[index] : MarkdownUtil.bold(splitSyntax[index]));
         }
 
@@ -378,7 +374,7 @@ public abstract class AbstractCommand {
         );
     }
 
-    protected void sendErrorMessage(final CommandParameters commandParameters, final String error) {
+    protected void sendErrorMessage(@NonNull final CommandParameters commandParameters, @NonNull final String error) {
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters).setTitle("Something went wrong")
@@ -390,8 +386,13 @@ public abstract class AbstractCommand {
         );
     }
 
-    protected void sendHelpMessage(final CommandParameters commandParameters, final String userArg, final int argPos, final String argName,
-                                   final AbstractCommand command, final String[] newArgs, final List<String> similarNames) {
+    protected void sendHelpMessage(@NonNull final CommandParameters commandParameters,
+                                   @NonNull final String userArg,
+                                   final int argPos,
+                                   @NonNull final String argName,
+                                   @Nullable final AbstractCommand command,
+                                   @Nullable final String[] newArgs,
+                                   @NonNull final List<String> similarNames) {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
         final StringBuilder helpDescription = new StringBuilder();
         helpDescription.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
@@ -428,7 +429,7 @@ public abstract class AbstractCommand {
     }
 
     // Checks
-    protected void checkArgLength(final CommandParameters commandParameters, final int length) {
+    protected void checkArgLength(@NonNull final CommandParameters commandParameters, final int length) {
         if (length > commandParameters.getArgs().length) {
             this.sendMissingArgsMessage(commandParameters, Math.max(this.getPropertyValueOrDefault(MinArgCommandProperty.class, length), length));
             throw new CommandReturnException(CommandResult.MISSING_ARGS);
@@ -436,18 +437,11 @@ public abstract class AbstractCommand {
     }
 
     // Args
-    public User getDiscordUserThrow(final CommandParameters commandParameters, final int argPos) {
+    public User getDiscordUserThrow(@NonNull final CommandParameters commandParameters, final int argPos) {
         final String discordUserName = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
         if (userIdMatcher.find()) {
             final User user = UserDb.getUSER_CACHE().get(Long.valueOf(userIdMatcher.group(2)));
-            if (user != null) {
-                return user;
-            }
-        }
-
-        if (DISCORD_USER_TAG_PATTERN.matcher(discordUserName).find()) {
-            final User user = DiscordBot.getInstance().getDiscord().getUserByTag(discordUserName);
             if (user != null) {
                 return user;
             }
@@ -460,7 +454,9 @@ public abstract class AbstractCommand {
         );
     }
 
-    public String getFromListIgnoreCaseThrow(final CommandParameters commandParameters, final int argPos, final List<String> possibleArguments) {
+    public String getFromListIgnoreCaseThrow(@NonNull final CommandParameters commandParameters,
+                                             final int argPos,
+                                             @NonNull final List<String> possibleArguments) {
         final String userArg = commandParameters.getArgs()[argPos];
         final Optional<String> arg = possibleArguments.stream()
                 .filter(possibleArg -> possibleArg.equalsIgnoreCase(userArg))
@@ -474,9 +470,9 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    public <E extends Enum> E getFromEnumIgnoreCaseThrow(final CommandParameters commandParameters,
+    public <E extends Enum> E getFromEnumIgnoreCaseThrow(@NonNull final CommandParameters commandParameters,
                                                          final int argPos,
-                                                         final E[] enumValue) {
+                                                         @NonNull final E[] enumValue) {
         final String userArg = commandParameters.getArgs()[argPos];
         final Optional<E> arg = EnumUtilities.getIgnoreCase(userArg, enumValue);
         if (arg.isPresent()) {
@@ -494,7 +490,7 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    public AbstractCommand getCommandThrow(final CommandParameters commandParameters, final int argPos) {
+    public AbstractCommand getCommandThrow(@NonNull final CommandParameters commandParameters, final int argPos) {
         final String commandName = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> command = AbstractCommand.getCommandModule().getCommand(commandName);
         if (command.isPresent()) {
@@ -523,7 +519,7 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    public Rank getRankThrow(final CommandParameters commandParameters, final int position) {
+    public Rank getRankThrow(@NonNull final CommandParameters commandParameters, final int position) {
         final String userInput = commandParameters.getArgs()[position];
 
         return AbstractCommand.getRankModule().getRanks()
@@ -537,7 +533,7 @@ public abstract class AbstractCommand {
                 ));
     }
 
-    public int getPermissionIdThrow(final CommandParameters commandParameters, final int argPos) {
+    public int getPermissionIdThrow(@NonNull final CommandParameters commandParameters, final int argPos) {
         final String permArg = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> commandOpt = AbstractCommand.getCommandModule().getCommand(permArg);
 
