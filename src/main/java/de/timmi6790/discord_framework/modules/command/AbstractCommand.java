@@ -224,7 +224,7 @@ public abstract class AbstractCommand {
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
-    private CommandResult executeSave(@Nullable final CommandParameters commandParameters) {
+    private CommandResult executeSave(@NonNull final CommandParameters commandParameters) {
         try {
             return this.onCommand(commandParameters);
         } catch (final CommandReturnException e) {
@@ -312,7 +312,7 @@ public abstract class AbstractCommand {
         return this.getPermissionId() == -1 || commandParameters.getUserDb().getAllPermissionIds().contains(this.getPermissionId());
     }
 
-    protected void addProperty(final @Nullable CommandProperty<?> property) {
+    protected void addProperty(final @NonNull CommandProperty<?> property) {
         this.getPropertiesMap().put((Class<? extends CommandProperty<?>>) property.getClass(), property);
     }
 
@@ -374,7 +374,8 @@ public abstract class AbstractCommand {
         );
     }
 
-    protected void sendErrorMessage(@NonNull final CommandParameters commandParameters, @NonNull final String error) {
+    protected void sendErrorMessage(@NonNull final CommandParameters commandParameters,
+                                    @NonNull final String error) {
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters).setTitle("Something went wrong")
@@ -429,7 +430,8 @@ public abstract class AbstractCommand {
     }
 
     // Checks
-    protected void checkArgLength(@NonNull final CommandParameters commandParameters, final int length) {
+    protected void checkArgLength(@NonNull final CommandParameters commandParameters,
+                                  final int length) {
         if (length > commandParameters.getArgs().length) {
             this.sendMissingArgsMessage(commandParameters, Math.max(this.getPropertyValueOrDefault(MinArgCommandProperty.class, length), length));
             throw new CommandReturnException(CommandResult.MISSING_ARGS);
@@ -437,7 +439,8 @@ public abstract class AbstractCommand {
     }
 
     // Args
-    public User getDiscordUserThrow(@NonNull final CommandParameters commandParameters, final int argPos) {
+    public User getDiscordUserThrow(@NonNull final CommandParameters commandParameters,
+                                    final int argPos) {
         final String discordUserName = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
         if (userIdMatcher.find()) {
@@ -490,7 +493,8 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    public AbstractCommand getCommandThrow(@NonNull final CommandParameters commandParameters, final int argPos) {
+    public AbstractCommand getCommandThrow(@NonNull final CommandParameters commandParameters,
+                                           final int argPos) {
         final String commandName = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> command = AbstractCommand.getCommandModule().getCommand(commandName);
         if (command.isPresent()) {
@@ -519,7 +523,8 @@ public abstract class AbstractCommand {
         throw new CommandReturnException();
     }
 
-    public Rank getRankThrow(@NonNull final CommandParameters commandParameters, final int position) {
+    public Rank getRankThrow(@NonNull final CommandParameters commandParameters,
+                             final int position) {
         final String userInput = commandParameters.getArgs()[position];
 
         return AbstractCommand.getRankModule().getRanks()
@@ -533,7 +538,8 @@ public abstract class AbstractCommand {
                 ));
     }
 
-    public int getPermissionIdThrow(@NonNull final CommandParameters commandParameters, final int argPos) {
+    public int getPermissionIdThrow(@NonNull final CommandParameters commandParameters,
+                                    final int argPos) {
         final String permArg = commandParameters.getArgs()[argPos];
         final Optional<AbstractCommand> commandOpt = AbstractCommand.getCommandModule().getCommand(permArg);
 
