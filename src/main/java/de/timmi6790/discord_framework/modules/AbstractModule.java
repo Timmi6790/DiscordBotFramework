@@ -16,7 +16,7 @@ public abstract class AbstractModule {
     private Set<Class<? extends AbstractModule>> loadBefore = new HashSet<>();
     private Set<GatewayIntent> requiredGatewayIntents = EnumSet.noneOf(GatewayIntent.class);
 
-    public AbstractModule(final String name) {
+    protected AbstractModule(final String name) {
         this.name = name;
     }
 

@@ -11,24 +11,23 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Getter(value = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class MessageListener {
     private static final Pattern FIRST_SPACE_PATTERN = Pattern.compile("^([\\S]*)\\s*(.*)$");
-
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-
+    
     private final CommandModule commandModule;
     private final GuildDbModule guildDbModule;
     private final AbstractCommand helpCommand;
@@ -111,16 +110,16 @@ public class MessageListener {
     @SubscribeEvent
     public void onTextMessage(@NonNull final MessageReceivedEvent event) {
         // Ignore yourself
-        if (this.commandModule.getBotId() == event.getAuthor().getIdLong()) {
+        if (this.getCommandModule().getBotId() == event.getAuthor().getIdLong()) {
             return;
         }
 
         final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
-        final GuildDb guildDb = this.guildDbModule.getOrCreate(guildId);
+        final GuildDb guildDb = this.getGuildDbModule().getOrCreate(guildId);
 
         final Optional<String> parsedStart = getParsedStart(
                 event.getMessage().getContentRaw(),
-                this.commandModule.getMainCommandPattern(),
+                this.getCommandModule().getMainCommandPattern(),
                 guildDb.getCommandAliasPattern().orElse(null)
         );
         if (!parsedStart.isPresent()) {
@@ -140,8 +139,7 @@ public class MessageListener {
 
         final String commandName = spaceMatcher.group(1);
         try {
-            this.getCommand(commandName, commandParameters)
-                    .ifPresent(abstractCommand -> this.executor.execute(() -> abstractCommand.runCommand(commandParameters)));
+            this.getCommand(commandName, commandParameters).ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
         } catch (final Exception e) {
             DiscordBot.getLogger().error(e);
         }

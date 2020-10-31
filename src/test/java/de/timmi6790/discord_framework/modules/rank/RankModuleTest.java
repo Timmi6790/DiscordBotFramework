@@ -7,7 +7,6 @@ import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 
 import java.util.ArrayList;
@@ -24,11 +23,11 @@ class RankModuleTest {
     private static final AtomicInteger RANK_NAME_NUMBER = new AtomicInteger(0);
 
     @Spy
-    private static final RankModule rankModule = Mockito.spy(new RankModule());
+    private static final RankModule rankModule = spy(new RankModule());
     @Spy
-    private static final PermissionsModule permissionsModule = Mockito.spy(new PermissionsModule());
+    private static final PermissionsModule permissionsModule = spy(new PermissionsModule());
     @Spy
-    private static final UserDbModule userDbModule = Mockito.spy(new UserDbModule());
+    private static final UserDbModule userDbModule = spy(new UserDbModule());
 
     private static String getRankName() {
         return "RandomRank" + RANK_NAME_NUMBER.getAndIncrement();

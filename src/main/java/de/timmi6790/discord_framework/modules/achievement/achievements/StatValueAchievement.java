@@ -13,7 +13,10 @@ public abstract class StatValueAchievement extends AbstractAchievement {
     private final Class<? extends AbstractStat> stat;
     private final long requiredValue;
 
-    public StatValueAchievement(final String name, final String internalName, final Class<? extends AbstractStat> stat, final long value) {
+    protected StatValueAchievement(final String name,
+                                   final String internalName,
+                                   final Class<? extends AbstractStat> stat,
+                                   final long value) {
         super(name, internalName);
 
         this.stat = stat;
