@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.modules.user;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.fake_modules.FakeEmptyCommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -13,7 +12,8 @@ import org.mockito.Spy;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class UserDbTest {
     private static final AtomicLong DISCORD_ID = new AtomicLong(0);
@@ -24,7 +24,9 @@ class UserDbTest {
     static void setUp() {
         doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
 
-        doReturn(new FakeEmptyCommandModule()).when(userDbModule).getModuleOrThrow(CommandModule.class);
+        final CommandModule commandModule = spy(new CommandModule());
+        doNothing().when(commandModule).registerCommands(any(), any());
+        doReturn(commandModule).when(userDbModule).getModuleOrThrow(CommandModule.class);
         userDbModule.onInitialize();
     }
 

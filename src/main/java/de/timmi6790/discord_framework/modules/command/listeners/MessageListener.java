@@ -33,7 +33,9 @@ public class MessageListener {
     private final GuildDbModule guildDbModule;
     private final AbstractCommand helpCommand;
 
-    protected static Optional<String> getParsedStart(@NonNull final String rawMessage, @NonNull final Pattern mainCommandPattern, final Pattern guildCommandAliasPattern) {
+    protected static Optional<String> getParsedStart(@NonNull final String rawMessage,
+                                                     @NonNull final Pattern mainCommandPattern,
+                                                     final Pattern guildCommandAliasPattern) {
         // Check if the message matches the main or guild specific start regex
         final Matcher mainMatcher = mainCommandPattern.matcher(rawMessage);
         if (mainMatcher.find()) {

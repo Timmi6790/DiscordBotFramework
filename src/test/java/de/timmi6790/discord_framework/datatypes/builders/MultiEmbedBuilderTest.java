@@ -1,12 +1,20 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
 import de.timmi6790.commons.Pair;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -34,6 +42,15 @@ class MultiEmbedBuilderTest {
         }
 
         return stringBuilder.toString();
+    }
+
+    @SneakyThrows
+    private static String getContentFromFile(@NonNull final String path) {
+        final ClassLoader classLoader = MultiEmbedBuilderTest.class.getClassLoader();
+
+        final URI uri = classLoader.getResource(path).toURI();
+        final byte[] encoded = Files.readAllBytes(Paths.get(uri));
+        return new String(encoded, StandardCharsets.UTF_8);
     }
 
     @Test
@@ -83,15 +100,10 @@ class MultiEmbedBuilderTest {
                 .matches(new OrderPredicate(), "Order");
     }
 
-    // TODO: Github actions broken
-    @SuppressWarnings("UnstableApiUsage")
-    /*
     @ParameterizedTest
-    @ValueSource(strings = {"loremipsum/20k", "loremipsum/5k", "loremipsum/111k", "loremipsum/NewLineBug"})
-    @Disabled("Broken with github actions")
-    void correctDescriptions(final String filePath) throws IOException, URISyntaxException {
-        final List<String> lines = Resources.readLines(Resources.getResource(filePath).toURI().toURL(), StandardCharsets.UTF_8);
-        final String description = String.join("", lines);
+    @ValueSource(strings = {"loremipsum/20k", "loremipsum/5k", "loremipsum/111k"})
+    void correctDescriptions(final String filePath) {
+        final String description = getContentFromFile(filePath);
 
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
         embedBuilder.setDescription(description);
@@ -108,8 +120,6 @@ class MultiEmbedBuilderTest {
                     return foundDescription.toString().equals(description);
                 }, "Input != Output description");
     }
-
-     */
 
     @ParameterizedTest
     @ValueSource(ints = {MultiEmbedBuilder.EMBED_FIELD_MAX, MultiEmbedBuilder.EMBED_FIELD_MAX + 1, 1, 100, 200})
@@ -174,23 +184,6 @@ class MultiEmbedBuilderTest {
     }
 
     @Test
-    void footerToBigForOneMessage() {
-        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder()
-                .setTitle(getRandomString(MultiEmbedBuilder.EMBED_TITLE_MAX))
-                .setFooter(getRandomString(MultiEmbedBuilder.EMBED_FOOTER_MAX));
-
-        final String fieldValue = getRandomString(1_000);
-        for (int count = 0; 6 > count; count++) {
-            embedBuilder.addField("", fieldValue);
-        }
-
-        final MessageEmbed[] messageEmbeds = embedBuilder.build();
-        assertThat(messageEmbeds)
-                .matches(new TotalSizePredicate(), "Total size")
-                .matches(new OrderPredicate(), "Order");
-    }
-
-    @Test
     void constructorMultiEmbedBuilder() {
         final MultiEmbedBuilder original = getFilledEmbedBuilder();
         final MultiEmbedBuilder copy = new MultiEmbedBuilder(original);
@@ -226,6 +219,15 @@ class MultiEmbedBuilderTest {
     void addBlankField() {
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder().addBlankField(true);
         assertThat(embedBuilder.getFields()).hasSize(1);
+    }
+
+    @Test
+    void addFieldField() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        final MessageEmbed.Field field = new MessageEmbed.Field("Name", "Value", true);
+        embedBuilder.addField(field);
+        assertThat(embedBuilder.getFields()).hasSize(1);
+        assertThat(embedBuilder.getFields().get(0)).isEqualTo(field);
     }
 
     @Test
@@ -271,6 +273,118 @@ class MultiEmbedBuilderTest {
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
         embedBuilder.setAuthor(null);
         assertThat(embedBuilder.getAuthor()).isNull();
+    }
+
+    @Test
+    void setAuthor_name_and_url() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setAuthor(null, null);
+        assertThat(embedBuilder.getAuthor()).isNull();
+    }
+
+    @Test
+    void setThumbnail_null() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setThumbnail(null);
+        assertThat(embedBuilder.getThumbnail()).isNull();
+    }
+
+    @Test
+    void setThumbnail() {
+        final String url = "https://i.imgur.com/UpnCDgA.jpg";
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setThumbnail(url);
+
+        assertThat(embedBuilder.getThumbnail()).isNotNull();
+        assertThat(embedBuilder.getThumbnail().getUrl()).isEqualTo(url);
+    }
+
+    @Test
+    void setImage_null() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setImage(null);
+        assertThat(embedBuilder.getImage()).isNull();
+    }
+
+    @Test
+    void setImage() {
+        final String url = "https://i.imgur.com/UpnCDgA.jpg";
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setImage(url);
+
+        assertThat(embedBuilder.getImage()).isNotNull();
+        assertThat(embedBuilder.getImage().getUrl()).isEqualTo(url);
+    }
+
+    @Test
+    void setTitle_null() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setTitle(null);
+        assertThat(embedBuilder.getTitle()).isNull();
+    }
+
+    @Test
+    void appendDescription_format() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.appendDescription("Test %s,%s,%s", 1, 2, 3);
+        assertThat(embedBuilder.getDescription()).isEqualTo(String.format("Test %s,%s,%s", 1, 2, 3));
+    }
+
+    @Test
+    void setDescription_format() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setDescription("Test %s,%s,%s", 1, 2, 3);
+        assertThat(embedBuilder.getDescription()).isEqualTo(String.format("Test %s,%s,%s", 1, 2, 3));
+    }
+
+    @Test
+    void setTimestamp_null() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setTimestamp(null);
+        assertThat(embedBuilder.getTimestamp()).isNull();
+    }
+
+    @Test
+    void setTimestamp_offsetDateTime() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        final OffsetDateTime dateTime = OffsetDateTime.now();
+        embedBuilder.setTimestamp(dateTime);
+        assertThat(embedBuilder.getTimestamp()).isEqualTo(dateTime);
+    }
+
+    @Test
+    void setTimestamp_instant() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        final Instant dateTime = Instant.now();
+        embedBuilder.setTimestamp(dateTime);
+        assertThat(embedBuilder.getTimestamp()).isEqualTo(dateTime.toString());
+    }
+
+    @Test
+    void buildSingle_empty() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        assertThrows(IllegalStateException.class, embedBuilder::buildSingle);
+    }
+
+    @Test
+    void buildSingle_description_over_limit() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setDescription(getRandomString(MultiEmbedBuilder.EMBED_DESCRIPTION_MAX + 1));
+
+        assertThrows(IllegalStateException.class, embedBuilder::buildSingle);
+    }
+
+    @Test
+    void buildSingle_total_over_limit() {
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+
+        final String content = getRandomString(MultiEmbedBuilder.EMBED_FIELD_VALUE_MAX);
+        final double fields = Math.floor((double) MultiEmbedBuilder.EMBED_TOTAL_MAX / MultiEmbedBuilder.EMBED_FIELD_VALUE_MAX);
+        for (int count = 0; fields >= count; count++) {
+            embedBuilder.addField("", content);
+        }
+
+        assertThrows(IllegalStateException.class, embedBuilder::buildSingle);
     }
 
     private static class TotalSizePredicate implements Predicate<MessageEmbed[]> {

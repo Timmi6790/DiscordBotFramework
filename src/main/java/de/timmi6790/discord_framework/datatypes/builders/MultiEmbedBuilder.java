@@ -1,6 +1,9 @@
 package de.timmi6790.discord_framework.datatypes.builders;
 
-import lombok.*;
+import de.timmi6790.discord_framework.utilities.DateUtilities;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.EmbedType;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -11,27 +14,25 @@ import net.dv8tion.jda.internal.utils.Helpers;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.awt.*;
-import java.time.*;
+import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-@ToString
-@Getter
+@Data
 @NoArgsConstructor
-@EqualsAndHashCode
 public class MultiEmbedBuilder {
     // Title, Description, Field, Footer.text, Author.name
-    protected static final int EMBED_TOTAL_MAX = 6_000;
-    protected static final int EMBED_DESCRIPTION_MAX = 2_048;
-    protected static final int EMBED_FOOTER_MAX = 2_048;
-    protected static final int EMBED_TITLE_MAX = 256;
+    protected static final int EMBED_TOTAL_MAX = MessageEmbed.EMBED_MAX_LENGTH_BOT;
+    protected static final int EMBED_DESCRIPTION_MAX = MessageEmbed.TEXT_MAX_LENGTH;
+    protected static final int EMBED_FOOTER_MAX = MessageEmbed.TEXT_MAX_LENGTH;
+    protected static final int EMBED_TITLE_MAX = MessageEmbed.TITLE_MAX_LENGTH;
     protected static final int EMBED_AUTHOR_MAX = 256;
     protected static final int EMBED_FIELD_MAX = 25;
-    protected static final int EMBED_FIELD_NAME_MAX = 256;
-    protected static final int EMBED_FIELD_VALUE_MAX = 1_024;
-    protected static final int EMBED_URL_MAX = 2_000;
+    protected static final int EMBED_FIELD_NAME_MAX = MessageEmbed.TITLE_MAX_LENGTH;
+    protected static final int EMBED_FIELD_VALUE_MAX = MessageEmbed.VALUE_MAX_LENGTH;
+    protected static final int EMBED_URL_MAX = MessageEmbed.URL_MAX_LENGTH;
 
     protected static final int EMBED_DEFAULT_COLOUR = 536870911;
 
@@ -139,7 +140,10 @@ public class MultiEmbedBuilder {
         return this.title == null ? 0 : this.title.length();
     }
 
-    private MessageEmbed createMessageEmbed(@Nullable final String description, @Nullable final List<Field> fields, final boolean includeHeader, final boolean includeFooter) {
+    private MessageEmbed createMessageEmbed(@Nullable final String description,
+                                            @Nullable final List<Field> fields,
+                                            final boolean includeHeader,
+                                            final boolean includeFooter) {
         return EntityBuilder.createMessageEmbed(
                 includeHeader ? this.url : null,
                 includeHeader ? this.title : null,
@@ -168,8 +172,7 @@ public class MultiEmbedBuilder {
         // Fields
         int currentEmbedSize = lastDescription != null ? lastDescription.length() : 0;
         if (embeds.isEmpty()) {
-            currentEmbedSize += this.getTitleLength();
-            currentEmbedSize += this.getAuthorLength();
+            currentEmbedSize += this.getTitleLength() + this.getAuthorLength();
         }
 
         int lastFieldIndex = 0;
@@ -179,7 +182,12 @@ public class MultiEmbedBuilder {
 
             // Add a new message when either the total amount, or the total amount of fields is reached.
             if (currentEmbedSize + fieldSize > EMBED_TOTAL_MAX || fieldIndex - lastFieldIndex >= EMBED_FIELD_MAX) {
-                embeds.add(this.createMessageEmbed(lastFieldIndex == 0 ? lastDescription : null, this.fields.subList(lastFieldIndex, fieldIndex), embeds.isEmpty(), false));
+                embeds.add(this.createMessageEmbed(
+                        lastFieldIndex == 0 ? lastDescription : null,
+                        this.fields.subList(lastFieldIndex, fieldIndex),
+                        embeds.isEmpty(),
+                        false
+                ));
                 currentEmbedSize = 0;
                 lastFieldIndex = fieldIndex;
             }
@@ -188,14 +196,12 @@ public class MultiEmbedBuilder {
         }
 
         // Last message
-        // Check if we have enough space for the footer, or put the footer in a new message.
-        final boolean enoughFooterSpace = EMBED_TOTAL_MAX >= this.getFooterLength() + currentEmbedSize;
-        final String fieldDescription = lastFieldIndex == 0 ? lastDescription : null;
-        embeds.add(this.createMessageEmbed(fieldDescription, this.fields.subList(lastFieldIndex, this.fields.size()), embeds.isEmpty(), enoughFooterSpace));
-
-        if (!enoughFooterSpace) {
-            embeds.add(this.createMessageEmbed(null, null, false, true));
-        }
+        embeds.add(this.createMessageEmbed(
+                lastFieldIndex == 0 ? lastDescription : null,
+                this.fields.subList(lastFieldIndex, this.fields.size()),
+                embeds.isEmpty(),
+                true
+        ));
 
         return embeds.toArray(new MessageEmbed[0]);
     }
@@ -244,15 +250,12 @@ public class MultiEmbedBuilder {
     }
 
     public int length() {
-        int length = this.description.length();
+        int fieldLength = 0;
         for (final Field field : this.fields) {
-            length += getFieldLength(field);
+            fieldLength += getFieldLength(field);
         }
 
-        length += this.getTitleLength();
-        length += this.getAuthorLength();
-        length += this.getFooterLength();
-        return length;
+        return fieldLength + this.description.length() + this.getTitleLength() + this.getAuthorLength() + this.getFooterLength();
     }
 
     public MultiEmbedBuilder setTitle(@Nullable final String title) {
@@ -315,32 +318,14 @@ public class MultiEmbedBuilder {
         } else if (temporal instanceof OffsetDateTime) {
             this.timestamp = (OffsetDateTime) temporal;
         } else {
-            ZoneOffset offset;
-            try {
-                offset = ZoneOffset.from(temporal);
-            } catch (final DateTimeException var7) {
-                offset = ZoneOffset.UTC;
-            }
-
-            try {
-                final LocalDateTime ldt = LocalDateTime.from(temporal);
-                this.timestamp = OffsetDateTime.of(ldt, offset);
-            } catch (final DateTimeException var6) {
-                try {
-                    final Instant instant = Instant.from(temporal);
-                    this.timestamp = OffsetDateTime.ofInstant(instant, offset);
-                } catch (final DateTimeException var5) {
-                    throw new DateTimeException("Unable to obtain OffsetDateTime from TemporalAccessor: " + temporal + " of type " + temporal.getClass().getName(), var5);
-                }
-            }
+            this.timestamp = DateUtilities.convertToOffsetDate(temporal);
         }
 
         return this;
     }
 
     public MultiEmbedBuilder setColor(@Nullable final Color color) {
-        this.color = color == null ? EMBED_DEFAULT_COLOUR : color.getRGB();
-        return this;
+        return this.setColor(color == null ? EMBED_DEFAULT_COLOUR : color.getRGB());
     }
 
     public MultiEmbedBuilder setColor(final int color) {
@@ -407,7 +392,10 @@ public class MultiEmbedBuilder {
         return this;
     }
 
-    public MultiEmbedBuilder addField(@NonNull final String name, @NonNull final String value, final boolean inline, final boolean ifCondition) {
+    public MultiEmbedBuilder addField(@NonNull final String name,
+                                      @NonNull final String value,
+                                      final boolean inline,
+                                      final boolean ifCondition) {
         if (ifCondition) {
             this.addField(name, value, inline);
         }
@@ -435,8 +423,7 @@ public class MultiEmbedBuilder {
     }
 
     public MultiEmbedBuilder addBlankField(final boolean inline) {
-        this.fields.add(new Field(EmbedBuilder.ZERO_WIDTH_SPACE, EmbedBuilder.ZERO_WIDTH_SPACE, inline));
-        return this;
+        return this.addField(EmbedBuilder.ZERO_WIDTH_SPACE, EmbedBuilder.ZERO_WIDTH_SPACE, inline);
     }
 
     public MultiEmbedBuilder clearFields() {

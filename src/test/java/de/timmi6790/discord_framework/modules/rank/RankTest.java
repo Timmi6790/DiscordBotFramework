@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.modules.rank;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.fake_modules.FakeEmptyCommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -19,7 +18,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class RankTest {
     private static final String PERMISSION_PREFIX = "rank_test.";
@@ -43,13 +43,16 @@ class RankTest {
         doReturn(AbstractIntegrationTest.databaseModule).when(permissionsModule).getModuleOrThrow(DatabaseModule.class);
         permissionsModule.onInitialize();
 
+        final CommandModule commandModule = spy(new CommandModule());
+        doNothing().when(commandModule).registerCommands(any(), any());
+
         doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(new FakeEmptyCommandModule()).when(userDbModule).getModuleOrThrow(CommandModule.class);
+        doReturn(commandModule).when(userDbModule).getModuleOrThrow(CommandModule.class);
         userDbModule.onInitialize();
 
         doReturn(AbstractIntegrationTest.databaseModule).when(rankModule).getModuleOrThrow(DatabaseModule.class);
         doReturn(userDbModule).when(rankModule).getModuleOrThrow(UserDbModule.class);
-        doReturn(new FakeEmptyCommandModule()).when(rankModule).getModuleOrThrow(CommandModule.class);
+        doReturn(commandModule).when(rankModule).getModuleOrThrow(CommandModule.class);
 
         rankModule.onInitialize();
 

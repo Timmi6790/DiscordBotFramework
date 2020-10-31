@@ -1,31 +1,30 @@
 package de.timmi6790.discord_framework.modules.user;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.fake_modules.FakeEmptyCommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.Spy;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 class UserDbModuleTest {
     private static final long TEST_DISCORD_ID = 305911488697204736L;
     private static final long TEST_DISCORD_ID2 = 168049519831810048L;
 
-    @Spy
-    private static final UserDbModule userDbModule = Mockito.spy(new UserDbModule());
+    private static final UserDbModule userDbModule = spy(new UserDbModule());
 
     @BeforeAll
     static void setUp() {
         doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
 
-        doReturn(new FakeEmptyCommandModule()).when(userDbModule).getModuleOrThrow(CommandModule.class);
+        final CommandModule commandModule = spy(new CommandModule());
+        doNothing().when(commandModule).registerCommands(any(), any());
+        doReturn(commandModule).when(userDbModule).getModuleOrThrow(CommandModule.class);
+
         userDbModule.onInitialize();
     }
 
