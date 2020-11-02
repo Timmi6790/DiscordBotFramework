@@ -67,7 +67,11 @@ public class ModuleManager {
                         .findAny();
 
                 if (missingDependency.isPresent()) {
-                    this.logger.warn("Can't load {}, because it is missing the {} dependency.", module.getName(), missingDependency.get().getSimpleName());
+                    this.logger.warn(
+                            "Can't load {}, because it is missing the {} dependency.",
+                            module.getName(),
+                            missingDependency.get().getSimpleName()
+                    );
 
                     moduleClasses.remove(module.getClass());
                     moduleIterator.remove();
@@ -207,7 +211,11 @@ public class ModuleManager {
         // Check if all load dependencies are innitlized
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
             if (!this.initializedModules.contains(dependencyClass)) {
-                this.logger.warn("Tried to initialize {} without {} dependency being initialized.", moduleClass, dependencyClass);
+                this.logger.warn(
+                        "Tried to initialize {} without {} dependency being initialized.",
+                        moduleClass,
+                        dependencyClass
+                );
                 return false;
             }
         }
@@ -245,7 +253,11 @@ public class ModuleManager {
         // Check if all load dependencies are started
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
             if (!(this.initializedModules.contains(dependencyClass) || this.startedModules.contains(dependencyClass))) {
-                this.logger.warn("Tried to start {} without {} dependency being started", moduleClass, dependencyClass);
+                this.logger.warn(
+                        "Tried to start {} without {} dependency being started",
+                        moduleClass,
+                        dependencyClass
+                );
                 return false;
             }
         }

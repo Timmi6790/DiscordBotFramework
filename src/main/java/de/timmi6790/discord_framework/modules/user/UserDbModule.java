@@ -7,39 +7,24 @@ import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
+import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
+import de.timmi6790.discord_framework.modules.user.repository.UserDbRepositoryMysql;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @EqualsAndHashCode(callSuper = true)
+@Getter
 public class UserDbModule extends AbstractModule {
-    private static final String GET_PLAYER = "SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, " +
-            "GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, " +
-            "GROUP_CONCAT(DISTINCT permission.id) perms, " +
-            "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_setting.setting_id, p_setting.setting) SEPARATOR ';') settings, " +
-            "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_stat.stat_id, p_stat.value) SEPARATOR ';') stats, " +
-            "GROUP_CONCAT(DISTINCT p_ach.achievement_id) achievements " +
-            "FROM player  " +
-            "LEFT JOIN player_rank p_rank ON p_rank.player_id = player.id  " +
-            "LEFT JOIN player_permission p_perm ON p_perm.player_id = player.id  " +
-            "LEFT JOIN permission ON permission.default_permission = 1 OR permission.id = p_perm.permission_id  " +
-            "LEFT JOIN player_setting p_setting ON p_setting.player_id = player.id  " +
-            "LEFT JOIN player_stat p_stat ON p_stat.player_id = player.id " +
-            "LEFT JOIN player_achievement p_ach ON p_ach.player_id = player.id " +
-            "WHERE player.discordId = :discordId LIMIT 1;";
-    private static final String INSERT_PLAYER = "INSERT INTO player(discordId) VALUES (:discordId);";
-    private static final String REMOVE_PLAYER = "DELETE FROM player WHERE id = :dbId LIMIT 1;";
-    @Getter
     private final Cache<Long, UserDb> cache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
-    private Jdbi database;
+    private UserDbRepository userDbRepository;
 
     public UserDbModule() {
         super("UserDb");
@@ -53,8 +38,7 @@ public class UserDbModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(UserDb.class, new UserDbMapper(this.database));
+        this.userDbRepository = new UserDbRepositoryMysql(this);
 
         this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
@@ -65,31 +49,24 @@ public class UserDbModule extends AbstractModule {
 
     protected UserDb create(final long discordId) {
         // Make sure that the user is not present
-        return this.get(discordId).orElseGet(() -> {
-            this.database.useHandle(handle ->
-                    handle.createUpdate(INSERT_PLAYER)
-                            .bind("discordId", discordId)
-                            .execute()
-            );
+        final Optional<UserDb> userDbOpt = this.get(discordId);
+        if (userDbOpt.isPresent()) {
+            return userDbOpt.get();
+        }
 
-            // Should never throw
-            return this.get(discordId).orElseThrow(RuntimeException::new);
-        });
+        final UserDb userDb = this.getUserDbRepository().create(discordId);
+        this.getCache().put(discordId, userDb);
+        return userDb;
     }
 
     public Optional<UserDb> get(final long discordId) {
-        final UserDb userDbCache = this.cache.getIfPresent(discordId);
+        final UserDb userDbCache = this.getCache().getIfPresent(discordId);
         if (userDbCache != null) {
             return Optional.of(userDbCache);
         }
 
-        final Optional<UserDb> userDbOpt = this.database.withHandle(handle ->
-                handle.createQuery(GET_PLAYER)
-                        .bind("discordId", discordId)
-                        .mapTo(UserDb.class)
-                        .findFirst()
-        );
-        userDbOpt.ifPresent(userDb -> this.cache.put(discordId, userDb));
+        final Optional<UserDb> userDbOpt = this.getUserDbRepository().get(discordId);
+        userDbOpt.ifPresent(userDb -> this.getCache().put(discordId, userDb));
 
         return userDbOpt;
     }
@@ -103,11 +80,7 @@ public class UserDbModule extends AbstractModule {
     }
 
     public void delete(@NonNull final UserDb userDb) {
-        this.database.useHandle(handle ->
-                handle.createUpdate(REMOVE_PLAYER)
-                        .bind("dbId", userDb.getDatabaseId())
-                        .execute()
-        );
-        this.cache.invalidate(userDb.getDiscordId());
+        this.getUserDbRepository().delete(userDb);
+        this.getCache().invalidate(userDb.getDiscordId());
     }
 }

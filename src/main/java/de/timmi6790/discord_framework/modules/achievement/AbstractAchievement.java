@@ -21,7 +21,7 @@ public abstract class AbstractAchievement extends DatabaseGetId {
     private final String name;
     private final String internalName;
 
-    public AbstractAchievement(final String name, final String internalName) {
+    protected AbstractAchievement(final String name, final String internalName) {
         super(GET_ACHIEVEMENT_ID, INSERT_NEW_ACHIEVEMENT);
 
         this.name = name;

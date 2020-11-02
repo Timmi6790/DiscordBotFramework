@@ -29,7 +29,7 @@ class RankModuleTest {
     @Spy
     private static final UserDbModule userDbModule = spy(new UserDbModule());
 
-    private static String getRankName() {
+    private static String generateRankName() {
         return "RandomRank" + RANK_NAME_NUMBER.getAndIncrement();
     }
 
@@ -54,7 +54,7 @@ class RankModuleTest {
 
     @Test
     void hasRank() {
-        final String rankName = getRankName();
+        final String rankName = generateRankName();
         rankModule.createRank(rankName);
 
         final Optional<Rank> rankByName = rankModule.getRank(rankName);
@@ -65,7 +65,7 @@ class RankModuleTest {
 
     @Test
     void getRankId() {
-        final String rankName = getRankName();
+        final String rankName = generateRankName();
         rankModule.createRank(rankName);
 
         final Optional<Rank> rankByName = rankModule.getRank(rankName);
@@ -79,7 +79,7 @@ class RankModuleTest {
 
     @Test
     void getRankByName() {
-        final String rankName = getRankName();
+        final String rankName = generateRankName();
         rankModule.createRank(rankName);
 
         final Optional<Rank> rank = rankModule.getRank(rankName);
@@ -91,7 +91,7 @@ class RankModuleTest {
     void getRanks() {
         final List<String> rankNames = new ArrayList<>();
         for (int count = 0; 10 > count; count++) {
-            rankNames.add(getRankName());
+            rankNames.add(generateRankName());
         }
 
         for (final String rankName : rankNames) {
@@ -106,7 +106,7 @@ class RankModuleTest {
 
     @Test
     void createRank() {
-        final String rankName = getRankName();
+        final String rankName = generateRankName();
         assertThat(rankModule.hasRank(rankName)).isFalse();
 
         final boolean rankCreated = rankModule.createRank(rankName);
@@ -122,7 +122,7 @@ class RankModuleTest {
 
     @Test
     void deleteRankRank() {
-        final String rankName = getRankName();
+        final String rankName = generateRankName();
         rankModule.createRank(rankName);
         final Optional<Rank> rank = rankModule.getRank(rankName);
 
@@ -133,7 +133,7 @@ class RankModuleTest {
 
     @Test
     void deleteRankId() {
-        final String rankName = getRankName();
+        final String rankName = generateRankName();
         rankModule.createRank(rankName);
         final Optional<Rank> rank = rankModule.getRank(rankName);
 
@@ -145,5 +145,15 @@ class RankModuleTest {
     @Test
     void deleteDefaultRank() {
         assertThat(rankModule.deleteRank(1)).isFalse();
+    }
+
+    @Test
+    void delete_missing_rank() {
+        assertThat(rankModule.deleteRank(-1)).isFalse();
+    }
+
+    @Test
+    void getRank_none_existing() {
+        assertThat(rankModule.getRank(generateRankName())).isEmpty();
     }
 }

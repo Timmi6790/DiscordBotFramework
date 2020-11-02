@@ -1,6 +1,7 @@
-package de.timmi6790.discord_framework.modules.guild;
+package de.timmi6790.discord_framework.modules.guild.repository;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
+import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 

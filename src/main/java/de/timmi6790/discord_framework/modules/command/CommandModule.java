@@ -6,6 +6,8 @@ import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.command.listeners.CommandLoggingListener;
 import de.timmi6790.discord_framework.modules.command.listeners.MessageListener;
+import de.timmi6790.discord_framework.modules.command.repository.CommandRepository;
+import de.timmi6790.discord_framework.modules.command.repository.CommandRepositoryMysql;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
@@ -19,26 +21,17 @@ import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
-import org.jdbi.v3.core.Jdbi;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 public class CommandModule extends AbstractModule {
-    private static final String COMMAND_NAME = "commandName";
-
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
-
-    private static final String GET_COMMAND_ID = "SELECT id FROM `command` WHERE command_name = :commandName LIMIT 1;";
-    private static final String INSERT_NEW_COMMAND = "INSERT INTO command(command_name) VALUES(:commandName);";
-
-    private static final String GET_COMMAND_CAUSE_COUNT = "SELECT COUNT(*) FROM `command_cause` WHERE cause_name = :causeName LIMIT 1;";
-    private static final String INSERT_COMMAND_CAUSE = "INSERT INTO command_cause(cause_name) VALUES(:causeName);";
-
-    private static final String GET_COMMAND_STATUS_COUNT = "SELECT COUNT(*) FROM `command_status` WHERE status_name = :statusName LIMIT 1;";
-    private static final String INSERT_COMMAND_STATUS = "INSERT INTO command_status(status_name) VALUES(:statusName);";
 
     private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
@@ -49,7 +42,7 @@ public class CommandModule extends AbstractModule {
     @Getter
     private long botId;
 
-    private Jdbi database;
+    private CommandRepository commandRepository;
     private Config commandConfig;
 
     public CommandModule() {
@@ -77,12 +70,15 @@ public class CommandModule extends AbstractModule {
     }
 
     public static Pattern compileMainCommandPattern(@NonNull final String mainCommand, final long botId) {
-        return Pattern.compile(String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), botId), Pattern.CASE_INSENSITIVE);
+        return Pattern.compile(
+                String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), botId),
+                Pattern.CASE_INSENSITIVE
+        );
     }
 
     @Override
     public void onInitialize() {
-        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
+        this.commandRepository = new CommandRepositoryMysql(this);
         this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
@@ -90,7 +86,7 @@ public class CommandModule extends AbstractModule {
         this.mainCommand = this.commandConfig.getMainCommand();
         this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
 
-        this.innitDatabase();
+        this.commandRepository.init(CommandCause.values(), CommandResult.values());
 
         final HelpCommand helpCommand = new HelpCommand(this);
         this.registerCommands(
@@ -105,7 +101,7 @@ public class CommandModule extends AbstractModule {
                                 this.getModuleOrThrow(GuildDbModule.class),
                                 helpCommand
                         ),
-                        new CommandLoggingListener(this.database)
+                        new CommandLoggingListener(this.commandRepository)
                 );
     }
 
@@ -116,62 +112,8 @@ public class CommandModule extends AbstractModule {
         }
     }
 
-    public void innitDatabase() {
-        // Db
-        // CommandCause
-        this.database.useHandle(handle ->
-                Arrays.stream(CommandCause.values())
-                        .parallel()
-                        .map(commandCause -> commandCause.name().toLowerCase())
-                        .filter(nameLower ->
-                                handle.createQuery(GET_COMMAND_CAUSE_COUNT)
-                                        .bind("causeName", nameLower)
-                                        .mapTo(int.class)
-                                        .first() == 0
-                        )
-                        .forEach(nameLower ->
-                                handle.createUpdate(INSERT_COMMAND_CAUSE)
-                                        .bind("causeName", nameLower)
-                                        .execute()
-                        )
-        );
-
-        // CommandStatus
-        this.database.useHandle(handle ->
-                Arrays.stream(CommandResult.values())
-                        .parallel()
-                        .map(commandResult -> commandResult.name().toLowerCase())
-                        .filter(nameLower ->
-                                handle.createQuery(GET_COMMAND_STATUS_COUNT)
-                                        .bind("statusName", nameLower)
-                                        .mapTo(int.class)
-                                        .first() == 0
-                        )
-                        .forEach(nameLower ->
-                                handle.createUpdate(INSERT_COMMAND_STATUS)
-                                        .bind("statusName", nameLower)
-                                        .execute()
-                        )
-        );
-    }
-
     private int getCommandDatabaseId(@NonNull final AbstractCommand command) {
-        return this.database.withHandle(handle ->
-                handle.createQuery(GET_COMMAND_ID)
-                        .bind(COMMAND_NAME, command.getName())
-                        .mapTo(int.class)
-                        .findFirst()
-                        .orElseGet(() -> {
-                            handle.createUpdate(INSERT_NEW_COMMAND)
-                                    .bind(COMMAND_NAME, command.getName())
-                                    .execute();
-
-                            return handle.createQuery(GET_COMMAND_ID)
-                                    .bind(COMMAND_NAME, command.getName())
-                                    .mapTo(int.class)
-                                    .first();
-                        })
-        );
+        return this.commandRepository.getCommandDatabaseId(command);
     }
 
     public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand... commands) {
@@ -190,7 +132,11 @@ public class CommandModule extends AbstractModule {
         this.commands.put(command.getName(), command);
         for (final String aliasName : command.getAliasNames()) {
             if (this.commandAliases.containsKey(aliasName)) {
-                DiscordBot.getLogger().warn("Can't register alias name {} for {}, it already exists.", aliasName, command.getName());
+                DiscordBot.getLogger().warn(
+                        "Can't register alias name {} for {}, it already exists.",
+                        aliasName,
+                        command.getName()
+                );
                 continue;
             }
 

@@ -1,5 +1,6 @@
-package de.timmi6790.discord_framework.modules.channel;
+package de.timmi6790.discord_framework.modules.channel.repository;
 
+import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import lombok.AllArgsConstructor;

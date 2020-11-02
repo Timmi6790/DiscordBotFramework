@@ -30,7 +30,7 @@ public abstract class DatabaseGetId {
      * @param sqlGetId    the sql get id code
      * @param sqlInsertId the sql insert id code
      */
-    public DatabaseGetId(final String sqlGetId, final String sqlInsertId) {
+    protected DatabaseGetId(final String sqlGetId, final String sqlInsertId) {
         this.sqlGetId = sqlGetId;
         this.sqlInsertId = sqlInsertId;
         this.databaseSupplier = () -> DiscordBot.getInstance().getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi();

@@ -1,6 +1,8 @@
-package de.timmi6790.discord_framework.modules.rank;
+package de.timmi6790.discord_framework.modules.rank.repository;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
+import de.timmi6790.discord_framework.modules.rank.Rank;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.AllArgsConstructor;
 import org.jdbi.v3.core.Jdbi;

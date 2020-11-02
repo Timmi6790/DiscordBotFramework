@@ -5,9 +5,9 @@ import com.google.common.collect.SetMultimap;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import io.sentry.Breadcrumb;
+import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
+import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
-import io.sentry.SentryEvent;
 import io.sentry.SentryLevel;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -15,7 +15,6 @@ import lombok.Getter;
 import net.dv8tion.jda.api.events.GenericEvent;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -42,21 +41,17 @@ public class EventModule extends AbstractModule {
         DiscordBot.getLogger().error(exception);
 
         // Sentry error
-        final Breadcrumb breadcrumb = new Breadcrumb();
-        breadcrumb.setCategory("Event");
-        breadcrumb.setData("Class", event.getClass().toString());
-        breadcrumb.setData("Listener", listener.getMethod().getName());
-
-        final SentryEvent sentryEvent = new SentryEvent();
-        sentryEvent.addBreadcrumb(breadcrumb);
-        sentryEvent.setLevel(SentryLevel.ERROR);
-        final io.sentry.protocol.Message sentryMessage = new io.sentry.protocol.Message();
-        sentryMessage.setMessage("Event");
-        sentryEvent.setMessage(sentryMessage);
-        sentryEvent.setLogger(EventObject.class.getName());
-        sentryEvent.setThrowable(exception);
-
-        Sentry.captureEvent(sentryEvent);
+        Sentry.captureEvent(new SentryEventBuilder()
+                .addBreadcrumb(new BreadcrumbBuilder()
+                        .setCategory("Event")
+                        .setData("Class", event.getClass().toString())
+                        .setData("Listener", listener.getMethod().getName())
+                        .build())
+                .setLevel(SentryLevel.ERROR)
+                .setMessage("Event")
+                .setLogger(EventObject.class.getName())
+                .setThrowable(exception)
+                .build());
     }
 
     public boolean addEventListener(final Object listener) {
@@ -64,15 +59,21 @@ public class EventModule extends AbstractModule {
         for (final Method method : listener.getClass().getMethods()) {
             ReflectionUtilities.getAnnotation(method, SubscribeEvent.class).ifPresent(annotation -> {
                         if (method.getParameterCount() != 1) {
-                            DiscordBot.getLogger().warn("{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
-                                    listener.getClass(), method.getName(), method.getParameterCount());
+                            DiscordBot.getLogger().warn(
+                                    "{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
+                                    listener.getClass(),
+                                    method.getName(),
+                                    method.getParameterCount()
+                            );
                             return;
                         }
 
                         final Class<?> parameter = method.getParameterTypes()[0];
                         if (!GenericEvent.class.isAssignableFrom(parameter)) {
-                            DiscordBot.getLogger().warn("{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
-                                    listener.getClass(), method.getName());
+                            DiscordBot.getLogger().warn(
+                                    "{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
+                                    listener.getClass(),
+                                    method.getName());
                             return;
                         }
 
@@ -81,7 +82,13 @@ public class EventModule extends AbstractModule {
                                 (Class<GenericEvent>) parameter,
                                 key -> MultimapBuilder.enumKeys(EventPriority.class).hashSetValues().build()
                         ).put(annotation.priority(), new EventObject(listener, method, annotation.ignoreCanceled()));
-                        DiscordBot.getLogger().info("Added {}.{} as new event listener for {}.", listener.getClass(), method.getName(), parameter.getName());
+
+                        DiscordBot.getLogger().info(
+                                "Added {}.{} as new event listener for {}.",
+                                listener.getClass(),
+                                method.getName(),
+                                parameter.getName()
+                        );
                     }
             );
         }
@@ -90,7 +97,9 @@ public class EventModule extends AbstractModule {
     }
 
     public void addEventListeners(final Object... listeners) {
-        Arrays.stream(listeners).forEach(this::addEventListener);
+        for (final Object listener : listeners) {
+            this.addEventListener(listener);
+        }
     }
 
     public void removeEventListener(final Object listener) {

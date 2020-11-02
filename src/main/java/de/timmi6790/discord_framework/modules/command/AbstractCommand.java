@@ -25,9 +25,9 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
-import io.sentry.Breadcrumb;
+import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
+import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
-import io.sentry.SentryEvent;
 import io.sentry.SentryLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -236,23 +236,19 @@ public abstract class AbstractCommand {
             this.sendErrorMessage(commandParameters, "Unknown");
 
             // Sentry error
-            final Breadcrumb breadcrumb = new Breadcrumb();
-            breadcrumb.setCategory("Command");
-            breadcrumb.setData("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()));
-            breadcrumb.setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()));
-            breadcrumb.setData("args", Arrays.toString(commandParameters.getArgs()));
-            breadcrumb.setData("command", this.name);
-
-            final SentryEvent sentryEvent = new SentryEvent();
-            sentryEvent.addBreadcrumb(breadcrumb);
-            sentryEvent.setLevel(SentryLevel.ERROR);
-            final io.sentry.protocol.Message sentryMessage = new io.sentry.protocol.Message();
-            sentryMessage.setMessage("Command Exception");
-            sentryEvent.setMessage(sentryMessage);
-            sentryEvent.setLogger(AbstractCommand.class.getName());
-            sentryEvent.setThrowable(e);
-
-            Sentry.captureEvent(sentryEvent);
+            Sentry.captureEvent(new SentryEventBuilder()
+                    .addBreadcrumb(new BreadcrumbBuilder()
+                            .setCategory("Command")
+                            .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()))
+                            .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
+                            .setData("args", Arrays.toString(commandParameters.getArgs()))
+                            .setData("command", this.name)
+                            .build())
+                    .setLevel(SentryLevel.ERROR)
+                    .setMessage("Command Exception")
+                    .setLogger(AbstractCommand.class.getName())
+                    .setThrowable(e)
+                    .build());
 
             return CommandResult.ERROR;
         }

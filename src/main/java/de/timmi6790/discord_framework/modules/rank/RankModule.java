@@ -4,40 +4,26 @@ import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.rank.commands.RankCommand;
+import de.timmi6790.discord_framework.modules.rank.repository.RankRepository;
+import de.timmi6790.discord_framework.modules.rank.repository.RankRepositoryMysql;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
-import org.jdbi.v3.core.Jdbi;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @EqualsAndHashCode(callSuper = true)
+@Getter
 public class RankModule extends AbstractModule {
-    private static final String DATABASE_ID = "databaseId";
-
-    private static final String GET_ALL_RANKS = "SELECT rank.id, rank_name rankName, GROUP_CONCAT(DISTINCT rank_permission.permission_id) permissions, GROUP_CONCAT(DISTINCT rank_relation.parent_rank_id) parentRanks " +
-            "FROM rank " +
-            "LEFT JOIN rank_permission ON rank_permission.rank_id = rank.id " +
-            "LEFT JOIN rank_relation ON rank_relation.child_rank_id = rank.id " +
-            "GROUP BY rank.id;";
-
-    private static final String DELETE_RANK = "DELETE FROM rank WHERE rank.id = :databaseId LIMIT 1;";
-    private static final String SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE = "UPDATE player SET player.primary_rank = 1 WHERE player.primary_rank = :databaseId;";
-
-    private static final String INSERT_RANK = "INSERT INTO `rank`(rank_name) VALUES(:rankName);";
-    private static final String GET_LAST_INSERT_ID = "SELECT LAST_INSERT_ID();";
-    private static final String GET_RANK_BY_ID = "SELECT rank.id, rank_name rankName, GROUP_CONCAT(DISTINCT rank_permission.permission_id) permissions, GROUP_CONCAT(DISTINCT rank_relation.parent_rank_id) parentRanks " +
-            "FROM rank " +
-            "LEFT JOIN rank_permission ON rank_permission.rank_id = rank.id " +
-            "LEFT JOIN rank_relation ON rank_relation.child_rank_id = rank.id " +
-            "WHERE rank.id = :databaseId " +
-            "GROUP BY rank.id;";
-
     private final ConcurrentHashMap<Integer, Rank> rankMap = new ConcurrentHashMap<>();
-    private final Map<Integer, String> rankMappingMap = new HashMap<>();
+    private final Map<Integer, String> rankMappingMap = new ConcurrentHashMap<>();
 
-    private Jdbi database;
+    private RankRepository rankRepository;
 
     public RankModule() {
         super("Rank");
@@ -49,27 +35,22 @@ public class RankModule extends AbstractModule {
         );
     }
 
-    private void loadRanksFromDatabase() {
-        final List<Rank> rankList = this.database.withHandle(handle ->
-                handle.createQuery(GET_ALL_RANKS)
-                        .mapTo(Rank.class)
-                        .list()
-        );
-
-        rankList.forEach(this::addRank);
+    private void loadRanks() {
+        for (final Rank rank : this.getRankRepository().loadRanks()) {
+            this.addRank(rank);
+        }
     }
 
     private void addRank(@NonNull final Rank rank) {
-        this.rankMappingMap.put(rank.getDatabaseId(), rank.getName());
-        this.rankMap.put(rank.getDatabaseId(), rank);
+        this.getRankMappingMap().put(rank.getDatabaseId(), rank.getName());
+        this.getRankMap().put(rank.getDatabaseId(), rank);
         this.invalidateAllPermCaches();
     }
 
     @Override
     public void onInitialize() {
-        this.database = this.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(Rank.class, new RankMapper(this.database, this, this.getModuleOrThrow(UserDbModule.class)));
-        this.loadRanksFromDatabase();
+        this.rankRepository = new RankRepositoryMysql(this);
+        this.loadRanks();
 
         this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
@@ -95,7 +76,7 @@ public class RankModule extends AbstractModule {
     }
 
     public Optional<Rank> getRank(@NonNull final String name) {
-        for (final Map.Entry<Integer, String> entry : this.rankMappingMap.entrySet()) {
+        for (final Map.Entry<Integer, String> entry : this.getRankMappingMap().entrySet()) {
             if (entry.getValue().equalsIgnoreCase(name)) {
                 return this.getRank(entry.getKey());
             }
@@ -104,7 +85,7 @@ public class RankModule extends AbstractModule {
     }
 
     public Set<Rank> getRanks() {
-        return new HashSet<>(this.rankMap.values());
+        return new HashSet<>(this.getRankMap().values());
     }
 
     public boolean createRank(@NonNull final String name) {
@@ -112,19 +93,7 @@ public class RankModule extends AbstractModule {
             return false;
         }
 
-        final Rank newRank = this.database.withHandle(handle -> {
-            handle.createUpdate(INSERT_RANK)
-                    .bind("rankName", name)
-                    .execute();
-
-            final int rankId = handle.createQuery(GET_LAST_INSERT_ID)
-                    .mapTo(int.class)
-                    .first();
-
-            return handle.createQuery(GET_RANK_BY_ID).bind(DATABASE_ID, rankId)
-                    .mapTo(Rank.class)
-                    .first();
-        });
+        final Rank newRank = this.getRankRepository().createRank(name);
         this.addRank(newRank);
 
         return true;
@@ -140,16 +109,9 @@ public class RankModule extends AbstractModule {
             return false;
         }
 
-        this.database.useHandle(handle -> {
-            handle.createUpdate(SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE)
-                    .bind(DATABASE_ID, rankId)
-                    .execute();
-            handle.createUpdate(DELETE_RANK)
-                    .bind(DATABASE_ID, rankId)
-                    .execute();
-        });
-        this.rankMap.remove(rankId);
-        this.rankMappingMap.remove(rankId);
+        this.getRankRepository().deleteRank(rankId);
+        this.getRankMap().remove(rankId);
+        this.getRankMappingMap().remove(rankId);
 
         this.invalidateAllPermCaches();
 

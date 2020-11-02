@@ -29,7 +29,7 @@ class CommandPropertyTest {
     private static class TestCommandProperty implements CommandProperty<Boolean> {
         @Override
         public Boolean getValue() {
-            return null;
+            return false;
         }
     }
 }

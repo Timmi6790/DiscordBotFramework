@@ -1,6 +1,7 @@
-package de.timmi6790.discord_framework.modules.user;
+package de.timmi6790.discord_framework.modules.user.repository;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
+import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.AllArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.RowMapper;

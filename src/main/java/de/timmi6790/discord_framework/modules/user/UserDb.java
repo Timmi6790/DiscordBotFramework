@@ -72,8 +72,16 @@ public class UserDb {
     private int primaryRank;
     private boolean banned;
 
-    public UserDb(final Jdbi database, final int databaseId, final long discordId, final int primaryRank, final Set<Integer> ranks, final boolean banned,
-                  final long points, final Set<Integer> permissionIds, final Map<Integer, String> settings, final Map<Integer, Integer> stats,
+    public UserDb(final Jdbi database,
+                  final int databaseId,
+                  final long discordId,
+                  final int primaryRank,
+                  final Set<Integer> ranks,
+                  final boolean banned,
+                  final long points,
+                  final Set<Integer> permissionIds,
+                  final Map<Integer, String> settings,
+                  final Map<Integer, Integer> stats,
                   final Set<Integer> achievements) {
         this.databaseId = databaseId;
         this.discordId = discordId;

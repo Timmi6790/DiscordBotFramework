@@ -312,7 +312,6 @@ public class RankCommand extends AbstractCommand {
         return CommandResult.SUCCESS;
     }
 
-    // Utilities
     private enum ValidArgs1 {
         PERMS,
         EXTEND,
