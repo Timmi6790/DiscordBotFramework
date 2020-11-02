@@ -23,6 +23,7 @@ import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
@@ -497,9 +498,10 @@ public abstract class AbstractCommand {
             return command.get();
         }
 
-        final List<AbstractCommand> similarCommands = AbstractCommand.getCommandModule().getSimilarCommands(
-                commandParameters,
+        final List<AbstractCommand> similarCommands = DataUtilities.getSimilarityList(
                 commandName,
+                AbstractCommand.getCommandModule().getCommandsWithPerms(commandParameters),
+                AbstractCommand::getName,
                 0.6,
                 3
         );

@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
@@ -13,14 +14,13 @@ import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
+import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
-import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -29,27 +29,7 @@ import java.util.stream.Collectors;
 
 
 @Data
-@EqualsAndHashCode(exclude = {"database"})
 public class UserDb {
-    private static final String DATABASE_ID = "databaseId";
-    private static final String PLAYER_ID = "playerId";
-
-    private static final String UPDATE_PLAYER_BAN_STATUS = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
-
-    private static final String UPDATE_STAT_VALUE = "UPDATE player_stat SET `value` = :value WHERE player_id = :playerId AND stat_id = :statId LIMIT 1;";
-    private static final String INSERT_STAT_VALUE = "INSERT player_stat(player_id, stat_id, value) VALUES(:playerId, :statId, :value)";
-
-    private static final String INSERT_PLAYER_ACHIEVEMENT = "INSERT player_achievement(player_id, achievement_id) VALUES(:playerId, :achievementId)";
-
-    private static final String INSERT_PLAYER_SETTING = "INSERT player_setting(player_id, setting_id, setting) VALUES(:playerId, :settingId, :setting);";
-
-    private static final String INSERT_PLAYER_PERMISSION = "INSERT INTO player_permission(player_id, permission_id) VALUES(:playerId, :permissionId);";
-    private static final String DELETE_PLAYER_PERMISSION = "DELETE FROM player_permission WHERE player_id = :playerId AND permission_id = :permissionId LIMIT 1";
-
-    private static final String SET_PRIMARY_RANK = "UPDATE `player` SET player.primary_rank = :primaryRank WHERE player.id = :databaseId LIMIT 1;";
-    private static final String ADD_RANK = "INSERT INTO player_rank(player_id, rank_id) VALUES(:databaseId, :rankId);";
-    private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
-
     @Getter
     private static final LoadingCache<Long, User> USER_CACHE = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
@@ -68,11 +48,11 @@ public class UserDb {
     private final Map<Integer, String> settings;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
-    private final Jdbi database;
+    private final UserDbRepository userDbRepository;
     private int primaryRank;
     private boolean banned;
 
-    public UserDb(final Jdbi database,
+    public UserDb(final UserDbRepository userDbRepository,
                   final int databaseId,
                   final long discordId,
                   final int primaryRank,
@@ -93,7 +73,7 @@ public class UserDb {
         this.settings = settings;
         this.stats = stats;
         this.achievements = achievements;
-        this.database = database;
+        this.userDbRepository = userDbRepository;
     }
 
     public User getUser() {
@@ -116,12 +96,7 @@ public class UserDb {
             return false;
         }
 
-        this.database.useHandle(handle ->
-                handle.createUpdate(UPDATE_PLAYER_BAN_STATUS)
-                        .bind("banned", banned ? 1 : 0)
-                        .bind(DATABASE_ID, this.databaseId)
-                        .execute()
-        );
+        this.userDbRepository.setBanStatus(this.getDatabaseId(), banned);
         this.banned = banned;
         return true;
     }
@@ -141,37 +116,27 @@ public class UserDb {
         return permissionSet;
     }
 
-    public boolean hasPermission(final int id) {
-        return this.permissionIds.contains(id);
+    public boolean hasPermission(final int permissionId) {
+        return this.permissionIds.contains(permissionId);
     }
 
-    public boolean addPermission(final int id) {
-        if (this.hasPermission(id)) {
+    public boolean addPermission(final int permissionId) {
+        if (this.hasPermission(permissionId)) {
             return false;
         }
 
-        this.permissionIds.add(id);
-        this.database.useHandle(handle ->
-                handle.createUpdate(INSERT_PLAYER_PERMISSION)
-                        .bind(PLAYER_ID, this.databaseId)
-                        .bind("permissionId", id)
-                        .execute()
-        );
+        this.getUserDbRepository().addPermission(this.getDatabaseId(), permissionId);
+        this.permissionIds.add(permissionId);
         return true;
     }
 
-    public boolean removePermission(final int id) {
-        if (!this.hasPermission(id)) {
+    public boolean removePermission(final int permissionId) {
+        if (!this.hasPermission(permissionId)) {
             return false;
         }
 
-        this.permissionIds.remove(id);
-        this.database.useHandle(handle ->
-                handle.createUpdate(DELETE_PLAYER_PERMISSION)
-                        .bind(PLAYER_ID, this.databaseId)
-                        .bind("permissionId", id)
-                        .execute()
-        );
+        this.permissionIds.remove(permissionId);
+        this.getUserDbRepository().removePermission(this.getDatabaseId(), permissionId);
         return true;
     }
 
@@ -189,12 +154,7 @@ public class UserDb {
             return false;
         }
 
-        this.database.useHandle(handle ->
-                handle.createUpdate(SET_PRIMARY_RANK)
-                        .bind("primaryRank", rankId)
-                        .bind(DATABASE_ID, this.databaseId)
-                        .execute()
-        );
+        this.getUserDbRepository().setPrimaryRank(this.getDatabaseId(), rankId);
         this.primaryRank = rankId;
 
         return true;
@@ -217,12 +177,7 @@ public class UserDb {
             return false;
         }
 
-        this.database.useHandle(handle ->
-                handle.createUpdate(ADD_RANK)
-                        .bind("rankId", rankId)
-                        .bind(DATABASE_ID, this.databaseId)
-                        .execute()
-        );
+        this.getUserDbRepository().addRank(this.getDatabaseId(), rankId);
         this.ranks.add(rankId);
 
         return true;
@@ -237,12 +192,7 @@ public class UserDb {
             return false;
         }
 
-        this.database.useHandle(handle ->
-                handle.createUpdate(DELETE_RANK)
-                        .bind("rankId", rankId)
-                        .bind(DATABASE_ID, this.databaseId)
-                        .execute()
-        );
+        this.getUserDbRepository().removeRank(this.getDatabaseId(), rankId);
         this.ranks.remove(rankId);
 
         return true;
@@ -257,18 +207,8 @@ public class UserDb {
         return this.achievements.contains(achievement.getDatabaseId());
     }
 
-    public void grantAchievement(final AbstractAchievement achievement) {
-        if (!this.achievements.add(achievement.getDatabaseId())) {
-            return;
-        }
-
-        this.database.useHandle(handle ->
-                handle.createUpdate(INSERT_PLAYER_ACHIEVEMENT)
-                        .bind(PLAYER_ID, this.getDatabaseId())
-                        .bind("achievementId", achievement.getDatabaseId())
-                        .execute()
-        );
-        achievement.onUnlock(this);
+    public void grantAchievement(@NonNull final AbstractAchievement achievement) {
+        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(AchievementModule.class).grantAchievement(this, achievement);
     }
 
     // Stats
@@ -285,19 +225,17 @@ public class UserDb {
     }
 
     public void setStatValue(final AbstractStat stat, final int value) {
-        final int currentValue = this.getStatValue(stat).orElse(-1);
-        final String sqlQuery = currentValue == -1 ? INSERT_STAT_VALUE : UPDATE_STAT_VALUE;
-        this.database.useHandle(handle ->
-                handle.createUpdate(sqlQuery)
-                        .bind(PLAYER_ID, this.getDatabaseId())
-                        .bind("statId", stat.getDatabaseId())
-                        .bind("value", value)
-                        .execute()
-        );
+        final Optional<Integer> currentValueOpt = this.getStatValue(stat);
+
+        if (currentValueOpt.isPresent()) {
+            this.getUserDbRepository().updateStat(this.getDatabaseId(), stat.getDatabaseId(), value);
+        } else {
+            this.getUserDbRepository().insertStat(this.getDatabaseId(), stat.getDatabaseId(), value);
+        }
 
         this.stats.put(stat.getDatabaseId(), value);
 
-        final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(this, stat, currentValue, value);
+        final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(this, stat, currentValueOpt.orElse(-1), value);
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(EventModule.class).executeEvent(statsChangeEvent);
     }
 
@@ -334,14 +272,8 @@ public class UserDb {
         }
 
         final String defaultValue = setting.getDefaultValue();
+        this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), defaultValue);
         this.settings.put(setting.getDatabaseId(), defaultValue);
-        this.database.useHandle(handle ->
-                handle.createUpdate(INSERT_PLAYER_SETTING)
-                        .bind(PLAYER_ID, this.getDatabaseId())
-                        .bind("settingId", setting.getDatabaseId())
-                        .bind("setting", defaultValue)
-                        .execute()
-        );
 
         return true;
     }

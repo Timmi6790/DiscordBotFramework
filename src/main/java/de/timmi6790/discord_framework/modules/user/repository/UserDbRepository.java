@@ -11,4 +11,22 @@ public interface UserDbRepository {
     Optional<UserDb> get(final long discordId);
 
     void delete(@NonNull final UserDb userDb);
+
+    void setBanStatus(final int userDatabaseId, final boolean isBanned);
+
+    void addPermission(int userDatabaseId, int permissionId);
+
+    void removePermission(int userDatabaseId, int permissionId);
+
+    void setPrimaryRank(int userDatabaseId, final int rankId);
+
+    void addRank(int userDatabaseId, final int rankId);
+
+    void removeRank(int userDatabaseId, final int rankId);
+
+    void insertStat(int userDatabaseId, int statId, int statValue);
+
+    void updateStat(int userDatabaseId, int statId, int statValue);
+
+    void grantSetting(int userDatabaseId, int settingId, String defaultValue);
 }

@@ -9,6 +9,9 @@ import org.jdbi.v3.core.Jdbi;
 import java.util.Optional;
 
 public class UserDbRepositoryMysql implements UserDbRepository {
+    private static final String PLAYER_ID = "playerId";
+    private static final String DATABASE_ID = "databaseId";
+
     private static final String GET_PLAYER = "SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, " +
             "GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, " +
             "GROUP_CONCAT(DISTINCT permission.id) perms, " +
@@ -25,12 +28,25 @@ public class UserDbRepositoryMysql implements UserDbRepository {
             "WHERE player.discordId = :discordId LIMIT 1;";
     private static final String INSERT_PLAYER = "INSERT INTO player(discordId) VALUES (:discordId);";
     private static final String REMOVE_PLAYER = "DELETE FROM player WHERE id = :dbId LIMIT 1;";
+    private static final String UPDATE_PLAYER_BAN_STATUS = "UPDATE player SET banned = :banned WHERE id = :databaseId LIMIT 1;";
+
+    private static final String UPDATE_STAT_VALUE = "UPDATE player_stat SET `value` = :value WHERE player_id = :playerId AND stat_id = :statId LIMIT 1;";
+    private static final String INSERT_STAT_VALUE = "INSERT player_stat(player_id, stat_id, value) VALUES(:playerId, :statId, :value)";
+
+    private static final String INSERT_PLAYER_SETTING = "INSERT player_setting(player_id, setting_id, setting) VALUES(:playerId, :settingId, :setting);";
+
+    private static final String INSERT_PLAYER_PERMISSION = "INSERT INTO player_permission(player_id, permission_id) VALUES(:playerId, :permissionId);";
+    private static final String DELETE_PLAYER_PERMISSION = "DELETE FROM player_permission WHERE player_id = :playerId AND permission_id = :permissionId LIMIT 1";
+
+    private static final String SET_PRIMARY_RANK = "UPDATE `player` SET player.primary_rank = :primaryRank WHERE player.id = :databaseId LIMIT 1;";
+    private static final String ADD_RANK = "INSERT INTO player_rank(player_id, rank_id) VALUES(:databaseId, :rankId);";
+    private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
 
     private final Jdbi database;
 
     public UserDbRepositoryMysql(final UserDbModule module) {
         this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(UserDb.class, new UserDbMapper(this.database));
+        this.database.registerRowMapper(UserDb.class, new UserDbMapper(this));
     }
 
     @Override
@@ -61,6 +77,99 @@ public class UserDbRepositoryMysql implements UserDbRepository {
         this.database.useHandle(handle ->
                 handle.createUpdate(REMOVE_PLAYER)
                         .bind("dbId", userDb.getDatabaseId())
+                        .execute()
+        );
+    }
+
+    @Override
+    public void setBanStatus(final int userDatabaseId, final boolean isBanned) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(UPDATE_PLAYER_BAN_STATUS)
+                        .bind("banned", isBanned ? 1 : 0)
+                        .bind(DATABASE_ID, userDatabaseId)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void addPermission(final int userDatabaseId, final int permissionId) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(INSERT_PLAYER_PERMISSION)
+                        .bind(PLAYER_ID, userDatabaseId)
+                        .bind("permissionId", permissionId)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void removePermission(final int userDatabaseId, final int permissionId) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(DELETE_PLAYER_PERMISSION)
+                        .bind(PLAYER_ID, userDatabaseId)
+                        .bind("permissionId", permissionId)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void setPrimaryRank(final int userDatabaseId, final int rankId) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(SET_PRIMARY_RANK)
+                        .bind("primaryRank", rankId)
+                        .bind(DATABASE_ID, userDatabaseId)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void addRank(final int userDatabaseId, final int rankId) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(ADD_RANK)
+                        .bind("rankId", rankId)
+                        .bind(DATABASE_ID, userDatabaseId)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void removeRank(final int userDatabaseId, final int rankId) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(DELETE_RANK)
+                        .bind("rankId", rankId)
+                        .bind(DATABASE_ID, userDatabaseId)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void insertStat(final int userDatabaseId, final int statId, final int statValue) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(INSERT_STAT_VALUE)
+                        .bind(PLAYER_ID, userDatabaseId)
+                        .bind("statId", statId)
+                        .bind("value", statValue)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void updateStat(final int userDatabaseId, final int statId, final int statValue) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(UPDATE_STAT_VALUE)
+                        .bind(PLAYER_ID, userDatabaseId)
+                        .bind("statId", statId)
+                        .bind("value", statValue)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void grantSetting(final int userDatabaseId, final int settingId, final String defaultValue) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(INSERT_PLAYER_SETTING)
+                        .bind(PLAYER_ID, userDatabaseId)
+                        .bind("settingId", settingId)
+                        .bind("setting", defaultValue)
                         .execute()
         );
     }

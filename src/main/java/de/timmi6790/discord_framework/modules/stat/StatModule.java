@@ -3,6 +3,8 @@ package de.timmi6790.discord_framework.modules.stat;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.stat.repository.StatRepository;
+import de.timmi6790.discord_framework.modules.stat.repository.StatRepositoryMysql;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -17,6 +19,8 @@ public class StatModule extends AbstractModule {
     private final Map<Integer, AbstractStat> stats = new ConcurrentHashMap<>();
     private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
 
+    private StatRepository statRepository;
+
     public StatModule() {
         super("StatModule");
 
@@ -24,6 +28,11 @@ public class StatModule extends AbstractModule {
                 DatabaseModule.class,
                 EventModule.class
         );
+    }
+
+    @Override
+    public void onInitialize() {
+        this.statRepository = new StatRepositoryMysql(this);
     }
 
     public boolean hasStat(final AbstractStat stat) {
@@ -35,6 +44,7 @@ public class StatModule extends AbstractModule {
             return false;
         }
 
+        stat.setDatabaseId(this.statRepository.retrieveOrCreateSettingId(stat.getInternalName()));
         this.stats.put(stat.getDatabaseId(), stat);
         this.nameIdMatching.put(stat.getInternalName(), stat.getDatabaseId());
 

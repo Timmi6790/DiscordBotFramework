@@ -223,10 +223,6 @@ class AbstractCommandTest {
     }
 
     @Test
-    void getAliasNames() {
-    }
-
-    @Test
     void getFormattedExampleCommands() {
         final TestCommand testCommand = new TestCommand();
         testCommand.addProperty(new ExampleCommandsCommandProperty("1", "2"));

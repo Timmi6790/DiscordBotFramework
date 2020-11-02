@@ -4,7 +4,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
-import lombok.*;
+import lombok.Data;
+import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -17,10 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@ToString
-@EqualsAndHashCode
-@Getter
-@Setter
+@Data
 public class GuildDb {
     private final int databaseId;
     private final long discordId;
@@ -40,7 +38,10 @@ public class GuildDb {
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
-    public GuildDb(final int databaseId, final long discordId, final boolean banned, final Set<String> commandAliasNames,
+    public GuildDb(final int databaseId,
+                   final long discordId,
+                   final boolean banned,
+                   final Set<String> commandAliasNames,
                    final Map<String, AbstractSetting<?>> properties) {
         this.databaseId = databaseId;
         this.discordId = discordId;

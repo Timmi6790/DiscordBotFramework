@@ -14,7 +14,6 @@ import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import de.timmi6790.discord_framework.utilities.DataUtilities;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -22,24 +21,21 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
+@Getter
 public class CommandModule extends AbstractModule {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
 
     private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
-    @Getter
     private Pattern mainCommandPattern;
-    @Getter
     private String mainCommand;
-    @Getter
     private long botId;
 
     private CommandRepository commandRepository;
@@ -172,23 +168,17 @@ public class CommandModule extends AbstractModule {
         return Optional.ofNullable(this.commands.get(name));
     }
 
-    public List<AbstractCommand> getSimilarCommands(@NonNull final CommandParameters commandParameters,
-                                                    @NonNull final String name,
-                                                    final double similarity,
-                                                    final int limit) {
-        return DataUtilities.getSimilarityList(
-                name,
-                this.commands.values()
-                        .stream()
-                        .filter(command -> command.hasPermission(commandParameters))
-                        .collect(Collectors.toList()),
-                AbstractCommand::getName,
-                similarity,
-                limit
-        );
+    public List<AbstractCommand> getCommandsWithPerms(@NonNull final CommandParameters commandParameters) {
+        final List<AbstractCommand> foundCommands = new ArrayList<>();
+        for (final AbstractCommand command : this.getCommands()) {
+            if (command.hasPermission(commandParameters)) {
+                foundCommands.add(command);
+            }
+        }
+        return foundCommands;
     }
 
-    public Collection<AbstractCommand> getCommands() {
-        return this.commands.values();
+    public List<AbstractCommand> getCommands() {
+        return new ArrayList<>(this.commands.values());
     }
 }

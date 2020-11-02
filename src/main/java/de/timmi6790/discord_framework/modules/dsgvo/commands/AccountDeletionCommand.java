@@ -18,7 +18,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AccountDeletionCommand extends AbstractCommand {
     private static final String CONFIRM_COMMAND_NAME = "Confirm Command";
 
-    private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{"PutMeDown", "SaveMeImBeingHeldCaptive", "GodSaveTheBot"};
+    private static final String[] RANDOM_CONFIRM_PHRASES = new String[]{
+            "PutMeDown",
+            "SaveMeImBeingHeldCaptive",
+            "GodSaveTheBot"
+    };
 
     private final Cache<Long, Integer> userDeleteConfirmCache = Caffeine.newBuilder()
             .maximumSize(10_000)

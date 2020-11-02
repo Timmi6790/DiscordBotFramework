@@ -9,6 +9,7 @@ import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.Comm
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.AccessLevel;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 public class MessageListener {
     private static final Pattern FIRST_SPACE_PATTERN = Pattern.compile("^([\\S]*)\\s*(.*)$");
-    
+
     private final CommandModule commandModule;
     private final GuildDbModule guildDbModule;
     private final AbstractCommand helpCommand;
@@ -57,7 +58,13 @@ public class MessageListener {
         if (commandOpt.isPresent()) {
             return commandOpt;
         } else {
-            final List<AbstractCommand> similarCommands = this.commandModule.getSimilarCommands(commandParameters, commandName, 0.6, 3);
+            final List<AbstractCommand> similarCommands = DataUtilities.getSimilarityList(
+                    commandName,
+                    AbstractCommand.getCommandModule().getCommandsWithPerms(commandParameters),
+                    AbstractCommand::getName,
+                    0.6,
+                    3
+            );
             if (!similarCommands.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
                 return Optional.of(similarCommands.get(0));
 

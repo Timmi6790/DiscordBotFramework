@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules.user.repository;
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.AllArgsConstructor;
-import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -12,7 +11,7 @@ import java.sql.SQLException;
 
 @AllArgsConstructor
 public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb> {
-    private final Jdbi database;
+    private final UserDbRepository userDbRepository;
 
     @Override
     public UserDb map(final ResultSet rs, final StatementContext ctx) throws SQLException {
@@ -21,7 +20,7 @@ public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb>
         }
 
         return new UserDb(
-                this.database,
+                this.userDbRepository,
                 rs.getInt("id"),
                 rs.getLong("discordId"),
                 rs.getInt("primaryRank"),
