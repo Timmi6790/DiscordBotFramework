@@ -3,10 +3,9 @@ package de.timmi6790.discord_framework.modules;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
-import de.timmi6790.discord_framework.datatypes.sorting.TopicalSort;
 import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import de.timmi6790.discord_framework.utilities.TopicalSort;
 import io.sentry.Sentry;
 import lombok.Cleanup;
 import lombok.Data;
@@ -61,16 +60,18 @@ public class ModuleManager {
             moduleIterator = modules.iterator();
             while (moduleIterator.hasNext()) {
                 final AbstractModule module = moduleIterator.next();
-                final Optional<Class<? extends AbstractModule>> missingDependency = module.getDependencies()
-                        .parallelStream()
-                        .filter(dependencyClass -> !moduleClasses.contains(dependencyClass))
-                        .findAny();
+                final List<String> missingDependencies = new ArrayList<>();
+                for (final Class<? extends AbstractModule> dependencyModule : module.getDependencies()) {
+                    if (!moduleClasses.contains(dependencyModule)) {
+                        missingDependencies.add(dependencyModule.getSimpleName());
+                    }
+                }
 
-                if (missingDependency.isPresent()) {
+                if (!missingDependencies.isEmpty()) {
                     this.logger.warn(
-                            "Can't load {}, because it is missing the {} dependency.",
+                            "Can't load {}, because it is missing the {} dependencies.",
                             module.getName(),
-                            missingDependency.get().getSimpleName()
+                            String.join(",", missingDependencies)
                     );
 
                     moduleClasses.remove(module.getClass());
@@ -87,27 +88,26 @@ public class ModuleManager {
             final int moduleIndex = index++;
 
             // Load after
-            module.getLoadAfter()
-                    .stream()
-                    .map(moduleClasses::indexOf)
-                    .filter(dependencyIndex -> dependencyIndex != -1)
-                    .map(dependencyIndex -> new TopicalSort.Dependency(moduleIndex, dependencyIndex))
-                    .forEach(edges::add);
+            for (final Class<? extends AbstractModule> loadAfterClass : module.getLoadAfter()) {
+                final int loadIndex = moduleClasses.indexOf(loadAfterClass);
+                if (loadIndex != -1) {
+                    edges.add(new TopicalSort.Dependency(moduleIndex, loadIndex));
+                }
+            }
 
             // Load before
-            module.getLoadBefore()
-                    .stream()
-                    .map(moduleClasses::indexOf)
-                    .filter(dependencyIndex -> dependencyIndex != -1)
-                    .map(dependencyIndex -> new TopicalSort.Dependency(dependencyIndex, moduleIndex))
-                    .forEach(edges::add);
+            for (final Class<? extends AbstractModule> loadBeforeClass : module.getLoadBefore()) {
+                final int loadIndex = moduleClasses.indexOf(loadBeforeClass);
+                if (loadIndex != -1) {
+                    edges.add(new TopicalSort.Dependency(loadIndex, moduleIndex));
+                }
+            }
         }
 
         final TopicalSort<Class<? extends AbstractModule>> moduleSort = new TopicalSort<>(moduleClasses, edges);
         return moduleSort.sort();
     }
 
-    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private Set<AbstractModule> getExternalModules() {
         final Set<AbstractModule> abstractModules = new HashSet<>();
 
@@ -118,52 +118,77 @@ public class ModuleManager {
 
         final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         for (final File jar : pluginJars) {
-            this.logger.info("Checking {} for modules.", jar.getName());
-
-            try {
-                // Add external jar to system classloader
-                ReflectionUtilities.addJarToClassLoader(jar, classLoader);
-
-                final URL pluginUrl = classLoader.getResource("plugin.json");
-                if (pluginUrl == null) {
-                    this.logger.warn("Can't load {}, no plugins.json found.", jar.getName());
+            final Optional<AbstractModule> moduleOpt = this.loadJarModule(jar, classLoader);
+            if (moduleOpt.isPresent()) {
+                final AbstractModule module = moduleOpt.get();
+                if (abstractModules.contains(module)) {
+                    this.logger.warn(
+                            "Module {} inside {} is already loaded.",
+                            module.getName(),
+                            jar.getName()
+                    );
                     continue;
                 }
 
-                @Cleanup final InputStreamReader inputStream = new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8);
-                final PluginConfig plugin = gson.fromJson(inputStream, PluginConfig.class);
-                for (final String path : plugin.getModules()) {
-                    final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromClassLoader(path, classLoader);
-                    if (!pluginClassOpt.isPresent()) {
-                        this.logger.warn("Can't load Module {} inside {}, unknown path.", path, jar.getName());
-                        continue;
-                    }
-
-                    if (!AbstractModule.class.isAssignableFrom(pluginClassOpt.get())) {
-                        this.logger.warn("Module {} inside {} is not extending AbstractModule!", path, jar.getName());
-                        continue;
-                    }
-
-                    final AbstractModule pluginModule = Class.forName(path, true, classLoader)
-                            .asSubclass(AbstractModule.class)
-                            .getConstructor()
-                            .newInstance();
-
-                    if (abstractModules.contains(pluginModule)) {
-                        this.logger.warn("Module {} inside {} is already loaded.", pluginModule.getName(), jar.getName());
-                        continue;
-                    }
-
-                    this.logger.info("Found module {} inside {}", pluginModule.getName(), jar.getName());
-                    abstractModules.add(pluginModule);
-                }
-
-            } catch (final Exception e) {
-                this.logger.warn(e, "Error while trying to load modules from {}.", jar.getName());
+                this.logger.info(
+                        "Found module {} inside {}",
+                        module.getName(),
+                        jar.getName()
+                );
+                abstractModules.add(module);
             }
         }
 
         return abstractModules;
+    }
+
+    private Optional<AbstractModule> loadJarModule(final File jar, final URLClassLoader classLoader) {
+        this.logger.info("Checking {} for modules.", jar.getName());
+
+        try {
+            // Add external jar to system classloader
+            ReflectionUtilities.addJarToClassLoader(jar, classLoader);
+
+            final URL pluginUrl = classLoader.getResource("plugin.json");
+            if (pluginUrl == null) {
+                this.logger.warn("Can't load {}, no plugins.json found.", jar.getName());
+                return Optional.empty();
+            }
+
+            @Cleanup final InputStreamReader inputStream = new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8);
+            final PluginConfig plugin = gson.fromJson(inputStream, PluginConfig.class);
+            for (final String path : plugin.getModules()) {
+                final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromClassLoader(path, classLoader);
+                if (!pluginClassOpt.isPresent()) {
+                    this.logger.warn(
+                            "Can't load Module {} inside {}, unknown path.",
+                            path,
+                            jar.getName()
+                    );
+                    continue;
+                }
+
+                if (!AbstractModule.class.isAssignableFrom(pluginClassOpt.get())) {
+                    this.logger.warn(
+                            "Module {} inside {} is not extending AbstractModule!",
+                            path,
+                            jar.getName()
+                    );
+                    continue;
+                }
+
+                final AbstractModule pluginModule = Class.forName(path, true, classLoader)
+                        .asSubclass(AbstractModule.class)
+                        .getConstructor()
+                        .newInstance();
+
+                return Optional.of(pluginModule);
+            }
+
+        } catch (final Exception e) {
+            this.logger.warn(e, "Error while trying to load modules from {}.", jar.getName());
+        }
+        return Optional.empty();
     }
 
     public void registerModules(final AbstractModule... modules) {
@@ -271,21 +296,26 @@ public class ModuleManager {
         } catch (final Exception e) {
             this.logger.error(module.getName(), e);
             Sentry.captureException(e);
-
             return false;
         }
     }
 
     public void initializeAll() throws TopicalSortCycleException {
-        this.getSortedModules().forEach(this::initialize);
+        for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules()) {
+            this.initialize(moduleClass);
+        }
     }
 
     public void startAll() throws TopicalSortCycleException {
-        this.getSortedModules().forEach(this::start);
+        for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules()) {
+            this.start(moduleClass);
+        }
     }
 
     public void loadExternalModules() {
-        this.getExternalModules().forEach(this::registerModule);
+        for (final AbstractModule module : this.getExternalModules()) {
+            this.registerModule(module);
+        }
     }
 
     public boolean stopModule(final Class<? extends AbstractModule> moduleClass) {

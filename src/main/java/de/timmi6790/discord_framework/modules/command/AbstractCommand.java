@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.commons.utilities.EnumUtilities;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
@@ -24,6 +23,7 @@ import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
@@ -112,16 +112,19 @@ public abstract class AbstractCommand {
             wantedDiscordPerms.removeIf(permissions::contains);
 
             if (!wantedDiscordPerms.isEmpty()) {
-                final StringJoiner perms = new StringJoiner(",");
+                final StringJoiner missingPerms = new StringJoiner(",");
                 for (final Permission permission : wantedDiscordPerms) {
-                    perms.add(MarkdownUtil.monospace(permission.getName()));
+                    missingPerms.add(MarkdownUtil.monospace(permission.getName()));
                 }
 
                 DiscordMessagesUtilities.sendPrivateMessage(
                         commandParameters.getUser(),
                         DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                                 .setTitle("Missing Permission")
-                                .setDescription("The bot is missing " + perms + " permission(s).")
+                                .setDescription(
+                                        "The bot is missing %s permission(s).",
+                                        MarkdownUtil.monospace(missingPerms.toString())
+                                )
                 );
 
                 return false;
@@ -215,8 +218,12 @@ public abstract class AbstractCommand {
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
-                        .setTitle("Invalid " + argName)
-                        .setDescription(MarkdownUtil.monospace(commandParameters.getArgs()[argPos]) + " is not a valid " + MarkdownUtil.bold(argName.toLowerCase()) + "."),
+                        .setTitleFormat("Invalid %s", argName)
+                        .setDescription(
+                                "%s is not a valid %s.",
+                                MarkdownUtil.monospace(commandParameters.getArgs()[argPos]),
+                                MarkdownUtil.bold(argName.toLowerCase())
+                        ),
                 120
         );
 
@@ -265,7 +272,10 @@ public abstract class AbstractCommand {
             return;
         }
 
-        final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(RequiredDiscordBotPermsCommandProperty.class, EnumSet.noneOf(Permission.class));
+        final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(
+                RequiredDiscordBotPermsCommandProperty.class,
+                EnumSet.noneOf(Permission.class)
+        );
         if (!hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms)) {
             return;
         }
@@ -340,9 +350,12 @@ public abstract class AbstractCommand {
     // Old Stuff
     public List<String> getFormattedExampleCommands() {
         final String mainCommand = AbstractCommand.getCommandModule().getMainCommand();
-        return Arrays.stream(this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0]))
-                .map(exampleCommand -> mainCommand + " " + this.name + " " + exampleCommand)
-                .collect(Collectors.toList());
+
+        final List<String> exampleCommands = new ArrayList<>();
+        for (final String exampleCommand : this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0])) {
+            exampleCommands.add(String.join(" ", mainCommand, this.name, exampleCommand));
+        }
+        return exampleCommands;
     }
 
     public void sendMissingArgsMessage(@NonNull final CommandParameters commandParameters) {
@@ -362,8 +375,10 @@ public abstract class AbstractCommand {
         final String exampleCommands = String.join("\n", this.getFormattedExampleCommands());
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters).setTitle("Missing Args")
-                        .setDescription("You are missing a few required arguments.\nIt is required that you enter the bold arguments.")
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle("Missing Args")
+                        .setDescription("You are missing a few required arguments.\n" +
+                                "It is required that you enter the bold arguments.")
                         .addField("Required Syntax", requiredSyntax.toString(), false)
                         .addField("Command Syntax", this.getSyntax(), false)
                         .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty()),
@@ -375,7 +390,8 @@ public abstract class AbstractCommand {
                                     @NonNull final String error) {
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters).setTitle("Something went wrong")
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle("Something went wrong")
                         .setDescription("Something went wrong while executing this command.")
                         .addField("Command", this.getName(), false)
                         .addField("Args", String.join(" ", commandParameters.getArgs()), false)
@@ -392,29 +408,49 @@ public abstract class AbstractCommand {
                                    @Nullable final String[] newArgs,
                                    @NonNull final List<String> similarNames) {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
-        final StringBuilder helpDescription = new StringBuilder();
-        helpDescription.append(MarkdownUtil.monospace(userArg)).append(" is not a valid ").append(argName).append(".\n");
+        final StringBuilder helpDescription = new StringBuilder(String.format(
+                "%s is not a valid %s.%n",
+                MarkdownUtil.monospace(userArg),
+                argName
+        ));
 
         if (similarNames.isEmpty() && command != null) {
-            helpDescription.append("Use the ").append(MarkdownUtil.bold(AbstractCommand.getCommandModule().getMainCommand() + " " + command.getName() + " " + String.join(" ", newArgs)))
-                    .append(" command or click the ").append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all ").append(argName).append("s.");
-
+            helpDescription.append(String.format(
+                    "Use the %s command or click the %s emote to see all %ss.",
+                    MarkdownUtil.bold(
+                            String.join(" ",
+                                    AbstractCommand.getCommandModule().getMainCommand(),
+                                    command.getName(),
+                                    String.join(" ", newArgs))
+                    ),
+                    DiscordEmotes.FOLDER.getEmote(),
+                    argName
+            ));
         } else {
             helpDescription.append("Is it possible that you wanted to write?\n\n");
 
             for (int index = 0; similarNames.size() > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
 
-                helpDescription.append(emote).append(" ").append(MarkdownUtil.bold(similarNames.get(index))).append("\n");
+                helpDescription.append(String.format(
+                        "%s %s%n",
+                        emote,
+                        similarNames.get(index)
+                ));
 
                 final String[] newArgsParameter = commandParameters.getArgs();
                 newArgsParameter[argPos] = similarNames.get(index);
                 final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgsParameter);
+
                 emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
             }
 
             if (command != null) {
-                helpDescription.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(MarkdownUtil.bold("All " + argName + "s"));
+                helpDescription.append(String.format(
+                        "%n%s %s",
+                        DiscordEmotes.FOLDER.getEmote(),
+                        MarkdownUtil.bold("All " + argName + "s")
+                ));
             }
         }
 

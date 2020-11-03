@@ -16,7 +16,10 @@ public class ChannelDb {
 
     private boolean disabled;
 
-    public ChannelDb(final int databaseId, final long discordId, final GuildDb guildDb, final boolean disabled) {
+    public ChannelDb(final int databaseId,
+                     final long discordId,
+                     final GuildDb guildDb,
+                     final boolean disabled) {
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.guildDb = guildDb;

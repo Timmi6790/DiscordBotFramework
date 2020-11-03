@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.datatypes.sorting;
+package de.timmi6790.discord_framework.utilities;
 
 import de.timmi6790.commons.builders.ListBuilder;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;

@@ -10,18 +10,16 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class RankModule extends AbstractModule {
     private final ConcurrentHashMap<Integer, Rank> rankMap = new ConcurrentHashMap<>();
-    private final Map<Integer, String> rankMappingMap = new ConcurrentHashMap<>();
+    private final Map<String, Integer> rankMappingMap = Collections.synchronizedMap(new CaseInsensitiveMap<>());
 
     private RankRepository rankRepository;
 
@@ -42,7 +40,7 @@ public class RankModule extends AbstractModule {
     }
 
     private void addRank(@NonNull final Rank rank) {
-        this.getRankMappingMap().put(rank.getDatabaseId(), rank.getName());
+        this.getRankMappingMap().put(rank.getName(), rank.getDatabaseId());
         this.getRankMap().put(rank.getDatabaseId(), rank);
         this.invalidateAllPermCaches();
     }
@@ -60,7 +58,9 @@ public class RankModule extends AbstractModule {
     }
 
     public void invalidateAllPermCaches() {
-        this.rankMap.values().forEach(Rank::invalidateCachedPermissions);
+        for (final Rank rank : this.rankMap.values()) {
+            rank.invalidateCachedPermissions();
+        }
     }
 
     public boolean hasRank(final int id) {
@@ -68,7 +68,7 @@ public class RankModule extends AbstractModule {
     }
 
     public boolean hasRank(@NonNull final String name) {
-        return this.rankMappingMap.containsValue(name);
+        return this.rankMappingMap.containsKey(name);
     }
 
     public Optional<Rank> getRank(final int id) {
@@ -76,11 +76,11 @@ public class RankModule extends AbstractModule {
     }
 
     public Optional<Rank> getRank(@NonNull final String name) {
-        for (final Map.Entry<Integer, String> entry : this.getRankMappingMap().entrySet()) {
-            if (entry.getValue().equalsIgnoreCase(name)) {
-                return this.getRank(entry.getKey());
-            }
+        final Integer rankId = this.getRankMappingMap().get(name);
+        if (rankId != null) {
+            return this.getRank(rankId);
         }
+
         return Optional.empty();
     }
 
@@ -110,8 +110,8 @@ public class RankModule extends AbstractModule {
         }
 
         this.getRankRepository().deleteRank(rankId);
-        this.getRankMap().remove(rankId);
-        this.getRankMappingMap().remove(rankId);
+        final Rank deletedRank = this.getRankMap().remove(rankId);
+        this.getRankMappingMap().remove(deletedRank.getName());
 
         this.invalidateAllPermCaches();
 

@@ -3,12 +3,12 @@ package de.timmi6790.discord_framework.modules.command.commands;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import de.timmi6790.commons.utilities.StringUtilities;
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.property.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -56,7 +56,7 @@ public class HelpCommand extends AbstractCommand {
         final MultiEmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Commands")
                 .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
-                .setFooter("TIP: Use " + this.commandModule.getMainCommand() + " help <command> to see more details");
+                .setFooterFormat("TIP: Use %s help <command> to see more details", this.commandModule.getMainCommand());
 
         final Multimap<String, AbstractCommand> sortedCommands = MultimapBuilder.treeKeys()
                 .arrayListValues()
@@ -77,7 +77,11 @@ public class HelpCommand extends AbstractCommand {
             final StringJoiner lines = new StringJoiner("\n");
             for (final AbstractCommand command : commands) {
                 final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
-                lines.add(MarkdownUtil.monospace(this.commandModule.getMainCommand() + command.getName() + syntax) + " " + command.getDescription());
+                lines.add(String.format(
+                        "%s %s",
+                        MarkdownUtil.monospace(this.commandModule.getMainCommand() + command.getName() + syntax),
+                        command.getDescription()
+                ));
             }
 
             message.addField(

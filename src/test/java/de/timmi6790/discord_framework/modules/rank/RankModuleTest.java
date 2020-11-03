@@ -48,6 +48,7 @@ class RankModuleTest {
         doReturn(AbstractIntegrationTest.databaseModule).when(rankModule).getModuleOrThrow(DatabaseModule.class);
         doReturn(userDbModule).when(rankModule).getModuleOrThrow(UserDbModule.class);
         doReturn(commandModule).when(rankModule).getModuleOrThrow(CommandModule.class);
+        doReturn(permissionsModule).when(rankModule).getModuleOrThrow(PermissionsModule.class);
 
         rankModule.onInitialize();
     }

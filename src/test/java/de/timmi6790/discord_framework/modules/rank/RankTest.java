@@ -53,6 +53,7 @@ class RankTest {
         doReturn(AbstractIntegrationTest.databaseModule).when(rankModule).getModuleOrThrow(DatabaseModule.class);
         doReturn(userDbModule).when(rankModule).getModuleOrThrow(UserDbModule.class);
         doReturn(commandModule).when(rankModule).getModuleOrThrow(CommandModule.class);
+        doReturn(permissionsModule).when(rankModule).getModuleOrThrow(PermissionsModule.class);
 
         rankModule.onInitialize();
 
@@ -89,17 +90,17 @@ class RankTest {
     void addPermission() {
         final Rank rank = this.createRank();
 
-        assertThat(rank.getPermissions().toArray(new Integer[0])).isEmpty();
+        assertThat(rank.getPermissionIds().toArray(new Integer[0])).isEmpty();
         for (final int permission : permissionIds) {
             assertThat(rank.addPermission(permission)).isTrue();
         }
-        assertThat(rank.getPermissions().toArray(new Integer[0]))
+        assertThat(rank.getPermissionIds().toArray(new Integer[0]))
                 .hasSize(permissionIds.size())
                 .containsAll(permissionIds);
     }
 
     @Test
-    void addPermissionDuplicate() {
+    void addPermission_duplicate() {
         final Rank rank = this.createRank();
 
         final int permissionId = permissionIds.toArray(new Integer[0])[0];
@@ -111,7 +112,7 @@ class RankTest {
     void removePermission() {
         final Rank rank = this.createRank();
 
-        assertThat(rank.getPermissions().toArray(new Integer[0])).isEmpty();
+        assertThat(rank.getPermissionIds().toArray(new Integer[0])).isEmpty();
         for (final int permission : permissionIds) {
             assertThat(rank.addPermission(permission)).isTrue();
         }
@@ -119,11 +120,11 @@ class RankTest {
         for (final int permission : permissionIds) {
             assertThat(rank.removePermission(permission)).isTrue();
         }
-        assertThat(rank.getPermissions().toArray(new Integer[0])).isEmpty();
+        assertThat(rank.getPermissionIds().toArray(new Integer[0])).isEmpty();
     }
 
     @Test
-    void addPermissionNotExisting() {
+    void addPermission_not_Existing() {
         final Rank rank = this.createRank();
 
         final int permissionId = permissionIds.toArray(new Integer[0])[0];
@@ -159,12 +160,12 @@ class RankTest {
         mainRank.addPermission(rank3permission);
         permissionIds.add(mainRankPermission);
 
-        assertThat(mainRank.getAllPermissions().toArray(new Integer[0]))
+        assertThat(mainRank.getAllPermissionIds().toArray(new Integer[0]))
                 .hasSize(permissionIds.size())
                 .containsAll(permissionIds);
 
         // Cache check
-        assertThat(mainRank.getAllPermissions().toArray(new Integer[0]))
+        assertThat(mainRank.getAllPermissionIds().toArray(new Integer[0]))
                 .hasSize(permissionIds.size())
                 .containsAll(permissionIds);
     }
@@ -180,7 +181,7 @@ class RankTest {
     }
 
     @Test
-    void hasExtendedRankId() {
+    void hasExtendedRank_id() {
         final Rank mainRank = this.createRank();
         final Rank extendedRank1 = this.createRank();
 
@@ -200,7 +201,7 @@ class RankTest {
     }
 
     @Test
-    void addExtendedRankId() {
+    void addExtendedRank_id() {
         final Rank mainRank = this.createRank();
         final Rank extendedRank1 = this.createRank();
 
@@ -221,7 +222,7 @@ class RankTest {
     }
 
     @Test
-    void removeExtendedRankId() {
+    void removeExtendedRank_id() {
         final Rank mainRank = this.createRank();
         final Rank extendedRank1 = this.createRank();
 

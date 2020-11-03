@@ -1,13 +1,13 @@
 package de.timmi6790.discord_framework.modules.command;
 
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.command.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.property.CommandProperty;
 import de.timmi6790.discord_framework.modules.command.property.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;

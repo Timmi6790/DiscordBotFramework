@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.PrivateChannel;

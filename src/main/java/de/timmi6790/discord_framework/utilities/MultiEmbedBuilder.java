@@ -1,6 +1,5 @@
-package de.timmi6790.discord_framework.datatypes.builders;
+package de.timmi6790.discord_framework.utilities;
 
-import de.timmi6790.discord_framework.utilities.DateUtilities;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -262,6 +261,10 @@ public class MultiEmbedBuilder {
         return this.setTitle(title, null);
     }
 
+    public MultiEmbedBuilder setTitleFormat(@NonNull final String format, final Object... objects) {
+        return this.setTitle(String.format(format, objects));
+    }
+
     public MultiEmbedBuilder setTitle(@Nullable final String title, @Nullable String url) {
         if (title == null) {
             this.title = null;
@@ -378,6 +381,10 @@ public class MultiEmbedBuilder {
 
     public MultiEmbedBuilder setFooter(@Nullable final String text) {
         return this.setFooter(text, null);
+    }
+
+    public MultiEmbedBuilder setFooterFormat(@NonNull final String format, final Object... objects) {
+        return this.setFooter(String.format(format, objects));
     }
 
     public MultiEmbedBuilder setFooter(@Nullable final String text, @Nullable final String iconUrl) {

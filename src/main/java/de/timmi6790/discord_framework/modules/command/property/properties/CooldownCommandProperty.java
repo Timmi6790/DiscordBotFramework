@@ -47,29 +47,33 @@ public class CooldownCommandProperty implements CommandProperty<Boolean> {
         return stringBuilder.toString();
     }
 
+    private void sendErrorMessage(final CommandParameters commandParameters, final long cooldownTill) {
+        final String timeLeft = this.getFormattedCooldownTime(cooldownTill - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+        DiscordMessagesUtilities.sendMessageTimed(
+                commandParameters.getLowestMessageChannel(),
+                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                        .setTitle("On Cooldown")
+                        .appendDescription(
+                                "Please wait %s before using the command again.",
+                                MarkdownUtil.monospace(timeLeft)
+                        ),
+                250
+        );
+    }
+
     @Override
     public Boolean getValue() {
         return true;
     }
 
     @Override
-    public boolean onCommandExecution(@NonNull final AbstractCommand command, @NonNull final CommandParameters commandParameters) {
+    public boolean onCommandExecution(@NonNull final AbstractCommand command,
+                                      @NonNull final CommandParameters commandParameters) {
         final long userId = commandParameters.getUserDb().getDiscordId();
 
         final Long cooldownTill = this.cooldownCache.getIfPresent(userId);
         if (cooldownTill != null) {
-            DiscordMessagesUtilities.sendMessageTimed(
-                    commandParameters.getLowestMessageChannel(),
-                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                            .setTitle("On Cooldown")
-                            .appendDescription(
-                                    "Please wait %s before using the command again.",
-                                    MarkdownUtil.monospace(
-                                            this.getFormattedCooldownTime(cooldownTill - TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))
-                                    )
-                            ),
-                    250
-            );
+            this.sendErrorMessage(commandParameters, cooldownTill);
             return false;
         }
 

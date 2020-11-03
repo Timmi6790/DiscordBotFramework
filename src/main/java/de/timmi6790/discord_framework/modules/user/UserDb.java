@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
@@ -106,12 +107,12 @@ public class UserDb {
         final Set<Integer> permissionSet = new HashSet<>(this.permissionIds);
 
         final RankModule rankModule = DiscordBot.getInstance().getModuleManager().getModuleOrThrow(RankModule.class);
-        rankModule.getRank(this.primaryRank).ifPresent(rank -> permissionSet.addAll(rank.getAllPermissions()));
+        rankModule.getRank(this.primaryRank).ifPresent(rank -> permissionSet.addAll(rank.getAllPermissionIds()));
         this.ranks.stream()
                 .map(rankModule::getRank)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .forEach(rank -> permissionSet.addAll(rank.getAllPermissions()));
+                .forEach(rank -> permissionSet.addAll(rank.getAllPermissionIds()));
 
         return permissionSet;
     }
@@ -250,36 +251,50 @@ public class UserDb {
     }
 
     // Settings
-    public boolean grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
+    private Optional<? extends AbstractSetting<?>> getSettingFromClass(final Class<? extends AbstractSetting<?>> settingClass) {
         final Optional<SettingModule> settingModule = DiscordBot.getInstance().getModuleManager().getModule(SettingModule.class);
         if (!settingModule.isPresent()) {
-            return false;
+            return Optional.empty();
         }
 
-        return settingModule.get()
-                .getSettings()
-                .values()
-                .stream()
-                .filter(setting -> setting.getClass().isAssignableFrom(settingClass))
-                .findAny()
-                .filter(this::grantSetting)
-                .isPresent();
+        return settingModule.get().getSetting(settingClass);
+    }
+
+    public boolean hasSetting(final Class<? extends AbstractSetting<?>> settingClass) {
+        final Optional<? extends AbstractSetting<?>> settingOpt = this.getSettingFromClass(settingClass);
+        return settingOpt.filter(this::hasSetting).isPresent();
+
+    }
+
+    public boolean hasSetting(final AbstractSetting<?> setting) {
+        return this.settings.containsKey(setting.getDatabaseId());
+    }
+
+    public boolean grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
+        final Optional<? extends AbstractSetting<?>> settingOpt = this.getSettingFromClass(settingClass);
+        return settingOpt.filter(this::grantSetting).isPresent();
     }
 
     public boolean grantSetting(final AbstractSetting<?> setting) {
-        if (this.settings.containsKey(setting.getDatabaseId())) {
+        if (this.hasSetting(setting)) {
             return false;
         }
 
-        final String defaultValue = setting.getDefaultValue();
-        this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), defaultValue);
-        this.settings.put(setting.getDatabaseId(), defaultValue);
-
+        this.setSetting(setting, setting.getDefaultValue());
         return true;
     }
 
+    public void setSetting(final AbstractSetting<?> setting, final String value) {
+        this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), value);
+        this.settings.put(setting.getDatabaseId(), value);
+    }
+
     public boolean hasAutoCorrection() {
-        // TODO: Reimplement me
+        if (this.hasSetting(CommandAutoCorrectSetting.class)) {
+            // TODO: Check value
+            return true;
+        }
+
         return false;
     }
 }

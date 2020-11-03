@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.datatypes.builders;
+package de.timmi6790.discord_framework.utilities;
 
 import de.timmi6790.commons.Pair;
 import lombok.NonNull;
@@ -262,6 +262,18 @@ class MultiEmbedBuilderTest {
     }
 
     @Test
+    void setFooterFormat() {
+        final String format = "%s,%s,%s";
+        final Object[] values = {"1", 2, "3"};
+
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.setFooterFormat(format, values);
+
+        assertThat(embedBuilder.getFooter()).isNotNull();
+        assertThat(embedBuilder.getFooter().getText()).isEqualTo(String.format(format, values));
+    }
+
+    @Test
     void setAuthorNull() {
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
         embedBuilder.setAuthor(null);
@@ -324,17 +336,33 @@ class MultiEmbedBuilderTest {
     }
 
     @Test
-    void appendDescription_format() {
+    void setTitleFormat() {
+        final String format = "Test %s,%s,%s";
+        final Object[] objects = {1, 2, 3};
+
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
-        embedBuilder.appendDescription("Test %s,%s,%s", 1, 2, 3);
-        assertThat(embedBuilder.getDescription()).isEqualTo(String.format("Test %s,%s,%s", 1, 2, 3));
+        embedBuilder.setTitleFormat(format, objects);
+        assertThat(embedBuilder.getTitle()).isEqualTo(String.format(format, objects));
+    }
+
+    @Test
+    void appendDescription_format() {
+        final String format = "Test %s,%s,%s";
+        final Object[] objects = {1, 2, 3};
+
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        embedBuilder.appendDescription(format, objects);
+        assertThat(embedBuilder.getDescription()).isEqualTo(String.format(format, objects));
     }
 
     @Test
     void setDescription_format() {
+        final String format = "Test %s,%s,%s";
+        final Object[] objects = {1, 2, 3};
+
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
-        embedBuilder.setDescription("Test %s,%s,%s", 1, 2, 3);
-        assertThat(embedBuilder.getDescription()).isEqualTo(String.format("Test %s,%s,%s", 1, 2, 3));
+        embedBuilder.setDescription(format, objects);
+        assertThat(embedBuilder.getDescription()).isEqualTo(String.format(format, objects));
     }
 
     @Test

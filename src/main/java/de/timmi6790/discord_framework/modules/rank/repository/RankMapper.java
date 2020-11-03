@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.modules.rank.repository;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
@@ -15,12 +16,14 @@ import java.sql.SQLException;
 public class RankMapper extends DatabaseRowMapper implements RowMapper<Rank> {
     private final RankModule rankModule;
     private final UserDbModule userDbModule;
+    private final PermissionsModule permissionsModule;
 
     @Override
     public Rank map(final ResultSet rs, final StatementContext ctx) throws SQLException {
         return new Rank(
                 this.rankModule,
                 this.userDbModule,
+                this.permissionsModule,
                 rs.getInt("id"),
                 rs.getString("rankName"),
                 this.toSet(rs.getString("parentRanks"), Integer::parseInt),

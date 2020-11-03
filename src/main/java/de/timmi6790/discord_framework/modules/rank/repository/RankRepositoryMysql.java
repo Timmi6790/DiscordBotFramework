@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.modules.rank.repository;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
@@ -56,7 +57,8 @@ public class RankRepositoryMysql implements RankRepository {
                 Rank.class,
                 new RankMapper(
                         module,
-                        module.getModuleOrThrow(UserDbModule.class)
+                        module.getModuleOrThrow(UserDbModule.class),
+                        module.getModuleOrThrow(PermissionsModule.class)
                 )
         );
     }

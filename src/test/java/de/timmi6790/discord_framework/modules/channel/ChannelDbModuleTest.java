@@ -61,16 +61,19 @@ class ChannelDbModuleTest {
     }
 
     @Test
-    void getCacheCheck() {
+    void get_cache_check() {
         final ChannelDb channelDbCreate = channelDbModule.getOrCreate(TEST_CHANNEL_ID3, TEST_GUILD_ID);
 
-        final Optional<ChannelDb> channelDbCache = channelDbModule.get(TEST_CHANNEL_ID3);
-        assertThat(channelDbCache).isPresent();
+        final Optional<ChannelDb> noneCache = channelDbModule.get(TEST_CHANNEL_ID3);
+        assertThat(noneCache).isPresent();
+
+        final Optional<ChannelDb> cache = channelDbModule.get(TEST_CHANNEL_ID3);
+        assertThat(cache).isPresent();
 
         channelDbModule.getCache().invalidate(TEST_CHANNEL_ID3);
         final Optional<ChannelDb> channelDbDatabase = channelDbModule.get(TEST_CHANNEL_ID3);
         assertThat(channelDbDatabase).isPresent();
 
-        assertThat(channelDbCreate).isEqualTo(channelDbCache.get()).isEqualTo(channelDbDatabase.get());
+        assertThat(channelDbCreate).isEqualTo(noneCache.get()).isEqualTo(channelDbDatabase.get());
     }
 }

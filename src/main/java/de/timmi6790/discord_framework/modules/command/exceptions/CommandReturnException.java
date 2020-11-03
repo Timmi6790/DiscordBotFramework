@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.modules.command.exceptions;
 
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;

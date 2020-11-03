@@ -1,10 +1,10 @@
 package de.timmi6790.discord_framework.modules.command.property.properties;
 
-import de.timmi6790.discord_framework.datatypes.builders.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;

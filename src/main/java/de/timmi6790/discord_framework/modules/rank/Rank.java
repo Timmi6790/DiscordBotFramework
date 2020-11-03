@@ -1,5 +1,6 @@
 package de.timmi6790.discord_framework.modules.rank;
 
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.Data;
@@ -12,37 +13,48 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Data
-@EqualsAndHashCode(exclude = {"rankModule", "userDbModule"})
+@EqualsAndHashCode(exclude = {"rankModule", "userDbModule", "permissionsModule"})
 public class Rank {
     private final int databaseId;
-    private final Set<Integer> extendedRanks;
-    private final Set<Integer> permissions;
+    private final Set<Integer> extendedRankIds;
+    private final Set<Integer> permissionIds;
     private final RankModule rankModule;
     private final UserDbModule userDbModule;
+    private final PermissionsModule permissionsModule;
     private String name;
     private Set<Integer> cachedAllPermissions;
 
     public Rank(final RankModule rankModule,
                 final UserDbModule userDbModule,
+                final PermissionsModule permissionsModule,
                 final int databaseId,
                 final String name,
-                final Set<Integer> extendedRanks,
-                final Set<Integer> permissions) {
+                final Set<Integer> extendedRankIds,
+                final Set<Integer> permissionIds) {
         this.rankModule = rankModule;
         this.userDbModule = userDbModule;
+        this.permissionsModule = permissionsModule;
         this.databaseId = databaseId;
         this.name = name;
-        this.extendedRanks = extendedRanks;
-        this.permissions = permissions;
+        this.extendedRankIds = extendedRankIds;
+        this.permissionIds = permissionIds;
     }
 
     public void invalidateCachedPermissions() {
         this.setCachedAllPermissions(null);
     }
 
+    public Set<Rank> getExtendedRanks() {
+        final Set<Rank> ranks = new HashSet<>();
+        for (final int rankId : this.getExtendedRankIds()) {
+            this.getRankModule().getRank(rankId).ifPresent(ranks::add);
+        }
+        return ranks;
+    }
+
     // Permissions
     public boolean hasPermission(final int permissionId) {
-        return this.getPermissions().contains(permissionId);
+        return this.getPermissionIds().contains(permissionId);
     }
 
     public boolean addPermission(final int permissionId) {
@@ -52,7 +64,7 @@ public class Rank {
 
 
         this.getRankModule().getRankRepository().addPermission(this.getDatabaseId(), permissionId);
-        this.getPermissions().add(permissionId);
+        this.getPermissionIds().add(permissionId);
 
         this.getRankModule().invalidateAllPermCaches();
 
@@ -66,27 +78,43 @@ public class Rank {
 
 
         this.getRankModule().getRankRepository().removePermission(this.getDatabaseId(), permissionId);
-        this.getPermissions().remove(permissionId);
+        this.getPermissionIds().remove(permissionId);
 
         this.getRankModule().invalidateAllPermCaches();
 
         return true;
     }
 
-    public Set<Integer> getAllPermissions() {
+    public Set<String> getPermissions() {
+        final Set<String> permissions = new HashSet<>();
+        for (final int id : this.getPermissionIds()) {
+            this.getPermissionsModule().getPermissionFromId(id).ifPresent(permissions::add);
+        }
+        return permissions;
+    }
+
+    public Set<String> getAllPermissions() {
+        final Set<String> permissions = new HashSet<>();
+        for (final int id : this.getAllPermissionIds()) {
+            this.getPermissionsModule().getPermissionFromId(id).ifPresent(permissions::add);
+        }
+        return permissions;
+    }
+
+    public Set<Integer> getAllPermissionIds() {
         if (this.getCachedAllPermissions() != null) {
             return this.getCachedAllPermissions();
         }
 
-        final Set<Integer> foundPermissions = new HashSet<>(this.getPermissions());
+        final Set<Integer> foundPermissions = new HashSet<>(this.getPermissionIds());
         final Set<Integer> seen = new HashSet<>();
-        final ArrayDeque<Integer> queue = new ArrayDeque<>(this.getExtendedRanks());
+        final ArrayDeque<Integer> queue = new ArrayDeque<>(this.getExtendedRankIds());
 
         while (!queue.isEmpty()) {
             this.getRankModule().getRank(queue.pop()).ifPresent(rank -> {
-                foundPermissions.addAll(rank.getPermissions());
+                foundPermissions.addAll(rank.getPermissionIds());
 
-                rank.getExtendedRanks()
+                rank.getExtendedRankIds()
                         .stream()
                         .filter(extendId -> !seen.contains(extendId))
                         .forEach(extendId -> {
@@ -102,7 +130,7 @@ public class Rank {
 
     // Extended Ranks
     public boolean hasExtendedRank(final int rankId) {
-        return this.getExtendedRanks().contains(rankId);
+        return this.getExtendedRankIds().contains(rankId);
     }
 
     public boolean hasExtendedRank(@NonNull final Rank rank) {
@@ -115,7 +143,7 @@ public class Rank {
         }
 
         this.getRankModule().getRankRepository().addExtendedRank(this.getDatabaseId(), rankId);
-        this.getExtendedRanks().add(rankId);
+        this.getExtendedRankIds().add(rankId);
 
         this.getRankModule().invalidateAllPermCaches();
 
@@ -132,7 +160,7 @@ public class Rank {
         }
 
         this.getRankModule().getRankRepository().removeExtendedRank(this.getDatabaseId(), rankId);
-        this.getExtendedRanks().remove(rankId);
+        this.getExtendedRankIds().remove(rankId);
 
         this.getRankModule().invalidateAllPermCaches();
 
