@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.setting;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.ArrayList;
@@ -85,13 +86,14 @@ public abstract class AbstractSetting<T> {
     protected void sendChangedValueMessage(final CommandParameters commandParameters,
                                            final T oldValue,
                                            final T newValue) {
+        final String oldValueString = String.valueOf(oldValue);
         DiscordMessagesUtilities.sendMessageTimed(
                 commandParameters.getLowestMessageChannel(),
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                         .setTitle("Changed Setting")
                         .setDescription(
                                 "Changed value from %s to %s.",
-                                MarkdownUtil.monospace(String.valueOf(oldValue)),
+                                MarkdownUtil.monospace(oldValueString.isEmpty() ? EmbedBuilder.ZERO_WIDTH_SPACE : oldValueString),
                                 MarkdownUtil.monospace(String.valueOf(newValue))
                         ),
                 300

@@ -289,7 +289,7 @@ public class UserDb {
     }
 
     public boolean hasSetting(final AbstractSetting<?> setting) {
-        return this.getPermissionIds().contains(setting.getPermissionId());
+        return this.getAllPermissionIds().contains(setting.getPermissionId());
     }
 
     public <T> boolean grantSetting(final Class<? extends AbstractSetting<T>> settingClazz) {

@@ -21,6 +21,8 @@ import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
@@ -575,8 +577,9 @@ public abstract class AbstractCommand {
     public int getPermissionIdThrow(@NonNull final CommandParameters commandParameters,
                                     final int argPos) {
         final String permArg = commandParameters.getArgs()[argPos];
-        final Optional<AbstractCommand> commandOpt = AbstractCommand.getCommandModule().getCommand(permArg);
 
+        // Check for command names
+        final Optional<AbstractCommand> commandOpt = AbstractCommand.getCommandModule().getCommand(permArg);
         if (commandOpt.isPresent()) {
             final AbstractCommand command = commandOpt.get();
             if (command.getPermissionId() == -1) {
@@ -588,13 +591,24 @@ public abstract class AbstractCommand {
             }
 
             return command.getPermissionId();
-        } else {
-            return AbstractCommand.getPermissionsModule().getPermissionId(permArg)
-                    .orElseThrow(() -> new CommandReturnException(
-                            DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                                    .setTitle(ERROR)
-                                    .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
-                    ));
         }
+
+        // check for setting names
+        final Optional<SettingModule> settingModuleOpt = getModuleManager().getModule(SettingModule.class);
+        if (settingModuleOpt.isPresent()) {
+            final Optional<AbstractSetting<?>> settingOpt = settingModuleOpt.get().getSetting(permArg);
+            if (settingOpt.isPresent()) {
+                return settingOpt.get().getPermissionId();
+            }
+        }
+
+
+        return AbstractCommand.getPermissionsModule().getPermissionId(permArg)
+                .orElseThrow(() -> new CommandReturnException(
+                        DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                                .setTitle(ERROR)
+                                .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
+                ));
+
     }
 }

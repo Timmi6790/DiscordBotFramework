@@ -10,6 +10,7 @@ import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class SettingsCommand extends AbstractCommand {
                 "Info",
                 "Settings",
                 "[setting] [newValue]",
-                "", "st");
+                "st", "setting");
 
         this.settingModule = getModuleManager().getModuleOrThrow(SettingModule.class);
     }
@@ -90,12 +91,14 @@ public class SettingsCommand extends AbstractCommand {
             embedBuilder.setDescription("You can unlock settings by using the bot.");
         } else {
             for (final Map.Entry<AbstractSetting<?>, String> entry : playerSettings.entrySet()) {
+                final String value = String.valueOf(entry.getValue());
+
                 embedBuilder.addField(
                         entry.getKey().getName(),
                         String.format(
                                 "%s%nValue: %s",
                                 entry.getKey().getDescription(),
-                                MarkdownUtil.monospace(String.valueOf(entry.getValue()))
+                                MarkdownUtil.monospace(value.isEmpty() ? EmbedBuilder.ZERO_WIDTH_SPACE : value)
                         ),
                         false
                 );
