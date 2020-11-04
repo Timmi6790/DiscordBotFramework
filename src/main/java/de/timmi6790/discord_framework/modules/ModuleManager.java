@@ -118,13 +118,11 @@ public class ModuleManager {
 
         final URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         for (final File jar : pluginJars) {
-            final Optional<AbstractModule> moduleOpt = this.loadJarModule(jar, classLoader);
-            if (moduleOpt.isPresent()) {
-                final AbstractModule module = moduleOpt.get();
-                if (abstractModules.contains(module)) {
+            for (final AbstractModule foundModule : this.loadJarModule(jar, classLoader)) {
+                if (abstractModules.contains(foundModule)) {
                     this.logger.warn(
                             "Module {} inside {} is already loaded.",
-                            module.getName(),
+                            foundModule.getName(),
                             jar.getName()
                     );
                     continue;
@@ -132,19 +130,20 @@ public class ModuleManager {
 
                 this.logger.info(
                         "Found module {} inside {}",
-                        module.getName(),
+                        foundModule.getName(),
                         jar.getName()
                 );
-                abstractModules.add(module);
+                abstractModules.add(foundModule);
             }
         }
 
         return abstractModules;
     }
 
-    private Optional<AbstractModule> loadJarModule(final File jar, final URLClassLoader classLoader) {
+    private List<AbstractModule> loadJarModule(final File jar, final URLClassLoader classLoader) {
         this.logger.info("Checking {} for modules.", jar.getName());
 
+        final List<AbstractModule> modules = new ArrayList<>();
         try {
             // Add external jar to system classloader
             ReflectionUtilities.addJarToClassLoader(jar, classLoader);
@@ -152,7 +151,7 @@ public class ModuleManager {
             final URL pluginUrl = classLoader.getResource("plugin.json");
             if (pluginUrl == null) {
                 this.logger.warn("Can't load {}, no plugins.json found.", jar.getName());
-                return Optional.empty();
+                return modules;
             }
 
             @Cleanup final InputStreamReader inputStream = new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8);
@@ -182,13 +181,14 @@ public class ModuleManager {
                         .getConstructor()
                         .newInstance();
 
-                return Optional.of(pluginModule);
+                modules.add(pluginModule);
             }
 
         } catch (final Exception e) {
             this.logger.warn(e, "Error while trying to load modules from {}.", jar.getName());
         }
-        return Optional.empty();
+
+        return modules;
     }
 
     public void registerModules(final AbstractModule... modules) {
