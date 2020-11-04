@@ -2,25 +2,21 @@ package de.timmi6790.discord_framework.modules.setting.settings;
 
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
+import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Arrays;
 
+import java.util.List;
 import java.util.Optional;
 
 public class BooleanSetting extends AbstractSetting<Boolean> {
-    private static final String[] ALLOWED_VALUES = {"true", "false", ""};
-
-    public BooleanSetting(final String internalName, final String name, final String defaultValue) {
-        super(internalName, name, defaultValue);
+    public BooleanSetting(final String internalName, final String name, final String description, final boolean defaultValue) {
+        super(internalName, name, description, defaultValue ? String.valueOf(1) : String.valueOf(0));
     }
 
     @Override
-    public void handleCommand(final CommandParameters commandParameters, final String newValue) {
-
-    }
-
-    private Optional<Boolean> parseNewValue(final CommandParameters commandParameters, final String newValue) {
-        if (newValue.equalsIgnoreCase("true")) {
+    protected Optional<Boolean> parseNewValue(final CommandParameters commandParameters, final String userInput) {
+        if (userInput.equalsIgnoreCase("true")) {
             return Optional.of(true);
-        } else if (newValue.equalsIgnoreCase("false")) {
+        } else if (userInput.equalsIgnoreCase("false")) {
             return Optional.of(false);
         }
 
@@ -28,12 +24,17 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
     }
 
     @Override
+    protected List<Boolean> possibleValues(final CommandParameters commandParameters, final String userInput) {
+        return Arrays.asList(new Boolean[]{true, false});
+    }
+
+    @Override
     public String toDatabaseValue(final Boolean value) {
-        return null;
+        return value ? String.valueOf(1) : String.valueOf(0);
     }
 
     @Override
     public Boolean fromDatabaseValue(final String value) {
-        return Boolean.parseBoolean(value);
+        return value.equals("1");
     }
 }

@@ -6,12 +6,12 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
@@ -251,50 +251,113 @@ public class UserDb {
     }
 
     // Settings
-    private Optional<? extends AbstractSetting<?>> getSettingFromClass(final Class<? extends AbstractSetting<?>> settingClass) {
+    private <T> Optional<? extends AbstractSetting<T>> getSettingFromClass(final Class<? extends AbstractSetting<T>> settingClazz) {
         final Optional<SettingModule> settingModule = DiscordBot.getInstance().getModuleManager().getModule(SettingModule.class);
         if (!settingModule.isPresent()) {
             return Optional.empty();
         }
 
-        return settingModule.get().getSetting(settingClass);
+        return settingModule.get().getSetting(settingClazz);
     }
 
-    public boolean hasSetting(final Class<? extends AbstractSetting<?>> settingClass) {
-        final Optional<? extends AbstractSetting<?>> settingOpt = this.getSettingFromClass(settingClass);
+    public Map<AbstractSetting<?>, String> getSettings() {
+        final Optional<SettingModule> settingModuleOpt = DiscordBot.getInstance().getModuleManager().getModule(SettingModule.class);
+        if (!settingModuleOpt.isPresent()) {
+            return new HashMap<>();
+        }
+
+        final SettingModule settingModule = settingModuleOpt.get();
+        final Map<AbstractSetting<?>, String> playerSettings = new HashMap<>();
+        for (final AbstractSetting<?> setting : settingModule.getSettings().values()) {
+            if (this.hasSetting(setting)) {
+                playerSettings.put(
+                        setting,
+                        this.getSetting(setting)
+                                .map(String::valueOf)
+                                .orElse(String.valueOf(setting.getDefaultDatabaseValue()))
+                );
+            }
+        }
+
+        return playerSettings;
+    }
+
+    public <T> boolean hasSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
+        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
         return settingOpt.filter(this::hasSetting).isPresent();
 
     }
 
     public boolean hasSetting(final AbstractSetting<?> setting) {
-        return this.settings.containsKey(setting.getDatabaseId());
+        return this.getPermissionIds().contains(setting.getPermissionId());
     }
 
-    public boolean grantSetting(final Class<? extends AbstractSetting<?>> settingClass) {
-        final Optional<? extends AbstractSetting<?>> settingOpt = this.getSettingFromClass(settingClass);
+    public <T> boolean grantSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
+        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
         return settingOpt.filter(this::grantSetting).isPresent();
     }
 
-    public boolean grantSetting(final AbstractSetting<?> setting) {
+    public <T> boolean grantSetting(final AbstractSetting<T> setting) {
         if (this.hasSetting(setting)) {
             return false;
         }
 
-        this.setSetting(setting, setting.getDefaultValue());
+        this.addPermission(setting.getPermissionId());
         return true;
     }
 
-    public void setSetting(final AbstractSetting<?> setting, final String value) {
-        this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), value);
-        this.settings.put(setting.getDatabaseId(), value);
+    public <T> void setSetting(final Class<? extends AbstractSetting<T>> settingClazz, final T value) {
+        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
+        if (settingOpt.isPresent()) {
+            this.setSetting(settingClazz, value);
+        }
+    }
+
+    public <T> void setSetting(final AbstractSetting<T> setting, final T value) {
+        final String newValue = setting.toDatabaseValue(value);
+        if (this.settings.containsKey(setting.getDatabaseId())) {
+            this.getUserDbRepository().updateSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
+        } else {
+            this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
+        }
+        this.settings.put(setting.getDatabaseId(), newValue);
+    }
+
+    public <T> Optional<T> getSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
+        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
+        if (settingOpt.isPresent()) {
+            return this.getSetting(settingOpt.get());
+        }
+        return Optional.empty();
+    }
+
+    public <T> Optional<T> getSetting(final AbstractSetting<T> setting) {
+        // Check if the player has the permissions for the setting.
+        if (!this.hasSetting(setting)) {
+            return Optional.empty();
+        }
+
+        final String value = this.settings.get(setting.getDatabaseId());
+        if (value != null) {
+            return Optional.ofNullable(setting.fromDatabaseValue(value));
+        }
+
+        return Optional.empty();
+    }
+
+    public <T> T getSettingOrDefault(final Class<? extends AbstractSetting<T>> settingClazz, final T defaultValue) {
+        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
+        if (settingOpt.isPresent()) {
+            return this.getSettingOrDefault(settingOpt.get(), defaultValue);
+        }
+        return defaultValue;
+    }
+
+    public <T> T getSettingOrDefault(final AbstractSetting<T> setting, final T defaultValue) {
+        return this.getSetting(setting).orElse(defaultValue);
     }
 
     public boolean hasAutoCorrection() {
-        if (this.hasSetting(CommandAutoCorrectSetting.class)) {
-            // TODO: Check value
-            return true;
-        }
-
-        return false;
+        return this.getSettingOrDefault(CommandAutoCorrectSetting.class, false);
     }
 }

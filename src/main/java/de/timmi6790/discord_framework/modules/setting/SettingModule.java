@@ -1,11 +1,14 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.setting.commands.SettingsCommand;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepository;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepositoryMysql;
+import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -26,7 +29,8 @@ public class SettingModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
-                CommandModule.class
+                CommandModule.class,
+                PermissionsModule.class
         );
     }
 
@@ -39,18 +43,27 @@ public class SettingModule extends AbstractModule {
                         this,
                         new SettingsCommand()
                 );
+
+        this.registerSettings(
+                this,
+                new CommandAutoCorrectSetting()
+        );
     }
 
-    public void registerSetting(final AbstractSetting<?> setting) {
+    public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
         setting.setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()));
+        final String defaultPermissionName = String.format("%s.setting.%s", module.getName(), setting.getName())
+                .replace(" ", "_")
+                .toLowerCase();
+        setting.setPermissionId(AbstractCommand.getPermissionsModule().addPermission(defaultPermissionName));
 
         this.settings.put(setting.getDatabaseId(), setting);
         this.nameIdMatching.put(setting.getName(), setting.getDatabaseId());
     }
 
-    public void registerSettings(final AbstractSetting<?>... settings) {
+    public void registerSettings(final AbstractModule module, final AbstractSetting<?>... settings) {
         for (final AbstractSetting<?> setting : settings) {
-            this.registerSetting(setting);
+            this.registerSetting(module, setting);
         }
     }
 
@@ -62,10 +75,10 @@ public class SettingModule extends AbstractModule {
         return Optional.ofNullable(this.settings.get(this.nameIdMatching.get(settingName)));
     }
 
-    public <T extends AbstractSetting<?>> Optional<T> getSetting(final Class<T> clazz) {
+    public <T> Optional<? extends AbstractSetting<T>> getSetting(final Class<? extends AbstractSetting<T>> clazz) {
         for (final AbstractSetting<?> setting : this.settings.values()) {
             if (setting.getClass().equals(clazz)) {
-                return (Optional<T>) Optional.of(setting);
+                return Optional.of((AbstractSetting<T>) setting);
             }
         }
         return Optional.empty();

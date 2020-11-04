@@ -5,9 +5,9 @@ import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
+import de.timmi6790.discord_framework.modules.core.achievements.CommandAutoCorrectAchievement;
 import de.timmi6790.discord_framework.modules.core.commands.info.BotInfoCommand;
 import de.timmi6790.discord_framework.modules.core.commands.info.InviteCommand;
-import de.timmi6790.discord_framework.modules.core.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.core.stats.FailedCommandStat;
 import de.timmi6790.discord_framework.modules.core.stats.IncorrectArgCommandStat;
 import de.timmi6790.discord_framework.modules.core.stats.MissingArgCommandStat;
@@ -47,15 +47,9 @@ public class CoreModule extends AbstractModule {
             );
         }
 
-        this.getModule(SettingModule.class)
-                .ifPresent(settingModule -> {
-                            DiscordBot.getLogger().info("Registering settings");
-                            settingModule.registerSettings(
-                                    new CommandAutoCorrectSetting()
-
-                            );
-                        }
-                );
+        this.getModule(AchievementModule.class).ifPresent(
+                achievementModule -> achievementModule.registerAchievements(new CommandAutoCorrectAchievement())
+        );
 
         this.getModule(StatModule.class)
                 .ifPresent(statModule -> {

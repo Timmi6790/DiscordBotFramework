@@ -29,4 +29,6 @@ public interface UserDbRepository {
     void updateStat(int userDatabaseId, int statId, int statValue);
 
     void grantSetting(int userDatabaseId, int settingId, String defaultValue);
+
+    void updateSetting(int userDatabaseId, int settingId, String newValue);
 }

@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.property.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
+import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
@@ -13,7 +14,9 @@ import lombok.Getter;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -87,7 +90,10 @@ public class UserCommand extends AbstractCommand {
         final int commandSpamCache = getCommandSpamCache().get(userDb.getDiscordId()).get();
         final int activeEmotes = this.getEmoteReactionModule().getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
-        final String settings = "TODO";
+        final StringJoiner settings = new StringJoiner("\n");
+        for (final Map.Entry<AbstractSetting<?>, String> entry : userDb.getSettings().entrySet()) {
+            settings.add(entry.getKey().getInternalName() + ": " + entry.getKey().fromDatabaseValue(entry.getValue()));
+        }
 
         final String stats = userDb.getStatsMap()
                 .entrySet()
@@ -127,7 +133,7 @@ public class UserCommand extends AbstractCommand {
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
                         .addField("Shop Points", String.valueOf(userDb.getPoints()), false)
                         .addField("Ranks", primaryRank + "[" + subRanks + "]", true)
-                        .addField("Settings", settings, false)
+                        .addField("Settings", settings.toString(), false)
                         .addField("Stats", stats, false)
                         .addField("User Perms", permissions, false)
                         .addField("All Perms", allPermissions, false),

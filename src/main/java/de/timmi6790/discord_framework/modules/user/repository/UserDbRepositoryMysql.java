@@ -34,6 +34,7 @@ public class UserDbRepositoryMysql implements UserDbRepository {
     private static final String INSERT_STAT_VALUE = "INSERT player_stat(player_id, stat_id, value) VALUES(:playerId, :statId, :value)";
 
     private static final String INSERT_PLAYER_SETTING = "INSERT player_setting(player_id, setting_id, setting) VALUES(:playerId, :settingId, :setting);";
+    private static final String UPDATE_PLAYER_SETTING = "UPDATE player_setting SET setting = :setting WHERE player_id = :playerId and setting_id = :settingId LIMIT 1;";
 
     private static final String INSERT_PLAYER_PERMISSION = "INSERT INTO player_permission(player_id, permission_id) VALUES(:playerId, :permissionId);";
     private static final String DELETE_PLAYER_PERMISSION = "DELETE FROM player_permission WHERE player_id = :playerId AND permission_id = :permissionId LIMIT 1";
@@ -170,6 +171,17 @@ public class UserDbRepositoryMysql implements UserDbRepository {
                         .bind(PLAYER_ID, userDatabaseId)
                         .bind("settingId", settingId)
                         .bind("setting", defaultValue)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void updateSetting(final int userDatabaseId, final int settingId, final String newValue) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(UPDATE_PLAYER_SETTING)
+                        .bind(PLAYER_ID, userDatabaseId)
+                        .bind("settingId", settingId)
+                        .bind("setting", newValue)
                         .execute()
         );
     }

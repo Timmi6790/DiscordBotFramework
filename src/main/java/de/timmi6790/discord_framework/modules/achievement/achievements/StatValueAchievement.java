@@ -7,6 +7,9 @@ import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
+
+import java.util.StringJoiner;
 
 @EqualsAndHashCode(callSuper = true)
 public abstract class StatValueAchievement extends AbstractAchievement {
@@ -30,12 +33,21 @@ public abstract class StatValueAchievement extends AbstractAchievement {
         }
 
         if (event.getNewValue() >= this.requiredValue) {
-            event.getUserDb().grantAchievement(this);
-
+            this.unlockAchievement(event.getUserDb());
             final User user = event.getUserDb().getUser();
+
+            final StringJoiner perks = new StringJoiner("\n");
+            for (final String unlocked : this.getUnlockedPerks()) {
+                perks.add("- " + unlocked);
+            }
+
             DiscordMessagesUtilities.sendPrivateMessage(user, DiscordMessagesUtilities.getEmbedBuilder(user, null)
                     .setTitle("Achievement Unlocked")
-                    .setDescription("Unlocked: " + this.getName())
+                    .setDescription(
+                            "Unlocked: %s%n%nPerks:%n%s",
+                            MarkdownUtil.bold(this.getName()),
+                            perks.toString()
+                    )
             );
         }
     }

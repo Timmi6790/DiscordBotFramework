@@ -3,6 +3,8 @@ package de.timmi6790.discord_framework.modules.achievement;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public abstract class AbstractAchievement {
     private final String name;
@@ -20,4 +22,6 @@ public abstract class AbstractAchievement {
     }
 
     public abstract void onUnlock(UserDb userDb);
+
+    public abstract List<String> getUnlockedPerks();
 }
