@@ -92,7 +92,7 @@ public class UserCommand extends AbstractCommand {
 
         final StringJoiner settings = new StringJoiner("\n");
         for (final Map.Entry<AbstractSetting<?>, String> entry : userDb.getSettings().entrySet()) {
-            settings.add(entry.getKey().getInternalName() + ": " + entry.getKey().fromDatabaseValue(entry.getValue()));
+            settings.add(entry.getKey().getInternalName() + ": " + entry.getValue());
         }
 
         final String stats = userDb.getStatsMap()

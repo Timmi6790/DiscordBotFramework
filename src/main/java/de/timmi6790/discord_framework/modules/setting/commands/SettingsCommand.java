@@ -95,7 +95,7 @@ public class SettingsCommand extends AbstractCommand {
                         String.format(
                                 "%s%nValue: %s",
                                 entry.getKey().getDescription(),
-                                MarkdownUtil.monospace(String.valueOf(entry.getKey().fromDatabaseValue(entry.getValue())))
+                                MarkdownUtil.monospace(String.valueOf(entry.getValue()))
                         ),
                         false
                 );

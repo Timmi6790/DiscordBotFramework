@@ -274,7 +274,7 @@ public class UserDb {
                         setting,
                         this.getSetting(setting)
                                 .map(String::valueOf)
-                                .orElse(String.valueOf(setting.getDefaultDatabaseValue()))
+                                .orElse(String.valueOf(setting.fromDatabaseValue(setting.getDefaultDatabaseValue())))
                 );
             }
         }
@@ -320,6 +320,7 @@ public class UserDb {
         } else {
             this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
         }
+
         this.settingsMap.put(setting.getDatabaseId(), newValue);
     }
 

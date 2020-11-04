@@ -11,7 +11,9 @@ import de.timmi6790.discord_framework.modules.setting.repository.SettingReposito
 import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SettingModule extends AbstractModule {
     @Getter
     private final Map<Integer, AbstractSetting<?>> settings = new ConcurrentHashMap<>();
-    private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
+    private final Map<String, Integer> nameIdMatching = Collections.synchronizedMap(new CaseInsensitiveMap<>());
 
     private SettingRepository settingRepository;
 
