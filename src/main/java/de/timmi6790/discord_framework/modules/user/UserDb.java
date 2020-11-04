@@ -46,7 +46,7 @@ public class UserDb {
     private final Set<Integer> ranks;
     private final long points;
     private final Set<Integer> permissionIds;
-    private final Map<Integer, String> settings;
+    private final Map<Integer, String> settingsMap;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievements;
     private final UserDbRepository userDbRepository;
@@ -61,7 +61,7 @@ public class UserDb {
                   final boolean banned,
                   final long points,
                   final Set<Integer> permissionIds,
-                  final Map<Integer, String> settings,
+                  final Map<Integer, String> settingsMap,
                   final Map<Integer, Integer> stats,
                   final Set<Integer> achievements) {
         this.databaseId = databaseId;
@@ -71,7 +71,7 @@ public class UserDb {
         this.banned = banned;
         this.points = points;
         this.permissionIds = permissionIds;
-        this.settings = settings;
+        this.settingsMap = settingsMap;
         this.stats = stats;
         this.achievements = achievements;
         this.userDbRepository = userDbRepository;
@@ -315,12 +315,12 @@ public class UserDb {
 
     public <T> void setSetting(final AbstractSetting<T> setting, final T value) {
         final String newValue = setting.toDatabaseValue(value);
-        if (this.settings.containsKey(setting.getDatabaseId())) {
+        if (this.settingsMap.containsKey(setting.getDatabaseId())) {
             this.getUserDbRepository().updateSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
         } else {
             this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
         }
-        this.settings.put(setting.getDatabaseId(), newValue);
+        this.settingsMap.put(setting.getDatabaseId(), newValue);
     }
 
     public <T> Optional<T> getSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
@@ -337,7 +337,7 @@ public class UserDb {
             return Optional.empty();
         }
 
-        final String value = this.settings.get(setting.getDatabaseId());
+        final String value = this.settingsMap.get(setting.getDatabaseId());
         if (value != null) {
             return Optional.ofNullable(setting.fromDatabaseValue(value));
         }
