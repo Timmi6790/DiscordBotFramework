@@ -31,4 +31,6 @@ public interface UserDbRepository {
     void grantSetting(int userDatabaseId, int settingId, String defaultValue);
 
     void updateSetting(int userDatabaseId, int settingId, String newValue);
+
+    void grantPlayerAchievement(final int playerId, final int achievementId);
 }

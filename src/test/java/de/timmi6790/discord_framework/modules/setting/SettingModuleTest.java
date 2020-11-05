@@ -29,13 +29,6 @@ class SettingModuleTest {
         return "Setting" + SETTING_NAME_NUMBER.getAndIncrement();
     }
 
-    private void hasSetting(final AbstractSetting<?> setting) {
-        assertThat(settingsModule.getSetting(setting.getName())).hasValue(setting);
-        for (final String aliasName : setting.getAliasNames()) {
-            assertThat(settingsModule.getSetting(aliasName)).hasValue(setting);
-        }
-    }
-
     @BeforeAll
     static void setup() {
         final ModuleManager moduleManager = mock(ModuleManager.class);
@@ -56,6 +49,13 @@ class SettingModuleTest {
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
             permissionsModule.onInitialize();
             settingsModule.onInitialize();
+        }
+    }
+
+    private void hasSetting(final AbstractSetting<?> setting) {
+        assertThat(settingsModule.getSetting(setting.getName())).hasValue(setting);
+        for (final String aliasName : setting.getAliasNames()) {
+            assertThat(settingsModule.getSetting(aliasName)).hasValue(setting);
         }
     }
 

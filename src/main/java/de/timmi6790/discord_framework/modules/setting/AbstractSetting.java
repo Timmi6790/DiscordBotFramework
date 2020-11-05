@@ -1,15 +1,16 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import lombok.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 @Data
 public abstract class AbstractSetting<T> {
@@ -46,10 +47,15 @@ public abstract class AbstractSetting<T> {
     public void handleCommand(final CommandParameters commandParameters, final String userInput) {
         final Optional<T> parsedValue = this.parseNewValue(commandParameters, userInput);
         if (parsedValue.isPresent()) {
+            final T oldValue = commandParameters.getUserDb().getSettingOrDefault(this, this.getDefaultValue());
             this.changeValue(
+                    commandParameters.getUserDb(),
+                    parsedValue.get()
+            );
+            this.sendChangedValueMessage(
                     commandParameters,
-                    parsedValue.get(),
-                    true
+                    oldValue,
+                    parsedValue.get()
             );
             return;
         }
@@ -57,24 +63,15 @@ public abstract class AbstractSetting<T> {
         this.sendInvalidInputMessage(commandParameters, userInput, this.possibleValues(commandParameters, userInput));
     }
 
-    protected void changeValue(final CommandParameters commandParameters,
-                               final T newValue,
-                               final boolean sendMessage) {
-        final T oldValue = commandParameters.getUserDb().getSetting(this).orElse(this.getDefaultValue());
-        commandParameters.getUserDb().setSetting(this, newValue);
-        if (sendMessage) {
-            this.sendChangedValueMessage(
-                    commandParameters,
-                    oldValue,
-                    newValue
-            );
-        }
+    protected void changeValue(@NonNull final UserDb userDb,
+                               @NonNull final T newValue) {
+        userDb.setSetting(this, newValue);
     }
 
     protected void sendInvalidInputMessage(final CommandParameters commandParameters,
                                            final String userInput,
                                            final List<T> possibleValues) {
-        final List<String> possibleValueFormatted = new ArrayList<>();
+        final StringJoiner possibleValueFormatted = new StringJoiner("\n");
         for (final T possibleValue : possibleValues) {
             possibleValueFormatted.add(MarkdownUtil.monospace(String.valueOf(possibleValue)));
         }
@@ -86,7 +83,7 @@ public abstract class AbstractSetting<T> {
                         .setDescription(
                                 "%s it not a valid value.\nPlease use one of the following values:\n%s",
                                 MarkdownUtil.monospace(userInput),
-                                String.join("\n", possibleValueFormatted)
+                                possibleValueFormatted.toString()
                         ),
                 300
         );

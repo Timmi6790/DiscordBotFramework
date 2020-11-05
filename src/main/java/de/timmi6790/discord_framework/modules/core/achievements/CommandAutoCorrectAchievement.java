@@ -11,7 +11,7 @@ import java.util.List;
 
 public class CommandAutoCorrectAchievement extends StatValueAchievement {
     public CommandAutoCorrectAchievement() {
-        super("Learn to use me", "core.achievement.auto_correction", IncorrectArgCommandStat.class, 100);
+        super("Learn to use me", IncorrectArgCommandStat.class, 100);
     }
 
     @Override

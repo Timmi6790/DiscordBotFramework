@@ -8,13 +8,11 @@ import java.util.List;
 @Data
 public abstract class AbstractAchievement {
     private final String name;
-    private final String internalName;
+    private String internalName;
     private int databaseId;
 
-    protected AbstractAchievement(final String name, final String internalName) {
-
+    protected AbstractAchievement(final String name) {
         this.name = name;
-        this.internalName = internalName;
     }
 
     public void unlockAchievement(final UserDb userDb) {

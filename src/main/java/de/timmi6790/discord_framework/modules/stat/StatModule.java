@@ -5,12 +5,12 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.stat.repository.StatRepository;
 import de.timmi6790.discord_framework.modules.stat.repository.StatRepositoryMysql;
-import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 
-import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @EqualsAndHashCode(callSuper = true)
@@ -20,6 +20,7 @@ public class StatModule extends AbstractModule {
     private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
 
     private StatRepository statRepository;
+    private EventModule eventModule;
 
     public StatModule() {
         super("StatModule");
@@ -33,30 +34,43 @@ public class StatModule extends AbstractModule {
     @Override
     public void onInitialize() {
         this.statRepository = new StatRepositoryMysql(this);
+        this.eventModule = this.getModuleOrThrow(EventModule.class);
     }
 
     public boolean hasStat(final AbstractStat stat) {
-        return this.stats.containsKey(stat.getDatabaseId());
+        return this.getStat(stat.getDatabaseId()).isPresent();
     }
 
-    public boolean registerStat(final AbstractStat stat) {
+    public void registerStats(@NonNull final AbstractModule module, final AbstractStat... stats) {
+        for (final AbstractStat stat : stats) {
+            this.registerStat(module, stat);
+        }
+    }
+
+    public boolean registerStat(@NonNull final AbstractModule module, @NonNull final AbstractStat stat) {
         if (this.hasStat(stat)) {
             return false;
         }
 
+        stat.setInternalName(this.generateInternalName(module, "stat", stat.getName()));
         stat.setDatabaseId(this.statRepository.retrieveOrCreateSettingId(stat.getInternalName()));
-        this.stats.put(stat.getDatabaseId(), stat);
-        this.nameIdMatching.put(stat.getInternalName(), stat.getDatabaseId());
 
-        this.getModuleOrThrow(EventModule.class).addEventListener(stat);
+        this.stats.put(stat.getDatabaseId(), stat);
+        this.nameIdMatching.put(stat.getName(), stat.getDatabaseId());
+
+        this.eventModule.addEventListener(stat);
         return true;
     }
 
-    public void registerStats(final AbstractStat... stats) {
-        Arrays.stream(stats).forEach(this::registerStat);
+    public Optional<AbstractStat> getStat(@NonNull final String statName) {
+        if (this.nameIdMatching.containsKey(statName)) {
+            return this.getStat(this.nameIdMatching.get(statName));
+        }
+
+        return Optional.empty();
     }
 
-    public void increaseStat(final UserDb userDb, final AbstractStat stat, final int value) {
-        userDb.increaseStat(stat, value);
+    public Optional<AbstractStat> getStat(final int statId) {
+        return Optional.ofNullable(this.stats.get(statId));
     }
 }

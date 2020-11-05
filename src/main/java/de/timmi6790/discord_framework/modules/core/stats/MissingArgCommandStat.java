@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class MissingArgCommandStat extends AbstractStat {
     public MissingArgCommandStat() {
-        super("MissingArgs Commands", "core.stat.missing_arg_command");
+        super("MissingArgs Commands");
     }
 
     @SubscribeEvent

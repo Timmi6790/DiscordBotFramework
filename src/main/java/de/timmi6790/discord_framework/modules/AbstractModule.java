@@ -29,6 +29,12 @@ public abstract class AbstractModule {
     public void onDisable() {
     }
 
+    protected String generateInternalName(final AbstractModule module, final String categoryName, final String valueName) {
+        return String.format("%s.%s.%s", module.getName(), categoryName, valueName)
+                .replace(" ", "_")
+                .toLowerCase();
+    }
+
     protected final void addGatewayIntents(final GatewayIntent... gatewayIntents) {
         this.requiredGatewayIntents.addAll(Arrays.asList(gatewayIntents));
     }

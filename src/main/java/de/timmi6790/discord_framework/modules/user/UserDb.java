@@ -48,7 +48,7 @@ public class UserDb {
     private final Set<Integer> permissionIds;
     private final Map<Integer, String> settingsMap;
     private final Map<Integer, Integer> stats;
-    private final Set<Integer> achievements;
+    private final Set<Integer> achievementIds;
     private final UserDbRepository userDbRepository;
     private int primaryRank;
     private boolean banned;
@@ -63,7 +63,7 @@ public class UserDb {
                   final Set<Integer> permissionIds,
                   final Map<Integer, String> settingsMap,
                   final Map<Integer, Integer> stats,
-                  final Set<Integer> achievements) {
+                  final Set<Integer> achievementIds) {
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.primaryRank = primaryRank;
@@ -73,7 +73,7 @@ public class UserDb {
         this.permissionIds = permissionIds;
         this.settingsMap = settingsMap;
         this.stats = stats;
-        this.achievements = achievements;
+        this.achievementIds = achievementIds;
         this.userDbRepository = userDbRepository;
     }
 
@@ -204,12 +204,33 @@ public class UserDb {
     }
 
     // Achievements
-    public boolean hasAchievement(final AbstractAchievement achievement) {
-        return this.achievements.contains(achievement.getDatabaseId());
+    public List<AbstractAchievement> getAchievements() {
+        final Optional<AchievementModule> achievementModuleOpt = DiscordBot.getInstance().getModuleManager().getModule(AchievementModule.class);
+        if (!achievementModuleOpt.isPresent()) {
+            return new ArrayList<>();
+        }
+
+        final AchievementModule achievementModule = achievementModuleOpt.get();
+        final List<AbstractAchievement> achievements = new ArrayList<>();
+        for (final int achievementId : this.achievementIds) {
+            achievementModule.getAchievement(achievementId).ifPresent(achievements::add);
+        }
+        return achievements;
     }
 
-    public void grantAchievement(@NonNull final AbstractAchievement achievement) {
-        DiscordBot.getInstance().getModuleManager().getModuleOrThrow(AchievementModule.class).grantAchievement(this, achievement);
+    public boolean hasAchievement(@NonNull final AbstractAchievement achievement) {
+        return this.achievementIds.contains(achievement.getDatabaseId());
+    }
+
+    public boolean grantAchievement(@NonNull final AbstractAchievement achievement) {
+        if (this.hasAchievement(achievement)) {
+            return false;
+        }
+
+        this.userDbRepository.grantPlayerAchievement(this.getDatabaseId(), achievement.getDatabaseId());
+        this.achievementIds.add(achievement.getDatabaseId());
+        achievement.onUnlock(this);
+        return true;
     }
 
     // Stats
@@ -236,7 +257,13 @@ public class UserDb {
 
         this.stats.put(stat.getDatabaseId(), value);
 
-        final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(this, stat, currentValueOpt.orElse(-1), value);
+        final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(
+                DiscordBot.getInstance().getDiscord(),
+                this,
+                stat,
+                currentValueOpt.orElse(-1),
+                value
+        );
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(EventModule.class).executeEvent(statsChangeEvent);
     }
 

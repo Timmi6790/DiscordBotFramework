@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class SuccessfulCommandStat extends AbstractStat {
     public SuccessfulCommandStat() {
-        super("Successful Commands", "core.stat.successful_command");
+        super("Successful Commands");
     }
 
     @SubscribeEvent

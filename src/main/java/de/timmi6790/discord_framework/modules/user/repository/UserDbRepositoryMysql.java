@@ -43,6 +43,8 @@ public class UserDbRepositoryMysql implements UserDbRepository {
     private static final String ADD_RANK = "INSERT INTO player_rank(player_id, rank_id) VALUES(:databaseId, :rankId);";
     private static final String DELETE_RANK = "DELETE FROM player_rank WHERE player_rank.player_id = :databaseId AND player_rank.rank_id = :rankId LIMIT 1;";
 
+    private static final String INSERT_PLAYER_ACHIEVEMENT = "INSERT player_achievement(player_id, achievement_id) VALUES(:playerId, :achievementId)";
+
     private final Jdbi database;
 
     public UserDbRepositoryMysql(final UserDbModule module) {
@@ -182,6 +184,16 @@ public class UserDbRepositoryMysql implements UserDbRepository {
                         .bind(PLAYER_ID, userDatabaseId)
                         .bind("settingId", settingId)
                         .bind("setting", newValue)
+                        .execute()
+        );
+    }
+
+    @Override
+    public void grantPlayerAchievement(final int playerId, final int achievementId) {
+        this.database.useHandle(handle ->
+                handle.createUpdate(INSERT_PLAYER_ACHIEVEMENT)
+                        .bind(PLAYER_ID, playerId)
+                        .bind("achievementId", achievementId)
                         .execute()
         );
     }

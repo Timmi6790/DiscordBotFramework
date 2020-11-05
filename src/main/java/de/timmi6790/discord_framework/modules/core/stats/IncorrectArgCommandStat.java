@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class IncorrectArgCommandStat extends AbstractStat {
     public IncorrectArgCommandStat() {
-        super("IncorrectArgs Commands", "core.stat.incorrect_args_command");
+        super("IncorrectArgs Commands");
     }
 
     @SubscribeEvent

@@ -1,12 +1,10 @@
 package de.timmi6790.discord_framework.modules.achievement;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.achievement.repository.AchievementRepository;
 import de.timmi6790.discord_framework.modules.achievement.repository.AchievementRepositoryMysql;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
-import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -14,6 +12,7 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 public class AchievementModule extends AbstractModule {
@@ -39,33 +38,36 @@ public class AchievementModule extends AbstractModule {
         this.eventModule = this.getModuleOrThrow(EventModule.class);
     }
 
-    public void registerAchievements(final AbstractAchievement... achievements) {
+    public void registerAchievements(@NonNull final AbstractModule module, final AbstractAchievement... achievements) {
         for (final AbstractAchievement achievement : achievements) {
-            if (!this.registerAchievement(achievement)) {
-                DiscordBot.getLogger().warn("Achievement {} is already registered.", achievement.getName());
-            }
+            this.registerAchievement(module, achievement);
         }
     }
 
-    public boolean registerAchievement(final AbstractAchievement achievement) {
+    public boolean registerAchievement(@NonNull final AbstractModule module, @NonNull final AbstractAchievement achievement) {
         if (this.achievements.containsKey(achievement.getDatabaseId())) {
             return false;
         }
 
+        achievement.setInternalName(this.generateInternalName(module, "achievement", achievement.getName()));
         achievement.setDatabaseId(this.achievementRepository.retrieveOrCreateSettingId(achievement.getInternalName()));
+
         this.achievements.put(achievement.getDatabaseId(), achievement);
-        this.nameIdMatching.put(achievement.getInternalName(), achievement.getDatabaseId());
+        this.nameIdMatching.put(achievement.getName(), achievement.getDatabaseId());
 
         this.eventModule.addEventListener(achievement);
         return true;
     }
 
-    public void grantAchievement(@NonNull final UserDb userDb, @NonNull final AbstractAchievement achievement) {
-        if (!userDb.getAchievements().add(achievement.getDatabaseId())) {
-            return;
+    public Optional<AbstractAchievement> getAchievement(@NonNull final String achievementName) {
+        if (this.nameIdMatching.containsKey(achievementName)) {
+            return this.getAchievement(this.nameIdMatching.get(achievementName));
         }
 
-        this.achievementRepository.grantPlayerAchievement(userDb.getDatabaseId(), achievement.getDatabaseId());
-        achievement.onUnlock(userDb);
+        return Optional.empty();
+    }
+
+    public Optional<AbstractAchievement> getAchievement(@NonNull final int achievementId) {
+        return Optional.ofNullable(this.achievements.get(achievementId));
     }
 }

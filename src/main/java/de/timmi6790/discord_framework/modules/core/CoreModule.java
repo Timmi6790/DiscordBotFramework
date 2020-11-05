@@ -47,14 +47,18 @@ public class CoreModule extends AbstractModule {
             );
         }
 
-        this.getModule(AchievementModule.class).ifPresent(
-                achievementModule -> achievementModule.registerAchievements(new CommandAutoCorrectAchievement())
-        );
+        this.getModule(AchievementModule.class)
+                .ifPresent(achievementModule -> achievementModule.registerAchievements(
+                        this,
+                        new CommandAutoCorrectAchievement()
+                        )
+                );
 
         this.getModule(StatModule.class)
                 .ifPresent(statModule -> {
                             DiscordBot.getLogger().info("Registering stats");
                             statModule.registerStats(
+                                    this,
                                     new FailedCommandStat(),
                                     new MissingArgCommandStat(),
                                     new SuccessfulCommandStat(),

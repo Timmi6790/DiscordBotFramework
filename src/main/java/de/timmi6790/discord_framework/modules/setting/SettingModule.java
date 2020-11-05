@@ -55,11 +55,7 @@ public class SettingModule extends AbstractModule {
     }
 
     public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
-        final String internalName = String.format("%s.setting.%s", module.getName(), setting.getName())
-                .replace(" ", "_")
-                .toLowerCase();
-
-        setting.setInternalName(internalName);
+        setting.setInternalName(this.generateInternalName(module, "setting", setting.getName()));
         setting.setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()));
         setting.setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));
 

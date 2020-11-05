@@ -6,12 +6,11 @@ import lombok.Data;
 @Data
 public class AbstractStat {
     private final String name;
-    private final String internalName;
+    private String internalName;
     private int databaseId;
 
-    public AbstractStat(final String name, final String internalName) {
+    public AbstractStat(final String name) {
         this.name = name;
-        this.internalName = internalName;
     }
 
     protected void increaseStat(final UserDb userDb) {
