@@ -1,6 +1,8 @@
 package de.timmi6790.discord_framework.modules.rank;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -8,7 +10,7 @@ import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.MockedStatic;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,9 +26,9 @@ class RankTest {
     private static final String PERMISSION_PREFIX = "rank_test.";
     private static final AtomicInteger RANK_NAME_NUMBER = new AtomicInteger(0);
 
-    private static final RankModule rankModule = Mockito.spy(new RankModule());
-    private static final PermissionsModule permissionsModule = Mockito.spy(new PermissionsModule());
-    private static final UserDbModule userDbModule = Mockito.spy(new UserDbModule());
+    private static final RankModule rankModule = spy(new RankModule());
+    private static final PermissionsModule permissionsModule = spy(new PermissionsModule());
+    private static final UserDbModule userDbModule = spy(new UserDbModule());
 
     private static final Set<Integer> permissionIds = new HashSet<>();
 
@@ -36,22 +38,27 @@ class RankTest {
 
     @BeforeAll
     static void setup() {
-        doReturn(AbstractIntegrationTest.databaseModule).when(permissionsModule).getModuleOrThrow(DatabaseModule.class);
-        permissionsModule.onInitialize();
+        final ModuleManager moduleManager = mock(ModuleManager.class);
 
         final CommandModule commandModule = spy(new CommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
 
-        doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(commandModule).when(userDbModule).getModuleOrThrow(CommandModule.class);
-        userDbModule.onInitialize();
+        when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionsModule);
+        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
+        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
+        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);
 
-        doReturn(AbstractIntegrationTest.databaseModule).when(rankModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(userDbModule).when(rankModule).getModuleOrThrow(UserDbModule.class);
-        doReturn(commandModule).when(rankModule).getModuleOrThrow(CommandModule.class);
-        doReturn(permissionsModule).when(rankModule).getModuleOrThrow(PermissionsModule.class);
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
 
-        rankModule.onInitialize();
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            permissionsModule.onInitialize();
+            userDbModule.onInitialize();
+            rankModule.onInitialize();
+        }
 
         for (int count = 0; 10 > count; count++) {
             permissionIds.add(permissionsModule.addPermission(PERMISSION_PREFIX + count));

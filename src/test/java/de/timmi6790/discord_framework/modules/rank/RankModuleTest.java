@@ -1,12 +1,17 @@
 package de.timmi6790.discord_framework.modules.rank;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.ModuleManager;
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,22 +36,33 @@ class RankModuleTest {
 
     @BeforeAll
     static void setup() {
-        doReturn(AbstractIntegrationTest.databaseModule).when(permissionsModule).getModuleOrThrow(DatabaseModule.class);
-        permissionsModule.onInitialize();
+        final ModuleManager moduleManager = mock(ModuleManager.class);
 
         final CommandModule commandModule = spy(new CommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
 
-        doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(commandModule).when(userDbModule).getModuleOrThrow(CommandModule.class);
-        userDbModule.onInitialize();
+        final EventModule eventModule = mock(EventModule.class);
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
 
-        doReturn(AbstractIntegrationTest.databaseModule).when(rankModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(userDbModule).when(rankModule).getModuleOrThrow(UserDbModule.class);
-        doReturn(commandModule).when(rankModule).getModuleOrThrow(CommandModule.class);
-        doReturn(permissionsModule).when(rankModule).getModuleOrThrow(PermissionsModule.class);
+        final AchievementModule achievementModule = new AchievementModule();
 
-        rankModule.onInitialize();
+        when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionsModule);
+        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
+        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
+        doReturn(achievementModule).when(moduleManager).getModuleOrThrow(AchievementModule.class);
+
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            permissionsModule.onInitialize();
+            userDbModule.onInitialize();
+            rankModule.onInitialize();
+            achievementModule.onInitialize();
+        }
     }
 
     @Test

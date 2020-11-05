@@ -5,7 +5,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepositoryMysql;
@@ -32,7 +34,9 @@ public class UserDbModule extends AbstractModule {
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
                 PermissionsModule.class,
-                CommandModule.class
+                CommandModule.class,
+                EventModule.class,
+                RankModule.class
         );
     }
 

@@ -1,5 +1,6 @@
 package de.timmi6790.discord_framework.modules.user.commands;
 
+import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
@@ -7,6 +8,7 @@ import de.timmi6790.discord_framework.modules.command.property.properties.MinArg
 import de.timmi6790.discord_framework.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
+import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
@@ -15,10 +17,8 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 public class UserCommand extends AbstractCommand {
@@ -30,8 +30,11 @@ public class UserCommand extends AbstractCommand {
     private final EmoteReactionModule emoteReactionModule = getModuleManager().getModuleOrThrow(EmoteReactionModule.class);
 
     public UserCommand() {
-        super("user", "Management", "User control command", "<discordUser> <perms|rank|setPrimaryRank|ban|" +
-                "unBan|info|invalidate> <add;remove;list|add;remove|rank|||||> <command;permNode|rank|>");
+        super("user",
+                "Management",
+                "User control command",
+                "<discordUser> <perms|rank|setPrimaryRank|ban|unBan|info|invalidate> " +
+                        "<add;remove;list|add;remove|rank|||||> <command;permNode|rank|>");
 
         this.addProperty(
                 new MinArgCommandProperty(2)
@@ -95,48 +98,48 @@ public class UserCommand extends AbstractCommand {
             settings.add(entry.getKey().getInternalName() + ": " + entry.getValue());
         }
 
-        final String stats = userDb.getStatsMap()
-                .entrySet()
-                .stream()
-                .map(setting -> setting.getKey().getInternalName() + ": " + setting.getValue())
-                .collect(Collectors.joining("\n"));
+        final StringJoiner stats = new StringJoiner("\n");
+        for (final Map.Entry<AbstractStat, Integer> entry : userDb.getStatsMap().entrySet()) {
+            stats.add(entry.getKey().getInternalName() + ": " + entry.getValue());
+        }
 
-        final String primaryRank = getRankModule().getRank(userDb.getPrimaryRank())
+        final StringJoiner achievements = new StringJoiner("\n");
+        for (final AbstractAchievement achievement : userDb.getAchievements()) {
+            achievements.add(achievement.getName());
+        }
+
+        final String primaryRank = getRankModule().getRank(userDb.getPrimaryRankId())
                 .map(Rank::getName)
                 .orElse("Unknown");
-        final String subRanks = userDb.getRanks()
-                .stream()
-                .map(getRankModule()::getRank)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(Rank::getName)
-                .collect(Collectors.joining("; "));
 
-        final String permissions = userDb.getPermissionIds()
-                .stream()
-                .map(getPermissionsModule()::getPermissionFromId)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.joining("\n"));
+        final StringJoiner subRanks = new StringJoiner("; ");
+        for (final int rankId : userDb.getRankIds()) {
+            getRankModule().getRank(rankId)
+                    .map(Rank::getName)
+                    .ifPresent(subRanks::add);
+        }
 
-        final String allPermissions = userDb.getAllPermissionIds()
-                .stream()
-                .map(getPermissionsModule()::getPermissionFromId)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.joining("\n"));
+        final StringJoiner permissions = new StringJoiner("\n");
+        for (final int permissionId : userDb.getPermissionIds()) {
+            getPermissionsModule().getPermissionFromId(permissionId).ifPresent(permissions::add);
+        }
+
+        final StringJoiner allPermissions = new StringJoiner("\n");
+        for (final int permissionId : userDb.getAllPermissionIds()) {
+            getPermissionsModule().getPermissionFromId(permissionId).ifPresent(allPermissions::add);
+        }
 
         this.sendTimedMessage(commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
-                        .addField("Shop Points", String.valueOf(userDb.getPoints()), false)
-                        .addField("Ranks", primaryRank + "[" + subRanks + "]", true)
+                        .addField("Ranks", primaryRank + "[" + subRanks.toString() + "]", true)
+                        .addField("Achievements", achievements.toString(), false)
                         .addField("Settings", settings.toString(), false)
-                        .addField("Stats", stats, false)
-                        .addField("User Perms", permissions, false)
-                        .addField("All Perms", allPermissions, false),
+                        .addField("Stats", stats.toString(), false)
+                        .addField("User Perms", permissions.toString(), false)
+                        .addField("All Perms", allPermissions.toString(), false),
                 90
         );
 
@@ -212,7 +215,10 @@ public class UserCommand extends AbstractCommand {
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Set Primary Rank")
-                        .setDescription("Set primary rank to " + MarkdownUtil.monospace(rank.getName()) + "."),
+                        .setDescription(
+                                "Set primary rank to %s.",
+                                MarkdownUtil.monospace(rank.getName())
+                        ),
                 90
         );
 
@@ -243,7 +249,10 @@ public class UserCommand extends AbstractCommand {
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
                             .setTitle("Added Rank")
-                            .setDescription("Added " + MarkdownUtil.monospace(rank.getName()) + " rank to the user."),
+                            .setDescription(
+                                    "Added %s rank to the user.",
+                                    MarkdownUtil.monospace(rank.getName())
+                            ),
                     90
             );
 
@@ -265,7 +274,10 @@ public class UserCommand extends AbstractCommand {
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
                             .setTitle("Removed Rank")
-                            .setDescription("Removed " + MarkdownUtil.monospace(rank.getName()) + " rank from the user."),
+                            .setDescription(
+                                    "Removed %s rank from the user.",
+                                    MarkdownUtil.monospace(rank.getName())
+                            ),
                     90
             );
         }
@@ -287,7 +299,11 @@ public class UserCommand extends AbstractCommand {
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
-                                .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " does already possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
+                                .setDescription(
+                                        "%s does already possess the %s permission.",
+                                        MarkdownUtil.monospace(discordUser.getAsTag()),
+                                        MarkdownUtil.monospace(permissionNode)
+                                ),
                         90
                 );
 
@@ -299,7 +315,11 @@ public class UserCommand extends AbstractCommand {
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
                             .setTitle("Added Permission")
-                            .setDescription(MarkdownUtil.monospace(permissionNode) + " added to " + MarkdownUtil.monospace(discordUser.getAsTag())),
+                            .setDescription(
+                                    "%s added to %s.",
+                                    MarkdownUtil.monospace(permissionNode),
+                                    MarkdownUtil.monospace(discordUser.getAsTag())
+                            ),
                     90
             );
 
@@ -309,7 +329,11 @@ public class UserCommand extends AbstractCommand {
                         commandParameters,
                         this.getEmbedBuilder(commandParameters)
                                 .setTitle(ERROR_TITLE)
-                                .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " does not possess the " + MarkdownUtil.monospace(permissionNode) + " permission."),
+                                .setDescription(
+                                        "%s does not possess the %s permission.",
+                                        MarkdownUtil.monospace(discordUser.getAsTag()),
+                                        MarkdownUtil.monospace(permissionNode)
+                                ),
                         90
                 );
 
@@ -321,7 +345,11 @@ public class UserCommand extends AbstractCommand {
                     commandParameters,
                     this.getEmbedBuilder(commandParameters)
                             .setTitle("Removed Permission")
-                            .setDescription(MarkdownUtil.monospace(permissionNode) + " removed from " + MarkdownUtil.monospace(discordUser.getAsTag())),
+                            .setDescription(
+                                    "%s removed from %s.",
+                                    MarkdownUtil.monospace(permissionNode),
+                                    MarkdownUtil.monospace(discordUser.getAsTag())
+                            ),
                     90
             );
         }

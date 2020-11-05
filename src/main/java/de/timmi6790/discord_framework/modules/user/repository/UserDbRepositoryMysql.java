@@ -1,6 +1,11 @@
 package de.timmi6790.discord_framework.modules.user.repository;
 
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.NonNull;
@@ -12,7 +17,7 @@ public class UserDbRepositoryMysql implements UserDbRepository {
     private static final String PLAYER_ID = "playerId";
     private static final String DATABASE_ID = "databaseId";
 
-    private static final String GET_PLAYER = "SELECT player.id, player.discordId, player.shop_points shopPoints, player.banned, player.primary_rank primaryRank, " +
+    private static final String GET_PLAYER = "SELECT player.id, player.discordId, player.banned, player.primary_rank primaryRank, " +
             "GROUP_CONCAT(DISTINCT p_rank.rank_id) ranks, " +
             "GROUP_CONCAT(DISTINCT permission.id) perms, " +
             "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_setting.setting_id, p_setting.setting) SEPARATOR ';') settings, " +
@@ -49,7 +54,17 @@ public class UserDbRepositoryMysql implements UserDbRepository {
 
     public UserDbRepositoryMysql(final UserDbModule module) {
         this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(UserDb.class, new UserDbMapper(this));
+        this.database.registerRowMapper(
+                UserDb.class,
+                new UserDbMapper(
+                        this,
+                        module.getModuleOrThrow(EventModule.class),
+                        module.getModuleOrThrow(RankModule.class),
+                        module.getModule(AchievementModule.class).orElse(null),
+                        module.getModule(SettingModule.class).orElse(null),
+                        module.getModule(StatModule.class).orElse(null)
+                )
+        );
     }
 
     @Override

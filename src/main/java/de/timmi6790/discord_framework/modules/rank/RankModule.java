@@ -28,8 +28,11 @@ public class RankModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
-                UserDbModule.class,
                 CommandModule.class
+        );
+
+        this.addDependencies(
+                UserDbModule.class
         );
     }
 

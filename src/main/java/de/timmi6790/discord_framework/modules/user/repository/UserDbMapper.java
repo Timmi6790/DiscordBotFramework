@@ -1,8 +1,14 @@
 package de.timmi6790.discord_framework.modules.user.repository;
 
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
+import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.AllArgsConstructor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -12,6 +18,11 @@ import java.sql.SQLException;
 @AllArgsConstructor
 public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb> {
     private final UserDbRepository userDbRepository;
+    private final EventModule eventModule;
+    private final RankModule rankModule;
+    private final @Nullable AchievementModule achievementModule;
+    private final @Nullable SettingModule settingModule;
+    private final @Nullable StatModule statModule;
 
     @Override
     public UserDb map(final ResultSet rs, final StatementContext ctx) throws SQLException {
@@ -21,12 +32,16 @@ public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb>
 
         return new UserDb(
                 this.userDbRepository,
+                this.eventModule,
+                this.rankModule,
+                this.achievementModule,
+                this.settingModule,
+                this.statModule,
                 rs.getInt("id"),
                 rs.getLong("discordId"),
                 rs.getInt("primaryRank"),
                 this.toSet(rs.getString("ranks"), Integer::parseInt),
                 rs.getBoolean("banned"),
-                rs.getLong("shopPoints"),
                 this.toSet(rs.getString("perms"), Integer::parseInt),
                 this.toMap(rs.getString("settings"), Integer::parseInt, String::valueOf),
                 this.toMap(rs.getString("stats"), Integer::parseInt, Integer::parseInt),

@@ -1,10 +1,13 @@
 package de.timmi6790.discord_framework.modules.user;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.util.Optional;
 
@@ -19,13 +22,24 @@ class UserDbModuleTest {
 
     @BeforeAll
     static void setUp() {
-        doReturn(AbstractIntegrationTest.databaseModule).when(userDbModule).getModuleOrThrow(DatabaseModule.class);
+        final ModuleManager moduleManager = mock(ModuleManager.class);
 
         final CommandModule commandModule = spy(new CommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
-        doReturn(commandModule).when(userDbModule).getModuleOrThrow(CommandModule.class);
 
-        userDbModule.onInitialize();
+        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
+        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);
+
+
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            userDbModule.onInitialize();
+        }
     }
 
     @Test
