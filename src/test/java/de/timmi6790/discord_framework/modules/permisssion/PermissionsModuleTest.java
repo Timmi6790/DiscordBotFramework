@@ -5,7 +5,6 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,7 +15,6 @@ import static org.mockito.Mockito.doReturn;
 class PermissionsModuleTest {
     private static final AtomicInteger permissionNodeId = new AtomicInteger(0);
 
-    @Spy
     private static final PermissionsModule permissionsModule = Mockito.spy(new PermissionsModule());
 
     private static String getPermissionNode() {

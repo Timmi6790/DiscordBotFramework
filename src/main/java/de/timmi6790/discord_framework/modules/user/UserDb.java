@@ -274,7 +274,7 @@ public class UserDb {
                         setting,
                         this.getSetting(setting)
                                 .map(String::valueOf)
-                                .orElse(String.valueOf(setting.fromDatabaseValue(setting.getDefaultDatabaseValue())))
+                                .orElse(String.valueOf(setting.getDefaultValue()))
                 );
             }
         }

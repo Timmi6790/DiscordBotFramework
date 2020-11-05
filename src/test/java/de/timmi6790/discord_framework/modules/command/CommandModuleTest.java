@@ -14,39 +14,6 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 class CommandModuleTest {
     @SneakyThrows
     private CommandModule getCommandModule() {
-        // TODO: FIX ME
-        /*
-        final CommandModule commandModule = Mockito.spy(new CommandModule());
-
-        final ModuleManager moduleManager = Mockito.spy(new ModuleManager());
-        final ConfigModule configModule = Mockito.spy(new ConfigModule());
-        final EventModule eventModule = Mockito.spy(new EventModule());
-        final PermissionsModule permissionsModule = Mockito.spy(new PermissionsModule());
-
-        doReturn(Optional.of(eventModule)).when(moduleManager).getModule(EventModule.class);
-        doReturn(Optional.of(AbstractIntegrationTest.databaseModule)).when(moduleManager).getModule(DatabaseModule.class);
-        doReturn(Optional.of(configModule)).when(moduleManager).getModule(ConfigModule.class);
-        doReturn(Optional.of(permissionsModule)).when(moduleManager).getModule(PermissionsModule.class);
-
-        doReturn(moduleManager).when(commandModule).getModuleManager();
-        doReturn(moduleManager).when(permissionsModule).getModuleManager();
-
-        final Config config = new Config();
-        config.setMainCommand("stat ");
-        doReturn(config).when(configModule).registerAndGetConfig(commandModule, new Config());
-
-        final JDA jda = Mockito.spy(JDA.class);
-        doReturn(jda).when(commandModule).getDiscord();
-
-        final SelfUser selfUser = Mockito.spy(SelfUser.class);
-        doReturn(selfUser).when(jda).getSelfUser();
-        when(selfUser.getIdLong()).thenReturn(1L);
-
-        permissionsModule.onInitialize();
-        commandModule.onInitialize();
-
-         */
-
         return new CommandModule();
     }
 

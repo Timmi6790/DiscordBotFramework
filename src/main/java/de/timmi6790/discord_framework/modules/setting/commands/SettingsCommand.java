@@ -73,8 +73,12 @@ public class SettingsCommand extends AbstractCommand {
             return this.showCurrentSettings(commandParameters);
         }
 
-        this.checkArgLength(commandParameters, 2);
         final AbstractSetting<?> setting = this.getSettingThrow(commandParameters, 0);
+
+        // setting info
+        if (argsLength == 1) {
+            return this.showSettingInfo(commandParameters, setting);
+        }
 
         // Change value
         final String raw = commandParameters.getRawArgs();
@@ -115,6 +119,26 @@ public class SettingsCommand extends AbstractCommand {
                 embedBuilder,
                 400
         );
+        return CommandResult.SUCCESS;
+    }
+
+    private CommandResult showSettingInfo(final CommandParameters commandParameters, final AbstractSetting<?> setting) {
+        this.sendTimedMessage(
+                commandParameters,
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle("Setting - " + setting.getName())
+                        .addField("Description", setting.getDescription())
+                        .addField("Alias names", String.join(", ", setting.getAliasNames()))
+                        .addField("Default value", String.valueOf(setting.getDefaultValue()))
+                        .setFooterFormat(
+                                "Tip: You can change the setting with %s%s %s <newValue>",
+                                getCommandModule().getMainCommand(),
+                                this.getName(),
+                                setting.getName()
+                        ),
+                300
+        );
+
         return CommandResult.SUCCESS;
     }
 

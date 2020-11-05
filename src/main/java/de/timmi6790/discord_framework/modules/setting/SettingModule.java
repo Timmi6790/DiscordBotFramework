@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -23,8 +22,10 @@ public class SettingModule extends AbstractModule {
     @Getter
     private final Map<Integer, AbstractSetting<?>> settings = new ConcurrentHashMap<>();
     private final Map<String, Integer> nameIdMatching = Collections.synchronizedMap(new CaseInsensitiveMap<>());
+    private final Map<String, String> aliasNameMatcher = Collections.synchronizedMap(new CaseInsensitiveMap<>());
 
     private SettingRepository settingRepository;
+    private PermissionsModule permissionsModule;
 
     public SettingModule() {
         super("Setting");
@@ -39,6 +40,7 @@ public class SettingModule extends AbstractModule {
     @Override
     public void onInitialize() {
         this.settingRepository = new SettingRepositoryMysql(this);
+        this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
 
         this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
@@ -53,14 +55,20 @@ public class SettingModule extends AbstractModule {
     }
 
     public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
-        setting.setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()));
-        final String defaultPermissionName = String.format("%s.setting.%s", module.getName(), setting.getName())
+        final String internalName = String.format("%s.setting.%s", module.getName(), setting.getName())
                 .replace(" ", "_")
                 .toLowerCase();
-        setting.setPermissionId(AbstractCommand.getPermissionsModule().addPermission(defaultPermissionName));
+
+        setting.setInternalName(internalName);
+        setting.setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()));
+        setting.setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));
 
         this.settings.put(setting.getDatabaseId(), setting);
         this.nameIdMatching.put(setting.getName(), setting.getDatabaseId());
+
+        for (final String aliasName : setting.getAliasNames()) {
+            this.aliasNameMatcher.put(aliasName, setting.getName());
+        }
     }
 
     public void registerSettings(final AbstractModule module, final AbstractSetting<?>... settings) {
@@ -70,11 +78,12 @@ public class SettingModule extends AbstractModule {
     }
 
     public Optional<AbstractSetting<?>> getSetting(final String settingName) {
-        if (!this.nameIdMatching.containsKey(settingName)) {
+        final String name = this.aliasNameMatcher.getOrDefault(settingName, settingName);
+        if (!this.nameIdMatching.containsKey(name)) {
             return Optional.empty();
         }
 
-        return Optional.ofNullable(this.settings.get(this.nameIdMatching.get(settingName)));
+        return Optional.ofNullable(this.settings.get(this.nameIdMatching.get(name)));
     }
 
     public <T> Optional<? extends AbstractSetting<T>> getSetting(final Class<? extends AbstractSetting<T>> clazz) {
@@ -84,9 +93,5 @@ public class SettingModule extends AbstractModule {
             }
         }
         return Optional.empty();
-    }
-
-    public Optional<AbstractSetting<?>> getSetting(final int dbId) {
-        return Optional.ofNullable(this.settings.get(dbId));
     }
 }

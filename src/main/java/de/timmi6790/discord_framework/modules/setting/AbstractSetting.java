@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.setting;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
+import lombok.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -12,18 +13,22 @@ import java.util.Optional;
 
 @Data
 public abstract class AbstractSetting<T> {
-    private final String internalName;
     private final String name;
     private final String description;
-    private final String defaultDatabaseValue;
+    private final T defaultValue;
+    private final String[] aliasNames;
+    private String internalName;
     private int databaseId;
     private int permissionId;
 
-    protected AbstractSetting(final String internalName, final String name, final String description, final String defaultDatabaseValue) {
+    protected AbstractSetting(@NonNull final String name,
+                              @NonNull final String description,
+                              @NonNull final T defaultValue,
+                              @NonNull final String... aliasNames) {
         this.name = name;
-        this.internalName = internalName;
         this.description = description;
-        this.defaultDatabaseValue = defaultDatabaseValue;
+        this.defaultValue = defaultValue;
+        this.aliasNames = aliasNames;
     }
 
     public abstract String toDatabaseValue(T value);
@@ -33,6 +38,10 @@ public abstract class AbstractSetting<T> {
     protected abstract Optional<T> parseNewValue(CommandParameters commandParameters, final String userInput);
 
     protected abstract List<T> possibleValues(CommandParameters commandParameters, String userInput);
+
+    public String getDatabaseDefaultValue() {
+        return this.toDatabaseValue(this.getDefaultValue());
+    }
 
     public void handleCommand(final CommandParameters commandParameters, final String userInput) {
         final Optional<T> parsedValue = this.parseNewValue(commandParameters, userInput);
@@ -51,7 +60,7 @@ public abstract class AbstractSetting<T> {
     protected void changeValue(final CommandParameters commandParameters,
                                final T newValue,
                                final boolean sendMessage) {
-        final T oldValue = commandParameters.getUserDb().getSetting(this).orElse(this.fromDatabaseValue(this.getDefaultDatabaseValue()));
+        final T oldValue = commandParameters.getUserDb().getSetting(this).orElse(this.getDefaultValue());
         commandParameters.getUserDb().setSetting(this, newValue);
         if (sendMessage) {
             this.sendChangedValueMessage(

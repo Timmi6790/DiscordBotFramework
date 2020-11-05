@@ -9,7 +9,6 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,11 +24,8 @@ class RankTest {
     private static final String PERMISSION_PREFIX = "rank_test.";
     private static final AtomicInteger RANK_NAME_NUMBER = new AtomicInteger(0);
 
-    @Spy
     private static final RankModule rankModule = Mockito.spy(new RankModule());
-    @Spy
     private static final PermissionsModule permissionsModule = Mockito.spy(new PermissionsModule());
-    @Spy
     private static final UserDbModule userDbModule = Mockito.spy(new UserDbModule());
 
     private static final Set<Integer> permissionIds = new HashSet<>();

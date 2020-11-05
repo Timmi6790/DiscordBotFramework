@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class BooleanSetting extends AbstractSetting<Boolean> {
-    public BooleanSetting(final String internalName, final String name, final String description, final boolean defaultValue) {
-        super(internalName, name, description, defaultValue ? String.valueOf(1) : String.valueOf(0));
+    public BooleanSetting(final String name,
+                          final String description,
+                          final boolean defaultValue,
+                          final String... aliasNames) {
+        super(name, description, defaultValue, aliasNames);
     }
 
     @Override
