@@ -2,17 +2,15 @@ package de.timmi6790.discord_framework.modules;
 
 import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import lombok.NonNull;
-import lombok.Setter;
 import org.junit.jupiter.api.Test;
 import org.tinylog.Logger;
 
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 class ModuleManagerTest {
     private ModuleManager getModuleManager() {
@@ -28,7 +26,7 @@ class ModuleManagerTest {
     }
 
     @Test
-    void registerAlreadyRegisteredModule() {
+    void register_already_registered_module() {
         final ModuleManager moduleManager = this.getModuleManager();
         final AbstractModule module = new ExampleModule();
         moduleManager.registerModule(module);
@@ -66,27 +64,23 @@ class ModuleManagerTest {
     }
 
     @Test
-    void initialize() throws InterruptedException {
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        final CountdownModule countdownModule = new CountdownModule(countDownLatch);
-        countdownModule.setCallOnInitialize(true);
+    void initialize() {
+        final ExampleModule module = spy(new ExampleModule());
 
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(countdownModule);
+        moduleManager.registerModule(module);
+        moduleManager.initialize(ExampleModule.class);
 
-        moduleManager.initialize(CountdownModule.class);
-        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        assertThat(countDownLatch.getCount()).isZero();
-        assertThat(moduleManager.getInitializedModules())
-                .hasSize(1)
-                .contains(CountdownModule.class);
+        verify(module).onInitialize();
+        assertThat(moduleManager.getInitializedModules()).containsExactly(ExampleModule.class);
     }
 
     @Test
-    void initializeMissingDependency() throws TopicalSortCycleException {
-        final DependencyModule dependencyModule = new DependencyModule();
-        final ModuleManager moduleManager = new ModuleManager(Logger.tag(""));
+    void initialize_missing_dependency() throws TopicalSortCycleException {
+        final ExampleModule dependencyModule = spy(new ExampleModule());
+        dependencyModule.addDependenciesAndLoadAfter(ExampleModule2.class);
+
+        final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModule(dependencyModule);
         moduleManager.initializeAll();
 
@@ -94,9 +88,10 @@ class ModuleManagerTest {
     }
 
     @Test
-    void initializeWhileStarted() throws TopicalSortCycleException {
+    void initialize_while_started() throws TopicalSortCycleException {
         final ExampleModule exampleModule = new ExampleModule();
-        final ModuleManager moduleManager = new ModuleManager(Logger.tag(""));
+
+        final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModule(exampleModule);
         moduleManager.initializeAll();
         moduleManager.startAll();
@@ -105,9 +100,10 @@ class ModuleManagerTest {
     }
 
     @Test
-    void initializeWhileInitialized() throws TopicalSortCycleException {
+    void initialize_while_initialized() throws TopicalSortCycleException {
         final ExampleModule exampleModule = new ExampleModule();
-        final ModuleManager moduleManager = new ModuleManager(Logger.tag(""));
+
+        final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModule(exampleModule);
         moduleManager.initializeAll();
 
@@ -115,108 +111,81 @@ class ModuleManagerTest {
     }
 
     @Test
-    void start() throws InterruptedException {
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        final CountdownModule countdownModule = new CountdownModule(countDownLatch);
-        countdownModule.setCallOnEnable(true);
+    void start() {
+        final ExampleModule module = spy(new ExampleModule());
 
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(countdownModule);
+        moduleManager.registerModule(module);
 
-        moduleManager.initialize(CountdownModule.class);
-        moduleManager.start(CountdownModule.class);
+        moduleManager.initialize(ExampleModule.class);
+        moduleManager.start(ExampleModule.class);
 
-        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        assertThat(countDownLatch.getCount()).isZero();
-        assertThat(moduleManager.getStartedModules())
-                .hasSize(1)
-                .contains(CountdownModule.class);
+        verify(module).onEnable();
+        assertThat(moduleManager.getStartedModules()).containsExactly(ExampleModule.class);
     }
 
     @Test
-    void startWithoutInitialize() {
-        final ExampleModule countdownModule = new ExampleModule();
+    void start_without_initialize() {
+        final ExampleModule module = new ExampleModule();
 
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(countdownModule);
+        moduleManager.registerModule(module);
 
-        assertThat(moduleManager.start(CountdownModule.class))
-                .isFalse();
-        assertThat(moduleManager.getStartedModules())
-                .isEmpty();
+        assertThat(moduleManager.start(ExampleModule.class)).isFalse();
+        assertThat(moduleManager.getStartedModules()).isEmpty();
     }
 
     @Test
-    void initializeAll() throws InterruptedException, TopicalSortCycleException {
-        final CountDownLatch countDownLatch = new CountDownLatch(2);
-
-        final CountdownModule countdownModule = new CountdownModule(countDownLatch);
-        countdownModule.setCallOnInitialize(true);
-
-        final CountdownModule countdownModule2 = new CountdownModule2(countDownLatch);
-        countdownModule2.setCallOnInitialize(true);
+    void initializeAll() throws TopicalSortCycleException {
+        final ExampleModule module1 = spy(new ExampleModule());
+        final ExampleModule2 module2 = spy(new ExampleModule2());
 
         final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModules(
-                countdownModule,
-                countdownModule2
+                module1,
+                module2
         );
-
         moduleManager.initializeAll();
 
-        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        assertThat(countDownLatch.getCount()).isZero();
+        verify(module1).onInitialize();
+        verify(module2).onInitialize();
         assertThat(moduleManager.getInitializedModules())
-                .hasSize(2)
-                .contains(CountdownModule.class)
-                .contains(CountdownModule2.class);
+                .containsExactlyInAnyOrder(ExampleModule.class, ExampleModule2.class);
     }
 
     @Test
-    void startAll() throws TopicalSortCycleException, InterruptedException {
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        final CountdownModule countdownModule = new CountdownModule(countDownLatch);
-        countdownModule.setCallOnEnable(true);
-
-        final CountdownModule countdownModule2 = new CountdownModule2(countDownLatch);
-        countdownModule.setCallOnEnable(true);
+    void startAll() throws TopicalSortCycleException {
+        final ExampleModule module1 = spy(new ExampleModule());
+        final ExampleModule2 module2 = spy(new ExampleModule2());
 
         final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModules(
-                countdownModule,
-                countdownModule2
+                module1,
+                module2
         );
 
         moduleManager.initializeAll();
         moduleManager.startAll();
 
-        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        assertThat(countDownLatch.getCount()).isZero();
-        assertThat(moduleManager.getStartedModules())
-                .hasSize(2)
-                .contains(CountdownModule.class)
-                .contains(CountdownModule2.class);
+        verify(module1).onEnable();
+        verify(module2).onEnable();
+
+        assertThat(moduleManager.getStartedModules()).containsExactlyInAnyOrder(ExampleModule.class, ExampleModule2.class);
     }
 
 
     @Test
-    void stopModule() throws InterruptedException {
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        final CountdownModule countdownModule = new CountdownModule(countDownLatch);
-        countdownModule.setCallOnDisable(true);
+    void stopModule() {
+        final ExampleModule module = spy(new ExampleModule());
 
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(countdownModule);
+        moduleManager.registerModule(module);
 
-        moduleManager.initialize(CountdownModule.class);
-        moduleManager.start(CountdownModule.class);
-        moduleManager.stopModule(CountdownModule.class);
+        moduleManager.initialize(ExampleModule.class);
+        moduleManager.start(ExampleModule.class);
+        moduleManager.stopModule(ExampleModule.class);
 
-        assertThat(countDownLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        assertThat(countDownLatch.getCount()).isZero();
+        verify(module).onDisable();
         assertThat(moduleManager.getStartedModules())
                 .isEmpty();
         assertThat(moduleManager.getInitializedModules())
@@ -224,67 +193,32 @@ class ModuleManagerTest {
     }
 
     @Test
-    void stopNotLoadedModule() {
+    void stop_not_loaded_module() {
         final ModuleManager moduleManager = this.getModuleManager();
         assertThat(moduleManager.stopModule(ExampleModule.class)).isFalse();
     }
 
-    @Setter
-    private static class CountdownModule extends AbstractModule {
-        private final CountDownLatch countDownLatch;
-        private boolean callOnInitialize = false;
-        private boolean callOnEnable = false;
-        private boolean callOnDisable = false;
-
-        public CountdownModule(final CountDownLatch countDownLatch) {
-            this("CountdownModule", countDownLatch);
-        }
-
-        public CountdownModule(@NonNull final String moduleName, @NonNull final CountDownLatch countDownLatch) {
-            super(moduleName);
-
-            this.countDownLatch = countDownLatch;
-        }
-
-        @Override
-        public void onEnable() {
-            if (this.callOnEnable) {
-                this.countDownLatch.countDown();
-            }
+    private static class ExampleModule extends AbstractModule {
+        public ExampleModule() {
+            super("Example");
         }
 
         @Override
         public void onInitialize() {
-            if (this.callOnInitialize) {
-                this.countDownLatch.countDown();
-            }
+        }
+
+        @Override
+        public void onEnable() {
+
         }
 
         @Override
         public void onDisable() {
-            if (this.callOnDisable) {
-                this.countDownLatch.countDown();
-            }
-        }
-    }
 
-    private static class CountdownModule2 extends CountdownModule {
-        public CountdownModule2(final CountDownLatch countDownLatch) {
-            super("CountdownModule2", countDownLatch);
         }
     }
 
     private static class ExampleModule2 extends ExampleModule {
 
-    }
-
-    private static class DependencyModule extends AbstractModule {
-        public DependencyModule() {
-            super("DependencyModule");
-
-            this.addDependenciesAndLoadAfter(
-                    ExampleModule2.class
-            );
-        }
     }
 }

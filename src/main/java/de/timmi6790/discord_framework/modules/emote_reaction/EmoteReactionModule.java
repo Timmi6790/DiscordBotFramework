@@ -2,84 +2,35 @@ package de.timmi6790.discord_framework.modules.emote_reaction;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Expiry;
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.emote_reaction.cache.CacheExpireAfter;
+import de.timmi6790.discord_framework.modules.emote_reaction.cache.CacheRemoveListener;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
-import org.checkerframework.checker.index.qual.NonNegative;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @EqualsAndHashCode(callSuper = true)
+@Getter
 public class EmoteReactionModule extends AbstractModule {
     private static final int ACTIVE_EMOTES_LIMIT = 6;
 
-    @Getter
     private final Map<Long, AtomicInteger> activeEmotesPerPlayer = new ConcurrentHashMap<>();
-
-    @Getter
     private final Cache<Long, EmoteReactionMessage> emoteMessageCache = Caffeine.newBuilder()
             .maximumSize(10_000)
-            .expireAfter(new Expiry<Long, EmoteReactionMessage>() {
-                @Override
-                public long expireAfterCreate(@NonNull final Long key, @NonNull final EmoteReactionMessage value, final long currentTime) {
-                    return TimeUnit.SECONDS.toNanos(value.getDeleteTime());
-                }
-
-                @Override
-                public long expireAfterUpdate(@NonNull final Long key, @NonNull final EmoteReactionMessage value, final long currentTime, @NonNegative final long currentDuration) {
-                    return currentDuration;
-                }
-
-                @Override
-                public long expireAfterRead(@NonNull final Long key, @NonNull final EmoteReactionMessage value, final long currentTime, @NonNegative final long currentDuration) {
-                    return currentDuration;
-                }
-            })
-            .removalListener((key, value, cause) -> {
-                if (key == null || value == null) {
-                    return;
-                }
-
-                // Deduct the active emotes per player
-                value.getUsers()
-                        .stream()
-                        .filter(this.activeEmotesPerPlayer::containsKey)
-                        .forEach(user -> {
-                            AtomicInteger currentCount = this.activeEmotesPerPlayer.get(user);
-                            if (currentCount.get() > 1) {
-                                currentCount.decrementAndGet();
-
-                            } else {
-                                this.activeEmotesPerPlayer.remove(user);
-                            }
-                        });
-
-                final MessageChannel channel = this.getDiscord().getTextChannelById(value.getChannelId());
-                if (channel == null) {
-                    return;
-                }
-
-                channel.retrieveMessageById(key)
-                        .queue(message -> value.getEmotes()
-                                        .keySet()
-                                        .forEach(emote -> message.removeReaction(emote)
-                                                .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE, ErrorResponse.MISSING_PERMISSIONS))),
-                                new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
-                        );
-            })
+            .expireAfter(new CacheExpireAfter())
+            .removalListener(new CacheRemoveListener(this))
             .build();
 
     public EmoteReactionModule() {
@@ -95,7 +46,8 @@ public class EmoteReactionModule extends AbstractModule {
         this.getModuleOrThrow(EventModule.class).addEventListener(this);
     }
 
-    public void addEmoteReactionMessage(final Message message, final EmoteReactionMessage emoteReactionMessage) {
+    public void addEmoteReactionMessage(@NonNull final Message message,
+                                        @NonNull final EmoteReactionMessage emoteReactionMessage) {
         // Remove all players who reached the rate limit
         emoteReactionMessage.getUsers()
                 .removeIf(user -> {
@@ -113,9 +65,10 @@ public class EmoteReactionModule extends AbstractModule {
         }
 
         this.emoteMessageCache.put(message.getIdLong(), emoteReactionMessage);
-        emoteReactionMessage.getEmotes()
-                .keySet()
-                .forEach(emote -> message.addReaction(emote).queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)));
+        for (final String emote : emoteReactionMessage.getEmotes().keySet()) {
+            message.addReaction(emote)
+                    .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
+        }
     }
 
     @SubscribeEvent

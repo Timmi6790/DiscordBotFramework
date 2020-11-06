@@ -15,7 +15,7 @@ public abstract class AbstractAchievement {
         this.name = name;
     }
 
-    public void unlockAchievement(final UserDb userDb) {
+    public void unlockPlayerAchievement(final UserDb userDb) {
         userDb.grantAchievement(this);
     }
 

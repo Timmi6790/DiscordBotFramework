@@ -25,9 +25,7 @@ class CommandModuleTest {
 
         final boolean registered = commandModule.registerCommand(testModule, testCommand);
         assertThat(registered).isTrue();
-        assertThat(commandModule.getCommands())
-                .hasSize(1)
-                .contains(testCommand);
+        assertThat(commandModule.getCommands()).containsExactly(testCommand);
     }
 
     @Test
@@ -42,10 +40,7 @@ class CommandModuleTest {
                 testCommand,
                 testCommand2
         );
-        assertThat(commandModule.getCommands())
-                .hasSize(2)
-                .contains(testCommand)
-                .contains(testCommand2);
+        assertThat(commandModule.getCommands()).containsExactlyInAnyOrder(testCommand, testCommand2);
     }
 
     @Test
@@ -104,9 +99,7 @@ class CommandModuleTest {
                 addedCommands.toArray(new AbstractCommand[0])
         );
 
-        assertThat(commandModule.getCommands())
-                .hasSize(addedCommands.size())
-                .containsAll(addedCommands);
+        assertThat(commandModule.getCommands()).containsExactlyInAnyOrderElementsOf(addedCommands);
     }
 
     @Test
@@ -121,9 +114,7 @@ class CommandModuleTest {
         final boolean registered1 = commandModule.registerCommand(testModule, testCommand);
         assertThat(registered1).isFalse();
 
-        assertThat(commandModule.getCommands())
-                .hasSize(1)
-                .contains(testCommand);
+        assertThat(commandModule.getCommands()).containsExactly(testCommand);
     }
 
     @Test
@@ -139,9 +130,7 @@ class CommandModuleTest {
         final boolean registered1 = commandModule.registerCommand(testModule, testCommand6Dub);
         assertThat(registered1).isFalse();
 
-        assertThat(commandModule.getCommands())
-                .hasSize(1)
-                .contains(testCommand);
+        assertThat(commandModule.getCommands()).containsExactly(testCommand);
     }
 
     private static class TestModule extends AbstractModule {

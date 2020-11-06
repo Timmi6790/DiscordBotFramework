@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Data
-@EqualsAndHashCode(exclude = {"rankModule", "userDbModule", "permissionsModule"})
+@EqualsAndHashCode(exclude = {"rankModule", "userDbModule", "permissionsModule", "cachedAllPermissions"})
 public class Rank {
     private final int databaseId;
     private final Set<Integer> extendedRankIds;
@@ -113,14 +113,11 @@ public class Rank {
         while (!queue.isEmpty()) {
             this.getRankModule().getRank(queue.pop()).ifPresent(rank -> {
                 foundPermissions.addAll(rank.getPermissionIds());
-
-                rank.getExtendedRankIds()
-                        .stream()
-                        .filter(extendId -> !seen.contains(extendId))
-                        .forEach(extendId -> {
-                            seen.add(extendId);
-                            queue.add(extendId);
-                        });
+                for (final int rankId : rank.getExtendedRankIds()) {
+                    if (seen.add(rankId)) {
+                        queue.add(rankId);
+                    }
+                }
             });
         }
 
@@ -172,9 +169,14 @@ public class Rank {
     }
 
     // Name
-    public void setName(final String name) {
+    public boolean setName(final String name) {
+        if (this.name.equalsIgnoreCase(name)) {
+            return false;
+        }
+
         this.getRankModule().getRankRepository().setRankName(this.getDatabaseId(), name);
         this.name = name;
+        return true;
     }
 
     // Players

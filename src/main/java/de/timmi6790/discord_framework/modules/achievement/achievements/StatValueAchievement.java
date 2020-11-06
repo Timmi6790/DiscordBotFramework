@@ -32,7 +32,7 @@ public abstract class StatValueAchievement extends AbstractAchievement {
         }
 
         if (event.getNewValue() >= this.requiredValue) {
-            this.unlockAchievement(event.getUserDb());
+            this.unlockPlayerAchievement(event.getUserDb());
             final User user = event.getUserDb().getUser();
 
             final StringJoiner perks = new StringJoiner("\n");

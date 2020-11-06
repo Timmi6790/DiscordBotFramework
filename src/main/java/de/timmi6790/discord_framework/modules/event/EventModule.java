@@ -23,13 +23,15 @@ import java.util.concurrent.Executors;
 
 @EqualsAndHashCode(callSuper = true)
 public class EventModule extends AbstractModule {
+    private static final String EVENT = "Event";
+
     @Getter(value = AccessLevel.PROTECTED)
     private final Map<Class<GenericEvent>, SetMultimap<EventPriority, EventObject>> eventListeners = new HashMap<>();
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public EventModule() {
-        super("Event");
+        super(EVENT);
     }
 
     @Override
@@ -43,12 +45,12 @@ public class EventModule extends AbstractModule {
         // Sentry error
         Sentry.captureEvent(new SentryEventBuilder()
                 .addBreadcrumb(new BreadcrumbBuilder()
-                        .setCategory("Event")
+                        .setCategory(EVENT)
                         .setData("Class", event.getClass().toString())
                         .setData("Listener", listener.getMethod().getName())
                         .build())
                 .setLevel(SentryLevel.ERROR)
-                .setMessage("Event")
+                .setMessage(EVENT)
                 .setLogger(EventObject.class.getName())
                 .setThrowable(exception)
                 .build());

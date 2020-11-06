@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @Data
-@EqualsAndHashCode(exclude = {"userDbRepository"})
+@EqualsAndHashCode(exclude = {"userDbRepository", "achievementModule", "settingModule", "statModule", "eventModule", "rankModule"})
 public class UserDb {
     @Getter
     private static final LoadingCache<Long, User> USER_CACHE = Caffeine.newBuilder()
@@ -222,13 +222,13 @@ public class UserDb {
 
     // Achievements
     public List<AbstractAchievement> getAchievements() {
-        if (this.getAchievementModule() == null) {
+        if (this.achievementModule == null) {
             return new ArrayList<>();
         }
 
         final List<AbstractAchievement> achievements = new ArrayList<>();
         for (final int achievementId : this.getAchievementIds()) {
-            this.getAchievementModule().getAchievement(achievementId).ifPresent(achievements::add);
+            this.achievementModule.getAchievement(achievementId).ifPresent(achievements::add);
         }
         return achievements;
     }

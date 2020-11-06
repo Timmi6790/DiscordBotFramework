@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -31,10 +31,6 @@ class RankTest {
     private static final UserDbModule userDbModule = spy(new UserDbModule());
 
     private static final Set<Integer> permissionIds = new HashSet<>();
-
-    private static String getRankName() {
-        return "RandomRankRank" + RANK_NAME_NUMBER.getAndIncrement();
-    }
 
     @BeforeAll
     static void setup() {
@@ -65,8 +61,12 @@ class RankTest {
         }
     }
 
+    private String getRankName() {
+        return "RandomRankRank" + RANK_NAME_NUMBER.getAndIncrement();
+    }
+
     private Rank createRank() {
-        final String rankName = getRankName();
+        final String rankName = this.getRankName();
         rankModule.createRank(rankName);
 
         return rankModule.getRank(rankName).orElseThrow(RuntimeException::new);
@@ -97,9 +97,7 @@ class RankTest {
         for (final int permission : permissionIds) {
             assertThat(rank.addPermission(permission)).isTrue();
         }
-        assertThat(rank.getPermissionIds().toArray(new Integer[0]))
-                .hasSize(permissionIds.size())
-                .containsAll(permissionIds);
+        assertThat(rank.getPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
     }
 
     @Test
@@ -123,7 +121,7 @@ class RankTest {
         for (final int permission : permissionIds) {
             assertThat(rank.removePermission(permission)).isTrue();
         }
-        assertThat(rank.getPermissionIds().toArray(new Integer[0])).isEmpty();
+        assertThat(rank.getPermissionIds()).isEmpty();
     }
 
     @Test
@@ -134,43 +132,62 @@ class RankTest {
         assertThat(rank.removePermission(permissionId)).isFalse();
     }
 
-
     @Test
     void getAllPermissions() {
-        final Rank mainRank = this.createRank();
-        final Rank extendedRank1 = this.createRank();
-        final Rank extendedRank2 = this.createRank();
+        final Set<Integer> permissionIds = new HashSet<>();
+        final Set<String> permissions = new HashSet<>();
+
+        // Extended Rank 3
         final Rank extendedRank3 = this.createRank();
 
-        final Set<Integer> permissionIds = new HashSet<>();
-        final int rank3permission = permissionsModule.addPermission(PERMISSION_PREFIX + extendedRank3.getName());
-        extendedRank3.addPermission(rank3permission);
+        final String rank3permissionNode = PERMISSION_PREFIX + extendedRank3.getName();
+        final int rank3permission = permissionsModule.addPermission(rank3permissionNode);
         permissionIds.add(rank3permission);
+        permissions.add(rank3permissionNode);
 
+        extendedRank3.addPermission(rank3permission);
+
+        // Extended Rank 2
+        final Rank extendedRank2 = this.createRank();
         extendedRank2.addExtendedRank(extendedRank3);
-        final int rank2permission = permissionsModule.addPermission(PERMISSION_PREFIX + extendedRank2.getName());
-        extendedRank2.addPermission(rank2permission);
+
+        final String rank2permissionNode = PERMISSION_PREFIX + extendedRank2.getName();
+        final int rank2permission = permissionsModule.addPermission(rank2permissionNode);
         permissionIds.add(rank2permission);
+        permissions.add(rank2permissionNode);
 
-        mainRank.addExtendedRank(extendedRank1);
-        final int rank1permission = permissionsModule.addPermission(PERMISSION_PREFIX + extendedRank1.getName());
-        extendedRank1.addPermission(rank1permission);
+        extendedRank2.addPermission(rank2permission);
+
+        // Extended Rank 1
+        final Rank extendedRank1 = this.createRank();
+
+        final String rank1permissionNode = PERMISSION_PREFIX + extendedRank1.getName();
+        final int rank1permission = permissionsModule.addPermission(rank1permissionNode);
         permissionIds.add(rank1permission);
+        permissions.add(rank1permissionNode);
 
+        extendedRank1.addPermission(rank1permission);
+
+        // Main rank
+        final Rank mainRank = this.createRank();
+        mainRank.addExtendedRank(extendedRank1);
         mainRank.addExtendedRank(extendedRank2);
-        final int mainRankPermission = permissionsModule.addPermission(PERMISSION_PREFIX + mainRank.getName());
+
+        final String mainRankPermissionNode = PERMISSION_PREFIX + mainRank.getName();
+        final int mainRankPermission = permissionsModule.addPermission(mainRankPermissionNode);
+        permissionIds.add(mainRankPermission);
+        permissions.add(mainRankPermissionNode);
+
         mainRank.addPermission(mainRankPermission);
         mainRank.addPermission(rank3permission);
-        permissionIds.add(mainRankPermission);
 
-        assertThat(mainRank.getAllPermissionIds().toArray(new Integer[0]))
-                .hasSize(permissionIds.size())
-                .containsAll(permissionIds);
+
+        assertThat(mainRank.getAllPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
+        assertThat(mainRank.getAllPermissions()).containsExactlyInAnyOrderElementsOf(permissions);
 
         // Cache check
-        assertThat(mainRank.getAllPermissionIds().toArray(new Integer[0]))
-                .hasSize(permissionIds.size())
-                .containsAll(permissionIds);
+        assertThat(mainRank.getAllPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
+        assertThat(mainRank.getAllPermissions()).containsExactlyInAnyOrderElementsOf(permissions);
     }
 
     @Test
@@ -240,7 +257,9 @@ class RankTest {
 
         final Rank rank = this.createRank();
         final String currentName = rank.getName();
-        rank.setName(newName);
+
+        assertThat(rank.setName(newName)).isTrue();
+        assertThat(rank.setName(newName)).isFalse();
 
         assertThat(rank.getName())
                 .isNotEqualTo(currentName)
@@ -272,8 +291,6 @@ class RankTest {
             userDbList.add(userDb);
         }
 
-        assertThat(rank.retrieveAllPlayers().toArray(new UserDb[0]))
-                .hasSize(userDbList.size())
-                .containsAll(userDbList);
+        assertThat(rank.retrieveAllPlayers()).containsExactlyInAnyOrderElementsOf(userDbList);
     }
 }
