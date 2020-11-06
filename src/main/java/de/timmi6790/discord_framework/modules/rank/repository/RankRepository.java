@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Set;
 
 public interface RankRepository {
-    List<Rank> loadRanks();
+    List<Rank> getRanks();
 
     Rank createRank(@NonNull final String name);
+
+    Rank getRank(int rankId);
 
     void deleteRank(final int rankId);
 
@@ -22,6 +24,6 @@ public interface RankRepository {
     void removeExtendedRank(int rankId, final int extendedRankId);
 
     void setRankName(int rankId, final String name);
-    
+
     Set<Long> retrieveAllPlayerIdsForRank(int rankId);
 }

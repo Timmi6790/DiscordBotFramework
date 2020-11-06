@@ -13,7 +13,7 @@ public class PermissionRepositoryMysql implements PermissionRepository {
             "FROM `permission` " +
             "WHERE permission.permission_node = :permNode " +
             "LIMIT 1;";
-    private static final String INSERT_PERMISSION = "INSERT INTO permission(permission_node, default_permission) VALUES(:permNode, 0);";
+    private static final String INSERT_PERMISSION = "INSERT INTO permission(permission_node) VALUES(:permNode);";
 
     private final Jdbi database;
 

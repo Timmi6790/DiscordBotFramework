@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import lombok.ToString;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(exclude = {"rankModule", "userDbModule", "permissionsModule", "cachedAllPermissions"})
+@ToString(exclude = {"rankModule", "userDbModule", "permissionsModule", "cachedAllPermissions"})
 public class Rank {
     private final int databaseId;
     private final Set<Integer> extendedRankIds;

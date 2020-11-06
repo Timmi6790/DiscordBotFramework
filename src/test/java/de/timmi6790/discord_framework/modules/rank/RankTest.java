@@ -8,6 +8,7 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -62,7 +63,7 @@ class RankTest {
     }
 
     private String getRankName() {
-        return "RandomRankRank" + RANK_NAME_NUMBER.getAndIncrement();
+        return "RankTest" + RANK_NAME_NUMBER.getAndIncrement();
     }
 
     private Rank createRank() {
@@ -70,6 +71,11 @@ class RankTest {
         rankModule.createRank(rankName);
 
         return rankModule.getRank(rankName).orElseThrow(RuntimeException::new);
+    }
+
+    private void validateRepository(final Rank rank) {
+        final Rank repositoryRank = rankModule.getRankRepository().getRank(rank.getDatabaseId());
+        AssertionsForClassTypes.assertThat(rank).isEqualTo(repositoryRank);
     }
 
     @Test
@@ -93,11 +99,13 @@ class RankTest {
     void addPermission() {
         final Rank rank = this.createRank();
 
-        assertThat(rank.getPermissionIds().toArray(new Integer[0])).isEmpty();
+        assertThat(rank.getPermissionIds()).isEmpty();
         for (final int permission : permissionIds) {
             assertThat(rank.addPermission(permission)).isTrue();
         }
+
         assertThat(rank.getPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
+        this.validateRepository(rank);
     }
 
     @Test
@@ -107,13 +115,14 @@ class RankTest {
         final int permissionId = permissionIds.toArray(new Integer[0])[0];
         assertThat(rank.addPermission(permissionId)).isTrue();
         assertThat(rank.addPermission(permissionId)).isFalse();
+
+        this.validateRepository(rank);
     }
 
     @Test
     void removePermission() {
         final Rank rank = this.createRank();
 
-        assertThat(rank.getPermissionIds().toArray(new Integer[0])).isEmpty();
         for (final int permission : permissionIds) {
             assertThat(rank.addPermission(permission)).isTrue();
         }
@@ -121,7 +130,9 @@ class RankTest {
         for (final int permission : permissionIds) {
             assertThat(rank.removePermission(permission)).isTrue();
         }
+
         assertThat(rank.getPermissionIds()).isEmpty();
+        this.validateRepository(rank);
     }
 
     @Test
@@ -130,6 +141,7 @@ class RankTest {
 
         final int permissionId = permissionIds.toArray(new Integer[0])[0];
         assertThat(rank.removePermission(permissionId)).isFalse();
+        this.validateRepository(rank);
     }
 
     @Test
@@ -188,6 +200,11 @@ class RankTest {
         // Cache check
         assertThat(mainRank.getAllPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
         assertThat(mainRank.getAllPermissions()).containsExactlyInAnyOrderElementsOf(permissions);
+
+        this.validateRepository(extendedRank1);
+        this.validateRepository(extendedRank2);
+        this.validateRepository(extendedRank3);
+        this.validateRepository(mainRank);
     }
 
     @Test
@@ -198,6 +215,9 @@ class RankTest {
         assertThat(mainRank.hasExtendedRank(extendedRank1)).isFalse();
         mainRank.addExtendedRank(extendedRank1);
         assertThat(mainRank.hasExtendedRank(extendedRank1)).isTrue();
+
+        this.validateRepository(mainRank);
+        this.validateRepository(extendedRank1);
     }
 
     @Test
@@ -208,6 +228,9 @@ class RankTest {
         assertThat(mainRank.hasExtendedRank(extendedRank1.getDatabaseId())).isFalse();
         mainRank.addExtendedRank(extendedRank1);
         assertThat(mainRank.hasExtendedRank(extendedRank1.getDatabaseId())).isTrue();
+
+        this.validateRepository(mainRank);
+        this.validateRepository(extendedRank1);
     }
 
     @Test
@@ -218,6 +241,9 @@ class RankTest {
         assertThat(mainRank.addExtendedRank(extendedRank1)).isTrue();
         assertThat(mainRank.addExtendedRank(extendedRank1)).isFalse();
         assertThat(mainRank.addExtendedRank(mainRank)).isFalse();
+
+        this.validateRepository(mainRank);
+        this.validateRepository(extendedRank1);
     }
 
     @Test
@@ -228,6 +254,9 @@ class RankTest {
         assertThat(mainRank.addExtendedRank(extendedRank1.getDatabaseId())).isTrue();
         assertThat(mainRank.addExtendedRank(extendedRank1.getDatabaseId())).isFalse();
         assertThat(mainRank.addExtendedRank(mainRank.getDatabaseId())).isFalse();
+
+        this.validateRepository(mainRank);
+        this.validateRepository(extendedRank1);
     }
 
     @Test
@@ -239,6 +268,9 @@ class RankTest {
         mainRank.addExtendedRank(extendedRank1);
         assertThat(mainRank.removeExtendedRank(extendedRank1)).isTrue();
         assertThat(mainRank.removeExtendedRank(extendedRank1)).isFalse();
+
+        this.validateRepository(mainRank);
+        this.validateRepository(extendedRank1);
     }
 
     @Test
@@ -249,6 +281,9 @@ class RankTest {
         mainRank.addExtendedRank(extendedRank1);
         assertThat(mainRank.removeExtendedRank(extendedRank1.getDatabaseId())).isTrue();
         assertThat(mainRank.removeExtendedRank(extendedRank1.getDatabaseId())).isFalse();
+
+        this.validateRepository(mainRank);
+        this.validateRepository(extendedRank1);
     }
 
     @Test
@@ -264,6 +299,8 @@ class RankTest {
         assertThat(rank.getName())
                 .isNotEqualTo(currentName)
                 .isEqualTo(newName);
+
+        this.validateRepository(rank);
     }
 
     @Test
@@ -277,6 +314,8 @@ class RankTest {
         user1.setPrimaryRank(rank);
         user2.setPrimaryRank(rank);
         assertThat(rank.retrievePlayerCount()).isEqualTo(2);
+
+        this.validateRepository(rank);
     }
 
     @Test
@@ -292,5 +331,6 @@ class RankTest {
         }
 
         assertThat(rank.retrieveAllPlayers()).containsExactlyInAnyOrderElementsOf(userDbList);
+        this.validateRepository(rank);
     }
 }

@@ -23,10 +23,10 @@ public class UserDbRepositoryMysql implements UserDbRepository {
             "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_setting.setting_id, p_setting.setting) SEPARATOR ';') settings, " +
             "GROUP_CONCAT(DISTINCT CONCAT_WS(',', p_stat.stat_id, p_stat.value) SEPARATOR ';') stats, " +
             "GROUP_CONCAT(DISTINCT p_ach.achievement_id) achievements " +
-            "FROM player  " +
+            "FROM player " +
             "LEFT JOIN player_rank p_rank ON p_rank.player_id = player.id  " +
             "LEFT JOIN player_permission p_perm ON p_perm.player_id = player.id  " +
-            "LEFT JOIN permission ON permission.default_permission = 1 OR permission.id = p_perm.permission_id  " +
+            "LEFT JOIN permission ON permission.id = p_perm.permission_id  " +
             "LEFT JOIN player_setting p_setting ON p_setting.player_id = player.id  " +
             "LEFT JOIN player_stat p_stat ON p_stat.player_id = player.id " +
             "LEFT JOIN player_achievement p_ach ON p_ach.player_id = player.id " +

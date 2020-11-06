@@ -94,10 +94,9 @@ class UserDbTest {
         return "user_db_test_" + PERMISSION_ID.getAndIncrement();
     }
 
-    private void validateCache(final UserDb userDb) {
-        userDbModule.getCache().invalidate(userDb.getDiscordId());
-        final UserDb cacheLessUser = userDbModule.getOrCreate(userDb.getDiscordId());
-        assertThat(userDb).isEqualTo(cacheLessUser);
+    private void validateRepository(final UserDb userDb) {
+        final UserDb repositoryUser = userDbModule.getUserDbRepository().get(userDb.getDiscordId()).orElseThrow(RuntimeException::new);
+        assertThat(userDb).isEqualTo(repositoryUser);
     }
 
     private void mockDiscord(final Runnable runnable) {
@@ -129,7 +128,7 @@ class UserDbTest {
 
         assertThat(userDb.isBanned()).isTrue();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -143,14 +142,14 @@ class UserDbTest {
         assertThat(userDb.setBanned(true)).isFalse();
 
         assertThat(userDb.isBanned()).isTrue();
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
 
         // Unban user
         assertThat(userDb.setBanned(false)).isTrue();
         assertThat(userDb.setBanned(false)).isFalse();
 
         assertThat(userDb.isBanned()).isFalse();
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     // Permission
@@ -176,7 +175,7 @@ class UserDbTest {
             assertThat(userDb.getAllPermissionIds()).contains(permId1, permId2, permId3);
         }
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -191,7 +190,7 @@ class UserDbTest {
         assertThat(userDb.addPermission(permissionId)).isFalse();
         assertThat(userDb.hasPermission(permissionId)).isTrue();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -208,7 +207,7 @@ class UserDbTest {
 
         assertThat(userDb.hasPermission(permissionId)).isFalse();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     // Ranks
@@ -224,7 +223,7 @@ class UserDbTest {
 
         assertThat(userDb.hasPrimaryRank(rank)).isTrue();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -246,7 +245,7 @@ class UserDbTest {
             assertThat(userDb.hasRank(rank)).isTrue();
         }
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -259,7 +258,7 @@ class UserDbTest {
         assertThat(userDb.removeRank(rank)).isTrue();
         assertThat(userDb.removeRank(rank)).isFalse();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     // Achievements
@@ -282,7 +281,7 @@ class UserDbTest {
         userDb.grantAchievement(achievement2);
         assertThat(userDb.getAchievements()).containsExactlyInAnyOrder(achievement, achievement2);
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -301,7 +300,7 @@ class UserDbTest {
 
         assertThat(userDb.hasAchievement(achievement)).isTrue();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     // Stats
@@ -334,7 +333,7 @@ class UserDbTest {
             assertThat(userDb.getStatValue(testStat2)).hasValue(1);
         });
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -368,7 +367,7 @@ class UserDbTest {
         });
 
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     // Settings
@@ -385,7 +384,7 @@ class UserDbTest {
         userDb.grantSetting(CommandAutoCorrectSetting.class);
         assertThat(userDb.getSettings()).hasSize(1);
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -408,7 +407,7 @@ class UserDbTest {
         userDb.grantSetting(CommandAutoCorrectSetting.class);
         assertThat(userDb.getSetting(CommandAutoCorrectSetting.class)).isPresent();
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -420,7 +419,7 @@ class UserDbTest {
         userDb.setSetting(CommandAutoCorrectSetting.class, true);
         userDb.setSetting(CommandAutoCorrectSetting.class, false);
 
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -441,7 +440,7 @@ class UserDbTest {
         userDb.grantSetting(CommandAutoCorrectSetting.class);
 
         assertThat(userDb.hasAutoCorrection()).isFalse();
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -454,7 +453,7 @@ class UserDbTest {
         userDb.setSetting(CommandAutoCorrectSetting.class, false);
 
         assertThat(userDb.hasAutoCorrection()).isFalse();
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -463,7 +462,7 @@ class UserDbTest {
 
         final UserDb userDb = this.generateUser();
         assertThat(userDb.hasAutoCorrection()).isFalse();
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     @Test
@@ -476,7 +475,7 @@ class UserDbTest {
         userDb.setSetting(CommandAutoCorrectSetting.class, true);
 
         assertThat(userDb.hasAutoCorrection()).isTrue();
-        this.validateCache(userDb);
+        this.validateRepository(userDb);
     }
 
     private static class TestAchievement extends AbstractAchievement {

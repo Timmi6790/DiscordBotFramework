@@ -64,7 +64,7 @@ public class RankRepositoryMysql implements RankRepository {
     }
 
     @Override
-    public List<Rank> loadRanks() {
+    public List<Rank> getRanks() {
         return this.database.withHandle(handle ->
                 handle.createQuery(GET_ALL_RANKS)
                         .mapTo(Rank.class)
@@ -83,10 +83,18 @@ public class RankRepositoryMysql implements RankRepository {
                     .mapTo(int.class)
                     .first();
 
-            return handle.createQuery(GET_RANK_BY_ID).bind(DATABASE_ID, rankId)
-                    .mapTo(Rank.class)
-                    .first();
+            return this.getRank(rankId);
         });
+    }
+
+    @Override
+    public Rank getRank(final int rankId) {
+        return this.database.withHandle(handle ->
+                handle.createQuery(GET_RANK_BY_ID)
+                        .bind(DATABASE_ID, rankId)
+                        .mapTo(Rank.class)
+                        .first()
+        );
     }
 
     @Override
@@ -125,8 +133,8 @@ public class RankRepositoryMysql implements RankRepository {
     public void addExtendedRank(final int rankId, final int extendedRankId) {
         this.database.useHandle(handle ->
                 handle.createUpdate(INSERT_RANK_RELATION)
-                        .bind(RANK_ID, extendedRankId)
-                        .bind("extendedRankId", rankId)
+                        .bind(RANK_ID, rankId)
+                        .bind("extendedRankId", extendedRankId)
                         .execute()
         );
     }
@@ -136,7 +144,7 @@ public class RankRepositoryMysql implements RankRepository {
         this.database.useHandle(handle ->
                 handle.createUpdate(DELETE_RANK_RELATION)
                         .bind(RANK_ID, rankId)
-                        .bind("extendedRankId", rankId)
+                        .bind("extendedRankId", extendedRankId)
                         .execute()
         );
     }

@@ -37,7 +37,7 @@ public class RankModule extends AbstractModule {
     }
 
     private void loadRanks() {
-        for (final Rank rank : this.getRankRepository().loadRanks()) {
+        for (final Rank rank : this.getRankRepository().getRanks()) {
             this.addRank(rank);
         }
     }
