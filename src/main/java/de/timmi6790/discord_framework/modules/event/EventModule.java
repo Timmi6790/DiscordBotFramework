@@ -18,6 +18,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -57,45 +58,47 @@ public class EventModule extends AbstractModule {
     }
 
     public boolean addEventListener(final Object listener) {
-        final boolean[] registeredListener = new boolean[]{false};
+        boolean registeredListener = false;
         for (final Method method : listener.getClass().getMethods()) {
-            ReflectionUtilities.getAnnotation(method, SubscribeEvent.class).ifPresent(annotation -> {
-                        if (method.getParameterCount() != 1) {
-                            DiscordBot.getLogger().warn(
-                                    "{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
-                                    listener.getClass(),
-                                    method.getName(),
-                                    method.getParameterCount()
-                            );
-                            return;
-                        }
+            final Optional<SubscribeEvent> annotationOpt = ReflectionUtilities.getAnnotation(method, SubscribeEvent.class);
+            if (annotationOpt.isPresent()) {
+                final SubscribeEvent annotation = annotationOpt.get();
 
-                        final Class<?> parameter = method.getParameterTypes()[0];
-                        if (!GenericEvent.class.isAssignableFrom(parameter)) {
-                            DiscordBot.getLogger().warn(
-                                    "{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
-                                    listener.getClass(),
-                                    method.getName());
-                            return;
-                        }
+                if (method.getParameterCount() != 1) {
+                    DiscordBot.getLogger().warn(
+                            "{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
+                            listener.getClass(),
+                            method.getName(),
+                            method.getParameterCount()
+                    );
+                    continue;
+                }
 
-                        registeredListener[0] = true;
-                        this.eventListeners.computeIfAbsent(
-                                (Class<GenericEvent>) parameter,
-                                key -> MultimapBuilder.enumKeys(EventPriority.class).hashSetValues().build()
-                        ).put(annotation.priority(), new EventObject(listener, method, annotation.ignoreCanceled()));
+                final Class<?> parameter = method.getParameterTypes()[0];
+                if (!GenericEvent.class.isAssignableFrom(parameter)) {
+                    DiscordBot.getLogger().warn(
+                            "{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
+                            listener.getClass(),
+                            method.getName());
+                    continue;
+                }
 
-                        DiscordBot.getLogger().info(
-                                "Added {}.{} as new event listener for {}.",
-                                listener.getClass(),
-                                method.getName(),
-                                parameter.getName()
-                        );
-                    }
-            );
+                registeredListener = true;
+                this.eventListeners.computeIfAbsent(
+                        (Class<GenericEvent>) parameter,
+                        key -> MultimapBuilder.enumKeys(EventPriority.class).hashSetValues().build()
+                ).put(annotation.priority(), new EventObject(listener, method, annotation.ignoreCanceled()));
+
+                DiscordBot.getLogger().info(
+                        "Added {}.{} as new event listener for {}.",
+                        listener.getClass(),
+                        method.getName(),
+                        parameter.getName()
+                );
+            }
         }
 
-        return registeredListener[0];
+        return registeredListener;
     }
 
     public void addEventListeners(final Object... listeners) {

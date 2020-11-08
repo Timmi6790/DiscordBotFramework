@@ -2,10 +2,12 @@ package de.timmi6790.discord_framework.modules.guild;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import lombok.ToString;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -19,6 +21,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Data
+@EqualsAndHashCode(exclude = {"discord"})
+@ToString(exclude = {"discord"})
 public class GuildDb {
     private final int databaseId;
     private final long discordId;
@@ -30,6 +34,8 @@ public class GuildDb {
 
     private final Map<String, AbstractSetting<?>> properties;
 
+    private final JDA discord;
+
     private final LoadingCache<Long, Member> memberCache = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(key -> {
@@ -38,11 +44,14 @@ public class GuildDb {
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
-    public GuildDb(final int databaseId,
+    public GuildDb(final JDA discord,
+                   final int databaseId,
                    final long discordId,
                    final boolean banned,
                    final Set<String> commandAliasNames,
                    final Map<String, AbstractSetting<?>> properties) {
+        this.discord = discord;
+
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.banned = banned;
@@ -63,7 +72,7 @@ public class GuildDb {
     }
 
     public Guild getGuild() {
-        return DiscordBot.getInstance().getDiscord().getGuildById(this.discordId);
+        return this.discord.getGuildById(this.discordId);
     }
 
     public Member getMember(@NonNull final User user) {

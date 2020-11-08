@@ -51,11 +51,13 @@ public class TopicalSort<T> {
     }
 
     private boolean hasDependency(final int mainIndex, @NonNull final Queue<Integer> queue) {
-        return queue.stream()
-                .map(index -> this.adjacency[mainIndex][index])
-                .filter(bool -> bool)
-                .findAny()
-                .orElse(false);
+        for (final int index : queue) {
+            if (this.adjacency[mainIndex][index]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Data

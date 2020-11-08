@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import lombok.AllArgsConstructor;
+import net.dv8tion.jda.api.JDA;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -13,6 +14,7 @@ import java.sql.SQLException;
 @AllArgsConstructor
 public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<ChannelDb> {
     private final GuildDbModule guildDbModule;
+    private final JDA discord;
 
     @Override
     public ChannelDb map(final ResultSet rs, final StatementContext ctx) throws SQLException {
@@ -21,9 +23,10 @@ public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<Chan
         }
 
         return new ChannelDb(
+                this.guildDbModule.getOrCreate(rs.getLong("serverDiscordId")),
+                this.discord,
                 rs.getInt("id"),
                 rs.getLong("discordId"),
-                this.guildDbModule.getOrCreate(rs.getLong("serverDiscordId")),
                 rs.getBoolean("disabled")
         );
     }

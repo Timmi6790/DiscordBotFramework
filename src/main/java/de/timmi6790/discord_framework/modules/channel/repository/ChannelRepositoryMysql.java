@@ -21,7 +21,13 @@ public class ChannelRepositoryMysql implements ChannelRepository {
 
     public ChannelRepositoryMysql(final ChannelDbModule module) {
         this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(ChannelDb.class, new ChannelDbMapper(module.getModuleOrThrow(GuildDbModule.class)));
+        this.database.registerRowMapper(
+                ChannelDb.class,
+                new ChannelDbMapper(
+                        module.getModuleOrThrow(GuildDbModule.class),
+                        module.getDiscord()
+                )
+        );
     }
 
     @Override

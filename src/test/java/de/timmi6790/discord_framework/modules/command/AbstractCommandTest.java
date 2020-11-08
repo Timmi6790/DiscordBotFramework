@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.command.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.property.CommandProperty;
@@ -12,7 +11,6 @@ import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -350,24 +348,6 @@ class AbstractCommandTest {
                 );
             }
         });
-    }
-
-    @Test
-    void getDiscordUserThrowDiscordId() {
-        final long discordUserId = 305911488697204736L;
-
-        final TestCommand command = new TestCommand();
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage(String.valueOf(discordUserId));
-        try (final MockedStatic<UserDb> commandMock = mockStatic(UserDb.class)) {
-            final LoadingCache<Long, User> cache = mock(LoadingCache.class);
-
-            final User user = mock(User.class);
-            when(cache.get(discordUserId)).thenReturn(user);
-
-            commandMock.when(UserDb::getUSER_CACHE).thenReturn(cache);
-
-            assertThat(command.getDiscordUserThrow(commandParameters, 0)).isNotNull();
-        }
     }
 
     @Test

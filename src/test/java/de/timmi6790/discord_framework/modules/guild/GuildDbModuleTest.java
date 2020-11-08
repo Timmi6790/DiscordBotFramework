@@ -1,10 +1,13 @@
 package de.timmi6790.discord_framework.modules.guild;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import net.dv8tion.jda.api.JDA;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 
@@ -12,7 +15,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 class GuildDbModuleTest {
     private static final AtomicLong DISCORD_IDS = new AtomicLong(0);
@@ -22,7 +25,17 @@ class GuildDbModuleTest {
     @BeforeAll
     static void setUp() {
         doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
-        guildDbModule.onInitialize();
+
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+
+            final JDA discord = mock(JDA.class);
+            when(bot.getDiscord()).thenReturn(discord);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            guildDbModule.onInitialize();
+        }
     }
 
     @Test

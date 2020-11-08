@@ -59,8 +59,8 @@ public class DataUtilities {
         }
 
         final String sourceLower = source.toLowerCase();
-        final Multimap<Double, T> sortedMap = MultimapBuilder.
-                treeKeys(Collections.reverseOrder())
+        final Multimap<Double, T> sortedMap = MultimapBuilder
+                .treeKeys(Collections.reverseOrder())
                 .arrayListValues()
                 .build();
         for (final T value : values) {

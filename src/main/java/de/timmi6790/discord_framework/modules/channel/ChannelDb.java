@@ -1,32 +1,37 @@
 package de.timmi6790.discord_framework.modules.channel;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageChannel;
 
 @Data
-@EqualsAndHashCode(exclude = {"guildDb"})
+@EqualsAndHashCode(exclude = {"discord"})
+@ToString(exclude = {"discord"})
 public class ChannelDb {
     private final int databaseId;
     private final long discordId;
-
     private final GuildDb guildDb;
-
     private boolean disabled;
 
-    public ChannelDb(final int databaseId,
+    private final JDA discord;
+
+    public ChannelDb(final GuildDb guildDb,
+                     final JDA discord,
+                     final int databaseId,
                      final long discordId,
-                     final GuildDb guildDb,
                      final boolean disabled) {
         this.databaseId = databaseId;
         this.discordId = discordId;
-        this.guildDb = guildDb;
         this.disabled = disabled;
+
+        this.guildDb = guildDb;
+        this.discord = discord;
     }
 
     public MessageChannel getChannel() {
-        return DiscordBot.getInstance().getDiscord().getTextChannelById(this.discordId);
+        return this.discord.getTextChannelById(this.discordId);
     }
 }

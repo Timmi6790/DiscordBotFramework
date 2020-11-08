@@ -1,17 +1,20 @@
 package de.timmi6790.discord_framework.modules.channel;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import net.dv8tion.jda.api.JDA;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 class ChannelDbModuleTest {
     private static final long TEST_GUILD_ID = 405911488697204736L;
@@ -28,12 +31,21 @@ class ChannelDbModuleTest {
     @BeforeAll
     static void setup() {
         doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
-        guildDbModule.onInitialize();
 
         doReturn(AbstractIntegrationTest.databaseModule).when(channelDbModule).getModuleOrThrow(DatabaseModule.class);
         doReturn(guildDbModule).when(channelDbModule).getModuleOrThrow(GuildDbModule.class);
 
-        channelDbModule.onInitialize();
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+
+            final JDA discord = mock(JDA.class);
+            when(bot.getDiscord()).thenReturn(discord);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            guildDbModule.onInitialize();
+            channelDbModule.onInitialize();
+        }
 
         // We need this to exist;
         guildDbModule.getOrCreate(TEST_GUILD_ID);

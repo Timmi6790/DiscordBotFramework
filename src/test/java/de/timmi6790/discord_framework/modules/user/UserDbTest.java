@@ -67,6 +67,10 @@ class UserDbTest {
             final DiscordBot bot = mock(DiscordBot.class);
             when(bot.getModuleManager()).thenReturn(moduleManager);
 
+            final JDA discord = mock(JDA.class);
+            when(discord.getResponseTotal()).thenReturn(1L);
+            when(bot.getDiscord()).thenReturn(discord);
+
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
 
             eventModule.onInitialize();
@@ -104,6 +108,7 @@ class UserDbTest {
             final DiscordBot bot = mock(DiscordBot.class);
 
             final JDA discord = mock(JDA.class);
+            when(discord.getResponseTotal()).thenReturn(1L);
             when(bot.getDiscord()).thenReturn(discord);
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);

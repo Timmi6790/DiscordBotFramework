@@ -57,7 +57,7 @@ public class UserDbRepositoryMysql implements UserDbRepository {
         this.database.registerRowMapper(
                 UserDb.class,
                 new UserDbMapper(
-                        this,
+                        module,
                         module.getModuleOrThrow(EventModule.class),
                         module.getModuleOrThrow(RankModule.class),
                         module.getModule(AchievementModule.class).orElse(null),

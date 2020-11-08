@@ -1,8 +1,5 @@
 package de.timmi6790.discord_framework.modules.user;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -19,30 +16,19 @@ import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 
 @Data
-@EqualsAndHashCode(exclude = {"userDbRepository", "achievementModule", "settingModule", "statModule", "eventModule", "rankModule"})
+@EqualsAndHashCode(exclude = {"userDbModule", "achievementModule", "settingModule", "statModule", "eventModule", "rankModule"})
+@ToString(exclude = {"userDbModule", "achievementModule", "settingModule", "statModule", "eventModule", "rankModule"})
 public class UserDb {
-    @Getter
-    private static final LoadingCache<Long, User> USER_CACHE = Caffeine.newBuilder()
-            .expireAfterWrite(5, TimeUnit.MINUTES)
-            .expireAfterAccess(1, TimeUnit.MINUTES)
-            .build(key -> {
-                final CompletableFuture<User> futureValue = new CompletableFuture<>();
-                DiscordBot.getInstance().getDiscord().retrieveUserById(key, false).queue(futureValue::complete);
-                return futureValue.get(1, TimeUnit.MINUTES);
-            });
-
     private final int databaseId;
     private final long discordId;
     private final Set<Integer> rankIds;
@@ -50,7 +36,10 @@ public class UserDb {
     private final Map<Integer, String> settingsMap;
     private final Map<Integer, Integer> stats;
     private final Set<Integer> achievementIds;
-    private final UserDbRepository userDbRepository;
+    private int primaryRankId;
+    private boolean banned;
+
+    private final UserDbModule userDbModule;
     @Nullable
     private final AchievementModule achievementModule;
     @Nullable
@@ -59,10 +48,8 @@ public class UserDb {
     private final StatModule statModule;
     private final EventModule eventModule;
     private final RankModule rankModule;
-    private int primaryRankId;
-    private boolean banned;
 
-    public UserDb(final UserDbRepository userDbRepository,
+    public UserDb(final UserDbModule userDbModule,
                   final EventModule eventModule,
                   final RankModule rankModule,
                   @Nullable final AchievementModule achievementModule,
@@ -87,15 +74,20 @@ public class UserDb {
         this.stats = stats;
         this.achievementIds = achievementIds;
         this.achievementModule = achievementModule;
-        this.userDbRepository = userDbRepository;
+
+        this.userDbModule = userDbModule;
         this.eventModule = eventModule;
         this.settingModule = settingModule;
         this.statModule = statModule;
         this.rankModule = rankModule;
     }
 
+    protected UserDbRepository getUserDbRepository() {
+        return this.userDbModule.getUserDbRepository();
+    }
+
     public User getUser() {
-        return USER_CACHE.get(this.getDiscordId());
+        return this.userDbModule.getDiscordUserCache().get(this.getDiscordId());
     }
 
     public void ban(final CommandParameters commandParameters, final String reason) {
@@ -114,7 +106,7 @@ public class UserDb {
             return false;
         }
 
-        this.userDbRepository.setBanStatus(this.getDatabaseId(), banned);
+        this.getUserDbRepository().setBanStatus(this.getDatabaseId(), banned);
         this.banned = banned;
         return true;
     }
@@ -242,7 +234,7 @@ public class UserDb {
             return false;
         }
 
-        this.userDbRepository.grantPlayerAchievement(this.getDatabaseId(), achievement.getDatabaseId());
+        this.getUserDbRepository().grantPlayerAchievement(this.getDatabaseId(), achievement.getDatabaseId());
         this.achievementIds.add(achievement.getDatabaseId());
         achievement.onUnlock(this);
         return true;
@@ -273,7 +265,7 @@ public class UserDb {
         this.stats.put(stat.getDatabaseId(), value);
 
         final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(
-                DiscordBot.getInstance().getDiscord(),
+                this.userDbModule.getDiscord(),
                 this,
                 stat,
                 currentValueOpt.orElse(-1),

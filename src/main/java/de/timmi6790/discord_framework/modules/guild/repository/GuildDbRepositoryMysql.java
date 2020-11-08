@@ -19,7 +19,7 @@ public class GuildDbRepositoryMysql implements GuildDbRepository {
 
     public GuildDbRepositoryMysql(final GuildDbModule module) {
         this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(GuildDb.class, new GuildDbMapper());
+        this.database.registerRowMapper(GuildDb.class, new GuildDbMapper(module.getDiscord()));
     }
 
     @Override

@@ -23,7 +23,6 @@ import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
-import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
@@ -479,7 +478,7 @@ public abstract class AbstractCommand {
         final String discordUserName = commandParameters.getArgs()[argPos];
         final Matcher userIdMatcher = DISCORD_USER_ID_PATTERN.matcher(discordUserName);
         if (userIdMatcher.find()) {
-            final User user = UserDb.getUSER_CACHE().get(Long.valueOf(userIdMatcher.group(2)));
+            final User user = commandParameters.getUserDb().getUserDbModule().getDiscordUserCache().get(Long.valueOf(userIdMatcher.group(2)));
             if (user != null) {
                 return user;
             }

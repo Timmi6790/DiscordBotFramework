@@ -133,28 +133,29 @@ public class DiscordMessagesUtilities {
                         embedBuilder
                                 .setFooter("↓ Click Me!")
                                 .buildSingle()
-                ).queue(message -> {
-            if (!emotes.isEmpty()) {
-                DiscordBot.getInstance()
-                        .getModuleManager()
-                        .getModuleOrThrow(EmoteReactionModule.class)
-                        .addEmoteReactionMessage(
-                                message,
-                                new EmoteReactionMessage(
-                                        emotes,
-                                        commandParameters.getUser().getIdLong(),
-                                        commandParameters.getLowestMessageChannel().getIdLong()
-                                )
-                        );
-            }
+                )
+                .queue(message -> {
+                    if (!emotes.isEmpty()) {
+                        DiscordBot.getInstance()
+                                .getModuleManager()
+                                .getModuleOrThrow(EmoteReactionModule.class)
+                                .addEmoteReactionMessage(
+                                        message,
+                                        new EmoteReactionMessage(
+                                                emotes,
+                                                commandParameters.getUser().getIdLong(),
+                                                commandParameters.getLowestMessageChannel().getIdLong()
+                                        )
+                                );
+                    }
 
-            message.delete()
-                    .queueAfter(
-                            90,
-                            TimeUnit.SECONDS,
-                            null,
-                            new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
-                    );
-        });
+                    message.delete()
+                            .queueAfter(
+                                    90,
+                                    TimeUnit.SECONDS,
+                                    null,
+                                    new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
+                            );
+                });
     }
 }

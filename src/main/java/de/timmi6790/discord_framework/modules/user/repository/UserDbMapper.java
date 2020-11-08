@@ -7,6 +7,7 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
+import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.AllArgsConstructor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -17,7 +18,7 @@ import java.sql.SQLException;
 
 @AllArgsConstructor
 public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb> {
-    private final UserDbRepository userDbRepository;
+    private final UserDbModule userDbModule;
     private final EventModule eventModule;
     private final RankModule rankModule;
     private final @Nullable AchievementModule achievementModule;
@@ -31,7 +32,7 @@ public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb>
         }
 
         return new UserDb(
-                this.userDbRepository,
+                this.userDbModule,
                 this.eventModule,
                 this.rankModule,
                 this.achievementModule,

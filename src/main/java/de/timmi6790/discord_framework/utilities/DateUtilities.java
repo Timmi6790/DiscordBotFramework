@@ -30,14 +30,14 @@ public class DateUtilities {
 
         try {
             return OffsetDateTime.ofInstant(Instant.from(temporal), offset);
-        } catch (final DateTimeException e) {
+        } catch (final DateTimeException exception) {
             throw new DateTimeException(
                     String.format(
                             "Unable to obtain OffsetDateTime from TemporalAccessor: %s of type %s",
                             temporal,
                             temporal.getClass().getName()
                     ),
-                    e
+                    exception
             );
         }
     }
