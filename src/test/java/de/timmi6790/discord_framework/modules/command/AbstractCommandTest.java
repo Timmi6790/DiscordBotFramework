@@ -16,7 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Arrays;
 
 import java.util.*;
 

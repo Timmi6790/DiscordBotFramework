@@ -31,8 +31,7 @@ class MessageListenerTest {
             final String expectedArg = testArg.replace("\n", "");
             final Optional<String> resultNoSpace = MessageListener.getParsedStart(
                     mainMessage + testArg,
-                    mainPattern,
-                    null
+                    mainPattern
             );
             assertThat(resultNoSpace)
                     .isPresent()
@@ -40,8 +39,7 @@ class MessageListenerTest {
 
             final Optional<String> resultSpace = MessageListener.getParsedStart(
                     mainMessage + " " + testArg,
-                    mainPattern,
-                    null
+                    mainPattern
             );
             assertThat(resultSpace)
                     .isPresent()
@@ -57,7 +55,6 @@ class MessageListenerTest {
         when(commandModule.getMainCommandPattern()).thenReturn(CommandModule.compileMainCommandPattern(mainCommand, botId));
 
         final GuildDb guildDb = mock(GuildDb.class);
-        when(guildDb.getCommandAliasPattern()).thenReturn(Optional.empty());
 
         final GuildDbModule guildDbModule = mock(GuildDbModule.class);
         when(guildDbModule.getOrCreate(0)).thenReturn(guildDb);

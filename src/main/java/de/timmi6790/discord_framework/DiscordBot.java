@@ -113,7 +113,6 @@ public class DiscordBot {
                 this.moduleManager.registerModule(module);
             }
         }
-
         this.moduleManager.loadExternalModules();
 
         // Discord

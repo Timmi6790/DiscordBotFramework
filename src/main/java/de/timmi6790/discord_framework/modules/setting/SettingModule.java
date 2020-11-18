@@ -1,10 +1,8 @@
 package de.timmi6790.discord_framework.modules.setting;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.modules.setting.commands.SettingsCommand;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepository;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepositoryMysql;
 import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
@@ -32,7 +30,6 @@ public class SettingModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
-                CommandModule.class,
                 PermissionsModule.class
         );
     }
@@ -41,12 +38,6 @@ public class SettingModule extends AbstractModule {
     public void onInitialize() {
         this.settingRepository = new SettingRepositoryMysql(this);
         this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
-
-        this.getModuleOrThrow(CommandModule.class)
-                .registerCommands(
-                        this,
-                        new SettingsCommand()
-                );
 
         this.registerSettings(
                 this,

@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules.guild;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -13,12 +12,8 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(exclude = {"discord"})
@@ -28,11 +23,7 @@ public class GuildDb {
     private final long discordId;
 
     private final boolean banned;
-
-    private final Set<String> commandAliasNames;
-    private final Pattern commandAliasPattern;
-
-    private final Map<String, AbstractSetting<?>> properties;
+    private final Map<Integer, String> settingsMap;
 
     private final JDA discord;
 
@@ -48,27 +39,13 @@ public class GuildDb {
                    final int databaseId,
                    final long discordId,
                    final boolean banned,
-                   final Set<String> commandAliasNames,
-                   final Map<String, AbstractSetting<?>> properties) {
+                   final Map<Integer, String> settingsMap) {
         this.discord = discord;
 
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.banned = banned;
-        this.commandAliasNames = commandAliasNames;
-        this.properties = properties;
-
-        // TODO: Escape the alias names or limit the alias names
-        if (commandAliasNames.isEmpty()) {
-            this.commandAliasPattern = null;
-
-        } else {
-            final String aliasPattern = commandAliasNames
-                    .stream()
-                    .map(alias -> "(?:" + alias + ")")
-                    .collect(Collectors.joining("|"));
-            this.commandAliasPattern = Pattern.compile("^(?:" + aliasPattern + ")(.*)$)", Pattern.CASE_INSENSITIVE);
-        }
+        this.settingsMap = settingsMap;
     }
 
     public Guild getGuild() {
@@ -81,14 +58,5 @@ public class GuildDb {
 
     public Member getMember(final long userId) {
         return this.memberCache.get(userId);
-    }
-
-    public Optional<Pattern> getCommandAliasPattern() {
-        return Optional.ofNullable(this.commandAliasPattern);
-    }
-
-    public boolean addCommandAlias(final String alias) {
-        // Insert db
-        return this.commandAliasNames.add(alias);
     }
 }

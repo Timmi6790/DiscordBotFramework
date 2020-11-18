@@ -5,8 +5,8 @@ import de.timmi6790.discord_framework.modules.core.stats.IncorrectArgCommandStat
 import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
-import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Arrays;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class CommandAutoCorrectAchievement extends StatValueAchievement {

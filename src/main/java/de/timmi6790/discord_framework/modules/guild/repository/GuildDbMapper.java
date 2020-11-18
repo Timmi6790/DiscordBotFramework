@@ -25,8 +25,7 @@ public class GuildDbMapper extends DatabaseRowMapper implements RowMapper<GuildD
                 rs.getInt("id"),
                 rs.getLong("discordId"),
                 rs.getBoolean("banned"),
-                this.toSet(rs.getString("aliases"), String::valueOf),
-                null
+                this.toMap(rs.getString("settings"), Integer::parseInt, String::valueOf)
         );
     }
 }

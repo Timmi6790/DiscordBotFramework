@@ -2,8 +2,8 @@ package de.timmi6790.discord_framework.modules.setting.settings;
 
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
-import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Arrays;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

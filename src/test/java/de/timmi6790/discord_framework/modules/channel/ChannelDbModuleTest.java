@@ -2,13 +2,14 @@ package de.timmi6790.discord_framework.modules.channel;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import net.dv8tion.jda.api.JDA;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 
 import java.util.Optional;
@@ -24,19 +25,21 @@ class ChannelDbModuleTest {
     private static final long TEST_CHANNEL_ID3 = 308911488647204736L;
 
     @Spy
-    private static final GuildDbModule guildDbModule = Mockito.spy(new GuildDbModule());
+    private static final GuildDbModule guildDbModule = spy(new GuildDbModule());
     @Spy
-    private static final ChannelDbModule channelDbModule = Mockito.spy(new ChannelDbModule());
+    private static final ChannelDbModule channelDbModule = spy(new ChannelDbModule());
 
     @BeforeAll
     static void setup() {
-        doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
-
-        doReturn(AbstractIntegrationTest.databaseModule).when(channelDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(guildDbModule).when(channelDbModule).getModuleOrThrow(GuildDbModule.class);
+        final ModuleManager moduleManager = mock(ModuleManager.class);
+        when(moduleManager.getModuleOrThrow(DatabaseModule.class)).thenReturn(AbstractIntegrationTest.databaseModule);
+        when(moduleManager.getModuleOrThrow(GuildDbModule.class)).thenReturn(guildDbModule);
+        when(moduleManager.getModuleOrThrow(ChannelDbModule.class)).thenReturn(channelDbModule);
+        when(moduleManager.getModule(SettingModule.class)).thenReturn(Optional.empty());
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
 
             final JDA discord = mock(JDA.class);
             when(bot.getDiscord()).thenReturn(discord);

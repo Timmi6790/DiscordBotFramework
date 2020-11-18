@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.setting.commands;
+package de.timmi6790.discord_framework.modules.user.commands;
 
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;

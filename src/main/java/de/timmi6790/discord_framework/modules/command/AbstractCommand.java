@@ -86,11 +86,11 @@ public abstract class AbstractCommand {
     private String category;
     private String description;
 
-    protected AbstractCommand(@NonNull final String name,
-                              @NonNull final String category,
-                              @NonNull final String description,
-                              @NonNull final String syntax,
-                              final String... aliasNames) {
+    public AbstractCommand(@NonNull final String name,
+                           @NonNull final String category,
+                           @NonNull final String description,
+                           @NonNull final String syntax,
+                           final String... aliasNames) {
         this.name = name;
         this.category = category;
         this.description = description;

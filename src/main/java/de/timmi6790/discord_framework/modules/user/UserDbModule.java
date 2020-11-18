@@ -9,6 +9,8 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.user.commands.SettingsCommand;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepositoryMysql;
@@ -52,6 +54,14 @@ public class UserDbModule extends AbstractModule {
                 EventModule.class,
                 RankModule.class
         );
+
+        this.addLoadAfter(
+                SettingModule.class
+        );
+
+        this.addDependencies(
+                CommandModule.class
+        );
     }
 
     @Override
@@ -64,6 +74,14 @@ public class UserDbModule extends AbstractModule {
                         this,
                         new UserCommand()
                 );
+
+        if (this.getModule(SettingModule.class).isPresent()) {
+            this.getModuleOrThrow(CommandModule.class)
+                    .registerCommands(
+                            this,
+                            new SettingsCommand()
+                    );
+        }
     }
 
     protected UserDb create(final long discordId) {

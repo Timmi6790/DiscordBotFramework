@@ -34,19 +34,11 @@ public class MessageListener {
     private final AbstractCommand helpCommand;
 
     protected static Optional<String> getParsedStart(@NonNull final String rawMessage,
-                                                     @NonNull final Pattern mainCommandPattern,
-                                                     final Pattern guildCommandAliasPattern) {
+                                                     @NonNull final Pattern mainCommandPattern) {
         // Check if the message matches the main or guild specific start regex
         final Matcher mainMatcher = mainCommandPattern.matcher(rawMessage);
         if (mainMatcher.find()) {
             return Optional.of(mainMatcher.group(1).trim());
-        }
-
-        if (guildCommandAliasPattern != null) {
-            final Matcher guildAliasMatcher = guildCommandAliasPattern.matcher(rawMessage);
-            if (guildAliasMatcher.find()) {
-                return Optional.of(guildAliasMatcher.group(1).trim());
-            }
         }
 
         return Optional.empty();
@@ -126,8 +118,7 @@ public class MessageListener {
 
         final Optional<String> parsedStart = getParsedStart(
                 event.getMessage().getContentRaw(),
-                this.getCommandModule().getMainCommandPattern(),
-                guildDb.getCommandAliasPattern().orElse(null)
+                this.getCommandModule().getMainCommandPattern()
         );
         if (!parsedStart.isPresent()) {
             return;

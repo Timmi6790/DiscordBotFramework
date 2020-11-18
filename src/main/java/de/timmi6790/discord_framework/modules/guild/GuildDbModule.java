@@ -3,10 +3,13 @@ package de.timmi6790.discord_framework.modules.guild;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.guild.commands.GuildSettingsCommand;
 import de.timmi6790.discord_framework.modules.guild.repository.GuildDbRepository;
 import de.timmi6790.discord_framework.modules.guild.repository.GuildDbRepositoryMysql;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -30,11 +33,27 @@ public class GuildDbModule extends AbstractModule {
                 DatabaseModule.class,
                 PermissionsModule.class
         );
+
+        this.addLoadAfter(
+                SettingModule.class
+        );
+
+        this.addDependencies(
+                CommandModule.class
+        );
     }
 
     @Override
     public void onInitialize() {
         this.guildDbRepository = new GuildDbRepositoryMysql(this);
+
+        if (this.getModule(SettingModule.class).isPresent()) {
+            this.getModuleOrThrow(CommandModule.class)
+                    .registerCommands(
+                            this,
+                            new GuildSettingsCommand()
+                    );
+        }
     }
 
     protected GuildDb create(final long discordId) {

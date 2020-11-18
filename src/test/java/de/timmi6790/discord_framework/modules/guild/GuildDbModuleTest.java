@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.guild;
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import net.dv8tion.jda.api.JDA;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
@@ -25,6 +26,7 @@ class GuildDbModuleTest {
     @BeforeAll
     static void setUp() {
         doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
+        doReturn(Optional.empty()).when(guildDbModule).getModule(SettingModule.class);
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);

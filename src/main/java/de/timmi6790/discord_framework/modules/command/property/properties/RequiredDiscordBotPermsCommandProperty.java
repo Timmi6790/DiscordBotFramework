@@ -2,8 +2,8 @@ package de.timmi6790.discord_framework.modules.command.property.properties;
 
 import de.timmi6790.discord_framework.modules.command.property.CommandProperty;
 import net.dv8tion.jda.api.Permission;
-import org.ocpsoft.prettytime.shade.edu.emory.mathcs.backport.java.util.Arrays;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 
 public class RequiredDiscordBotPermsCommandProperty implements CommandProperty<EnumSet<Permission>> {
