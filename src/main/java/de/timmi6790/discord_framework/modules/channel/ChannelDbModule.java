@@ -2,6 +2,7 @@ package de.timmi6790.discord_framework.modules.channel;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepository;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepositoryMysql;
@@ -13,9 +14,12 @@ import lombok.Getter;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 @EqualsAndHashCode(callSuper = true)
 public class ChannelDbModule extends AbstractModule {
+    private final Striped<Lock> channelCreateLock = Striped.lock(64);
+
     @Getter
     private final Cache<Long, ChannelDb> cache = Caffeine.newBuilder()
             .maximumSize(10_000)
@@ -40,8 +44,22 @@ public class ChannelDbModule extends AbstractModule {
     }
 
     protected ChannelDb create(final long discordId, final long guildId) {
-        // Make sure that the channel is not present
-        return this.get(discordId).orElseGet(() -> this.channelRepository.create(discordId, guildId));
+        // Lock the current discord id to prevent multiple creates
+        final Lock lock = this.channelCreateLock.get(discordId);
+        lock.lock();
+        try {
+            // Make sure that the channel is not present
+            final Optional<ChannelDb> channelDbOpt = this.get(discordId);
+            if (channelDbOpt.isPresent()) {
+                return channelDbOpt.get();
+            }
+
+            final ChannelDb channelDb = this.channelRepository.create(discordId, guildId);
+            this.getCache().put(discordId, channelDb);
+            return channelDb;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Optional<ChannelDb> get(final long discordId) {

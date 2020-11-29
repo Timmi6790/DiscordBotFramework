@@ -2,10 +2,10 @@ package de.timmi6790.discord_framework.modules.guild;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.guild.commands.GuildSettingsCommand;
 import de.timmi6790.discord_framework.modules.guild.repository.GuildDbRepository;
 import de.timmi6790.discord_framework.modules.guild.repository.GuildDbRepositoryMysql;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -15,10 +15,12 @@ import lombok.Getter;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class GuildDbModule extends AbstractModule {
+    private final Striped<Lock> guildCreateLock = Striped.lock(64);
     private final Cache<Long, GuildDb> cache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
@@ -47,6 +49,7 @@ public class GuildDbModule extends AbstractModule {
     public void onInitialize() {
         this.guildDbRepository = new GuildDbRepositoryMysql(this);
 
+        /*
         if (this.getModule(SettingModule.class).isPresent()) {
             this.getModuleOrThrow(CommandModule.class)
                     .registerCommands(
@@ -54,18 +57,27 @@ public class GuildDbModule extends AbstractModule {
                             new GuildSettingsCommand()
                     );
         }
+
+         */
     }
 
     protected GuildDb create(final long discordId) {
-        // Make sure that the guild is not present
-        final Optional<GuildDb> guildDbOpt = this.get(discordId);
-        if (guildDbOpt.isPresent()) {
-            return guildDbOpt.get();
-        }
+        // Lock the current discord id to prevent multiple creates
+        final Lock lock = this.guildCreateLock.get(discordId);
+        lock.lock();
+        try {
+            // Make sure that the guild is not present
+            final Optional<GuildDb> guildDbOpt = this.get(discordId);
+            if (guildDbOpt.isPresent()) {
+                return guildDbOpt.get();
+            }
 
-        final GuildDb guildDb = this.getGuildDbRepository().create(discordId);
-        this.getCache().put(discordId, guildDb);
-        return guildDb;
+            final GuildDb guildDb = this.getGuildDbRepository().create(discordId);
+            this.getCache().put(discordId, guildDb);
+            return guildDb;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Optional<GuildDb> get(final long discordId) {

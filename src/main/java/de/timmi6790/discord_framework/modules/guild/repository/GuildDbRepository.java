@@ -8,4 +8,6 @@ public interface GuildDbRepository {
     GuildDb create(final long discordId);
 
     Optional<GuildDb> get(final long discordId);
+
+    void updateSetting(int guildDatabaseId, int settingId, String newValue);
 }

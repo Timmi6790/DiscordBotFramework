@@ -84,7 +84,7 @@ public class CommandModule extends AbstractModule {
 
         this.commandRepository.init(CommandCause.values(), CommandResult.values());
 
-        final HelpCommand helpCommand = new HelpCommand(this);
+        final HelpCommand helpCommand = new HelpCommand();
         this.registerCommands(
                 this,
                 helpCommand

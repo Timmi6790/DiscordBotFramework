@@ -32,6 +32,7 @@ import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
@@ -51,6 +52,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Data
+@EqualsAndHashCode(exclude = {"database", "commandModule", "permissionsModule", "eventModule", "eventModule", "rankModule", "discord"})
 public abstract class AbstractCommand {
     protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
     private static final String ERROR = "Error";
@@ -86,11 +88,11 @@ public abstract class AbstractCommand {
     private String category;
     private String description;
 
-    public AbstractCommand(@NonNull final String name,
-                           @NonNull final String category,
-                           @NonNull final String description,
-                           @NonNull final String syntax,
-                           final String... aliasNames) {
+    protected AbstractCommand(@NonNull final String name,
+                              @NonNull final String category,
+                              @NonNull final String description,
+                              @NonNull final String syntax,
+                              final String... aliasNames) {
         this.name = name;
         this.category = category;
         this.description = description;

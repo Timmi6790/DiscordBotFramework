@@ -4,7 +4,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.property.properties.ExampleCommandsCommandProperty;
@@ -16,17 +15,12 @@ import java.util.*;
 
 @EqualsAndHashCode(callSuper = true)
 public class HelpCommand extends AbstractCommand {
-    private final CommandModule commandModule;
-
     /**
      * Instantiates a new Help command.
-     *
-     * @param commandModule the command module
      */
-    public HelpCommand(final CommandModule commandModule) {
+    public HelpCommand() {
         super("help", "Info", "In need of help", "[command]", "h");
 
-        this.commandModule = commandModule;
         this.addProperties(
                 new ExampleCommandsCommandProperty(
                         "help"
@@ -56,14 +50,14 @@ public class HelpCommand extends AbstractCommand {
         final MultiEmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Commands")
                 .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
-                .setFooterFormat("TIP: Use %s help <command> to see more details", this.commandModule.getMainCommand());
+                .setFooterFormat("TIP: Use %s help <command> to see more details", getCommandModule().getMainCommand());
 
         final Multimap<String, AbstractCommand> sortedCommands = MultimapBuilder.treeKeys()
                 .arrayListValues()
                 .build();
 
         // Group all commands via their category
-        for (final AbstractCommand command : this.commandModule.getCommands()) {
+        for (final AbstractCommand command : getCommandModule().getCommands()) {
             if (command.hasPermission(commandParameters)) {
                 sortedCommands.put(command.getCategory(), command);
             }
@@ -79,7 +73,7 @@ public class HelpCommand extends AbstractCommand {
                 final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
                 lines.add(String.format(
                         "%s %s",
-                        MarkdownUtil.monospace(this.commandModule.getMainCommand() + command.getName() + syntax),
+                        MarkdownUtil.monospace(getCommandModule().getMainCommand() + command.getName() + syntax),
                         command.getDescription()
                 ));
             }

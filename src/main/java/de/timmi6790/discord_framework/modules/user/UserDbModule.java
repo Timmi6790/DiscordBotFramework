@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.user;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -23,6 +24,7 @@ import net.dv8tion.jda.api.entities.User;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -36,6 +38,7 @@ public class UserDbModule extends AbstractModule {
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
+    private final Striped<Lock> userCreateLock = Striped.lock(64);
     private final Cache<Long, UserDb> cache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
@@ -85,15 +88,22 @@ public class UserDbModule extends AbstractModule {
     }
 
     protected UserDb create(final long discordId) {
-        // Make sure that the user is not present
-        final Optional<UserDb> userDbOpt = this.get(discordId);
-        if (userDbOpt.isPresent()) {
-            return userDbOpt.get();
-        }
+        // Lock the current discord id to prevent multiple creates
+        final Lock lock = this.userCreateLock.get(discordId);
+        lock.lock();
+        try {
+            // Make sure that the user is not present
+            final Optional<UserDb> userDbOpt = this.get(discordId);
+            if (userDbOpt.isPresent()) {
+                return userDbOpt.get();
+            }
 
-        final UserDb userDb = this.getUserDbRepository().create(discordId);
-        this.getCache().put(discordId, userDb);
-        return userDb;
+            final UserDb userDb = this.getUserDbRepository().create(discordId);
+            this.getCache().put(discordId, userDb);
+            return userDb;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Optional<UserDb> get(final long discordId) {

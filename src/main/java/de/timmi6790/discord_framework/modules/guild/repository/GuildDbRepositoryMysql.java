@@ -8,10 +8,8 @@ import org.jdbi.v3.core.Jdbi;
 import java.util.Optional;
 
 public class GuildDbRepositoryMysql implements GuildDbRepository {
-    private static final String GET_GUILD = "SELECT guild.id, discordId, banned, " +
-            "GROUP_CONCAT(DISTINCT CONCAT_WS(',', g_setting.setting_id, g_setting.setting) SEPARATOR ';') settings " +
+    private static final String GET_GUILD = "SELECT guild.id, discordId, banned " +
             "FROM guild " +
-            "LEFT JOIN guild_setting g_setting ON g_setting.guild_id = guild.id  " +
             "WHERE guild.discordId = :discordId " +
             "LIMIT 1;";
 
@@ -44,5 +42,10 @@ public class GuildDbRepositoryMysql implements GuildDbRepository {
                         .mapTo(GuildDb.class)
                         .findFirst()
         );
+    }
+
+    @Override
+    public void updateSetting(final int guildDatabaseId, final int settingId, final String newValue) {
+
     }
 }
