@@ -23,7 +23,6 @@ public class UserDataDatabaseMapper extends DatabaseRowMapper implements RowMapp
         return new UserData(
                 rs.getLong("discordId"),
                 rs.getTimestamp("registerDate"),
-                rs.getLong("shopPoints"),
                 rs.getBoolean("isBanned"),
                 rs.getString("mainRank"),
                 achievements.isEmpty() ? null : achievements,

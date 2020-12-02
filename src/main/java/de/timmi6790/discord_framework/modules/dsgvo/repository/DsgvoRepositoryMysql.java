@@ -6,7 +6,7 @@ import de.timmi6790.discord_framework.modules.dsgvo.UserData;
 import org.jdbi.v3.core.Jdbi;
 
 public class DsgvoRepositoryMysql implements DsgvoRepository {
-    private static final String GET_USER_DATA = "SELECT player.discordId, player.register_date registerDate, player.shop_points shopPoints, player.banned isBanned, mainRank.rank_name mainRank, " +
+    private static final String GET_USER_DATA = "SELECT player.discordId, player.register_date registerDate, player.banned isBanned, mainRank.rank_name mainRank, " +
             "GROUP_CONCAT(DISTINCT CONCAT(achievement.achievement_name, ':', pachievement.date)) achievements, " +
             "GROUP_CONCAT(DISTINCT CONCAT(stat.stat_name, ':', pstat.`value`)) stats, " +
             "GROUP_CONCAT(DISTINCT rank.rank_name) secondaryRanks, " +

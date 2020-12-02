@@ -12,7 +12,6 @@ import java.util.Set;
 public class UserData {
     private final long discordId;
     private final @NonNull Timestamp registerDate;
-    private final long shopPoints;
     private final boolean isBanned;
     private final @NonNull String mainRank;
     private final @Nullable Map<String, Timestamp> achievements;
