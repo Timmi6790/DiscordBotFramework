@@ -15,9 +15,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
-        <sonar.projectKey>Timmi6790_DiscordBotFramework</sonar.projectKey>
-        <sonar.organization>timmi6790</sonar.organization>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.projectKey>DiscordBotFramework</sonar.projectKey>
+        <sonar.host.url>https://sonarcube.timmi6790.de</sonar.host.url>
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
