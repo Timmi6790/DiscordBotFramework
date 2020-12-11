@@ -1,5 +1,7 @@
 package de.timmi6790.discord_framework.modules.command;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
@@ -25,12 +27,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class CommandModule extends AbstractModule {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
+
+    private final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .expireAfterWrite(30, TimeUnit.SECONDS)
+            .build(key -> new AtomicInteger(0));
 
     private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();

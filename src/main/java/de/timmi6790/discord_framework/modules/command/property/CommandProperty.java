@@ -24,7 +24,8 @@ public interface CommandProperty<T> {
      * @param commandParameters the command parameters
      * @return is successful
      */
-    default boolean onPermissionCheck(@NonNull final AbstractCommand command, @NonNull final CommandParameters commandParameters) {
+    default boolean onPermissionCheck(@NonNull final AbstractCommand command,
+                                      @NonNull final CommandParameters commandParameters) {
         return true;
     }
 
@@ -35,7 +36,8 @@ public interface CommandProperty<T> {
      * @param commandParameters the command parameters
      * @return is successful
      */
-    default boolean onCommandExecution(@NonNull final AbstractCommand command, @NonNull final CommandParameters commandParameters) {
+    default boolean onCommandExecution(@NonNull final AbstractCommand command,
+                                       @NonNull final CommandParameters commandParameters) {
         return true;
     }
 }

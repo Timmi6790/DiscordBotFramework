@@ -97,17 +97,20 @@ public class UserDb {
                 commandParameters.getUser(),
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                         .setTitle("You are banned")
-                        .setDescription("Congratulations!!! You did it. You are now banned from using this bot for " + MarkdownUtil.monospace(reason) + ".")
+                        .setDescription(
+                                "Congratulations!!! You did it. You are now banned from using this bot for "
+                                        + MarkdownUtil.monospace(reason) + "."
+                        )
         );
     }
 
-    public boolean setBanned(final boolean banned) {
-        if (this.banned == banned) {
+    public boolean setBanned(final boolean newBanStatus) {
+        if (this.banned == newBanStatus) {
             return false;
         }
 
-        this.getUserDbRepository().setBanStatus(this.getDatabaseId(), banned);
-        this.banned = banned;
+        this.getUserDbRepository().setBanStatus(this.getDatabaseId(), newBanStatus);
+        this.banned = newBanStatus;
         return true;
     }
 

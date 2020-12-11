@@ -33,7 +33,9 @@ public class CommandExecutionEvent extends Event {
     public static class Post extends CommandExecutionEvent {
         private final CommandResult commandResult;
 
-        public Post(final AbstractCommand command, final CommandParameters parameters, @NonNull final CommandResult commandResult) {
+        public Post(final AbstractCommand command,
+                    final CommandParameters parameters,
+                    @NonNull final CommandResult commandResult) {
             super(command, parameters);
 
             this.commandResult = commandResult;

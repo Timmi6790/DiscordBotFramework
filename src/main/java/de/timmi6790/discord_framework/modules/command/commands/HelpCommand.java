@@ -1,7 +1,5 @@
 package de.timmi6790.discord_framework.modules.command.commands;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -50,26 +48,26 @@ public class HelpCommand extends AbstractCommand {
         final MultiEmbedBuilder message = this.getEmbedBuilder(commandParameters)
                 .setTitle("Commands")
                 .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
-                .setFooterFormat("TIP: Use %s help <command> to see more details", getCommandModule().getMainCommand());
-
-        final Multimap<String, AbstractCommand> sortedCommands = MultimapBuilder.treeKeys()
-                .arrayListValues()
-                .build();
+                .setFooterFormat(
+                        "TIP: Use %s %s <command> to see more details",
+                        getCommandModule().getMainCommand(),
+                        this.getName()
+                );
 
         // Group all commands via their category
+        final Map<String, List<AbstractCommand>> sortedCommands = new HashMap<>();
         for (final AbstractCommand command : getCommandModule().getCommands()) {
             if (command.hasPermission(commandParameters)) {
-                sortedCommands.put(command.getCategory(), command);
+                sortedCommands.computeIfAbsent(command.getCategory(), k -> new ArrayList<>()).add(command);
             }
         }
 
         // Sort the command after name
-        for (final Map.Entry<String, Collection<AbstractCommand>> entry : sortedCommands.asMap().entrySet()) {
-            final List<AbstractCommand> commands = new ArrayList<>(entry.getValue());
-            commands.sort(Comparator.comparing(AbstractCommand::getName));
+        for (final Map.Entry<String, List<AbstractCommand>> entry : sortedCommands.entrySet()) {
+            entry.getValue().sort(Comparator.comparing(AbstractCommand::getName));
 
             final StringJoiner lines = new StringJoiner("\n");
-            for (final AbstractCommand command : commands) {
+            for (final AbstractCommand command : entry.getValue()) {
                 final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
                 lines.add(String.format(
                         "%s %s",

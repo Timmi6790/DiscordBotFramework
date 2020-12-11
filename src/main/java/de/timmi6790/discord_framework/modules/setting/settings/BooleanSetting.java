@@ -28,7 +28,7 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
 
     @Override
     protected List<Boolean> possibleValues(final CommandParameters commandParameters, final String userInput) {
-        return Arrays.asList(new Boolean[]{true, false});
+        return Arrays.asList(Boolean.TRUE, Boolean.FALSE);
     }
 
     @Override

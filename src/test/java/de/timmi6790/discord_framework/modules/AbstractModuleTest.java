@@ -8,7 +8,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AbstractModuleTest {
     @Test
     void addGatewayIntents() {
-        final GatewayIntent[] intents = new GatewayIntent[]{GatewayIntent.DIRECT_MESSAGE_TYPING, GatewayIntent.GUILD_MEMBERS};
+        final GatewayIntent[] intents = new GatewayIntent[]{
+                GatewayIntent.DIRECT_MESSAGE_TYPING,
+                GatewayIntent.GUILD_MEMBERS
+        };
         final TestModule module = new TestModule();
         module.addGatewayIntents(intents);
 
@@ -50,13 +53,13 @@ class AbstractModuleTest {
     }
 
     public static class TestModule extends AbstractModule {
-        public TestModule() {
+        TestModule() {
             super("Test");
         }
     }
 
     public static class TestModule2 extends AbstractModule {
-        public TestModule2() {
+        TestModule2() {
             super("Test2");
         }
     }

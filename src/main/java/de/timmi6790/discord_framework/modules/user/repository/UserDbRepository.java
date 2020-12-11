@@ -6,23 +6,23 @@ import lombok.NonNull;
 import java.util.Optional;
 
 public interface UserDbRepository {
-    UserDb create(final long discordId);
+    UserDb create(long discordId);
 
-    Optional<UserDb> get(final long discordId);
+    Optional<UserDb> get(long discordId);
 
-    void delete(@NonNull final UserDb userDb);
+    void delete(@NonNull UserDb userDb);
 
-    void setBanStatus(final int userDatabaseId, final boolean isBanned);
+    void setBanStatus(int userDatabaseId, boolean isBanned);
 
     void addPermission(int userDatabaseId, int permissionId);
 
     void removePermission(int userDatabaseId, int permissionId);
 
-    void setPrimaryRank(int userDatabaseId, final int rankId);
+    void setPrimaryRank(int userDatabaseId, int rankId);
 
-    void addRank(int userDatabaseId, final int rankId);
+    void addRank(int userDatabaseId, int rankId);
 
-    void removeRank(int userDatabaseId, final int rankId);
+    void removeRank(int userDatabaseId, int rankId);
 
     void insertStat(int userDatabaseId, int statId, int statValue);
 
@@ -32,5 +32,5 @@ public interface UserDbRepository {
 
     void updateSetting(int userDatabaseId, int settingId, String newValue);
 
-    void grantPlayerAchievement(final int playerId, final int achievementId);
+    void grantPlayerAchievement(int playerId, int achievementId);
 }

@@ -19,7 +19,7 @@ class UserDbModuleTest {
     private static final long TEST_DISCORD_ID = 305911488697204736L;
     private static final long TEST_DISCORD_ID2 = 168049519831810048L;
 
-    private static final UserDbModule userDbModule = spy(new UserDbModule());
+    private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
 
     @BeforeAll
     static void setUp() {
@@ -30,7 +30,7 @@ class UserDbModuleTest {
 
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
         when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
-        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);
+        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
 
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
@@ -42,17 +42,17 @@ class UserDbModuleTest {
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
 
-            userDbModule.onInitialize();
+            USER_DB_MODULE.onInitialize();
         }
     }
 
     @Test
     void get() {
-        final Optional<UserDb> userDbNotFound = userDbModule.get(TEST_DISCORD_ID);
+        final Optional<UserDb> userDbNotFound = USER_DB_MODULE.get(TEST_DISCORD_ID);
         assertThat(userDbNotFound).isNotPresent();
 
-        userDbModule.create(TEST_DISCORD_ID);
-        final Optional<UserDb> userDbFound = userDbModule.get(TEST_DISCORD_ID);
+        USER_DB_MODULE.create(TEST_DISCORD_ID);
+        final Optional<UserDb> userDbFound = USER_DB_MODULE.get(TEST_DISCORD_ID);
         assertThat(userDbFound).isPresent();
         assertThat(userDbFound.get().getDiscordId()).isEqualTo(TEST_DISCORD_ID);
     }
@@ -60,41 +60,41 @@ class UserDbModuleTest {
     @Test
     void getOrCreate() {
         // Should create them
-        final UserDb userDb = userDbModule.getOrCreate(TEST_DISCORD_ID2);
+        final UserDb userDb = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID2);
         assertThat(userDb).isNotNull();
         assertThat(userDb.getDiscordId()).isEqualTo(TEST_DISCORD_ID2);
 
         // Should get it without creation
-        final UserDb userDb2 = userDbModule.getOrCreate(TEST_DISCORD_ID2);
+        final UserDb userDb2 = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID2);
         assertThat(userDb2).isNotNull();
         assertThat(userDb2.getDiscordId()).isEqualTo(TEST_DISCORD_ID2);
     }
 
     @Test
     void deleteUser() {
-        final UserDb userDb = userDbModule.getOrCreate(TEST_DISCORD_ID);
-        userDbModule.delete(userDb);
+        final UserDb userDb = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID);
+        USER_DB_MODULE.delete(userDb);
 
-        final Optional<UserDb> deletedUser = userDbModule.get(TEST_DISCORD_ID);
+        final Optional<UserDb> deletedUser = USER_DB_MODULE.get(TEST_DISCORD_ID);
         assertThat(deletedUser).isNotPresent();
     }
 
     @Test
     void deleteId() {
-        final UserDb userDb = userDbModule.getOrCreate(TEST_DISCORD_ID);
-        userDbModule.delete(userDb.getDiscordId());
+        final UserDb userDb = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID);
+        USER_DB_MODULE.delete(userDb.getDiscordId());
 
-        final Optional<UserDb> deletedUser = userDbModule.get(TEST_DISCORD_ID);
+        final Optional<UserDb> deletedUser = USER_DB_MODULE.get(TEST_DISCORD_ID);
         assertThat(deletedUser).isNotPresent();
     }
 
     @Test
     void checkIncorrectCache() {
-        userDbModule.create(TEST_DISCORD_ID);
-        final UserDb cachedUser = userDbModule.getCache().getIfPresent(TEST_DISCORD_ID);
+        USER_DB_MODULE.create(TEST_DISCORD_ID);
+        final UserDb cachedUser = USER_DB_MODULE.getCache().getIfPresent(TEST_DISCORD_ID);
 
-        userDbModule.getCache().invalidate(TEST_DISCORD_ID);
-        final UserDb dbUser = userDbModule.getOrCreate(TEST_DISCORD_ID);
+        USER_DB_MODULE.getCache().invalidate(TEST_DISCORD_ID);
+        final UserDb dbUser = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID);
 
         assertThat(cachedUser).isEqualTo(dbUser);
     }

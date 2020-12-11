@@ -36,7 +36,7 @@ public abstract class AbstractSetting<T> {
 
     public abstract T fromDatabaseValue(String value);
 
-    protected abstract Optional<T> parseNewValue(CommandParameters commandParameters, final String userInput);
+    protected abstract Optional<T> parseNewValue(CommandParameters commandParameters, String userInput);
 
     protected abstract List<T> possibleValues(CommandParameters commandParameters, String userInput);
 
@@ -93,13 +93,14 @@ public abstract class AbstractSetting<T> {
                                            final T oldValue,
                                            final T newValue) {
         final String oldValueString = String.valueOf(oldValue);
+        final String oldValueFormatted = oldValueString.isEmpty() ? EmbedBuilder.ZERO_WIDTH_SPACE : oldValueString;
         DiscordMessagesUtilities.sendMessageTimed(
                 commandParameters.getLowestMessageChannel(),
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                         .setTitle("Changed Setting")
                         .setDescription(
                                 "Changed value from %s to %s.",
-                                MarkdownUtil.monospace(oldValueString.isEmpty() ? EmbedBuilder.ZERO_WIDTH_SPACE : oldValueString),
+                                MarkdownUtil.monospace(oldValueFormatted),
                                 MarkdownUtil.monospace(String.valueOf(newValue))
                         ),
                 300

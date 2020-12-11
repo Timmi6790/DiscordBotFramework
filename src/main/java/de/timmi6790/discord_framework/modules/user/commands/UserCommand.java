@@ -90,7 +90,7 @@ public class UserCommand extends AbstractCommand {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        final int commandSpamCache = getCommandSpamCache().get(userDb.getDiscordId()).get();
+        final int commandSpamCache = getCommandModule().getCommandSpamCache().get(userDb.getDiscordId()).get();
         final int activeEmotes = this.getEmoteReactionModule().getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
         final StringJoiner settings = new StringJoiner("\n");

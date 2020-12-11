@@ -1,7 +1,5 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.commons.utilities.EnumUtilities;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
@@ -44,8 +42,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,23 +50,22 @@ import java.util.stream.Collectors;
 @Data
 @EqualsAndHashCode(exclude = {"database", "commandModule", "permissionsModule", "eventModule", "eventModule", "rankModule", "discord"})
 public abstract class AbstractCommand {
-    protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS);
+    protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(
+            Permission.MESSAGE_WRITE,
+            Permission.MESSAGE_EMBED_LINKS
+    );
     private static final String ERROR = "Error";
     private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
     @Getter
     private static final int COMMAND_USER_RATE_LIMIT = 10;
-    @Getter
-    private static final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(30, TimeUnit.SECONDS)
-            .build(key -> new AtomicInteger(0));
 
     @Getter(lazy = true)
     private static final Jdbi database = getModuleManager().getModuleOrThrow(DatabaseModule.class).getJdbi();
     @Getter(lazy = true)
     private static final CommandModule commandModule = getModuleManager().getModuleOrThrow(CommandModule.class);
     @Getter(lazy = true)
-    private static final PermissionsModule permissionsModule = getModuleManager().getModuleOrThrow(PermissionsModule.class);
+    private static final PermissionsModule permissionsModule = getModuleManager()
+            .getModuleOrThrow(PermissionsModule.class);
     @Getter(lazy = true)
     private static final EventModule eventModule = getModuleManager().getModuleOrThrow(EventModule.class);
     @Getter(lazy = true)
@@ -201,7 +196,11 @@ public abstract class AbstractCommand {
     protected void sendTimedMessage(@NonNull final CommandParameters commandParameters,
                                     @NonNull final MultiEmbedBuilder embedBuilder,
                                     final int deleteTime) {
-        DiscordMessagesUtilities.sendMessageTimed(commandParameters.getLowestMessageChannel(), embedBuilder, deleteTime);
+        DiscordMessagesUtilities.sendMessageTimed(
+                commandParameters.getLowestMessageChannel(),
+                embedBuilder,
+                deleteTime
+        );
     }
 
     protected void sendMessage(@NonNull final CommandParameters commandParameters,
@@ -266,7 +265,11 @@ public abstract class AbstractCommand {
     }
 
     public void runCommand(final @NonNull CommandParameters commandParameters) {
-        if (getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).get() > COMMAND_USER_RATE_LIMIT) {
+        final int executedCommands = getCommandModule()
+                .getCommandSpamCache()
+                .get(commandParameters.getUserDb().getDiscordId())
+                .get();
+        if (executedCommands > COMMAND_USER_RATE_LIMIT) {
             return;
         }
 
@@ -299,7 +302,7 @@ public abstract class AbstractCommand {
         AbstractCommand.getEventModule().executeEvent(new CommandExecutionEvent.Pre(this, commandParameters));
 
         // Run command
-        getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
+        getCommandModule().getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
         final CommandResult commandResult = this.executeSave(commandParameters);
 
         // Command post event
@@ -319,7 +322,10 @@ public abstract class AbstractCommand {
         }
 
         // Permission check
-        return this.getPermissionId() == -1 || commandParameters.getUserDb().getAllPermissionIds().contains(this.getPermissionId());
+        return this.getPermissionId() == -1 || commandParameters
+                .getUserDb()
+                .getAllPermissionIds()
+                .contains(this.getPermissionId());
     }
 
     protected void addProperty(final @NonNull CommandProperty<?> property) {
@@ -355,7 +361,8 @@ public abstract class AbstractCommand {
         final String mainCommand = AbstractCommand.getCommandModule().getMainCommand();
 
         final List<String> exampleCommands = new ArrayList<>();
-        for (final String exampleCommand : this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0])) {
+        final String[] values = this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0]);
+        for (final String exampleCommand : values) {
             exampleCommands.add(String.join(" ", mainCommand, this.name, exampleCommand));
         }
         return exampleCommands;
@@ -380,8 +387,8 @@ public abstract class AbstractCommand {
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Missing Args")
-                        .setDescription("You are missing a few required arguments.\n" +
-                                "It is required that you enter the bold arguments.")
+                        .setDescription("You are missing a few required arguments.\n"
+                                + "It is required that you enter the bold arguments.")
                         .addField("Required Syntax", requiredSyntax.toString(), false)
                         .addField("Command Syntax", this.getSyntax(), false)
                         .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty()),

@@ -7,7 +7,6 @@ import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
-import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
@@ -76,19 +75,29 @@ public class MessageListener {
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
         if (similarCommands.isEmpty()) {
-            description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
-                    .append("Use the ").append(MarkdownUtil.bold(this.commandModule.getMainCommand() + " help")).append(" command or click the ")
-                    .append(DiscordEmotes.FOLDER.getEmote()).append(" emote to see all commands.");
+            description.append(MarkdownUtil.monospace(firstArg))
+                    .append(" is not a valid command.\n")
+                    .append("Use the ")
+                    .append(MarkdownUtil.bold(this.commandModule.getMainCommand() + this.helpCommand.getName()))
+                    .append(" command or click the ")
+                    .append(DiscordEmotes.FOLDER.getEmote())
+                    .append(" emote to see all commands.");
 
         } else {
-            description.append(MarkdownUtil.monospace(firstArg)).append(" is not a valid command.\n")
+            description.append(MarkdownUtil.monospace(firstArg))
+                    .append(" is not a valid command.\n")
                     .append("Is it possible that you wanted to write?\n\n");
 
             for (int index = 0; similarCommands.size() > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
                 final AbstractCommand similarCommand = similarCommands.get(index);
 
-                description.append(emote).append(" ").append(MarkdownUtil.bold(similarCommand.getName())).append(" | ").append(similarCommand.getDescription()).append("\n");
+                description.append(emote)
+                        .append(" ")
+                        .append(MarkdownUtil.bold(similarCommand.getName()))
+                        .append(" | ")
+                        .append(similarCommand.getDescription())
+                        .append("\n");
                 emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
             }
 
@@ -114,7 +123,8 @@ public class MessageListener {
         }
 
         final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
-        final GuildDb guildDb = this.getGuildDbModule().getOrCreate(guildId);
+        // Make sure that the guild is created
+        this.getGuildDbModule().getOrCreate(guildId);
 
         final Optional<String> parsedStart = getParsedStart(
                 event.getMessage().getContentRaw(),
@@ -137,7 +147,8 @@ public class MessageListener {
 
         final String commandName = spaceMatcher.group(1);
         try {
-            this.getCommand(commandName, commandParameters).ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
+            this.getCommand(commandName, commandParameters)
+                    .ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
         } catch (final Exception e) {
             DiscordBot.getLogger().error(e);
         }

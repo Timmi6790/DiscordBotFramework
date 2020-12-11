@@ -56,9 +56,17 @@ public class AccountDeletionCommand extends AbstractCommand {
             this.sendTimedMessage(commandParameters,
                     this.getEmbedBuilder(commandParameters)
                             .setTitle("How to delete my account")
-                            .setDescription("If you really wish to delete your account, write the " + MarkdownUtil.monospace(CONFIRM_COMMAND_NAME) + " in the next 5 minutes.\n" +
-                                    MarkdownUtil.bold("THERE IS NO WAY TO REVERT THIS ACTION"))
-                            .addField(CONFIRM_COMMAND_NAME, getCommandModule().getMainCommand() + " deleteMyAccount " + phrase, false),
+                            .setDescription(
+                                    "If you really wish to delete your account, write the %s in "
+                                            + "the next 5 minutes.%n%s",
+                                    MarkdownUtil.monospace(CONFIRM_COMMAND_NAME),
+                                    MarkdownUtil.bold("THERE IS NO WAY TO REVERT THIS ACTION")
+                            )
+                            .addField(
+                                    CONFIRM_COMMAND_NAME,
+                                    getCommandModule().getMainCommand() + " deleteMyAccount " + phrase,
+                                    false
+                            ),
                     300
             );
 

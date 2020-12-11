@@ -6,7 +6,7 @@ import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrec
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class CommandAutoCorrectAchievement extends StatValueAchievement {
@@ -21,8 +21,8 @@ public class CommandAutoCorrectAchievement extends StatValueAchievement {
 
     @Override
     public List<String> getUnlockedPerks() {
-        return Arrays.asList(new String[]{
+        return Collections.singletonList(
                 "A new setting. Check the " + MarkdownUtil.monospace("settings") + " command for more information."
-        });
+        );
     }
 }
