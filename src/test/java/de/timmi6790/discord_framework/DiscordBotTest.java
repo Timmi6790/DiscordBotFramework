@@ -19,18 +19,6 @@ import static org.mockito.Mockito.*;
 
 class DiscordBotTest {
     @Test
-    void main() {
-    }
-
-    @Test
-    void getInstance() {
-    }
-
-    @Test
-    void getLogger() {
-    }
-
-    @Test
     void start_first_time() throws IOException, TopicalSortCycleException, InterruptedException, LoginException {
         final DiscordBot discordBot = spy(new DiscordBot());
         doReturn(new HashSet<>()).when(discordBot).getInternalModuleClasses();
