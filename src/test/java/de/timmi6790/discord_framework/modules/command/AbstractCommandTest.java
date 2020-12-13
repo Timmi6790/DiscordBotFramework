@@ -132,8 +132,9 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getUserDb()).thenReturn(userDb);
 
+        final TestCommand testCommand = this.createCommand();
         this.runInsideDiscordMessagesUtilitiesMock(
-                () -> assertThat(AbstractCommand.isUserBanned(commandParameters)).isEqualTo(isBanned)
+                () -> assertThat(testCommand.isUserBanned(commandParameters)).isEqualTo(isBanned)
         );
     }
 
@@ -149,8 +150,9 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getChannelDb()).thenReturn(channelDb);
 
+        final TestCommand testCommand = this.createCommand();
         this.runInsideDiscordMessagesUtilitiesMock(
-                () -> assertThat(AbstractCommand.isServerBanned(commandParameters)).isEqualTo(isBanned)
+                () -> assertThat(testCommand.isServerBanned(commandParameters)).isEqualTo(isBanned)
         );
     }
 

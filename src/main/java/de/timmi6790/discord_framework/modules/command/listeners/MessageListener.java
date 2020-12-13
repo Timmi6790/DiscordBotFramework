@@ -30,6 +30,7 @@ public class MessageListener {
 
     private final CommandModule commandModule;
     private final GuildDbModule guildDbModule;
+
     private final AbstractCommand helpCommand;
 
     protected static Optional<String> getParsedStart(@NonNull final String rawMessage,
@@ -43,9 +44,14 @@ public class MessageListener {
         return Optional.empty();
     }
 
-    protected Optional<AbstractCommand> getCommand(final String commandName, final CommandParameters commandParameters) {
-        final Optional<AbstractCommand> commandOpt = commandName.isEmpty() ? Optional.of(this.helpCommand) : this.commandModule.getCommand(commandName);
+    protected Optional<AbstractCommand> getCommand(final String commandName,
+                                                   final CommandParameters commandParameters) {
+        // Always show the help command when only the main command is executed
+        if (commandName.isEmpty()) {
+            return Optional.of(this.helpCommand);
+        }
 
+        final Optional<AbstractCommand> commandOpt = this.commandModule.getCommand(commandName);
         if (commandOpt.isPresent()) {
             return commandOpt;
         } else {
@@ -60,6 +66,7 @@ public class MessageListener {
                 return Optional.of(similarCommands.get(0));
 
             } else {
+                // Make sure that we have enough perms to send this
                 if (AbstractCommand.hasRequiredDiscordPerms(commandParameters, EnumSet.noneOf(Permission.class))) {
                     this.sendIncorrectCommandHelpMessage(commandParameters, similarCommands, commandName);
                 }
@@ -101,7 +108,9 @@ public class MessageListener {
                 emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
             }
 
-            description.append("\n").append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
+            description.append("\n")
+                    .append(DiscordEmotes.FOLDER.getEmote())
+                    .append(" All commands");
         }
 
         emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(this.helpCommand, commandParameters));
@@ -122,10 +131,7 @@ public class MessageListener {
             return;
         }
 
-        final long guildId = event.getMessage().isFromGuild() ? event.getMessage().getGuild().getIdLong() : 0;
-        // Make sure that the guild is created
-        this.getGuildDbModule().getOrCreate(guildId);
-
+        // Check if the main command exists
         final Optional<String> parsedStart = getParsedStart(
                 event.getMessage().getContentRaw(),
                 this.getCommandModule().getMainCommandPattern()
@@ -135,16 +141,12 @@ public class MessageListener {
         }
 
         final Matcher spaceMatcher = FIRST_SPACE_PATTERN.matcher(parsedStart.get());
+        // This should never happen
         if (!spaceMatcher.find()) {
             return;
         }
 
-        final String rawArgs = spaceMatcher.group(2);
-        final CommandParameters commandParameters = CommandParameters.of(event, rawArgs);
-        if (AbstractCommand.isServerBanned(commandParameters) || AbstractCommand.isUserBanned(commandParameters)) {
-            return;
-        }
-
+        final CommandParameters commandParameters = CommandParameters.of(event, spaceMatcher.group(2));
         final String commandName = spaceMatcher.group(1);
         try {
             this.getCommand(commandName, commandParameters)

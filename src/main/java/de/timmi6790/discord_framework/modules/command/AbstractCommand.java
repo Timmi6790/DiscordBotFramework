@@ -135,34 +135,6 @@ public abstract class AbstractCommand {
         return true;
     }
 
-    public static boolean isUserBanned(@NonNull final CommandParameters commandParameters) {
-        if (commandParameters.getUserDb().isBanned()) {
-            DiscordMessagesUtilities.sendPrivateMessage(
-                    commandParameters.getUser(),
-                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                            .setTitle("You are banned")
-                            .setDescription("You are banned from using this bot.")
-            );
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean isServerBanned(@NonNull final CommandParameters commandParameters) {
-        if (commandParameters.getChannelDb().getGuildDb().isBanned()) {
-            DiscordMessagesUtilities.sendMessageTimed(
-                    commandParameters.getLowestMessageChannel(),
-                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
-                            .setTitle("Banned Server")
-                            .setDescription("This server is banned from using this bot."),
-                    90
-            );
-
-            return true;
-        }
-        return false;
-    }
-
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
     protected DiscordBot getDiscordBot() {
@@ -253,6 +225,34 @@ public abstract class AbstractCommand {
         throw new CommandReturnException(CommandResult.INVALID_ARGS);
     }
 
+    protected boolean isUserBanned(@NonNull final CommandParameters commandParameters) {
+        if (commandParameters.getUserDb().isBanned()) {
+            DiscordMessagesUtilities.sendPrivateMessage(
+                    commandParameters.getUser(),
+                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                            .setTitle("You are banned")
+                            .setDescription("You are banned from using this bot.")
+            );
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isServerBanned(@NonNull final CommandParameters commandParameters) {
+        if (commandParameters.getChannelDb().getGuildDb().isBanned()) {
+            DiscordMessagesUtilities.sendMessageTimed(
+                    commandParameters.getLowestMessageChannel(),
+                    DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                            .setTitle("Banned Server")
+                            .setDescription("This server is banned from using this bot."),
+                    90
+            );
+
+            return true;
+        }
+        return false;
+    }
+
     public void runCommand(final @NonNull CommandParameters commandParameters) {
         final int executedCommands = this.getCommandModule()
                 .getCommandSpamCache()
@@ -263,7 +263,7 @@ public abstract class AbstractCommand {
         }
 
         // Ban checks
-        if (isUserBanned(commandParameters) || isServerBanned(commandParameters)) {
+        if (this.isUserBanned(commandParameters) || this.isServerBanned(commandParameters)) {
             return;
         }
 

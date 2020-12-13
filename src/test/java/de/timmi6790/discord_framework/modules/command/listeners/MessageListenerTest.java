@@ -78,8 +78,6 @@ class MessageListenerTest {
 
     private void runOnTextMessageTest(final String mainCommand,
                                       final String rawMessage,
-                                      final boolean userBanned,
-                                      final boolean guildBanned,
                                       final VerificationMode verificationMode) {
         final AbstractCommand helpCommand = mock(AbstractCommand.class);
         try (final MockedStatic<CommandParameters> commandParametersMockedStatic = mockStatic(CommandParameters.class)) {
@@ -87,9 +85,6 @@ class MessageListenerTest {
             commandParametersMockedStatic.when(() -> CommandParameters.of(any(), anyString())).thenReturn(commandParameters);
 
             try (final MockedStatic<AbstractCommand> abstractCommandMockedStatic = mockStatic(AbstractCommand.class)) {
-                abstractCommandMockedStatic.when(() -> AbstractCommand.isUserBanned(any())).thenReturn(userBanned);
-                abstractCommandMockedStatic.when(() -> AbstractCommand.isServerBanned(any())).thenReturn(guildBanned);
-
                 this.createMessageListener(1, mainCommand, helpCommand)
                         .onTextMessage(this.createMessageReceivedEvent(2, rawMessage));
                 Mockito.verify(helpCommand, verificationMode).runCommand(any());
@@ -124,30 +119,12 @@ class MessageListenerTest {
     @ParameterizedTest
     @ValueSource(strings = {"!", "stat "})
     void onTextMessage_help_message(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, mainCommand, false, false, atLeastOnce());
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"!", "stat "})
-    void onTextMessage_guid_banned(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, mainCommand, false, true, never());
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"!", "stat "})
-    void onTextMessage_user_banned(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, mainCommand, true, false, never());
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"!", "stat "})
-    void onTextMessage_user_and_guild_banned(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, mainCommand, true, true, never());
+        this.runOnTextMessageTest(mainCommand, mainCommand, atLeastOnce());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"!", "stat "})
     void onTextMessage_incorrect_input(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, "", false, false, never());
+        this.runOnTextMessageTest(mainCommand, "", never());
     }
 }

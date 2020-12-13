@@ -57,7 +57,9 @@ public class CommandParameters {
         final GuildDb guildDb = moduleManager.getModuleOrThrow(GuildDbModule.class).getOrCreate(guildId);
 
         // Add already obtained elements to cache
-        moduleManager.getModuleOrThrow(UserDbModule.class).getDiscordUserCache().put(event.getAuthor().getIdLong(), event.getAuthor());
+        moduleManager.getModuleOrThrow(UserDbModule.class)
+                .getDiscordUserCache()
+                .put(event.getAuthor().getIdLong(), event.getAuthor());
         if (event.getMember() != null) {
             guildDb.getMemberCache().put(event.getMember().getIdLong(), event.getMember());
         }
@@ -67,8 +69,10 @@ public class CommandParameters {
                 SPLITTER.splitToList(rawArgs).toArray(new String[0]),
                 event.isFromGuild(),
                 CommandCause.USER,
-                moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
-                moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(event.getAuthor().getIdLong())
+                moduleManager.getModuleOrThrow(ChannelDbModule.class)
+                        .getOrCreate(event.getChannel().getIdLong(), guildDb.getDiscordId()),
+                moduleManager.getModuleOrThrow(UserDbModule.class)
+                        .getOrCreate(event.getAuthor().getIdLong())
         );
     }
 
