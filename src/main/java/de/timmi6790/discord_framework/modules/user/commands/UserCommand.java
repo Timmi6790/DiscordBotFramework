@@ -118,7 +118,6 @@ public class UserCommand extends AbstractCommand {
                     .map(Rank::getName)
                     .ifPresent(subRanks::add);
         }
-        final String ranks = primaryRank + "[" + subRanks.toString() + "]";
 
         final StringJoiner permissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getPermissionIds()) {
@@ -135,7 +134,7 @@ public class UserCommand extends AbstractCommand {
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
-                        .addField("Ranks", ranks, true)
+                        .addField("Ranks", primaryRank + "[" + subRanks + "]", true)
                         .addField("Achievements", achievements.toString(), false)
                         .addField("Settings", settings.toString(), false)
                         .addField("Stats", stats.toString(), false)

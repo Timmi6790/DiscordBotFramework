@@ -78,29 +78,28 @@ public class MessageListener {
     protected void sendIncorrectCommandHelpMessage(@NonNull final CommandParameters commandParameters,
                                                    @NonNull final List<AbstractCommand> similarCommands,
                                                    @NonNull final String firstArg) {
-        String description = "";
+        final StringBuilder description = new StringBuilder();
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
         if (similarCommands.isEmpty()) {
-            description += String.format(
+            description.append(String.format(
                     "%s is not a valid command.%n Use the %s command or click the %s emote to see all commands",
                     MarkdownUtil.monospace(firstArg),
                     MarkdownUtil.bold(this.commandModule.getMainCommand() + this.helpCommand.getName()),
                     DiscordEmotes.FOLDER.getEmote()
-            );
+            ));
 
         } else {
-            description += String.format(
+            description.append(String.format(
                     "%s is not a valid command.%n Is it possible that you wanted to write?%n%n",
                     MarkdownUtil.monospace(firstArg)
-            );
+            ));
 
-            final StringBuilder emoteDescription = new StringBuilder();
             for (int index = 0; similarCommands.size() > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
                 final AbstractCommand similarCommand = similarCommands.get(index);
 
-                emoteDescription.append(
+                description.append(
                         String.format(
                                 "%s %s | %s %n",
                                 emote,
@@ -110,7 +109,7 @@ public class MessageListener {
                 );
                 emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
             }
-            description += emoteDescription.toString() + "\n" + DiscordEmotes.FOLDER.getEmote() + " All commands";
+            description.append('\n').append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
 
         emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(this.helpCommand, commandParameters));

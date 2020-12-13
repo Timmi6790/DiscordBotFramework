@@ -137,7 +137,7 @@ public abstract class AbstractCommand {
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
-    protected DiscordBot getDiscordBot() {
+    protected final DiscordBot getDiscordBot() {
         return DiscordBot.getInstance();
     }
 
