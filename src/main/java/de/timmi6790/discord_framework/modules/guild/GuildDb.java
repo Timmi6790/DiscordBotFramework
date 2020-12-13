@@ -6,10 +6,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +25,7 @@ public class GuildDb {
     private final boolean banned;
     private final Map<Integer, String> settingsMap;
 
-    private final JDA discord;
+    private final ShardManager discord;
 
     private final LoadingCache<Long, Member> memberCache = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES)
@@ -35,7 +35,7 @@ public class GuildDb {
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
-    public GuildDb(final JDA discord,
+    public GuildDb(final ShardManager discord,
                    final int databaseId,
                    final long discordId,
                    final boolean banned,

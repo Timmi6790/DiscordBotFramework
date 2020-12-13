@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules.botlist;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import lombok.EqualsAndHashCode;
-import net.dv8tion.jda.api.JDA;
 import org.discordbots.api.client.DiscordBotListAPI;
 
 import java.util.concurrent.Executors;
@@ -17,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class BotListModule extends AbstractModule {
     private ScheduledFuture<?> updateTask;
 
-    private JDA discord;
+    private String botId;
     private DiscordBotListAPI botListAPI;
 
     /**
@@ -33,7 +32,7 @@ public class BotListModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.discord = this.getDiscord();
+        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getId();
     }
 
     @Override
@@ -45,7 +44,7 @@ public class BotListModule extends AbstractModule {
         if (!discordListToken.isEmpty()) {
             this.botListAPI = new DiscordBotListAPI.Builder()
                     .token(discordListToken)
-                    .botId(this.discord.getSelfUser().getId())
+                    .botId(this.botId)
                     .build();
 
             this.updateTask = Executors.newScheduledThreadPool(1)

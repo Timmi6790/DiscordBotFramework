@@ -3,8 +3,8 @@ package de.timmi6790.discord_framework.modules;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import lombok.Data;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.util.*;
 
@@ -72,7 +72,7 @@ public abstract class AbstractModule {
         return DiscordBot.getInstance();
     }
 
-    public JDA getDiscord() {
+    public ShardManager getDiscord() {
         return this.getDiscordBot().getDiscord();
     }
 

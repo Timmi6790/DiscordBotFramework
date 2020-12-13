@@ -9,9 +9,10 @@ import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.reflections.Reflections;
 import org.tinylog.Logger;
 import org.tinylog.TaggedLogger;
@@ -32,7 +33,7 @@ public class DiscordBot {
     private final ModuleManager moduleManager = new ModuleManager(getLogger());
     private final Path basePath = Paths.get(".").toAbsolutePath().normalize();
     private final Set<AbstractModule> internalModules = new HashSet<>();
-    private JDA discord;
+    private ShardManager discord;
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
         instance = new DiscordBot();
@@ -122,12 +123,16 @@ public class DiscordBot {
         }
 
         getLogger().debug("Starting discord with {} gateway intents.", requiredGatewayIntents);
-        this.discord = JDABuilder.createLight(mainConfig.getDiscordToken(), requiredGatewayIntents)
+        this.discord = DefaultShardManagerBuilder.createLight(mainConfig.getDiscordToken(), requiredGatewayIntents)
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
 
         this.moduleManager.initializeAll();
-        this.discord.awaitReady();
+        this.getBaseShard().awaitReady();
         this.moduleManager.startAll();
+    }
+
+    public JDA getBaseShard() {
+        return this.discord.getShardById(0);
     }
 }

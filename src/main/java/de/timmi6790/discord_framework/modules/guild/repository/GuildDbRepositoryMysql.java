@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.modules.guild.repository;
 
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
-import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
@@ -16,7 +16,7 @@ public class GuildDbRepositoryMysql implements GuildDbRepository {
 
     private final Jdbi database;
 
-    public GuildDbRepositoryMysql(final Jdbi database, final JDA discord) {
+    public GuildDbRepositoryMysql(final Jdbi database, final ShardManager discord) {
         this.database = database;
         this.database.registerRowMapper(
                 GuildDb.class,

@@ -18,8 +18,8 @@ import de.timmi6790.discord_framework.modules.user.repository.UserDbRepositoryMy
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +34,7 @@ public class UserDbModule extends AbstractModule {
             .expireAfterAccess(1, TimeUnit.MINUTES)
             .build(key -> {
                 final CompletableFuture<User> futureValue = new CompletableFuture<>();
-                this.discord.retrieveUserById(key, false).queue(futureValue::complete);
+                this.discord.retrieveUserById(key).queue(futureValue::complete);
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
@@ -45,7 +45,7 @@ public class UserDbModule extends AbstractModule {
             .build();
 
     private UserDbRepository userDbRepository;
-    private JDA discord;
+    private ShardManager discord;
 
     public UserDbModule() {
         super("UserDb");

@@ -31,10 +31,10 @@ import io.sentry.SentryLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -65,7 +65,7 @@ public abstract class AbstractCommand {
     private final PermissionsModule permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
     private final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
     private final RankModule rankModule = this.getModuleOrThrow(RankModule.class);
-    private final JDA discord = this.getDiscordBot().getDiscord();
+    private final ShardManager discord = this.getDiscordBot().getDiscord();
 
     // Command specific data
     private final String name;
@@ -439,7 +439,13 @@ public abstract class AbstractCommand {
                                    @Nullable final Class<? extends AbstractCommand> commandClass,
                                    @Nullable final String[] newArgs,
                                    @NonNull final List<String> similarNames) {
-        final AbstractCommand command = this.getCommandModule().getCommand(commandClass).orElse(null);
+        final AbstractCommand command;
+        if (commandClass == null) {
+            command = null;
+        } else {
+            command = this.getCommandModule().getCommand(commandClass).orElse(null);
+
+        }
 
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
         final StringBuilder helpDescription = new StringBuilder(String.format(

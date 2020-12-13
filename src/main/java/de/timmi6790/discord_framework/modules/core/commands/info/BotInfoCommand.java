@@ -20,16 +20,19 @@ public class BotInfoCommand extends AbstractCommand {
         super("binfo", "Management", "", "");
 
 
-        this.userDbModule = getModuleManager().getModuleOrThrow(UserDbModule.class);
-        this.channelDbModule = getModuleManager().getModuleOrThrow(ChannelDbModule.class);
-        this.guildDbModule = getModuleManager().getModuleOrThrow(GuildDbModule.class);
-        this.emoteReactionModule = getModuleManager().getModuleOrThrow(EmoteReactionModule.class);
+        this.userDbModule = this.getModuleManager().getModuleOrThrow(UserDbModule.class);
+        this.channelDbModule = this.getModuleManager().getModuleOrThrow(ChannelDbModule.class);
+        this.guildDbModule = this.getModuleManager().getModuleOrThrow(GuildDbModule.class);
+        this.emoteReactionModule = this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class);
     }
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        final int guilds = getDiscord().getSelfUser().getMutualGuilds().size();
+        // discord stats
+        final int guilds = this.getDiscord().getGuilds().size();
+        final int shards = this.getDiscord().getShardsTotal();
 
+        // Module stats
         final long userCacheSize = this.userDbModule.getCache().estimatedSize();
         final long channelCacheSize = this.channelDbModule.getCache().estimatedSize();
         final long guildCacheSize = this.guildDbModule.getCache().estimatedSize();
@@ -39,6 +42,7 @@ public class BotInfoCommand extends AbstractCommand {
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("Bot Info")
                         .addField("Guilds", String.valueOf(guilds), true)
+                        .addField("Shards", String.valueOf(shards), true)
                         .addField("User Cache", String.valueOf(userCacheSize), true)
                         .addField("Channel Cache", String.valueOf(channelCacheSize), true)
                         .addField("Guild Cache", String.valueOf(guildCacheSize), true)

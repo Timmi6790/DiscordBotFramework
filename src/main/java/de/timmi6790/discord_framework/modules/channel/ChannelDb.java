@@ -4,8 +4,8 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 @Data
 @EqualsAndHashCode(exclude = {"discord"})
@@ -16,10 +16,10 @@ public class ChannelDb {
     private final GuildDb guildDb;
     private boolean disabled;
 
-    private final JDA discord;
+    private final ShardManager discord;
 
     public ChannelDb(final GuildDb guildDb,
-                     final JDA discord,
+                     final ShardManager discord,
                      final int databaseId,
                      final long discordId,
                      final boolean disabled) {

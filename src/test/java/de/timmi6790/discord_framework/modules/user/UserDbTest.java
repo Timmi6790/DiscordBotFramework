@@ -20,6 +20,7 @@ import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -67,8 +68,11 @@ class UserDbTest {
             final DiscordBot bot = mock(DiscordBot.class);
             when(bot.getModuleManager()).thenReturn(moduleManager);
 
-            final JDA discord = mock(JDA.class);
-            when(discord.getResponseTotal()).thenReturn(1L);
+            final JDA jda = mock(JDA.class);
+            when(jda.getResponseTotal()).thenReturn(1L);
+
+            final ShardManager discord = mock(ShardManager.class);
+            when(discord.getShardById(0)).thenReturn(jda);
             when(bot.getDiscord()).thenReturn(discord);
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
@@ -107,8 +111,11 @@ class UserDbTest {
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);
 
-            final JDA discord = mock(JDA.class);
-            when(discord.getResponseTotal()).thenReturn(1L);
+            final JDA jda = mock(JDA.class);
+            when(jda.getResponseTotal()).thenReturn(1L);
+
+            final ShardManager discord = mock(ShardManager.class);
+            when(discord.getShardById(0)).thenReturn(jda);
             when(bot.getDiscord()).thenReturn(discord);
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);

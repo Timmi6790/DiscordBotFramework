@@ -91,7 +91,7 @@ public class CommandModule extends AbstractModule {
         this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
-        this.botId = this.getDiscord().getSelfUser().getIdLong();
+        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getIdLong();
         this.mainCommand = this.commandConfig.getMainCommand();
         this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
 
@@ -117,7 +117,7 @@ public class CommandModule extends AbstractModule {
     @Override
     public void onEnable() {
         if (this.commandConfig.isSetDiscordActivity()) {
-            this.getDiscord().getPresence().setActivity(Activity.playing(this.mainCommand + "help"));
+            this.getDiscord().setActivity(Activity.playing(this.mainCommand + "help"));
         }
     }
 

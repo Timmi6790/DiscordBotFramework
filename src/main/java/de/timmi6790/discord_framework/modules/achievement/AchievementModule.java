@@ -68,7 +68,7 @@ public class AchievementModule extends AbstractModule {
         return Optional.empty();
     }
 
-    public Optional<AbstractAchievement> getAchievement(@NonNull final int achievementId) {
+    public Optional<AbstractAchievement> getAchievement(final int achievementId) {
         return Optional.ofNullable(this.achievements.get(achievementId));
     }
 }
