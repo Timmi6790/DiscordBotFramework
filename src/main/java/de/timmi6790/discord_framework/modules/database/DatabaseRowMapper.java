@@ -19,7 +19,8 @@ public abstract class DatabaseRowMapper {
      * @param typeFunction function to convert string input into wanted set type
      * @return the splitted set
      */
-    protected <T> Set<T> toSet(@Nullable final String string, @NonNull final Function<String, T> typeFunction) {
+    protected <T> Set<T> toSet(@Nullable final String string,
+                               @NonNull final Function<String, T> typeFunction) {
         return this.toSet(string, typeFunction, ",");
     }
 
@@ -32,7 +33,9 @@ public abstract class DatabaseRowMapper {
      * @param splitter     the splitter
      * @return the splitted set
      */
-    protected <T> Set<T> toSet(@Nullable final String string, @NonNull final Function<String, T> typeFunction, @NonNull final String splitter) {
+    protected <T> Set<T> toSet(@Nullable final String string,
+                               @NonNull final Function<String, T> typeFunction,
+                               @NonNull final String splitter) {
         if (string == null) {
             return new HashSet<>();
         }
@@ -54,7 +57,8 @@ public abstract class DatabaseRowMapper {
      * @param valueFunction function to convert string input into the wanted value type
      * @return the parsed database map
      */
-    protected <K, V> Map<K, V> toMap(@Nullable final String string, @NonNull final Function<String, K> keyFunction,
+    protected <K, V> Map<K, V> toMap(@Nullable final String string,
+                                     @NonNull final Function<String, K> keyFunction,
                                      @NonNull final Function<String, V> valueFunction) {
         return this.toMap(string, keyFunction, valueFunction, ";", ",");
     }
@@ -72,15 +76,25 @@ public abstract class DatabaseRowMapper {
      * @param keyValueSeparator the key value separator
      * @return the parsed database map
      */
-    protected <K, V> Map<K, V> toMap(@Nullable final String string, @NonNull final Function<String, K> keyFunction, @NonNull final Function<String, V> valueFunction,
-                                     @NonNull final String listSeparator, @NonNull final String keyValueSeparator) {
+    protected <K, V> Map<K, V> toMap(@Nullable final String string,
+                                     @NonNull final Function<String, K> keyFunction,
+                                     @NonNull final Function<String, V> valueFunction,
+                                     @NonNull final String listSeparator,
+                                     @NonNull final String keyValueSeparator) {
         if (string == null) {
             return new HashMap<>();
         }
 
-        return Arrays.stream(string.split(listSeparator))
-                .map(setting -> setting.split(keyValueSeparator))
-                .filter(values -> values.length == 2)
-                .collect(Collectors.toMap(values -> keyFunction.apply(values[0]), values -> valueFunction.apply(values[1])));
+        final Map<K, V> result = new HashMap<>();
+        for (final String listPart : string.split(listSeparator)) {
+            final String[] keyValue = listPart.split(keyValueSeparator);
+            if (keyValue.length == 2) {
+                result.put(
+                        keyFunction.apply(keyValue[0]),
+                        valueFunction.apply(keyValue[1])
+                );
+            }
+        }
+        return result;
     }
 }

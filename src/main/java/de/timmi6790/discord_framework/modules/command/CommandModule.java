@@ -87,7 +87,7 @@ public class CommandModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.commandRepository = new CommandRepositoryMysql(this);
+        this.commandRepository = new CommandRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class).getJdbi());
         this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
@@ -157,7 +157,7 @@ public class CommandModule extends AbstractModule {
         }
         if (command.getPermissionId() == -1) {
             final String defaultPermissionName = String.format("%s.command.%s", module.getName(), command.getName())
-                    .replace(" ", "_")
+                    .replace(' ', '_')
                     .toLowerCase();
             command.setPermission(defaultPermissionName);
         }

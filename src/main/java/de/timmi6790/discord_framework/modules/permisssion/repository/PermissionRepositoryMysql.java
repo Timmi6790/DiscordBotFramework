@@ -1,7 +1,5 @@
 package de.timmi6790.discord_framework.modules.permisssion.repository;
 
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
@@ -17,8 +15,8 @@ public class PermissionRepositoryMysql implements PermissionRepository {
 
     private final Jdbi database;
 
-    public PermissionRepositoryMysql(final PermissionsModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
+    public PermissionRepositoryMysql(final Jdbi database) {
+        this.database = database;
     }
 
     @Override

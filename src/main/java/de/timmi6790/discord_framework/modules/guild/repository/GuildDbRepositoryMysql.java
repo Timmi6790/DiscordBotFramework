@@ -1,8 +1,7 @@
 package de.timmi6790.discord_framework.modules.guild.repository;
 
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
-import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import net.dv8tion.jda.api.JDA;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
@@ -17,9 +16,12 @@ public class GuildDbRepositoryMysql implements GuildDbRepository {
 
     private final Jdbi database;
 
-    public GuildDbRepositoryMysql(final GuildDbModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
-        this.database.registerRowMapper(GuildDb.class, new GuildDbMapper(module.getDiscord()));
+    public GuildDbRepositoryMysql(final Jdbi database, final JDA discord) {
+        this.database = database;
+        this.database.registerRowMapper(
+                GuildDb.class,
+                new GuildDbMapper(discord)
+        );
     }
 
     @Override

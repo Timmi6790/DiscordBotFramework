@@ -1,7 +1,5 @@
 package de.timmi6790.discord_framework.modules.dsgvo.repository;
 
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
 import de.timmi6790.discord_framework.modules.dsgvo.UserData;
 import org.jdbi.v3.core.Jdbi;
 
@@ -29,8 +27,8 @@ public class DsgvoRepositoryMysql implements DsgvoRepository {
 
     private final Jdbi database;
 
-    public DsgvoRepositoryMysql(final DsgvoModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
+    public DsgvoRepositoryMysql(final Jdbi database) {
+        this.database = database;
         this.database.registerRowMapper(new UserDataDatabaseMapper());
     }
 

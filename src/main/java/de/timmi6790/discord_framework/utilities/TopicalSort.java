@@ -5,10 +5,7 @@ import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import lombok.Data;
 import lombok.NonNull;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -33,15 +30,17 @@ public class TopicalSort<T> {
         boolean cycle;
         while (!queue.isEmpty()) {
             cycle = true;
-            for (final int element : queue) {
+            Iterator<Integer> queueIterator = queue.iterator();
+            while (queueIterator.hasNext()) {
+                int element = queueIterator.next();
                 if (!this.hasDependency(element, queue)) {
-                    queue.remove(element);
+                    queueIterator.remove();
                     result.add(this.vertices.get(element));
                     cycle = false;
                     break;
                 }
             }
-
+            
             if (cycle) {
                 throw new TopicalSortCycleException();
             }

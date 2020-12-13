@@ -2,9 +2,7 @@ package de.timmi6790.discord_framework.modules.command.repository;
 
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
@@ -29,8 +27,8 @@ public class CommandRepositoryMysql implements CommandRepository {
 
     private final Jdbi database;
 
-    public CommandRepositoryMysql(final CommandModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
+    public CommandRepositoryMysql(final Jdbi database) {
+        this.database = database;
     }
 
     @Override

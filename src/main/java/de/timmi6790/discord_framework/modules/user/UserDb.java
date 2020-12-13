@@ -253,7 +253,10 @@ public class UserDb {
     }
 
     public void increaseStat(final AbstractStat stat, final int value) {
-        this.setStatValue(stat, this.getStatValue(stat).orElse(0) + value);
+        this.setStatValue(
+                stat,
+                this.getStatValue(stat).orElse(0) + value
+        );
     }
 
     public void setStatValue(final AbstractStat stat, final int value) {
@@ -311,7 +314,7 @@ public class UserDb {
                         setting,
                         this.getSetting(setting)
                                 .map(String::valueOf)
-                                .orElse(String.valueOf(setting.getDefaultValue()))
+                                .orElseGet(() -> String.valueOf(setting.getDefaultValue()))
                 );
             }
         }
@@ -392,6 +395,9 @@ public class UserDb {
     }
 
     public boolean hasAutoCorrection() {
-        return this.getSettingOrDefault(CommandAutoCorrectSetting.class, false);
+        return this.getSettingOrDefault(
+                CommandAutoCorrectSetting.class,
+                Boolean.FALSE
+        );
     }
 }

@@ -2,7 +2,6 @@ package de.timmi6790.discord_framework.modules.stat.repository;
 
 import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.stat.StatModule;
 
 public class StatRepositoryMysql implements StatRepository {
     private static final String STAT_NAME = "statName";
@@ -12,8 +11,8 @@ public class StatRepositoryMysql implements StatRepository {
 
     private final DatabaseModule databaseModule;
 
-    public StatRepositoryMysql(final StatModule module) {
-        this.databaseModule = module.getModuleOrThrow(DatabaseModule.class);
+    public StatRepositoryMysql(final DatabaseModule databaseModule) {
+        this.databaseModule = databaseModule;
     }
 
     @Override

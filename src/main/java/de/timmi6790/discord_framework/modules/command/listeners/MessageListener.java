@@ -78,39 +78,39 @@ public class MessageListener {
     protected void sendIncorrectCommandHelpMessage(@NonNull final CommandParameters commandParameters,
                                                    @NonNull final List<AbstractCommand> similarCommands,
                                                    @NonNull final String firstArg) {
-        final StringBuilder description = new StringBuilder();
+        String description = "";
         final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
 
         if (similarCommands.isEmpty()) {
-            description.append(MarkdownUtil.monospace(firstArg))
-                    .append(" is not a valid command.\n")
-                    .append("Use the ")
-                    .append(MarkdownUtil.bold(this.commandModule.getMainCommand() + this.helpCommand.getName()))
-                    .append(" command or click the ")
-                    .append(DiscordEmotes.FOLDER.getEmote())
-                    .append(" emote to see all commands.");
+            description += String.format(
+                    "%s is not a valid command.%n Use the %s command or click the %s emote to see all commands",
+                    MarkdownUtil.monospace(firstArg),
+                    MarkdownUtil.bold(this.commandModule.getMainCommand() + this.helpCommand.getName()),
+                    DiscordEmotes.FOLDER.getEmote()
+            );
 
         } else {
-            description.append(MarkdownUtil.monospace(firstArg))
-                    .append(" is not a valid command.\n")
-                    .append("Is it possible that you wanted to write?\n\n");
+            description += String.format(
+                    "%s is not a valid command.%n Is it possible that you wanted to write?%n%n",
+                    MarkdownUtil.monospace(firstArg)
+            );
 
+            final StringBuilder emoteDescription = new StringBuilder();
             for (int index = 0; similarCommands.size() > index; index++) {
                 final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
                 final AbstractCommand similarCommand = similarCommands.get(index);
 
-                description.append(emote)
-                        .append(" ")
-                        .append(MarkdownUtil.bold(similarCommand.getName()))
-                        .append(" | ")
-                        .append(similarCommand.getDescription())
-                        .append("\n");
+                emoteDescription.append(
+                        String.format(
+                                "%s %s | %s %n",
+                                emote,
+                                MarkdownUtil.bold(similarCommand.getName()),
+                                similarCommand.getDescription()
+                        )
+                );
                 emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
             }
-
-            description.append("\n")
-                    .append(DiscordEmotes.FOLDER.getEmote())
-                    .append(" All commands");
+            description += emoteDescription.toString() + "\n" + DiscordEmotes.FOLDER.getEmote() + " All commands";
         }
 
         emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(this.helpCommand, commandParameters));

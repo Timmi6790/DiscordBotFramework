@@ -25,9 +25,9 @@ public class UserCommand extends AbstractCommand {
     private static final String ERROR_TITLE = "Error";
 
     @Getter(lazy = true)
-    private final UserDbModule userDbModule = getModuleManager().getModuleOrThrow(UserDbModule.class);
+    private final UserDbModule userDbModule = this.getModuleManager().getModuleOrThrow(UserDbModule.class);
     @Getter(lazy = true)
-    private final EmoteReactionModule emoteReactionModule = getModuleManager().getModuleOrThrow(EmoteReactionModule.class);
+    private final EmoteReactionModule emoteReactionModule = this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class);
 
     public UserCommand() {
         super("user",
@@ -90,7 +90,7 @@ public class UserCommand extends AbstractCommand {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        final int commandSpamCache = getCommandModule().getCommandSpamCache().get(userDb.getDiscordId()).get();
+        final int commandSpamCache = this.getCommandModule().getCommandSpamCache().get(userDb.getDiscordId()).get();
         final int activeEmotes = this.getEmoteReactionModule().getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
         final StringJoiner settings = new StringJoiner("\n");
@@ -108,25 +108,26 @@ public class UserCommand extends AbstractCommand {
             achievements.add(achievement.getName());
         }
 
-        final String primaryRank = getRankModule().getRank(userDb.getPrimaryRankId())
+        final String primaryRank = this.getRankModule().getRank(userDb.getPrimaryRankId())
                 .map(Rank::getName)
                 .orElse("Unknown");
 
         final StringJoiner subRanks = new StringJoiner("; ");
         for (final int rankId : userDb.getRankIds()) {
-            getRankModule().getRank(rankId)
+            this.getRankModule().getRank(rankId)
                     .map(Rank::getName)
                     .ifPresent(subRanks::add);
         }
+        final String ranks = primaryRank + "[" + subRanks.toString() + "]";
 
         final StringJoiner permissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getPermissionIds()) {
-            getPermissionsModule().getPermissionFromId(permissionId).ifPresent(permissions::add);
+            this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(permissions::add);
         }
 
         final StringJoiner allPermissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getAllPermissionIds()) {
-            getPermissionsModule().getPermissionFromId(permissionId).ifPresent(allPermissions::add);
+            this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(allPermissions::add);
         }
 
         this.sendTimedMessage(commandParameters,
@@ -134,7 +135,7 @@ public class UserCommand extends AbstractCommand {
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
-                        .addField("Ranks", primaryRank + "[" + subRanks.toString() + "]", true)
+                        .addField("Ranks", ranks, true)
                         .addField("Achievements", achievements.toString(), false)
                         .addField("Settings", settings.toString(), false)
                         .addField("Stats", stats.toString(), false)
@@ -290,7 +291,7 @@ public class UserCommand extends AbstractCommand {
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = getPermissionsModule().getPermissionFromId(permissionId)
+        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {

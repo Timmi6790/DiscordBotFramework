@@ -14,11 +14,35 @@ import java.util.Set;
 public class UserDataDatabaseMapper extends DatabaseRowMapper implements RowMapper<UserData> {
     @Override
     public UserData map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        final Map<String, Timestamp> achievements = this.toMap(rs.getString("achievements"), String::toString, Timestamp::valueOf, ",", ":");
-        final Map<String, Long> stats = this.toMap(rs.getString("stats"), String::toString, Long::parseLong, ",", ":");
-        final Set<String> secondaryRanks = this.toSet(rs.getString("secondaryRanks"), String::toString);
-        final Map<String, String> settings = this.toMap(rs.getString("settings"), String::toString, String::toString, ",", ":");
-        final Set<String> playerSpecificPermissions = this.toSet(rs.getString("playerPermissions"), String::toString);
+        final Map<String, Timestamp> achievements = this.toMap(
+                rs.getString("achievements"),
+                String::toString,
+                Timestamp::valueOf,
+                ",",
+                ":"
+        );
+        final Map<String, Long> stats = this.toMap(
+                rs.getString("stats"),
+                String::toString,
+                Long::parseLong,
+                ",",
+                ":"
+        );
+        final Set<String> secondaryRanks = this.toSet(
+                rs.getString("secondaryRanks")
+                , String::toString
+        );
+        final Map<String, String> settings = this.toMap(
+                rs.getString("settings"),
+                String::toString,
+                String::toString,
+                ",",
+                ":"
+        );
+        final Set<String> playerSpecificPermissions = this.toSet(
+                rs.getString("playerPermissions"),
+                String::toString
+        );
 
         return new UserData(
                 rs.getLong("discordId"),

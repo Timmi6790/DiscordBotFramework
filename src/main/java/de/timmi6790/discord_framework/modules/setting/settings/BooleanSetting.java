@@ -18,9 +18,9 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
     @Override
     protected Optional<Boolean> parseNewValue(final CommandParameters commandParameters, final String userInput) {
         if (userInput.equalsIgnoreCase("true")) {
-            return Optional.of(true);
+            return Optional.of(Boolean.TRUE);
         } else if (userInput.equalsIgnoreCase("false")) {
-            return Optional.of(false);
+            return Optional.of(Boolean.FALSE);
         }
 
         return Optional.empty();

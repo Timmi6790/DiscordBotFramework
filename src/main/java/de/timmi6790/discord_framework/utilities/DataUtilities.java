@@ -76,16 +76,16 @@ public class DataUtilities {
 
 
     /**
-     * Converts the given list into a string list
+     * Converts the given collection into a string collection
      *
-     * @param <T>      the type parameter
-     * @param list     the list
-     * @param toString to string function
+     * @param <T>        the type parameter
+     * @param collection the collection
+     * @param toString   to string function
      * @return the converted string list
      */
-    public <T> List<String> convertToStringList(final List<T> list, final Function<T, String> toString) {
-        final List<String> result = new ArrayList<>();
-        for (final T value : list) {
+    public <T> List<String> convertToStringList(final Collection<T> collection, final Function<T, String> toString) {
+        final List<String> result = new ArrayList<>(collection.size());
+        for (final T value : collection) {
             result.add(toString.apply(value));
         }
         return result;

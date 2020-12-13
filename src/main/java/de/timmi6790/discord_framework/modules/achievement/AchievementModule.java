@@ -60,8 +60,9 @@ public class AchievementModule extends AbstractModule {
     }
 
     public Optional<AbstractAchievement> getAchievement(@NonNull final String achievementName) {
-        if (this.nameIdMatching.containsKey(achievementName)) {
-            return this.getAchievement(this.nameIdMatching.get(achievementName));
+        final Integer achievementId = this.nameIdMatching.get(achievementName);
+        if (achievementId != null) {
+            return this.getAchievement(achievementId);
         }
 
         return Optional.empty();

@@ -5,12 +5,12 @@ import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.property.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.modules.rank.Rank;
+import de.timmi6790.discord_framework.utilities.DataUtilities;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 public class RankCommand extends AbstractCommand {
     private static final String ERROR_TITLE = "Error";
@@ -79,7 +79,7 @@ public class RankCommand extends AbstractCommand {
 
         final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
         final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = getPermissionsModule().getPermissionFromId(permissionId)
+        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {
@@ -233,7 +233,7 @@ public class RankCommand extends AbstractCommand {
         this.checkArgLength(commandParameters, 3);
 
         final String oldName = rank.getName();
-        final String newName = commandParameters.getArgs()[2];
+        final String newName = this.getArg(commandParameters, 2);
         rank.setName(newName);
 
         this.sendTimedMessage(
@@ -251,7 +251,7 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult createCommand(final CommandParameters commandParameters, final String rankName) {
-        final boolean success = getRankModule().createRank(rankName);
+        final boolean success = this.getRankModule().createRank(rankName);
         if (success) {
             this.sendTimedMessage(
                     commandParameters,
@@ -279,7 +279,7 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult deleteCommand(final CommandParameters commandParameters, final Rank rank) {
-        final boolean success = getRankModule().deleteRank(rank);
+        final boolean success = this.getRankModule().deleteRank(rank);
         if (success) {
             this.sendTimedMessage(
                     commandParameters,
@@ -310,19 +310,15 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final Rank rank) {
-        final List<String> extendedRanks = new ArrayList<>();
-        for (final Rank extendedRank : rank.getExtendedRanks()) {
-            extendedRanks.add(extendedRank.getName());
-        }
-        extendedRanks.sort(Comparator.naturalOrder());
+        final List<String> extendedRank = DataUtilities.convertToStringList(rank.getExtendedRanks(), Rank::getName);
+        extendedRank.sort(Comparator.naturalOrder());
 
         final List<String> perms = new ArrayList<>(rank.getPermissions());
         perms.sort(Comparator.naturalOrder());
 
-        final Set<String> permissions = rank.getPermissions();
         final List<String> extendedPerms = new ArrayList<>();
         for (final String perm : rank.getAllPermissions()) {
-            if (!permissions.contains(perm)) {
+            if (!perms.contains(perm)) {
                 extendedPerms.add(perm);
             }
         }
@@ -337,7 +333,7 @@ public class RankCommand extends AbstractCommand {
                         .addField("DatabaseId", String.valueOf(rank.getDatabaseId()), true)
                         .addField("Name", rank.getName(), true)
                         .addField("User Count", userCount, true)
-                        .addField("ExtendedRanks", String.join("\n", extendedRanks), true)
+                        .addField("ExtendedRanks", String.join("\n", extendedRank), true)
                         .addField("ExtendedPerms", String.join("\n", extendedPerms), false)
                         .addField("Perms", String.join("\n", perms), false),
                 150
@@ -347,10 +343,7 @@ public class RankCommand extends AbstractCommand {
     }
 
     private CommandResult listCommand(final CommandParameters commandParameters) {
-        final List<String> rankNames = new ArrayList<>();
-        for (final Rank rank : getRankModule().getRanks()) {
-            rankNames.add(rank.getName());
-        }
+        final List<String> rankNames = DataUtilities.convertToStringList(this.getRankModule().getRanks(), Rank::getName);
         rankNames.sort(Comparator.naturalOrder());
 
         this.sendTimedMessage(

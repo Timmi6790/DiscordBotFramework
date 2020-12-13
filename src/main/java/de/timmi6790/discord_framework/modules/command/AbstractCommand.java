@@ -145,11 +145,11 @@ public abstract class AbstractCommand {
         return this.getDiscordBot().getModuleManager();
     }
 
-    protected <T extends AbstractModule> Optional<T> getModule(final Class<T> clazz) {
+    protected final <T extends AbstractModule> Optional<T> getModule(final Class<T> clazz) {
         return this.getModuleManager().getModule(clazz);
     }
 
-    protected <T extends AbstractModule> T getModuleOrThrow(final Class<T> clazz) {
+    protected final <T extends AbstractModule> T getModuleOrThrow(final Class<T> clazz) {
         return this.getModuleManager().getModuleOrThrow(clazz);
     }
 
@@ -379,8 +379,8 @@ public abstract class AbstractCommand {
     public List<String> getFormattedExampleCommands() {
         final String mainCommand = this.getCommandModule().getMainCommand();
 
-        final List<String> exampleCommands = new ArrayList<>();
         final String[] values = this.getPropertyValueOrDefault(ExampleCommandsCommandProperty.class, new String[0]);
+        final List<String> exampleCommands = new ArrayList<>(values.length);
         for (final String exampleCommand : values) {
             exampleCommands.add(String.join(" ", mainCommand, this.name, exampleCommand));
         }

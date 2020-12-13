@@ -63,7 +63,7 @@ public class CooldownCommandProperty implements CommandProperty<Boolean> {
 
     @Override
     public Boolean getValue() {
-        return true;
+        return Boolean.TRUE;
     }
 
     @Override

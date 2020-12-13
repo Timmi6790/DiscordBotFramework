@@ -23,7 +23,7 @@ public class ConfigModule extends AbstractModule {
     }
 
     private String getFormattedModuleName(@NonNull final AbstractModule module) {
-        return module.getName().replace(" ", "_").toLowerCase();
+        return module.getName().replace(' ', '_').toLowerCase();
     }
 
     private Path getBaseConfigPath() {
@@ -31,11 +31,20 @@ public class ConfigModule extends AbstractModule {
     }
 
     private Path getModuleFolderPath(@NonNull final AbstractModule module) {
-        return Paths.get(this.getBaseConfigPath() + FileSystems.getDefault().getSeparator() + this.getFormattedModuleName(module));
+        return Paths.get(
+                this.getBaseConfigPath()
+                        + FileSystems.getDefault().getSeparator()
+                        + this.getFormattedModuleName(module)
+        );
     }
 
     private Path getModuleConfigPath(@NonNull final AbstractModule module, @NonNull final Class configClass) {
-        return Paths.get(this.getModuleFolderPath(module) + FileSystems.getDefault().getSeparator() + configClass.getSimpleName().toLowerCase() + ".json");
+        return Paths.get(
+                this.getModuleFolderPath(module)
+                        + FileSystems.getDefault().getSeparator()
+                        + configClass.getSimpleName().toLowerCase()
+                        + ".json"
+        );
     }
 
     @SneakyThrows
@@ -59,10 +68,11 @@ public class ConfigModule extends AbstractModule {
 
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
-        if (this.configs.containsKey(configClass)) {
-            return (T) this.configs.get(configClass);
+        T savedConfig = (T) configs.get(configClass);
+        if (savedConfig != null) {
+            return savedConfig;
         }
-
+        
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
         DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getName());
         this.configs.put(configClass, config);

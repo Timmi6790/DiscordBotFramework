@@ -26,7 +26,7 @@ public class DsgvoModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.dsgvoRepository = new DsgvoRepositoryMysql(this);
+        this.dsgvoRepository = new DsgvoRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class).getJdbi());
 
         this.getModuleOrThrow(CommandModule.class).registerCommands(
                 this,

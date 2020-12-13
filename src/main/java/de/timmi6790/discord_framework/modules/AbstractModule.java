@@ -31,7 +31,7 @@ public abstract class AbstractModule {
 
     protected String generateInternalName(final AbstractModule module, final String categoryName, final String valueName) {
         return String.format("%s.%s.%s", module.getName(), categoryName, valueName)
-                .replace(" ", "_")
+                .replace(' ', '_')
                 .toLowerCase();
     }
 

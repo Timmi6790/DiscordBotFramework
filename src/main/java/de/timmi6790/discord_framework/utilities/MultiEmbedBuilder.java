@@ -296,7 +296,7 @@ public class MultiEmbedBuilder {
         return this.setDescription(String.format(format, objects));
     }
 
-    public MultiEmbedBuilder setDescription(@Nullable final CharSequence description) {
+    public final MultiEmbedBuilder setDescription(@Nullable final CharSequence description) {
         this.description.setLength(0);
         if (description != null && description.length() >= 1) {
             this.appendDescription(description);
@@ -309,7 +309,7 @@ public class MultiEmbedBuilder {
         return this.appendDescription(String.format(format, object));
     }
 
-    public MultiEmbedBuilder appendDescription(@NonNull final CharSequence description) {
+    public final MultiEmbedBuilder appendDescription(@NonNull final CharSequence description) {
         Checks.notNull(description, "description");
         this.description.append(description);
         return this;

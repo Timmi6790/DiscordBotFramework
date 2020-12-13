@@ -29,7 +29,7 @@ public class SettingsCommand extends AbstractCommand {
                 "[setting] [newValue]",
                 "st", "setting");
 
-        this.settingModule = getModuleManager().getModuleOrThrow(SettingModule.class);
+        this.settingModule = this.getModuleManager().getModuleOrThrow(SettingModule.class);
     }
 
     private AbstractSetting<?> getSettingThrow(final CommandParameters commandParameters, final int argPos) {
@@ -81,7 +81,7 @@ public class SettingsCommand extends AbstractCommand {
 
         // Change value
         final String raw = commandParameters.getRawArgs();
-        final int firstSpace = raw.indexOf(" ");
+        final int firstSpace = raw.indexOf(' ');
         return this.changeSetting(commandParameters, setting, raw.substring(Math.min(firstSpace + 1, raw.length())));
     }
 
@@ -108,7 +108,7 @@ public class SettingsCommand extends AbstractCommand {
             }
             embedBuilder.setFooterFormat(
                     "Tip: You can change the setting with %s%s <statName> <newValue>",
-                    getCommandModule().getMainCommand(),
+                    this.getCommandModule().getMainCommand(),
                     this.getName()
             );
         }
@@ -131,7 +131,7 @@ public class SettingsCommand extends AbstractCommand {
                         .addField("Default value", String.valueOf(setting.getDefaultValue()))
                         .setFooterFormat(
                                 "Tip: You can change the setting with %s%s %s <newValue>",
-                                getCommandModule().getMainCommand(),
+                                this.getCommandModule().getMainCommand(),
                                 this.getName(),
                                 setting.getName()
                         ),

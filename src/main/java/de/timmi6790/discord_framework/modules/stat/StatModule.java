@@ -33,7 +33,7 @@ public class StatModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.statRepository = new StatRepositoryMysql(this);
+        this.statRepository = new StatRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
         this.eventModule = this.getModuleOrThrow(EventModule.class);
     }
 
@@ -63,8 +63,9 @@ public class StatModule extends AbstractModule {
     }
 
     public Optional<AbstractStat> getStat(@NonNull final String statName) {
-        if (this.nameIdMatching.containsKey(statName)) {
-            return this.getStat(this.nameIdMatching.get(statName));
+        final Integer statId = this.nameIdMatching.get(statName);
+        if (statId != null) {
+            return this.getStat(statId);
         }
 
         return Optional.empty();
