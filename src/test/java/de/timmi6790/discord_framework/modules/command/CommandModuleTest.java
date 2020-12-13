@@ -1,8 +1,15 @@
 package de.timmi6790.discord_framework.modules.command;
 
+import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.ModuleManager;
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.*;
 
 class CommandModuleTest {
     @SneakyThrows
@@ -17,11 +25,35 @@ class CommandModuleTest {
         return new CommandModule();
     }
 
+    @SneakyThrows
+    private <T extends AbstractCommand> T createCommand(final Class<?> commandClass, final CommandModule commandModule) {
+        final ModuleManager moduleManager = mock(ModuleManager.class);
+
+        final EventModule eventModule = mock(EventModule.class);
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
+
+        final AchievementModule achievementModule = new AchievementModule();
+
+        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
+        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        doReturn(achievementModule).when(moduleManager).getModuleOrThrow(AchievementModule.class);
+
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+            achievementModule.onInitialize();
+
+            return (T) commandClass.getConstructor().newInstance();
+        }
+    }
+
     @Test
     void registerCommand() {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
-        final TestCommand testCommand = new TestCommand();
+        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
 
         final boolean registered = commandModule.registerCommand(testModule, testCommand);
         assertThat(registered).isTrue();
@@ -32,8 +64,8 @@ class CommandModuleTest {
     void registerCommands() {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
-        final TestCommand testCommand = new TestCommand();
-        final TestCommand2 testCommand2 = new TestCommand2();
+        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
+        final TestCommand2 testCommand2 = this.createCommand(TestCommand2.class, commandModule);
 
         commandModule.registerCommands(
                 testModule,
@@ -47,7 +79,7 @@ class CommandModuleTest {
     void getCommandClass() {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
-        final TestCommand testCommand = new TestCommand();
+        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
 
         commandModule.registerCommands(testModule, testCommand);
         final Optional<AbstractCommand> commandFound = commandModule.getCommand(TestCommand.class);
@@ -69,7 +101,7 @@ class CommandModuleTest {
     void getCommandName() {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
-        final TestCommand testCommand = new TestCommand();
+        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
 
         commandModule.registerCommands(testModule, testCommand);
         final Optional<AbstractCommand> commandFound = commandModule.getCommand(testCommand.getName());
@@ -86,12 +118,12 @@ class CommandModuleTest {
         final List<AbstractCommand> addedCommands = new ArrayList<>();
         Collections.addAll(
                 addedCommands,
-                new TestCommand(),
-                new TestCommand2(),
-                new TestCommand3(),
-                new TestCommand4(),
-                new TestCommand5(),
-                new TestCommand6()
+                this.createCommand(TestCommand.class, commandModule),
+                this.createCommand(TestCommand2.class, commandModule),
+                this.createCommand(TestCommand3.class, commandModule),
+                this.createCommand(TestCommand4.class, commandModule),
+                this.createCommand(TestCommand5.class, commandModule),
+                this.createCommand(TestCommand6.class, commandModule)
         );
 
         commandModule.registerCommands(
@@ -106,7 +138,7 @@ class CommandModuleTest {
     void registerDupClassCommand() {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
-        final TestCommand testCommand = new TestCommand();
+        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
 
         final boolean registered = commandModule.registerCommand(testModule, testCommand);
         assertThat(registered).isTrue();
@@ -121,8 +153,8 @@ class CommandModuleTest {
     void registerDupNameCommand() {
         final CommandModule commandModule = this.getCommandModule();
         final TestModule testModule = new TestModule();
-        final TestCommand6 testCommand = new TestCommand6();
-        final TestCommand6Dub testCommand6Dub = new TestCommand6Dub();
+        final TestCommand6 testCommand = this.createCommand(TestCommand6.class, commandModule);
+        final TestCommand6Dub testCommand6Dub = this.createCommand(TestCommand6Dub.class, commandModule);
 
         final boolean registered = commandModule.registerCommand(testModule, testCommand);
         assertThat(registered).isTrue();

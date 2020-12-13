@@ -1,9 +1,15 @@
 package de.timmi6790.discord_framework.modules.command;
 
+import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.modules.ModuleManager;
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.command.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.modules.command.property.CommandProperty;
 import de.timmi6790.discord_framework.modules.command.property.properties.ExampleCommandsCommandProperty;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
@@ -35,13 +41,32 @@ class AbstractCommandTest {
         }
     }
 
-    private void runInsideCommandModuleMock(final Runnable runnable) {
-        try (final MockedStatic<AbstractCommand> commandMock = mockStatic(AbstractCommand.class)) {
-            final CommandModule commandModule = mock(CommandModule.class);
-            when(commandModule.getMainCommand()).thenReturn("");
+    private TestCommand createCommand() {
+        final CommandModule commandModule = mock(CommandModule.class);
+        when(commandModule.getMainCommand()).thenReturn("");
+        return this.createCommand(commandModule);
+    }
 
-            commandMock.when(AbstractCommand::getCommandModule).thenReturn(commandModule);
-            runnable.run();
+    private TestCommand createCommand(final CommandModule commandModule) {
+        final ModuleManager moduleManager = mock(ModuleManager.class);
+
+        final EventModule eventModule = mock(EventModule.class);
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
+
+        final AchievementModule achievementModule = new AchievementModule();
+
+        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
+        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        doReturn(achievementModule).when(moduleManager).getModuleOrThrow(AchievementModule.class);
+
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+            achievementModule.onInitialize();
+
+            return new TestCommand();
         }
     }
 
@@ -134,7 +159,7 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getArgs()).thenReturn(new String[]{"A"});
 
-        final TestCommand testCommand = new TestCommand();
+        final TestCommand testCommand = this.createCommand();
         this.runInsideDiscordMessagesUtilitiesMock(
                 () -> assertThrows(
                         CommandReturnException.class,
@@ -147,7 +172,7 @@ class AbstractCommandTest {
     void hasPermissionNoIdSet() {
         final CommandParameters commandParameters = mock(CommandParameters.class);
 
-        final TestCommand command = Mockito.spy(new TestCommand());
+        final TestCommand command = Mockito.spy(this.createCommand());
         when(command.getPermissionId()).thenReturn(-1);
 
         assertThat(command.hasPermission(commandParameters)).isTrue();
@@ -165,7 +190,7 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getUserDb()).thenReturn(userDb);
 
-        final TestCommand command = Mockito.spy(new TestCommand());
+        final TestCommand command = Mockito.spy(this.createCommand());
         when(command.getPermissionId()).thenReturn(permissionId);
 
         assertThat(command.hasPermission(commandParameters)).isTrue();
@@ -179,7 +204,7 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getUserDb()).thenReturn(userDb);
 
-        final TestCommand command = Mockito.spy(new TestCommand());
+        final TestCommand command = Mockito.spy(this.createCommand());
         when(command.getPermissionId()).thenReturn(10);
 
         assertThat(command.hasPermission(commandParameters)).isFalse();
@@ -198,7 +223,7 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getUserDb()).thenReturn(userDb);
 
-        final TestCommand command = Mockito.spy(new TestCommand());
+        final TestCommand command = Mockito.spy(this.createCommand());
         command.addProperty(new BooleanCommandProperty(propertyStatus));
         when(command.getPermissionId()).thenReturn(permissionId);
 
@@ -207,29 +232,29 @@ class AbstractCommandTest {
 
     @Test
     void getPropertyValueOrDefaultNoPropertyFound() {
-        final TestCommand command = Mockito.spy(new TestCommand());
+        final TestCommand command = Mockito.spy(this.createCommand());
         assertThat(command.getPropertyValueOrDefault(BooleanCommandProperty.class, true)).isTrue();
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void getPropertyValueOrDefaultPropertyFound(final boolean propertyStatus) {
-        final TestCommand command = Mockito.spy(new TestCommand());
+        final TestCommand command = Mockito.spy(this.createCommand());
         command.addProperties(new BooleanCommandProperty(propertyStatus));
         assertThat(command.getPropertyValueOrDefault(BooleanCommandProperty.class, true)).isEqualTo(propertyStatus);
     }
 
     @Test
     void getFormattedExampleCommands() {
-        final TestCommand testCommand = new TestCommand();
+        final TestCommand testCommand = this.createCommand();
         testCommand.addProperty(new ExampleCommandsCommandProperty("1", "2"));
-        this.runInsideCommandModuleMock(() -> assertThat(testCommand.getFormattedExampleCommands()).hasSize(2));
+        assertThat(testCommand.getFormattedExampleCommands()).hasSize(2);
     }
 
     @Test
     void getFormattedExampleCommandsEmpty() {
-        final TestCommand testCommand = new TestCommand();
-        this.runInsideCommandModuleMock(() -> assertThat(testCommand.getFormattedExampleCommands()).isEmpty());
+        final TestCommand testCommand = this.createCommand();
+        assertThat(testCommand.getFormattedExampleCommands()).isEmpty();
     }
 
     @Test
@@ -237,11 +262,9 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getArgs()).thenReturn(new String[0]);
 
-        final TestCommand command = new TestCommand();
+        final TestCommand command = this.createCommand();
         this.runInsideDiscordMessagesUtilitiesMock(() ->
-                this.runInsideCommandModuleMock(() ->
-                        assertThrows(CommandReturnException.class, () -> command.checkArgLength(commandParameters, 1))
-                )
+                assertThrows(CommandReturnException.class, () -> command.checkArgLength(commandParameters, 1))
         );
     }
 
@@ -251,7 +274,7 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getArgs()).thenReturn(new String[length]);
 
-        final TestCommand command = new TestCommand();
+        final TestCommand command = this.createCommand();
         assertThatCode(() -> command.checkArgLength(commandParameters, 2)).doesNotThrowAnyException();
     }
 
@@ -260,8 +283,8 @@ class AbstractCommandTest {
     void getFromListIgnoreCaseThrowSuccess(final String value) {
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage(value.toLowerCase());
 
-        final TestCommand command = new TestCommand();
-        final List<String> values = Arrays.asList(new String[]{value.toUpperCase()});
+        final TestCommand command = this.createCommand();
+        final List<String> values = Collections.singletonList(value.toUpperCase());
         assertThat(command.getFromListIgnoreCaseThrow(commandParameters, 0, values)).isEqualToIgnoringCase(value);
     }
 
@@ -270,16 +293,14 @@ class AbstractCommandTest {
     void getFromListIgnoreCaseThrowFail(final String value) {
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage("");
 
-        final TestCommand command = new TestCommand();
-        final List<String> values = Arrays.asList(new String[]{value});
+        final TestCommand command = this.createCommand();
+        final List<String> values = Collections.singletonList(value);
         this.runInsideDiscordMessagesUtilitiesMock(() ->
-                this.runInsideCommandModuleMock(() ->
-                        assertThrows(CommandReturnException.class,
-                                () -> command.getFromListIgnoreCaseThrow(
-                                        commandParameters,
-                                        0,
-                                        values
-                                )
+                assertThrows(CommandReturnException.class,
+                        () -> command.getFromListIgnoreCaseThrow(
+                                commandParameters,
+                                0,
+                                values
                         )
                 )
         );
@@ -289,16 +310,14 @@ class AbstractCommandTest {
     void getFromEnumIgnoreCaseThrowFail() {
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage("c");
 
-        final TestCommand command = new TestCommand();
+        final TestCommand command = this.createCommand();
         final TestEnum[] values = TestEnum.values();
         this.runInsideDiscordMessagesUtilitiesMock(() ->
-                this.runInsideCommandModuleMock(() ->
-                        assertThrows(CommandReturnException.class,
-                                () -> command.getFromEnumIgnoreCaseThrow(
-                                        commandParameters,
-                                        0,
-                                        values
-                                )
+                assertThrows(CommandReturnException.class,
+                        () -> command.getFromEnumIgnoreCaseThrow(
+                                commandParameters,
+                                0,
+                                values
                         )
                 )
         );
@@ -308,39 +327,34 @@ class AbstractCommandTest {
     void getFromEnumIgnoreCaseThrowSuccess() {
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage(TestEnum.TEST.name());
 
-        final TestCommand command = new TestCommand();
+        final TestCommand command = this.createCommand();
         assertThat(command.getFromEnumIgnoreCaseThrow(commandParameters, 0, TestEnum.values()))
                 .isEqualTo(TestEnum.TEST);
     }
 
     @Test
     void getCommandThrowSuccess() {
-        final TestCommand command = new TestCommand();
+        final TestCommand expectedCommand = this.createCommand();
+
+        final CommandModule commandModule = mock(CommandModule.class);
+        when(commandModule.getCommand(anyString())).thenReturn(Optional.of(expectedCommand));
+
+        final TestCommand command = this.createCommand(commandModule);
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage(command.getName());
-
-        this.runInsideDiscordMessagesUtilitiesMock(() -> {
-            try (final MockedStatic<AbstractCommand> commandMock = mockStatic(AbstractCommand.class)) {
-                final CommandModule commandModule = mock(CommandModule.class);
-                when(commandModule.getCommand(anyString())).thenReturn(Optional.of(command));
-
-                commandMock.when(AbstractCommand::getCommandModule).thenReturn(commandModule);
-
-                assertThat(command.getCommandThrow(commandParameters, 0)).isEqualTo(command);
-            }
-        });
+        this.runInsideDiscordMessagesUtilitiesMock(() ->
+                assertThat(command.getCommandThrow(commandParameters, 0)).isEqualTo(expectedCommand)
+        );
     }
 
     @Test
     void getCommandThrowFail() {
-        final TestCommand command = new TestCommand();
+        final TestCommand command = this.createCommand();
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage(command.getName());
 
         this.runInsideDiscordMessagesUtilitiesMock(() -> {
             try (final MockedStatic<AbstractCommand> commandMock = mockStatic(AbstractCommand.class)) {
                 final CommandModule commandModule = mock(CommandModule.class);
                 when(commandModule.getCommand(anyString())).thenReturn(Optional.empty());
-
-                commandMock.when(AbstractCommand::getCommandModule).thenReturn(commandModule);
 
                 assertThrows(CommandReturnException.class,
                         () -> command.getCommandThrow(commandParameters, 0)
@@ -351,7 +365,7 @@ class AbstractCommandTest {
 
     @Test
     void getDiscordUserThrowFail() {
-        final TestCommand command = new TestCommand();
+        final TestCommand command = this.createCommand();
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage("a");
 
         this.runInsideDiscordMessagesUtilitiesMock(() ->

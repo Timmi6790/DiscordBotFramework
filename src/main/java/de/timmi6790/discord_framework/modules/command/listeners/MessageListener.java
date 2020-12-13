@@ -51,7 +51,7 @@ public class MessageListener {
         } else {
             final List<AbstractCommand> similarCommands = DataUtilities.getSimilarityList(
                     commandName,
-                    AbstractCommand.getCommandModule().getCommandsWithPerms(commandParameters),
+                    this.getCommandModule().getCommandsWithPerms(commandParameters),
                     AbstractCommand::getName,
                     0.6,
                     3
@@ -105,7 +105,7 @@ public class MessageListener {
         }
 
         emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(this.helpCommand, commandParameters));
-        AbstractCommand.sendEmoteMessage(
+        DiscordMessagesUtilities.sendEmoteMessage(
                 commandParameters,
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
                         .setTitle("Invalid Command")

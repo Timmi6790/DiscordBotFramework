@@ -15,6 +15,7 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -35,6 +36,8 @@ import java.util.regex.Pattern;
 @Getter
 public class CommandModule extends AbstractModule {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
+    @Getter
+    private static final int COMMAND_USER_RATE_LIMIT = 10;
 
     private final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
             .maximumSize(10_000)
@@ -70,7 +73,8 @@ public class CommandModule extends AbstractModule {
         this.addDependencies(
                 UserDbModule.class,
                 GuildDbModule.class,
-                ChannelDbModule.class
+                ChannelDbModule.class,
+                RankModule.class
         );
     }
 

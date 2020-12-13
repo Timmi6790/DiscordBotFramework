@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -57,9 +56,9 @@ public class SettingsCommand extends AbstractCommand {
                 settingName,
                 argPos,
                 "setting",
-                this,
+                this.getClass(),
                 new String[0],
-                similarSettings.stream().map(AbstractSetting::getName).collect(Collectors.toList())
+                DataUtilities.convertToStringList(similarSettings, AbstractSetting::getName)
         );
         throw new CommandReturnException();
     }

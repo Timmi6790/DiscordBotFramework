@@ -73,4 +73,21 @@ public class DataUtilities {
         final List<T> sortedValues = new ArrayList<>(sortedMap.values());
         return sortedValues.subList(0, Math.min(limit, sortedValues.size()));
     }
+
+
+    /**
+     * Converts the given list into a string list
+     *
+     * @param <T>      the type parameter
+     * @param list     the list
+     * @param toString to string function
+     * @return the converted string list
+     */
+    public <T> List<String> convertToStringList(final List<T> list, final Function<T, String> toString) {
+        final List<String> result = new ArrayList<>();
+        for (final T value : list) {
+            result.add(toString.apply(value));
+        }
+        return result;
+    }
 }

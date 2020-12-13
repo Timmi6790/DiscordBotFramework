@@ -141,7 +141,10 @@ public class CommandParameters {
 
     public Set<Permission> getDiscordPermissions() {
         if (this.isGuildCommand()) {
-            return this.channelDb.getGuildDb().getGuild().getSelfMember().getPermissions((GuildChannel) this.getGuildTextChannel());
+            return this.channelDb.getGuildDb()
+                    .getGuild()
+                    .getSelfMember()
+                    .getPermissions((GuildChannel) this.getGuildTextChannel());
         } else {
             return EnumSet.noneOf(Permission.class);
         }
