@@ -1,7 +1,5 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
@@ -17,6 +15,7 @@ import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import io.github.bucket4j.Bucket;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,24 +27,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class CommandModule extends AbstractModule {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
-    @Getter
-    private static final int COMMAND_USER_RATE_LIMIT = 10;
 
-    private final LoadingCache<Long, AtomicInteger> commandSpamCache = Caffeine.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(30, TimeUnit.SECONDS)
-            .build(key -> new AtomicInteger(0));
+    private final RateLimitService commandRateLimitService = new RateLimitService();
 
     private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
+    
     private Pattern mainCommandPattern;
     private String mainCommand;
     private long botId;
@@ -193,5 +186,9 @@ public class CommandModule extends AbstractModule {
 
     public List<AbstractCommand> getCommands() {
         return new ArrayList<>(this.commands.values());
+    }
+
+    public Bucket resolveRateBucket(final long userId) {
+        return this.commandRateLimitService.resolveBucket(userId);
     }
 }

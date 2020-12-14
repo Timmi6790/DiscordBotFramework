@@ -26,6 +26,7 @@ import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
+import io.github.bucket4j.Bucket;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import lombok.Data;
@@ -254,11 +255,8 @@ public abstract class AbstractCommand {
     }
 
     public void runCommand(final @NonNull CommandParameters commandParameters) {
-        final int executedCommands = this.getCommandModule()
-                .getCommandSpamCache()
-                .get(commandParameters.getUserDb().getDiscordId())
-                .get();
-        if (executedCommands > CommandModule.getCOMMAND_USER_RATE_LIMIT()) {
+        final Bucket rateLimit = this.getCommandModule().resolveRateBucket(commandParameters.getUserDb().getDiscordId());
+        if (!rateLimit.tryConsume(1)) {
             return;
         }
 
@@ -293,7 +291,6 @@ public abstract class AbstractCommand {
         this.getEventModule().executeEvent(new CommandExecutionEvent.Pre(this, commandParameters));
 
         // Run command
-        this.getCommandModule().getCommandSpamCache().get(commandParameters.getUserDb().getDiscordId()).incrementAndGet();
         CommandResult commandResult;
         try {
             commandResult = this.onCommand(commandParameters);

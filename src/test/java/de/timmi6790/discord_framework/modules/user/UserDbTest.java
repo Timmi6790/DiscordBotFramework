@@ -109,10 +109,11 @@ class UserDbTest {
 
     private void mockDiscord(final Runnable runnable) {
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
-            final DiscordBot bot = mock(DiscordBot.class);
-
             final JDA jda = mock(JDA.class);
             when(jda.getResponseTotal()).thenReturn(1L);
+
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getBaseShard()).thenReturn(jda);
 
             final ShardManager discord = mock(ShardManager.class);
             when(discord.getShardById(0)).thenReturn(jda);

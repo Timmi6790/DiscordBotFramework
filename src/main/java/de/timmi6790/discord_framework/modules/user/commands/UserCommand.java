@@ -11,6 +11,7 @@ import de.timmi6790.discord_framework.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import io.github.bucket4j.Bucket;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.User;
@@ -90,7 +91,7 @@ public class UserCommand extends AbstractCommand {
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        final int commandSpamCache = this.getCommandModule().getCommandSpamCache().get(userDb.getDiscordId()).get();
+        final Bucket commandRatelimit = this.getCommandModule().resolveRateBucket(userDb.getUser().getIdLong());
         final int activeEmotes = this.getEmoteReactionModule().getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
         final StringJoiner settings = new StringJoiner("\n");
@@ -132,7 +133,7 @@ public class UserCommand extends AbstractCommand {
         this.sendTimedMessage(commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("User Info")
-                        .addField("Command Spam Cache", String.valueOf(commandSpamCache), true)
+                        .addField("Command Spam Cache", String.valueOf(commandRatelimit.getAvailableTokens()), true)
                         .addField("Active Emotes", String.valueOf(activeEmotes), true)
                         .addField("Ranks", primaryRank + "[" + subRanks + "]", true)
                         .addField("Achievements", achievements.toString(), false)

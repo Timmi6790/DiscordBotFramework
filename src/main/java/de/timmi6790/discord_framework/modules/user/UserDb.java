@@ -271,7 +271,7 @@ public class UserDb {
         this.stats.put(stat.getDatabaseId(), value);
 
         final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(
-                this.userDbModule.getDiscord(),
+                this.userDbModule.getDiscordBot().getBaseShard(),
                 this,
                 stat,
                 currentValueOpt.orElse(-1),
