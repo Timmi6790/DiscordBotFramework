@@ -233,7 +233,7 @@
                 <version>2.7.0</version>
                 <configuration>
                     <to>
-                        <image>discordbotframework</image>
+                        <image>timmi6790/discordbotframework</image>
                         <tags>
                             <tag>${project.version}</tag>
                         </tags>
