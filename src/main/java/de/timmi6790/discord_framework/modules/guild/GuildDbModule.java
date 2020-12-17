@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.guild;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -22,6 +23,7 @@ import java.util.concurrent.locks.Lock;
 public class GuildDbModule extends AbstractModule {
     private final Striped<Lock> guildCreateLock = Striped.lock(64);
     private final Cache<Long, GuildDb> cache = Caffeine.newBuilder()
+            .recordStats()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
@@ -43,6 +45,9 @@ public class GuildDbModule extends AbstractModule {
         this.addDependencies(
                 CommandModule.class
         );
+
+        // Register metrics
+        DiscordBot.CACHE_METRICS.addCache("guildDB_guild_cache", this.cache);
     }
 
     @Override

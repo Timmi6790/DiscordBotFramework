@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.channel;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepository;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepositoryMysql;
@@ -36,6 +37,9 @@ public class ChannelDbModule extends AbstractModule {
                 GuildDbModule.class,
                 PermissionsModule.class
         );
+
+        // Register metrics
+        DiscordBot.CACHE_METRICS.addCache("channelDB_channel_cache", this.cache);
     }
 
     @Override

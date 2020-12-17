@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -30,6 +31,7 @@ import java.util.concurrent.locks.Lock;
 @Getter
 public class UserDbModule extends AbstractModule {
     private final LoadingCache<Long, User> discordUserCache = Caffeine.newBuilder()
+            .recordStats()
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .expireAfterAccess(1, TimeUnit.MINUTES)
             .build(key -> {
@@ -65,6 +67,9 @@ public class UserDbModule extends AbstractModule {
         this.addDependencies(
                 CommandModule.class
         );
+
+        // Register metrics
+        DiscordBot.CACHE_METRICS.addCache("userDB_user_cache", this.cache);
     }
 
     @Override

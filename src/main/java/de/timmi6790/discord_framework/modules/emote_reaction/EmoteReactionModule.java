@@ -2,6 +2,7 @@ package de.timmi6790.discord_framework.modules.emote_reaction;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.cache.CacheExpireAfter;
 import de.timmi6790.discord_framework.modules.emote_reaction.cache.CacheRemoveListener;
@@ -28,6 +29,7 @@ public class EmoteReactionModule extends AbstractModule {
 
     private final Map<Long, AtomicInteger> activeEmotesPerPlayer = new ConcurrentHashMap<>();
     private final Cache<Long, EmoteReactionMessage> emoteMessageCache = Caffeine.newBuilder()
+            .recordStats()
             .maximumSize(10_000)
             .expireAfter(new CacheExpireAfter())
             .removalListener(new CacheRemoveListener(this))
@@ -39,6 +41,9 @@ public class EmoteReactionModule extends AbstractModule {
         this.addDependenciesAndLoadAfter(
                 EventModule.class
         );
+
+        // Register metrics
+        DiscordBot.CACHE_METRICS.addCache("emote_reaction_message_cache", this.emoteMessageCache);
     }
 
     @Override
@@ -51,7 +56,8 @@ public class EmoteReactionModule extends AbstractModule {
         // Remove all players who reached the rate limit
         emoteReactionMessage.getUsers()
                 .removeIf(user -> {
-                    final AtomicInteger currentActive = this.activeEmotesPerPlayer.computeIfAbsent(user, k -> new AtomicInteger(0));
+                    final AtomicInteger currentActive = this.activeEmotesPerPlayer.
+                            computeIfAbsent(user, k -> new AtomicInteger(0));
                     if (currentActive.get() >= ACTIVE_EMOTES_LIMIT) {
                         return true;
                     }

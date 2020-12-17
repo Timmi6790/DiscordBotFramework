@@ -27,6 +27,7 @@ import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.github.bucket4j.Bucket;
+import io.prometheus.client.Histogram;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import lombok.Data;
@@ -54,6 +55,16 @@ import java.util.regex.Pattern;
         "discord"
 })
 public abstract class AbstractCommand {
+    static final Histogram COMMAND_EXECUTION_TIME_FULL = Histogram.build()
+            .name("command_execution_full_seconds")
+            .labelNames("command")
+            .help("Full command execution time in seconds. This includes all pre checks.")
+            .register();
+    static final Histogram COMMAND_EXECUTION_TIME = Histogram.build()
+            .name("command_execution_seconds")
+            .labelNames("command")
+            .help("Command execution time in seconds.")
+            .register();
     protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(
             Permission.MESSAGE_WRITE,
             Permission.MESSAGE_EMBED_LINKS
@@ -255,83 +266,94 @@ public abstract class AbstractCommand {
     }
 
     public void runCommand(final @NonNull CommandParameters commandParameters) {
-        final Bucket rateLimit = this.getCommandModule().resolveRateBucket(commandParameters.getUserDb().getDiscordId());
-        if (!rateLimit.tryConsume(1)) {
-            return;
-        }
-
-        // Ban checks
-        if (this.isUserBanned(commandParameters) || this.isServerBanned(commandParameters)) {
-            return;
-        }
-
-        // Discord perms check
-        final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(
-                RequiredDiscordBotPermsCommandProperty.class,
-                EnumSet.noneOf(Permission.class)
-        );
-        if (!hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms)) {
-            return;
-        }
-
-        // Perm checks
-        if (!this.hasPermission(commandParameters)) {
-            this.sendMissingPermissionMessage(commandParameters);
-            return;
-        }
-
-        // Property checks
-        for (final CommandProperty<?> commandProperty : this.getPropertiesMap().values()) {
-            if (!commandProperty.onCommandExecution(this, commandParameters)) {
+        final Histogram.Timer fullTimer = COMMAND_EXECUTION_TIME_FULL.labels(this.getName()).startTimer();
+        try {
+            final Bucket rateLimit = this.getCommandModule()
+                    .resolveRateBucket(commandParameters.getUserDb().getDiscordId());
+            if (!rateLimit.tryConsume(1)) {
                 return;
             }
+
+            // Ban checks
+            if (this.isUserBanned(commandParameters) || this.isServerBanned(commandParameters)) {
+                return;
+            }
+
+            // Discord perms check
+            final EnumSet<Permission> requiredDiscordPerms = this.getPropertyValueOrDefault(
+                    RequiredDiscordBotPermsCommandProperty.class,
+                    EnumSet.noneOf(Permission.class)
+            );
+            if (!hasRequiredDiscordPerms(commandParameters, requiredDiscordPerms)) {
+                return;
+            }
+
+            // Perm checks
+            if (!this.hasPermission(commandParameters)) {
+                this.sendMissingPermissionMessage(commandParameters);
+                return;
+            }
+
+            // Property checks
+            for (final CommandProperty<?> commandProperty : this.getPropertiesMap().values()) {
+                if (!commandProperty.onCommandExecution(this, commandParameters)) {
+                    return;
+                }
+            }
+
+            // Command pre event
+            this.getEventModule().executeEvent(new CommandExecutionEvent.Pre(this, commandParameters));
+
+            // Run command
+            CommandResult commandResult;
+            try {
+                // Track the time how long the command is executed
+                commandResult = COMMAND_EXECUTION_TIME
+                        .labels(this.getName())
+                        .time(() -> this.onCommand(commandParameters));
+            } catch (final CommandReturnException e) {
+                e.getEmbedBuilder()
+                        .ifPresent(embedBuilder -> this.sendTimedMessage(commandParameters, embedBuilder, 90));
+                commandResult = e.getCommandResult();
+
+            } catch (final Exception e) {
+                DiscordBot.getLogger().error(e);
+                this.sendErrorMessage(commandParameters, "Unknown");
+
+                // Sentry error
+                Sentry.captureEvent(new SentryEventBuilder()
+                        .addBreadcrumb(new BreadcrumbBuilder()
+                                .setCategory("Command")
+                                .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()))
+                                .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
+                                .setData("args", Arrays.toString(commandParameters.getArgs()))
+                                .setData("command", this.name)
+                                .build())
+                        .setLevel(SentryLevel.ERROR)
+                        .setMessage("Command Exception")
+                        .setLogger(this.getClass().getName())
+                        .setThrowable(e)
+                        .build());
+
+                commandResult = CommandResult.ERROR;
+            }
+
+            // Command post event
+            this.getEventModule().executeEvent(new CommandExecutionEvent.Post(
+                    this,
+                    commandParameters,
+                    commandResult == null ? CommandResult.MISSING : commandResult
+            ));
+        } finally {
+            fullTimer.observeDuration();
         }
-
-        // Command pre event
-        this.getEventModule().executeEvent(new CommandExecutionEvent.Pre(this, commandParameters));
-
-        // Run command
-        CommandResult commandResult;
-        try {
-            commandResult = this.onCommand(commandParameters);
-        } catch (final CommandReturnException e) {
-            e.getEmbedBuilder()
-                    .ifPresent(embedBuilder -> this.sendTimedMessage(commandParameters, embedBuilder, 90));
-            commandResult = e.getCommandResult();
-
-        } catch (final Exception e) {
-            DiscordBot.getLogger().error(e);
-            this.sendErrorMessage(commandParameters, "Unknown");
-
-            // Sentry error
-            Sentry.captureEvent(new SentryEventBuilder()
-                    .addBreadcrumb(new BreadcrumbBuilder()
-                            .setCategory("Command")
-                            .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDatabaseId()))
-                            .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
-                            .setData("args", Arrays.toString(commandParameters.getArgs()))
-                            .setData("command", this.name)
-                            .build())
-                    .setLevel(SentryLevel.ERROR)
-                    .setMessage("Command Exception")
-                    .setLogger(this.getClass().getName())
-                    .setThrowable(e)
-                    .build());
-
-            commandResult = CommandResult.ERROR;
-        }
-
-        // Command post event
-        this.getEventModule().executeEvent(new CommandExecutionEvent.Post(
-                this,
-                commandParameters,
-                commandResult == null ? CommandResult.MISSING : commandResult
-        ));
     }
 
     public boolean hasPermission(@NonNull final CommandParameters commandParameters) {
         // Permission check
-        if (this.getPermissionId() != -1 && !commandParameters.getUserDb().getAllPermissionIds().contains(this.getPermissionId())) {
+        if (this.getPermissionId() != -1 && !commandParameters.getUserDb()
+                .getAllPermissionIds()
+                .contains(this.getPermissionId())) {
             return false;
         }
 

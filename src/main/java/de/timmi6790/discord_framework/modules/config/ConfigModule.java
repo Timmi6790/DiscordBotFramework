@@ -52,7 +52,11 @@ public class ConfigModule extends AbstractModule {
         if (!Files.exists(configPath)) {
             // New file
             GsonUtilities.saveToJson(configPath, config);
-            DiscordBot.getLogger().info("Created {} config file {}", module.getName(), config.getClass().getSimpleName());
+            DiscordBot.getLogger().info(
+                    "Created {} config file {}",
+                    module.getName(),
+                    config.getClass().getSimpleName()
+            );
         } else {
             // TODO: Add a better verify method
             // This will currently always write new configs and remove old ones

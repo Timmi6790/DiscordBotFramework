@@ -62,6 +62,28 @@
             <version>2.2.1</version>
         </dependency>
 
+        <!-- Metrics -->
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_hotspot</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_httpserver</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_caffeine</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+
         <!-- Dependencies -->
         <dependency>
             <groupId>com.github.Timmi6790</groupId>

@@ -38,13 +38,15 @@ public class AchievementModule extends AbstractModule {
         this.eventModule = this.getModuleOrThrow(EventModule.class);
     }
 
-    public void registerAchievements(@NonNull final AbstractModule module, final AbstractAchievement... achievements) {
+    public void registerAchievements(@NonNull final AbstractModule module,
+                                     final AbstractAchievement... achievements) {
         for (final AbstractAchievement achievement : achievements) {
             this.registerAchievement(module, achievement);
         }
     }
 
-    public boolean registerAchievement(@NonNull final AbstractModule module, @NonNull final AbstractAchievement achievement) {
+    public boolean registerAchievement(@NonNull final AbstractModule module,
+                                       @NonNull final AbstractAchievement achievement) {
         if (this.achievements.containsKey(achievement.getDatabaseId())) {
             return false;
         }
