@@ -11,13 +11,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 public class ConfigModule extends AbstractModule {
-    private final Map<Class<?>, Object> configs = new HashMap<>();
-
     public ConfigModule() {
         super("Config");
     }
@@ -68,14 +64,8 @@ public class ConfigModule extends AbstractModule {
 
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
-        T savedConfig = (T) configs.get(configClass);
-        if (savedConfig != null) {
-            return savedConfig;
-        }
-        
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
         DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getName());
-        this.configs.put(configClass, config);
         return config;
     }
 
