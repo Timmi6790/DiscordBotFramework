@@ -330,18 +330,18 @@ public abstract class AbstractCommand {
     }
 
     public boolean hasPermission(@NonNull final CommandParameters commandParameters) {
+        // Permission check
+        if (this.getPermissionId() != -1 && !commandParameters.getUserDb().getAllPermissionIds().contains(this.getPermissionId())) {
+            return false;
+        }
+
         // Properties Check
         for (final CommandProperty<?> commandProperty : this.getPropertiesMap().values()) {
             if (!commandProperty.onPermissionCheck(this, commandParameters)) {
                 return false;
             }
         }
-
-        // Permission check
-        return this.getPermissionId() == -1 || commandParameters
-                .getUserDb()
-                .getAllPermissionIds()
-                .contains(this.getPermissionId());
+        return true;
     }
 
     protected void addProperty(final @NonNull CommandProperty<?> property) {

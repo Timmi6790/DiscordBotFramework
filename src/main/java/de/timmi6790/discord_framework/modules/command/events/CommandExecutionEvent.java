@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command.events;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
@@ -16,7 +15,7 @@ public class CommandExecutionEvent extends Event {
     private final CommandParameters parameters;
 
     public CommandExecutionEvent(@NonNull final AbstractCommand command, @NonNull final CommandParameters parameters) {
-        super(DiscordBot.getInstance().getBaseShard());
+        super(parameters.getGuild().getJDA());
 
         this.command = command;
         this.parameters = parameters;

@@ -66,7 +66,7 @@ class AbstractCommandTest {
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
             achievementModule.onInitialize();
 
-            return new TestCommand();
+            return spy(new TestCommand());
         }
     }
 
@@ -354,14 +354,12 @@ class AbstractCommandTest {
         final CommandParameters commandParameters = this.getCommandParametersHelpMessage(command.getName());
 
         this.runInsideDiscordMessagesUtilitiesMock(() -> {
-            try (final MockedStatic<AbstractCommand> commandMock = mockStatic(AbstractCommand.class)) {
-                final CommandModule commandModule = mock(CommandModule.class);
-                when(commandModule.getCommand(anyString())).thenReturn(Optional.empty());
+            final CommandModule commandModule = mock(CommandModule.class);
+            when(commandModule.getCommand(anyString())).thenReturn(Optional.empty());
 
-                assertThrows(CommandReturnException.class,
-                        () -> command.getCommandThrow(commandParameters, 0)
-                );
-            }
+            assertThrows(CommandReturnException.class,
+                    () -> command.getCommandThrow(commandParameters, 0)
+            );
         });
     }
 

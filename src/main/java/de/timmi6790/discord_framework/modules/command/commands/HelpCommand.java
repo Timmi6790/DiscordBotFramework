@@ -50,16 +50,14 @@ public class HelpCommand extends AbstractCommand {
                 .setDescription("<> Required [] Optional | " + MarkdownUtil.bold("Don't use <> and [] in the actual command"))
                 .setFooterFormat(
                         "TIP: Use %s %s <command> to see more details",
-                        getCommandModule().getMainCommand(),
+                        this.getCommandModule().getMainCommand(),
                         this.getName()
                 );
 
         // Group all commands via their category
         final Map<String, List<AbstractCommand>> sortedCommands = new HashMap<>();
-        for (final AbstractCommand command : getCommandModule().getCommands()) {
-            if (command.hasPermission(commandParameters)) {
-                sortedCommands.computeIfAbsent(command.getCategory(), k -> new ArrayList<>()).add(command);
-            }
+        for (final AbstractCommand command : this.getCommandModule().getCommandsWithPerms(commandParameters)) {
+            sortedCommands.computeIfAbsent(command.getCategory(), k -> new ArrayList<>()).add(command);
         }
 
         // Sort the command after name
@@ -71,7 +69,7 @@ public class HelpCommand extends AbstractCommand {
                 final String syntax = command.getSyntax().length() == 0 ? "" : " " + command.getSyntax();
                 lines.add(String.format(
                         "%s %s",
-                        MarkdownUtil.monospace(getCommandModule().getMainCommand() + command.getName() + syntax),
+                        MarkdownUtil.monospace(this.getCommandModule().getMainCommand() + command.getName() + syntax),
                         command.getDescription()
                 ));
             }
