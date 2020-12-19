@@ -30,7 +30,7 @@ import java.util.Set;
 
 @Getter
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.0.6";
+    public static final String BOT_VERSION = "3.0.8";
     // We need to register it here, because we can only have one global instance of the cache metrics
     public static final CacheMetricsCollector CACHE_METRICS = new CacheMetricsCollector().register();
 
