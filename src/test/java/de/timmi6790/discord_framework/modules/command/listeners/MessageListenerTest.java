@@ -8,7 +8,6 @@ import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
@@ -62,7 +61,9 @@ class MessageListenerTest {
         return new MessageListener(commandModule, guildDbModule, helpCommand);
     }
 
-    private MessageReceivedEvent createMessageReceivedEvent(final long userId, final String messageRaw) {
+    private MessageReceivedEvent createMessageReceivedEvent(final long userId,
+                                                            final String messageRaw,
+                                                            final boolean fromGuild) {
         final MessageReceivedEvent messageReceivedEvent = mock(MessageReceivedEvent.class);
         final User user = mock(User.class);
         when(user.getIdLong()).thenReturn(userId);
@@ -78,17 +79,16 @@ class MessageListenerTest {
 
     private void runOnTextMessageTest(final String mainCommand,
                                       final String rawMessage,
+                                      final boolean fromGuild,
                                       final VerificationMode verificationMode) {
         final AbstractCommand helpCommand = mock(AbstractCommand.class);
         try (final MockedStatic<CommandParameters> commandParametersMockedStatic = mockStatic(CommandParameters.class)) {
             final CommandParameters commandParameters = mock(CommandParameters.class);
             commandParametersMockedStatic.when(() -> CommandParameters.of(any(), anyString())).thenReturn(commandParameters);
 
-            try (final MockedStatic<AbstractCommand> abstractCommandMockedStatic = mockStatic(AbstractCommand.class)) {
-                this.createMessageListener(1, mainCommand, helpCommand)
-                        .onTextMessage(this.createMessageReceivedEvent(2, rawMessage));
-                Mockito.verify(helpCommand, verificationMode).runCommand(any());
-            }
+            this.createMessageListener(1, mainCommand, helpCommand)
+                    .onTextMessage(this.createMessageReceivedEvent(2, rawMessage, fromGuild));
+            Mockito.verify(helpCommand, verificationMode).runCommand(any());
         }
     }
 
@@ -106,25 +106,30 @@ class MessageListenerTest {
         this.runParsedStartTest(mainPattern, botTag);
     }
 
-    @Test
-    void onTextMessage_ignore_self() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void onTextMessage_ignore_self(final boolean fromGuild) {
         final long userId = 1L;
 
         assertThatCode(() ->
                 this.createMessageListener(userId, "!", mock(AbstractCommand.class))
-                        .onTextMessage(this.createMessageReceivedEvent(userId, ""))
+                        .onTextMessage(this.createMessageReceivedEvent(userId, "", fromGuild))
         ).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"!", "stat "})
     void onTextMessage_help_message(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, mainCommand, atLeastOnce());
+        for (final boolean isGuild : new boolean[]{true, false}) {
+            this.runOnTextMessageTest(mainCommand, mainCommand, isGuild, atLeastOnce());
+        }
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"!", "stat "})
     void onTextMessage_incorrect_input(final String mainCommand) {
-        this.runOnTextMessageTest(mainCommand, "", never());
+        for (final boolean isGuild : new boolean[]{true, false}) {
+            this.runOnTextMessageTest(mainCommand, "", isGuild, never());
+        }
     }
 }

@@ -14,15 +14,24 @@ import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.Refill;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.TextChannel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,9 +79,22 @@ class AbstractCommandTest {
         }
     }
 
-    private CommandParameters getCommandParametersHelpMessage(final String... args) {
+    private CommandParameters generateCommandParameters(final boolean fromGuild, final String... args) {
+        final JDA jda = mock(JDA.class);
+
+        final Guild guild = mock(Guild.class);
+        // We only need it when from guild
+        if (fromGuild) {
+            final Member selfMember = mock(Member.class);
+            when(selfMember.getPermissions(any())).thenReturn(AbstractCommand.MINIMUM_DISCORD_PERMISSIONS);
+            when(guild.getSelfMember()).thenReturn(selfMember);
+
+            when(guild.getJDA()).thenReturn(jda);
+        }
+
         final GuildDb guildDb = mock(GuildDb.class);
         when(guildDb.getDiscordId()).thenReturn(1L);
+        when(guildDb.getGuild()).thenReturn(guild);
 
         final ChannelDb channelDb = mock(ChannelDb.class);
         when(channelDb.getDiscordId()).thenReturn(1L);
@@ -81,14 +103,20 @@ class AbstractCommandTest {
         final UserDb userDb = mock(UserDb.class);
         when(userDb.getDiscordId()).thenReturn(1L);
 
-        return new CommandParameters(
-                "",
+        final CommandParameters commandParameters = spy(new CommandParameters(
+                String.join(" ", args),
                 args,
-                true,
+                fromGuild,
                 CommandCause.USER,
                 channelDb,
                 userDb
-        );
+        ));
+        doReturn(jda).when(commandParameters).getJda();
+
+        final TextChannel textChannel = mock(TextChannel.class);
+        doReturn(textChannel).when(commandParameters).getLowestMessageChannel();
+
+        return commandParameters;
     }
 
     @Test
@@ -283,7 +311,7 @@ class AbstractCommandTest {
     @ParameterizedTest
     @ValueSource(strings = {"test", "a", "b", "100"})
     void getFromListIgnoreCaseThrowSuccess(final String value) {
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage(value.toLowerCase());
+        final CommandParameters commandParameters = this.generateCommandParameters(true, value.toLowerCase());
 
         final TestCommand command = this.createCommand();
         final List<String> values = Collections.singletonList(value.toUpperCase());
@@ -293,7 +321,7 @@ class AbstractCommandTest {
     @ParameterizedTest
     @ValueSource(strings = {"test", "a", "b", "100"})
     void getFromListIgnoreCaseThrowFail(final String value) {
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage("");
+        final CommandParameters commandParameters = this.generateCommandParameters(true, "");
 
         final TestCommand command = this.createCommand();
         final List<String> values = Collections.singletonList(value);
@@ -310,7 +338,7 @@ class AbstractCommandTest {
 
     @Test
     void getFromEnumIgnoreCaseThrowFail() {
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage("c");
+        final CommandParameters commandParameters = this.generateCommandParameters(true, "c");
 
         final TestCommand command = this.createCommand();
         final TestEnum[] values = TestEnum.values();
@@ -327,7 +355,7 @@ class AbstractCommandTest {
 
     @Test
     void getFromEnumIgnoreCaseThrowSuccess() {
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage(TestEnum.TEST.name());
+        final CommandParameters commandParameters = this.generateCommandParameters(true, TestEnum.TEST.name());
 
         final TestCommand command = this.createCommand();
         assertThat(command.getFromEnumIgnoreCaseThrow(commandParameters, 0, TestEnum.values()))
@@ -342,7 +370,7 @@ class AbstractCommandTest {
         when(commandModule.getCommand(anyString())).thenReturn(Optional.of(expectedCommand));
 
         final TestCommand command = this.createCommand(commandModule);
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage(command.getName());
+        final CommandParameters commandParameters = this.generateCommandParameters(true, command.getName());
         this.runInsideDiscordMessagesUtilitiesMock(() ->
                 assertThat(command.getCommandThrow(commandParameters, 0)).isEqualTo(expectedCommand)
         );
@@ -351,7 +379,7 @@ class AbstractCommandTest {
     @Test
     void getCommandThrowFail() {
         final TestCommand command = this.createCommand();
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage(command.getName());
+        final CommandParameters commandParameters = this.generateCommandParameters(true, command.getName());
 
         this.runInsideDiscordMessagesUtilitiesMock(() -> {
             final CommandModule commandModule = mock(CommandModule.class);
@@ -366,13 +394,48 @@ class AbstractCommandTest {
     @Test
     void getDiscordUserThrowFail() {
         final TestCommand command = this.createCommand();
-        final CommandParameters commandParameters = this.getCommandParametersHelpMessage("a");
+        final CommandParameters commandParameters = this.generateCommandParameters(true, "a");
 
         this.runInsideDiscordMessagesUtilitiesMock(() ->
                 assertThrows(CommandReturnException.class,
                         () -> command.getDiscordUserThrow(commandParameters, 0)
                 )
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void runCommand(final boolean fromGuild) {
+        // TODO: Implement me correctly
+        final String fakeCommandName = "test";
+        final CommandParameters commandParameters = this.generateCommandParameters(fromGuild, fakeCommandName);
+
+        final CommandModule commandModule = mock(CommandModule.class);
+        final Bucket bucket = Bucket4j.builder()
+                .addLimit(Bandwidth.classic(90, Refill.intervally(90, Duration.ofMinutes(1))))
+                .build();
+        when(commandModule.resolveRateBucket(commandParameters.getUserDb().getDiscordId())).thenReturn(bucket);
+
+        // Command with perms
+        final TestCommand commandWithPerms = this.createCommand(commandModule);
+        when(commandModule.getCommand(commandWithPerms.getName())).thenReturn(Optional.of(commandWithPerms));
+
+        // Command without perms
+        final String fakeCommandNameMissingPerms = "test1";
+        final TestCommand missingPermsCommand = this.createCommand(commandModule);
+        missingPermsCommand.setPermissionId(999);
+        final CommandParameters missingPermsCommandParameters = this.generateCommandParameters(fromGuild, fakeCommandNameMissingPerms);
+        when(commandModule.getCommand(missingPermsCommand.getName())).thenReturn(Optional.of(missingPermsCommand));
+
+        this.runInsideDiscordMessagesUtilitiesMock(() -> {
+            // Command with enough perms
+            commandWithPerms.runCommand(commandParameters);
+            verify(commandWithPerms).onCommand(commandParameters);
+
+            // Command with missing perms
+            missingPermsCommand.runCommand(missingPermsCommandParameters);
+            verify(missingPermsCommand, never()).onCommand(missingPermsCommandParameters);
+        });
     }
 
     private static class TestCommand extends AbstractCommand {

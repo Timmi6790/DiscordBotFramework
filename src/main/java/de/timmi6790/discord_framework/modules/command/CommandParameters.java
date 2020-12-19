@@ -12,6 +12,7 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -151,6 +152,14 @@ public class CommandParameters {
                     .getPermissions((GuildChannel) this.getGuildTextChannel());
         } else {
             return EnumSet.noneOf(Permission.class);
+        }
+    }
+
+    public JDA getJda() {
+        if (this.isGuildCommand()) {
+            return this.getGuild().getJDA();
+        } else {
+            return DiscordBot.getInstance().getBaseShard();
         }
     }
 }

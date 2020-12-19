@@ -15,7 +15,7 @@ public class CommandExecutionEvent extends Event {
     private final CommandParameters parameters;
 
     public CommandExecutionEvent(@NonNull final AbstractCommand command, @NonNull final CommandParameters parameters) {
-        super(parameters.getGuild().getJDA());
+        super(parameters.getJda());
 
         this.command = command;
         this.parameters = parameters;
