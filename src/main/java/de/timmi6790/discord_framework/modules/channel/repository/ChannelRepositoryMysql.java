@@ -1,13 +1,17 @@
 package de.timmi6790.discord_framework.modules.channel.repository;
 
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
-import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
+import de.timmi6790.discord_framework.modules.channel.repository.database_mappers.ChannelDbMapper;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 
+/**
+ * Mysql channel repository implementation
+ */
 public class ChannelRepositoryMysql implements ChannelRepository {
     private static final String GET_CHANNEL = "SELECT channel.id, channel.discordId, disabled, guild.discordId serverDiscordId " +
             "FROM channel " +
@@ -19,36 +23,44 @@ public class ChannelRepositoryMysql implements ChannelRepository {
 
     private final Jdbi database;
 
-    public ChannelRepositoryMysql(final ChannelDbModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
+    /**
+     * Instantiates a new Channel repository mysql.
+     *
+     * @param discordShardManager the discord shard manager
+     * @param databaseModule      the database module
+     * @param guildDbModule       the guildDb module
+     */
+    public ChannelRepositoryMysql(final ShardManager discordShardManager,
+                                  final DatabaseModule databaseModule,
+                                  final GuildDbModule guildDbModule) {
+        this.database = databaseModule.getJdbi();
         this.database.registerRowMapper(
-                ChannelDb.class,
                 new ChannelDbMapper(
-                        module.getModuleOrThrow(GuildDbModule.class),
-                        module.getDiscord()
+                        guildDbModule,
+                        discordShardManager
                 )
         );
     }
 
     @Override
-    public ChannelDb create(final long discordId, final long guildId) {
+    public ChannelDb create(final long discordChannelId, final long discordGuildID) {
         // Make sure that the channel is not present
         this.database.useHandle(handle ->
                 handle.createUpdate(INSERT_CHANNEL)
-                        .bind("discordId", discordId)
-                        .bind("guildId", guildId)
+                        .bind("discordId", discordChannelId)
+                        .bind("guildId", discordGuildID)
                         .execute()
         );
 
         // Should never throw
-        return this.get(discordId).orElseThrow(RuntimeException::new);
+        return this.get(discordChannelId).orElseThrow(RuntimeException::new);
     }
 
     @Override
-    public Optional<ChannelDb> get(final long discordId) {
+    public Optional<ChannelDb> get(final long discordChannelId) {
         return this.database.withHandle(handle ->
                 handle.createQuery(GET_CHANNEL)
-                        .bind("discordId", discordId)
+                        .bind("discordId", discordChannelId)
                         .mapTo(ChannelDb.class)
                         .findFirst()
         );

@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.channel.repository;
+package de.timmi6790.discord_framework.modules.channel.repository.database_mappers;
 
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
@@ -11,6 +11,9 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Maps the database row to {@link ChannelDb}
+ */
 @AllArgsConstructor
 public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<ChannelDb> {
     private final GuildDbModule guildDbModule;

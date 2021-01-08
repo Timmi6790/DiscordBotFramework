@@ -17,6 +17,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+/**
+ * Handles all channel db instances
+ */
 @EqualsAndHashCode(callSuper = true)
 public class ChannelDbModule extends AbstractModule {
     private final Striped<Lock> channelCreateLock = Striped.lock(64);
@@ -29,6 +32,9 @@ public class ChannelDbModule extends AbstractModule {
 
     private ChannelRepository channelRepository;
 
+    /**
+     * Instantiates a new Channel db module.
+     */
     public ChannelDbModule() {
         super("ChannelDb");
 
@@ -44,41 +50,65 @@ public class ChannelDbModule extends AbstractModule {
 
     @Override
     public void onInitialize() {
-        this.channelRepository = new ChannelRepositoryMysql(this);
+        this.channelRepository = new ChannelRepositoryMysql(
+                this.getDiscord(),
+                this.getModuleOrThrow(DatabaseModule.class),
+                this.getModuleOrThrow(GuildDbModule.class)
+        );
     }
 
-    protected ChannelDb create(final long discordId, final long guildId) {
+    /**
+     * Create a new channel db instance
+     *
+     * @param discordChannelId the discord channel id
+     * @param discordGuildId   the discord guild id
+     * @return the channel db instance
+     */
+    protected ChannelDb create(final long discordChannelId, final long discordGuildId) {
         // Lock the current discord id to prevent multiple creates
-        final Lock lock = this.channelCreateLock.get(discordId);
+        final Lock lock = this.channelCreateLock.get(discordChannelId);
         lock.lock();
         try {
             // Make sure that the channel is not present
-            final Optional<ChannelDb> channelDbOpt = this.get(discordId);
+            final Optional<ChannelDb> channelDbOpt = this.get(discordChannelId);
             if (channelDbOpt.isPresent()) {
                 return channelDbOpt.get();
             }
 
-            final ChannelDb channelDb = this.channelRepository.create(discordId, guildId);
-            this.getCache().put(discordId, channelDb);
+            final ChannelDb channelDb = this.channelRepository.create(discordChannelId, discordGuildId);
+            this.getCache().put(discordChannelId, channelDb);
             return channelDb;
         } finally {
             lock.unlock();
         }
     }
 
-    public Optional<ChannelDb> get(final long discordId) {
-        final ChannelDb channelDbCache = this.cache.getIfPresent(discordId);
+    /**
+     * Tries to retrieve the corresponding channel db instance inside the repository
+     *
+     * @param discordChannelId the discord channel id
+     * @return the channel db instance
+     */
+    public Optional<ChannelDb> get(final long discordChannelId) {
+        final ChannelDb channelDbCache = this.cache.getIfPresent(discordChannelId);
         if (channelDbCache != null) {
             return Optional.of(channelDbCache);
         }
 
-        final Optional<ChannelDb> channelDbOpt = this.channelRepository.get(discordId);
-        channelDbOpt.ifPresent(userDb -> this.cache.put(discordId, userDb));
+        final Optional<ChannelDb> channelDbOpt = this.channelRepository.get(discordChannelId);
+        channelDbOpt.ifPresent(userDb -> this.cache.put(discordChannelId, userDb));
 
         return channelDbOpt;
     }
 
-    public ChannelDb getOrCreate(final long discordId, final long guildId) {
-        return this.get(discordId).orElseGet(() -> this.create(discordId, guildId));
+    /**
+     * Retrieves or create a discord channel instance
+     *
+     * @param discordChannelId the discord channel id
+     * @param discordGuildId   the discord guild id
+     * @return the channel db instance
+     */
+    public ChannelDb getOrCreate(final long discordChannelId, final long discordGuildId) {
+        return this.get(discordChannelId).orElseGet(() -> this.create(discordChannelId, discordGuildId));
     }
 }
