@@ -70,7 +70,7 @@ public class ModuleManager {
                 if (!missingDependencies.isEmpty()) {
                     this.logger.warn(
                             "Can't load {}, because it is missing the {} dependencies.",
-                            module.getName(),
+                            module.getModuleName(),
                             String.join(",", missingDependencies)
                     );
 
@@ -88,7 +88,7 @@ public class ModuleManager {
             final int moduleIndex = index++;
 
             // Load after
-            for (final Class<? extends AbstractModule> loadAfterClass : module.getLoadAfter()) {
+            for (final Class<? extends AbstractModule> loadAfterClass : module.getLoadAfterDependencies()) {
                 final int loadIndex = moduleClasses.indexOf(loadAfterClass);
                 if (loadIndex != -1) {
                     edges.add(new TopicalSort.Dependency(moduleIndex, loadIndex));
@@ -96,7 +96,7 @@ public class ModuleManager {
             }
 
             // Load before
-            for (final Class<? extends AbstractModule> loadBeforeClass : module.getLoadBefore()) {
+            for (final Class<? extends AbstractModule> loadBeforeClass : module.getLoadBeforeDependencies()) {
                 final int loadIndex = moduleClasses.indexOf(loadBeforeClass);
                 if (loadIndex != -1) {
                     edges.add(new TopicalSort.Dependency(loadIndex, moduleIndex));
@@ -122,7 +122,7 @@ public class ModuleManager {
                 if (abstractModules.contains(foundModule)) {
                     this.logger.warn(
                             "Module {} inside {} is already loaded.",
-                            foundModule.getName(),
+                            foundModule.getModuleName(),
                             jar.getName()
                     );
                     continue;
@@ -130,7 +130,7 @@ public class ModuleManager {
 
                 this.logger.info(
                         "Found module {} inside {}",
-                        foundModule.getName(),
+                        foundModule.getModuleName(),
                         jar.getName()
                 );
                 abstractModules.add(foundModule);
@@ -199,11 +199,11 @@ public class ModuleManager {
 
     public boolean registerModule(final AbstractModule module) {
         if (this.loadedModules.containsKey(module.getClass())) {
-            this.logger.debug("{} is already registered!", module.getName());
+            this.logger.debug("{} is already registered!", module.getModuleName());
             return false;
         }
 
-        this.logger.debug("Registered {}[{}]", module.getName(), module.getClass());
+        this.logger.debug("Registered {}[{}]", module.getModuleName(), module.getClass());
         this.loadedModules.put(module.getClass(), module);
         return true;
     }
@@ -234,7 +234,7 @@ public class ModuleManager {
         }
 
         // Check if all load dependencies are innitlized
-        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
+        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfterDependencies()) {
             if (!this.initializedModules.contains(dependencyClass)) {
                 this.logger.warn(
                         "Tried to initialize {} without {} dependency being initialized.",
@@ -245,13 +245,13 @@ public class ModuleManager {
             }
         }
 
-        this.logger.info("Initialize module {}", module.getName());
+        this.logger.info("Initialize module {}", module.getModuleName());
         try {
             module.onInitialize();
             this.initializedModules.add(moduleClass);
             return true;
         } catch (final Exception e) {
-            this.logger.error(module.getName(), e);
+            this.logger.error(module.getModuleName(), e);
             Sentry.captureException(e);
 
             return false;
@@ -276,7 +276,7 @@ public class ModuleManager {
         }
 
         // Check if all load dependencies are started
-        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfter()) {
+        for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfterDependencies()) {
             if (!(this.initializedModules.contains(dependencyClass) || this.startedModules.contains(dependencyClass))) {
                 this.logger.warn(
                         "Tried to start {} without {} dependency being started",
@@ -287,14 +287,14 @@ public class ModuleManager {
             }
         }
 
-        this.logger.info("Starting module {}", module.getName());
+        this.logger.info("Starting module {}", module.getModuleName());
         try {
             module.onEnable();
             this.startedModules.add(moduleClass);
             this.initializedModules.remove(moduleClass);
             return true;
         } catch (final Exception e) {
-            this.logger.error(module.getName(), e);
+            this.logger.error(module.getModuleName(), e);
             Sentry.captureException(e);
             return false;
         }
@@ -329,7 +329,7 @@ public class ModuleManager {
             this.startedModules.remove(moduleClass);
             return true;
         } catch (final Exception e) {
-            this.logger.error(module.getName(), e);
+            this.logger.error(module.getModuleName(), e);
             Sentry.captureException(e);
 
             return false;

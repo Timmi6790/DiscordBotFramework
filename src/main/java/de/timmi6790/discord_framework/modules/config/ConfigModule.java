@@ -25,7 +25,7 @@ public class ConfigModule extends AbstractModule {
     }
 
     private String getFormattedModuleName(@NonNull final AbstractModule module) {
-        return module.getName().replace(' ', '_').toLowerCase();
+        return module.getModuleName().replace(' ', '_').toLowerCase();
     }
 
     private Path getBaseConfigPath() {
@@ -66,7 +66,7 @@ public class ConfigModule extends AbstractModule {
             GsonUtilities.saveToJson(configPath, config);
             DiscordBot.getLogger().info(
                     "Created {} config file {}",
-                    module.getName(),
+                    module.getModuleName(),
                     config.getClass().getSimpleName()
             );
         } else {
@@ -87,7 +87,7 @@ public class ConfigModule extends AbstractModule {
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
-        DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getName());
+        DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getModuleName());
         return config;
     }
 

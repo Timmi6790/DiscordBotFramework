@@ -13,7 +13,7 @@ class AbstractModuleTest {
                 GatewayIntent.GUILD_MEMBERS
         };
         final TestModule module = new TestModule();
-        module.addGatewayIntents(intents);
+        module.addDiscordGatewayIntents(intents);
 
         assertThat(module.getRequiredGatewayIntents()).containsExactlyInAnyOrder(intents);
     }
@@ -33,23 +33,23 @@ class AbstractModuleTest {
 
         assertThat(module.getDependencies()).containsExactly(TestModule2.class);
 
-        assertThat(module.getLoadAfter()).containsExactly(TestModule2.class);
+        assertThat(module.getLoadAfterDependencies()).containsExactly(TestModule2.class);
     }
 
     @Test
     void addLoadAfter() {
         final TestModule module = new TestModule();
-        module.addLoadAfter(TestModule2.class);
+        module.addLoadAfterDependencies(TestModule2.class);
 
-        assertThat(module.getLoadAfter()).containsExactly(TestModule2.class);
+        assertThat(module.getLoadAfterDependencies()).containsExactly(TestModule2.class);
     }
 
     @Test
     void addLoadBefore() {
         final TestModule module = new TestModule();
-        module.addLoadBefore(TestModule2.class);
+        module.addLoadBeforeDependencies(TestModule2.class);
 
-        assertThat(module.getLoadBefore()).containsExactly(TestModule2.class);
+        assertThat(module.getLoadBeforeDependencies()).containsExactly(TestModule2.class);
     }
 
     public static class TestModule extends AbstractModule {

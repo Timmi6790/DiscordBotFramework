@@ -38,7 +38,7 @@ public class GuildDbModule extends AbstractModule {
                 PermissionsModule.class
         );
 
-        this.addLoadAfter(
+        this.addLoadAfterDependencies(
                 SettingModule.class
         );
 

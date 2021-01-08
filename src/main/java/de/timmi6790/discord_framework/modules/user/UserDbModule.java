@@ -60,7 +60,7 @@ public class UserDbModule extends AbstractModule {
                 RankModule.class
         );
 
-        this.addLoadAfter(
+        this.addLoadAfterDependencies(
                 SettingModule.class
         );
 

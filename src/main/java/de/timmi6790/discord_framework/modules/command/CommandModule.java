@@ -38,7 +38,7 @@ public class CommandModule extends AbstractModule {
 
     private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
-    
+
     private Pattern mainCommandPattern;
     private String mainCommand;
     private long botId;
@@ -49,7 +49,7 @@ public class CommandModule extends AbstractModule {
     public CommandModule() {
         super("Command");
 
-        this.addGatewayIntents(
+        this.addDiscordGatewayIntents(
                 GatewayIntent.DIRECT_MESSAGE_REACTIONS,
                 GatewayIntent.DIRECT_MESSAGES,
                 GatewayIntent.GUILD_MESSAGE_REACTIONS,
@@ -149,7 +149,7 @@ public class CommandModule extends AbstractModule {
             command.setDbId(this.getCommandDatabaseId(command));
         }
         if (command.getPermissionId() == -1) {
-            final String defaultPermissionName = String.format("%s.command.%s", module.getName(), command.getName())
+            final String defaultPermissionName = String.format("%s.command.%s", module.getModuleName(), command.getName())
                     .replace(' ', '_')
                     .toLowerCase();
             command.setPermission(defaultPermissionName);

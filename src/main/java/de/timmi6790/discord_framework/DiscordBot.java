@@ -92,7 +92,7 @@ public class DiscordBot {
         final Config config = firstInnit ? new Config() : this.getConfig();
         final Config newConfig = ReflectionUtilities.deepCopy(config);
         for (final AbstractModule module : this.internalModules) {
-            newConfig.getEnabledModules().putIfAbsent(module.getName(), Boolean.TRUE);
+            newConfig.getEnabledModules().putIfAbsent(module.getModuleName(), Boolean.TRUE);
         }
 
         GsonUtilities.saveToJsonIfChanged(configPath, config, newConfig);
@@ -120,7 +120,7 @@ public class DiscordBot {
 
         // Modules
         for (final AbstractModule module : this.internalModules) {
-            if (Boolean.TRUE.equals(mainConfig.getEnabledModules().getOrDefault(module.getName(), Boolean.TRUE))) {
+            if (Boolean.TRUE.equals(mainConfig.getEnabledModules().getOrDefault(module.getModuleName(), Boolean.TRUE))) {
                 this.moduleManager.registerModule(module);
             }
         }
