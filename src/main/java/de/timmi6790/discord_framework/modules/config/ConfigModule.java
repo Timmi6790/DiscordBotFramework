@@ -12,8 +12,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Global module config system
+ */
 @EqualsAndHashCode(callSuper = true)
 public class ConfigModule extends AbstractModule {
+    /**
+     * Instantiates a new Config module.
+     */
     public ConfigModule() {
         super("Config");
     }
@@ -43,8 +49,14 @@ public class ConfigModule extends AbstractModule {
         );
     }
 
+    /**
+     * Creates a new config file /configs/<module>/<config class name>.json
+     *
+     * @param module the module
+     * @param config the config object
+     */
     @SneakyThrows
-    public boolean registerConfig(@NonNull final AbstractModule module, @NonNull final Object config) {
+    public void registerConfig(@NonNull final AbstractModule module, @NonNull final Object config) {
         final Path configFolderPath = this.getModuleFolderPath(module);
         Files.createDirectories(configFolderPath);
 
@@ -62,10 +74,16 @@ public class ConfigModule extends AbstractModule {
             // This will currently always write new configs and remove old ones
             this.saveConfig(module, config.getClass());
         }
-
-        return true;
     }
 
+    /**
+     * Retrieves the config from the configs folder
+     *
+     * @param <T>         the config type
+     * @param module      the module
+     * @param configClass the config class
+     * @return the config object
+     */
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
@@ -73,6 +91,12 @@ public class ConfigModule extends AbstractModule {
         return config;
     }
 
+    /**
+     * Save the config to file
+     *
+     * @param module      the module
+     * @param configClass the config class
+     */
     @SneakyThrows
     public void saveConfig(@NonNull final AbstractModule module, @NonNull final Class<?> configClass) {
         final Object currentConfig = this.getConfig(module, configClass);
@@ -83,6 +107,14 @@ public class ConfigModule extends AbstractModule {
         GsonUtilities.saveToJson(this.getModuleConfigPath(module, configClass), currentConfig);
     }
 
+    /**
+     * Registers the config and also returns the instance
+     *
+     * @param <T>    the config type parameter
+     * @param module the module
+     * @param config the config
+     * @return the config
+     */
     public <T> T registerAndGetConfig(@NonNull final AbstractModule module, @NonNull final T config) {
         this.registerConfig(module, config);
         return (T) this.getConfig(module, config.getClass());
