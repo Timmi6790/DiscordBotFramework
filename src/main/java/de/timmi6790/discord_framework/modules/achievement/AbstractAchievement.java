@@ -5,21 +5,46 @@ import lombok.Data;
 
 import java.util.List;
 
+/**
+ * Abstract achievement.
+ */
 @Data
 public abstract class AbstractAchievement {
-    private final String name;
-    private String internalName;
-    private int databaseId;
+    private final String achievementName;
+    private String internalAchievementName;
+    private int repositoryId;
 
-    protected AbstractAchievement(final String name) {
-        this.name = name;
+    /**
+     * Instantiates a new Abstract achievement.
+     *
+     * @param achievementName the achievement name
+     */
+    protected AbstractAchievement(final String achievementName) {
+        this.achievementName = achievementName;
     }
 
-    public void unlockPlayerAchievement(final UserDb userDb) {
-        userDb.grantAchievement(this);
+    /**
+     * Unlock player achievement.
+     *
+     * @param userDb            the user db
+     * @param sendUnlockMessage the send unlock message
+     */
+    public void unlockPlayerAchievement(final UserDb userDb, final boolean sendUnlockMessage) {
+        userDb.grantAchievement(this, sendUnlockMessage);
     }
 
+    /**
+     * Triggered after a user has been granted the achievement to allow further logic from the achievement. For example
+     * granting specific perms on unlock
+     *
+     * @param userDb user who unlocked the achievement
+     */
     public abstract void onUnlock(UserDb userDb);
 
+    /**
+     * Returns a list of unlocked perks for the unlock message
+     *
+     * @return the unlocked perks
+     */
     public abstract List<String> getUnlockedPerks();
 }

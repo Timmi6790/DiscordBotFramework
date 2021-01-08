@@ -287,11 +287,11 @@ class UserDbTest {
         assertThat(userDb.getAchievements()).isEmpty();
 
         // one achievement
-        userDb.grantAchievement(achievement);
+        userDb.grantAchievement(achievement, false);
         assertThat(userDb.getAchievements()).containsExactlyInAnyOrder(achievement);
 
         // two achievement
-        userDb.grantAchievement(achievement2);
+        userDb.grantAchievement(achievement2, false);
         assertThat(userDb.getAchievements()).containsExactlyInAnyOrder(achievement, achievement2);
 
         this.validateRepository(userDb);
@@ -306,10 +306,10 @@ class UserDbTest {
 
         assertThat(userDb.hasAchievement(achievement)).isFalse();
 
-        assertThat(userDb.grantAchievement(achievement)).isTrue();
+        assertThat(userDb.grantAchievement(achievement, false)).isTrue();
         verify(achievement).onUnlock(any());
 
-        assertThat(userDb.grantAchievement(achievement)).isFalse();
+        assertThat(userDb.grantAchievement(achievement, false)).isFalse();
 
         assertThat(userDb.hasAchievement(achievement)).isTrue();
 

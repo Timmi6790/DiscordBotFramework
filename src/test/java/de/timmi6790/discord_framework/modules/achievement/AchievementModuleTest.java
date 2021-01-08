@@ -48,8 +48,8 @@ class AchievementModuleTest {
 
     private void hasAchievements(final AbstractAchievement... achievements) {
         for (final AbstractAchievement achievement : achievements) {
-            assertThat(achievementModule.getAchievement(achievement.getDatabaseId())).hasValue(achievement);
-            assertThat(achievementModule.getAchievement(achievement.getName())).hasValue(achievement);
+            assertThat(achievementModule.getAchievement(achievement.getRepositoryId())).hasValue(achievement);
+            assertThat(achievementModule.getAchievement(achievement.getAchievementName())).hasValue(achievement);
         }
     }
 

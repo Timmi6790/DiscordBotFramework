@@ -4,27 +4,37 @@ import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.modules.stat.events.StatsChangeEvent;
-import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.EqualsAndHashCode;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.util.StringJoiner;
-
+/**
+ * Stat achievement that is triggers when a user reaches a specific stat value
+ */
 @EqualsAndHashCode(callSuper = true)
 public abstract class StatValueAchievement extends AbstractAchievement {
     private final Class<? extends AbstractStat> stat;
     private final long requiredValue;
 
-    protected StatValueAchievement(final String name,
-                                   final Class<? extends AbstractStat> stat,
-                                   final long value) {
-        super(name);
+    /**
+     * Instantiates a new Stat value achievement.
+     *
+     * @param achievementName the achievement name
+     * @param statClass       the statClass
+     * @param requiredValue   the required stat value for the achivement
+     */
+    protected StatValueAchievement(final String achievementName,
+                                   final Class<? extends AbstractStat> statClass,
+                                   final long requiredValue) {
+        super(achievementName);
 
-        this.stat = stat;
-        this.requiredValue = value;
+        this.stat = statClass;
+        this.requiredValue = requiredValue;
     }
 
+    /**
+     * On stat value change.
+     *
+     * @param event the event
+     */
     @SubscribeEvent
     public void onStatValueChange(final StatsChangeEvent event) {
         if (!event.getStat().getClass().isAssignableFrom(this.stat) || event.getUserDb().hasAchievement(this)) {
@@ -32,22 +42,7 @@ public abstract class StatValueAchievement extends AbstractAchievement {
         }
 
         if (event.getNewValue() >= this.requiredValue) {
-            this.unlockPlayerAchievement(event.getUserDb());
-            final User user = event.getUserDb().getUser();
-
-            final StringJoiner perks = new StringJoiner("\n");
-            for (final String unlocked : this.getUnlockedPerks()) {
-                perks.add("- " + unlocked);
-            }
-
-            DiscordMessagesUtilities.sendPrivateMessage(user, DiscordMessagesUtilities.getEmbedBuilder(user, null)
-                    .setTitle("Achievement Unlocked")
-                    .setDescription(
-                            "Unlocked: %s%n%nPerks:%n%s",
-                            MarkdownUtil.bold(this.getName()),
-                            perks.toString()
-                    )
-            );
+            this.unlockPlayerAchievement(event.getUserDb(), true);
         }
     }
 }

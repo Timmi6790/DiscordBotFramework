@@ -106,7 +106,7 @@ public class UserCommand extends AbstractCommand {
 
         final StringJoiner achievements = new StringJoiner("\n");
         for (final AbstractAchievement achievement : userDb.getAchievements()) {
-            achievements.add(achievement.getName());
+            achievements.add(achievement.getAchievementName());
         }
 
         final String primaryRank = this.getRankModule().getRank(userDb.getPrimaryRankId())

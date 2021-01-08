@@ -229,17 +229,37 @@ public class UserDb {
     }
 
     public boolean hasAchievement(@NonNull final AbstractAchievement achievement) {
-        return this.achievementIds.contains(achievement.getDatabaseId());
+        return this.achievementIds.contains(achievement.getRepositoryId());
     }
 
-    public boolean grantAchievement(@NonNull final AbstractAchievement achievement) {
+    public boolean grantAchievement(@NonNull final AbstractAchievement achievement, final boolean sendUnlockMessage) {
         if (this.hasAchievement(achievement)) {
             return false;
         }
 
-        this.getUserDbRepository().grantPlayerAchievement(this.getDatabaseId(), achievement.getDatabaseId());
-        this.achievementIds.add(achievement.getDatabaseId());
+        this.getUserDbRepository().grantPlayerAchievement(this.getDatabaseId(), achievement.getRepositoryId());
+        this.achievementIds.add(achievement.getRepositoryId());
         achievement.onUnlock(this);
+        if (sendUnlockMessage) {
+            // Show all the perks the players unlocked with this achievement
+            final StringJoiner perks = new StringJoiner("\n");
+            for (final String unlocked : achievement.getUnlockedPerks()) {
+                perks.add("- " + unlocked);
+            }
+
+            final User user = this.getUser();
+            // Always inform the user only inside his dms about the unlocked achievement to reduce spam
+            DiscordMessagesUtilities.sendPrivateMessage(
+                    user,
+                    DiscordMessagesUtilities.getEmbedBuilder(user, null)
+                            .setTitle("Achievement Unlocked")
+                            .setDescription(
+                                    "Unlocked: %s%n%nPerks:%n%s",
+                                    MarkdownUtil.bold(achievement.getAchievementName()),
+                                    perks.toString()
+                            )
+            );
+        }
         return true;
     }
 
