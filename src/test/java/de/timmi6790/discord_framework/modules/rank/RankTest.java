@@ -74,7 +74,7 @@ class RankTest {
     }
 
     private void validateRepository(final Rank rank) {
-        final Rank repositoryRank = rankModule.getRankRepository().getRank(rank.getDatabaseId());
+        final Rank repositoryRank = rankModule.getRankRepository().getRank(rank.getRepositoryId());
         AssertionsForClassTypes.assertThat(rank).isEqualTo(repositoryRank);
     }
 
@@ -83,7 +83,7 @@ class RankTest {
         final Rank rank = this.createRank();
 
         for (final int permission : permissionIds) {
-            assertThat(rank.hasPermission(permission)).isFalse();
+            assertThat(rank.hasPermission(permission, false)).isFalse();
         }
 
         for (final int permission : permissionIds) {
@@ -91,7 +91,7 @@ class RankTest {
         }
 
         for (final int permission : permissionIds) {
-            assertThat(rank.hasPermission(permission)).isTrue();
+            assertThat(rank.hasPermission(permission, false)).isTrue();
         }
     }
 
@@ -99,12 +99,12 @@ class RankTest {
     void addPermission() {
         final Rank rank = this.createRank();
 
-        assertThat(rank.getPermissionIds()).isEmpty();
+        assertThat(rank.getPermissionIds(false)).isEmpty();
         for (final int permission : permissionIds) {
             assertThat(rank.addPermission(permission)).isTrue();
         }
 
-        assertThat(rank.getPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
+        assertThat(rank.getPermissionIds(false)).containsExactlyInAnyOrderElementsOf(permissionIds);
         this.validateRepository(rank);
     }
 
@@ -131,7 +131,7 @@ class RankTest {
             assertThat(rank.removePermission(permission)).isTrue();
         }
 
-        assertThat(rank.getPermissionIds()).isEmpty();
+        assertThat(rank.getPermissionIds(false)).isEmpty();
         this.validateRepository(rank);
     }
 
@@ -152,7 +152,7 @@ class RankTest {
         // Extended Rank 3
         final Rank extendedRank3 = this.createRank();
 
-        final String rank3permissionNode = PERMISSION_PREFIX + extendedRank3.getName();
+        final String rank3permissionNode = PERMISSION_PREFIX + extendedRank3.getRankName();
         final int rank3permission = permissionsModule.addPermission(rank3permissionNode);
         permissionIds.add(rank3permission);
         permissions.add(rank3permissionNode);
@@ -163,7 +163,7 @@ class RankTest {
         final Rank extendedRank2 = this.createRank();
         extendedRank2.addExtendedRank(extendedRank3);
 
-        final String rank2permissionNode = PERMISSION_PREFIX + extendedRank2.getName();
+        final String rank2permissionNode = PERMISSION_PREFIX + extendedRank2.getRankName();
         final int rank2permission = permissionsModule.addPermission(rank2permissionNode);
         permissionIds.add(rank2permission);
         permissions.add(rank2permissionNode);
@@ -173,7 +173,7 @@ class RankTest {
         // Extended Rank 1
         final Rank extendedRank1 = this.createRank();
 
-        final String rank1permissionNode = PERMISSION_PREFIX + extendedRank1.getName();
+        final String rank1permissionNode = PERMISSION_PREFIX + extendedRank1.getRankName();
         final int rank1permission = permissionsModule.addPermission(rank1permissionNode);
         permissionIds.add(rank1permission);
         permissions.add(rank1permissionNode);
@@ -185,7 +185,7 @@ class RankTest {
         mainRank.addExtendedRank(extendedRank1);
         mainRank.addExtendedRank(extendedRank2);
 
-        final String mainRankPermissionNode = PERMISSION_PREFIX + mainRank.getName();
+        final String mainRankPermissionNode = PERMISSION_PREFIX + mainRank.getRankName();
         final int mainRankPermission = permissionsModule.addPermission(mainRankPermissionNode);
         permissionIds.add(mainRankPermission);
         permissions.add(mainRankPermissionNode);
@@ -194,12 +194,12 @@ class RankTest {
         mainRank.addPermission(rank3permission);
 
 
-        assertThat(mainRank.getAllPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
-        assertThat(mainRank.getAllPermissions()).containsExactlyInAnyOrderElementsOf(permissions);
+        assertThat(mainRank.getPermissionIds(true)).containsExactlyInAnyOrderElementsOf(permissionIds);
+        assertThat(mainRank.getPermissions(true)).containsExactlyInAnyOrderElementsOf(permissions);
 
         // Cache check
-        assertThat(mainRank.getAllPermissionIds()).containsExactlyInAnyOrderElementsOf(permissionIds);
-        assertThat(mainRank.getAllPermissions()).containsExactlyInAnyOrderElementsOf(permissions);
+        assertThat(mainRank.getPermissionIds(true)).containsExactlyInAnyOrderElementsOf(permissionIds);
+        assertThat(mainRank.getPermissions(true)).containsExactlyInAnyOrderElementsOf(permissions);
 
         this.validateRepository(extendedRank1);
         this.validateRepository(extendedRank2);
@@ -225,9 +225,9 @@ class RankTest {
         final Rank mainRank = this.createRank();
         final Rank extendedRank1 = this.createRank();
 
-        assertThat(mainRank.hasExtendedRank(extendedRank1.getDatabaseId())).isFalse();
+        assertThat(mainRank.hasExtendedRank(extendedRank1.getRepositoryId())).isFalse();
         mainRank.addExtendedRank(extendedRank1);
-        assertThat(mainRank.hasExtendedRank(extendedRank1.getDatabaseId())).isTrue();
+        assertThat(mainRank.hasExtendedRank(extendedRank1.getRepositoryId())).isTrue();
 
         this.validateRepository(mainRank);
         this.validateRepository(extendedRank1);
@@ -251,9 +251,9 @@ class RankTest {
         final Rank mainRank = this.createRank();
         final Rank extendedRank1 = this.createRank();
 
-        assertThat(mainRank.addExtendedRank(extendedRank1.getDatabaseId())).isTrue();
-        assertThat(mainRank.addExtendedRank(extendedRank1.getDatabaseId())).isFalse();
-        assertThat(mainRank.addExtendedRank(mainRank.getDatabaseId())).isFalse();
+        assertThat(mainRank.addExtendedRank(extendedRank1.getRepositoryId())).isTrue();
+        assertThat(mainRank.addExtendedRank(extendedRank1.getRepositoryId())).isFalse();
+        assertThat(mainRank.addExtendedRank(mainRank.getRepositoryId())).isFalse();
 
         this.validateRepository(mainRank);
         this.validateRepository(extendedRank1);
@@ -279,8 +279,8 @@ class RankTest {
         final Rank extendedRank1 = this.createRank();
 
         mainRank.addExtendedRank(extendedRank1);
-        assertThat(mainRank.removeExtendedRank(extendedRank1.getDatabaseId())).isTrue();
-        assertThat(mainRank.removeExtendedRank(extendedRank1.getDatabaseId())).isFalse();
+        assertThat(mainRank.removeExtendedRank(extendedRank1.getRepositoryId())).isTrue();
+        assertThat(mainRank.removeExtendedRank(extendedRank1.getRepositoryId())).isFalse();
 
         this.validateRepository(mainRank);
         this.validateRepository(extendedRank1);
@@ -291,12 +291,12 @@ class RankTest {
         final String newName = "_A";
 
         final Rank rank = this.createRank();
-        final String currentName = rank.getName();
+        final String currentName = rank.getRankName();
 
-        assertThat(rank.setName(newName)).isTrue();
-        assertThat(rank.setName(newName)).isFalse();
+        assertThat(rank.setRankName(newName)).isTrue();
+        assertThat(rank.setRankName(newName)).isFalse();
 
-        assertThat(rank.getName())
+        assertThat(rank.getRankName())
                 .isNotEqualTo(currentName)
                 .isEqualTo(newName);
 

@@ -9,6 +9,7 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import de.timmi6790.discord_framework.utilities.DataUtilities;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -73,7 +73,7 @@ class RankModuleTest {
         final Optional<Rank> rankByName = rankModule.getRank(rankName);
         assertThat(rankByName).isPresent();
 
-        assertThat(rankModule.hasRank(rankByName.get().getDatabaseId())).isTrue();
+        assertThat(rankModule.hasRank(rankByName.get().getRepositoryId())).isTrue();
     }
 
     @Test
@@ -84,7 +84,7 @@ class RankModuleTest {
         final Optional<Rank> rankByName = rankModule.getRank(rankName);
         assertThat(rankByName).isPresent();
 
-        final Optional<Rank> rankById = rankModule.getRank(rankByName.get().getDatabaseId());
+        final Optional<Rank> rankById = rankModule.getRank(rankByName.get().getRepositoryId());
         assertThat(rankById)
                 .isPresent()
                 .hasValue(rankByName.get());
@@ -97,7 +97,7 @@ class RankModuleTest {
 
         final Optional<Rank> rank = rankModule.getRank(rankName);
         assertThat(rank).isPresent();
-        assertThat(rank.get().getName()).isEqualTo(rankName);
+        assertThat(rank.get().getRankName()).isEqualTo(rankName);
     }
 
     @Test
@@ -111,9 +111,7 @@ class RankModuleTest {
             rankModule.createRank(rankName);
         }
 
-        final List<String> foundRankNames = rankModule.getRanks().stream()
-                .map(Rank::getName)
-                .collect(Collectors.toList());
+        final List<String> foundRankNames = DataUtilities.convertToStringList(rankModule.getRanks(), Rank::getRankName);
         assertThat(foundRankNames).containsAll(rankNames);
     }
 
@@ -130,7 +128,7 @@ class RankModuleTest {
 
         final Optional<Rank> rank = rankModule.getRank(rankName);
         assertThat(rank).isPresent();
-        assertThat(rank.get().getName()).isEqualTo(rankName);
+        assertThat(rank.get().getRankName()).isEqualTo(rankName);
     }
 
     @Test
@@ -151,7 +149,7 @@ class RankModuleTest {
         final Optional<Rank> rank = rankModule.getRank(rankName);
 
         assertThat(rank).isPresent();
-        assertThat(rankModule.deleteRank(rank.get().getDatabaseId())).isTrue();
+        assertThat(rankModule.deleteRank(rank.get().getRepositoryId())).isTrue();
         assertThat(rankModule.hasRank(rankName)).isFalse();
     }
 

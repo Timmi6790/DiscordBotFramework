@@ -19,7 +19,6 @@ public class BotInfoCommand extends AbstractCommand {
     public BotInfoCommand() {
         super("binfo", "Management", "", "");
 
-
         this.userDbModule = this.getModuleManager().getModuleOrThrow(UserDbModule.class);
         this.channelDbModule = this.getModuleManager().getModuleOrThrow(ChannelDbModule.class);
         this.guildDbModule = this.getModuleManager().getModuleOrThrow(GuildDbModule.class);

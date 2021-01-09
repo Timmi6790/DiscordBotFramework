@@ -179,6 +179,30 @@ public abstract class AbstractCommand {
         );
     }
 
+    protected void sendTimedMessage(final CommandParameters commandParameters,
+                                    final String title,
+                                    final String descriptionFormat,
+                                    final Object... descriptionObjects) {
+        this.sendTimedMessage(
+                commandParameters,
+                this.getEmbedBuilder(commandParameters)
+                        .setTitle(title)
+                        .setDescription(
+                                descriptionFormat,
+                                descriptionObjects
+                        )
+        );
+    }
+
+    protected void sendTimedMessage(@NonNull final CommandParameters commandParameters,
+                                    @NonNull final MultiEmbedBuilder embedBuilder) {
+        DiscordMessagesUtilities.sendMessageTimed(
+                commandParameters.getLowestMessageChannel(),
+                embedBuilder,
+                90
+        );
+    }
+
     protected void sendTimedMessage(@NonNull final CommandParameters commandParameters,
                                     @NonNull final MultiEmbedBuilder embedBuilder,
                                     final int deleteTime) {
@@ -651,10 +675,9 @@ public abstract class AbstractCommand {
     public Rank getRankThrow(@NonNull final CommandParameters commandParameters,
                              final int position) {
         final String userInput = this.getArg(commandParameters, position);
-        for (final Rank rank : this.getRankModule().getRanks()) {
-            if (rank.getName().equalsIgnoreCase(userInput)) {
-                return rank;
-            }
+        final Optional<Rank> rankOpt = this.getRankModule().getRank(userInput);
+        if (rankOpt.isPresent()) {
+            return rankOpt.get();
         }
 
         throw new CommandReturnException(

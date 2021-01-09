@@ -119,9 +119,9 @@ public class UserDb {
         final Set<Integer> permissionSet = new HashSet<>(this.permissionIds);
 
         this.rankModule.getRank(this.primaryRankId)
-                .ifPresent(rank -> permissionSet.addAll(rank.getAllPermissionIds()));
+                .ifPresent(rank -> permissionSet.addAll(rank.getPermissionIds(true)));
         for (final int rankId : this.getRankIds()) {
-            this.rankModule.getRank(rankId).ifPresent(rank -> permissionSet.addAll(rank.getAllPermissionIds()));
+            this.rankModule.getRank(rankId).ifPresent(rank -> permissionSet.addAll(rank.getPermissionIds(true)));
         }
 
         return permissionSet;
@@ -159,7 +159,7 @@ public class UserDb {
     }
 
     public boolean hasPrimaryRank(@NonNull final Rank rank) {
-        return this.hasPrimaryRank(rank.getDatabaseId());
+        return this.hasPrimaryRank(rank.getRepositoryId());
     }
 
     public boolean setPrimaryRankId(final int rankId) {
@@ -174,7 +174,7 @@ public class UserDb {
     }
 
     public boolean setPrimaryRank(@NonNull final Rank rank) {
-        return this.setPrimaryRankId(rank.getDatabaseId());
+        return this.setPrimaryRankId(rank.getRepositoryId());
     }
 
     public boolean hasRank(final int rankId) {
@@ -182,7 +182,7 @@ public class UserDb {
     }
 
     public boolean hasRank(@NonNull final Rank rank) {
-        return this.hasRank(rank.getDatabaseId());
+        return this.hasRank(rank.getRepositoryId());
     }
 
     public boolean addRank(final int rankId) {
@@ -197,7 +197,7 @@ public class UserDb {
     }
 
     public boolean addRank(@NonNull final Rank rank) {
-        return this.addRank(rank.getDatabaseId());
+        return this.addRank(rank.getRepositoryId());
     }
 
     public boolean removeRank(final int rankId) {
@@ -212,7 +212,7 @@ public class UserDb {
     }
 
     public boolean removeRank(@NonNull final Rank rank) {
-        return this.removeRank(rank.getDatabaseId());
+        return this.removeRank(rank.getRepositoryId());
     }
 
     // Achievements

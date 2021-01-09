@@ -23,11 +23,12 @@ public class RankRepositoryMysql implements RankRepository {
             "LEFT JOIN rank_permission ON rank_permission.rank_id = rank.id " +
             "LEFT JOIN rank_relation ON rank_relation.child_rank_id = rank.id " +
             "GROUP BY rank.id;";
-
     private static final String DELETE_RANK = "DELETE FROM rank WHERE rank.id = :databaseId LIMIT 1;";
-    private static final String SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE = "UPDATE player SET player.primary_rank = 1 WHERE player.primary_rank = :databaseId;";
 
+    private static final String SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE = "UPDATE player SET player.primary_rank = 1 WHERE player.primary_rank = :databaseId;";
+    
     private static final String INSERT_RANK = "INSERT INTO `rank`(rank_name) VALUES(:rankName);";
+
     private static final String GET_LAST_INSERT_ID = "SELECT LAST_INSERT_ID();";
     private static final String GET_RANK_BY_ID = "SELECT rank.id, rank_name rankName, GROUP_CONCAT(DISTINCT rank_permission.permission_id) permissions, GROUP_CONCAT(DISTINCT rank_relation.parent_rank_id) parentRanks " +
             "FROM rank " +
@@ -36,6 +37,7 @@ public class RankRepositoryMysql implements RankRepository {
             "WHERE rank.id = :databaseId " +
             "GROUP BY rank.id;";
 
+
     private static final String INSERT_RANK_PERMISSION = "INSERT INTO rank_permission(rank_id, permission_id) VALUES(:rankId, :permissionId);";
     private static final String DELETE_RANK_PERMISSION = "DELETE FROM rank_permission WHERE rank_id = :rankId AND permission_id = :permissionId LIMIT 1";
 
@@ -43,7 +45,6 @@ public class RankRepositoryMysql implements RankRepository {
     private static final String DELETE_RANK_RELATION = "DELETE FROM rank_relation WHERE parent_rank_id = :extendedRankId AND child_rank_id = :rankId LIMIT 1;";
 
     private static final String SET_NAME = "UPDATE rank SET rank.rank_name = :newRankName WHERE rank.id = :databaseId LIMIT 1;";
-
     private static final String GET_PLAYER_IDS_WITH_RANK = "SELECT discordId " +
             "FROM player " +
             "LEFT JOIN player_rank ON player_rank.player_id = player.id " +
@@ -51,16 +52,29 @@ public class RankRepositoryMysql implements RankRepository {
             "OR player_rank.rank_id = :databaseId " +
             "GROUP BY player.id;";
 
+    /**
+     * The Database.
+     */
     private final Jdbi database;
 
-    public RankRepositoryMysql(final RankModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
+    /**
+     * Instantiates a new Rank repository mysql.
+     *
+     * @param rankModule        the rank module
+     * @param databaseModule    the database module
+     * @param userDbModule      the user db module
+     * @param permissionsModule the permissions module
+     */
+    public RankRepositoryMysql(final RankModule rankModule,
+                               final DatabaseModule databaseModule,
+                               final UserDbModule userDbModule,
+                               final PermissionsModule permissionsModule) {
+        this.database = databaseModule.getJdbi();
         this.database.registerRowMapper(
-                Rank.class,
                 new RankDatabaseMapper(
-                        module,
-                        module.getModuleOrThrow(UserDbModule.class),
-                        module.getModuleOrThrow(PermissionsModule.class)
+                        rankModule,
+                        userDbModule,
+                        permissionsModule
                 )
         );
     }
@@ -75,10 +89,10 @@ public class RankRepositoryMysql implements RankRepository {
     }
 
     @Override
-    public Rank createRank(@NonNull final String name) {
+    public Rank createRank(@NonNull final String rankName) {
         return this.database.withHandle(handle -> {
             handle.createUpdate(INSERT_RANK)
-                    .bind("rankName", name)
+                    .bind("rankName", rankName)
                     .execute();
 
             final int rankId = handle.createQuery(GET_LAST_INSERT_ID)
@@ -152,10 +166,10 @@ public class RankRepositoryMysql implements RankRepository {
     }
 
     @Override
-    public void setRankName(final int rankId, final String name) {
+    public void setRankName(final int rankId, final String newRankName) {
         this.database.useHandle(handle ->
                 handle.createUpdate(SET_NAME)
-                        .bind("newRankName", name)
+                        .bind("newRankName", newRankName)
                         .bind(DATABASE_ID, rankId)
                         .execute()
         );

@@ -110,13 +110,13 @@ public class UserCommand extends AbstractCommand {
         }
 
         final String primaryRank = this.getRankModule().getRank(userDb.getPrimaryRankId())
-                .map(Rank::getName)
+                .map(Rank::getRankName)
                 .orElse("Unknown");
 
         final StringJoiner subRanks = new StringJoiner("; ");
         for (final int rankId : userDb.getRankIds()) {
             this.getRankModule().getRank(rankId)
-                    .map(Rank::getName)
+                    .map(Rank::getRankName)
                     .ifPresent(subRanks::add);
         }
 
@@ -218,7 +218,7 @@ public class UserCommand extends AbstractCommand {
                         .setTitle("Set Primary Rank")
                         .setDescription(
                                 "Set primary rank to %s.",
-                                MarkdownUtil.monospace(rank.getName())
+                                MarkdownUtil.monospace(rank.getRankName())
                         ),
                 90
         );
@@ -252,7 +252,7 @@ public class UserCommand extends AbstractCommand {
                             .setTitle("Added Rank")
                             .setDescription(
                                     "Added %s rank to the user.",
-                                    MarkdownUtil.monospace(rank.getName())
+                                    MarkdownUtil.monospace(rank.getRankName())
                             ),
                     90
             );
@@ -277,7 +277,7 @@ public class UserCommand extends AbstractCommand {
                             .setTitle("Removed Rank")
                             .setDescription(
                                     "Removed %s rank from the user.",
-                                    MarkdownUtil.monospace(rank.getName())
+                                    MarkdownUtil.monospace(rank.getRankName())
                             ),
                     90
             );

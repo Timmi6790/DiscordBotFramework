@@ -3,26 +3,35 @@ package de.timmi6790.discord_framework.modules.rank;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.commands.RankCommand;
 import de.timmi6790.discord_framework.modules.rank.repository.RankRepository;
 import de.timmi6790.discord_framework.modules.rank.repository.mysql.RankRepositoryMysql;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import lombok.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Rank module.
+ */
 @EqualsAndHashCode(callSuper = true)
-@Getter
+@ToString
 public class RankModule extends AbstractModule {
-    private final ConcurrentHashMap<Integer, Rank> rankMap = new ConcurrentHashMap<>();
-    private final Map<String, Integer> rankMappingMap = Collections.synchronizedMap(new CaseInsensitiveMap<>());
+    /**
+     * Rank id to rank mapping
+     */
+    private final Map<Integer, Rank> rankMap = new HashMap<>();
 
+    /**
+     * The Rank repository.
+     */
+    @Getter(AccessLevel.PROTECTED)
     private RankRepository rankRepository;
 
+    /**
+     * Instantiates a new Rank module.
+     */
     public RankModule() {
         super("Rank");
 
@@ -36,22 +45,34 @@ public class RankModule extends AbstractModule {
         );
     }
 
-    private void loadRanks() {
-        for (final Rank rank : this.getRankRepository().getRanks()) {
+    /**
+     * Load all ranks from repository.
+     */
+    private void loadRanksFromRepository() {
+        for (final Rank rank : this.rankRepository.getRanks()) {
             this.addRank(rank);
         }
     }
 
+    /**
+     * Add the rank to all maps and reload the permission cache of all ranks
+     *
+     * @param rank the rank
+     */
     private void addRank(@NonNull final Rank rank) {
-        this.getRankMappingMap().put(rank.getName(), rank.getDatabaseId());
-        this.getRankMap().put(rank.getDatabaseId(), rank);
+        this.rankMap.put(rank.getRepositoryId(), rank);
         this.invalidateAllPermCaches();
     }
 
     @Override
     public void onInitialize() {
-        this.rankRepository = new RankRepositoryMysql(this);
-        this.loadRanks();
+        this.rankRepository = new RankRepositoryMysql(
+                this,
+                this.getModuleOrThrow(DatabaseModule.class),
+                this.getModuleOrThrow(UserDbModule.class),
+                this.getModuleOrThrow(PermissionsModule.class)
+        );
+        this.loadRanksFromRepository();
 
         this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(
@@ -60,61 +81,114 @@ public class RankModule extends AbstractModule {
                 );
     }
 
+    /**
+     * Invalidate the rank permission cache for all ranks. This is required after specific actions, like rank deletions,
+     * permission modifications, etc... .
+     */
     public void invalidateAllPermCaches() {
         for (final Rank rank : this.rankMap.values()) {
             rank.invalidateCachedPermissions();
         }
     }
 
-    public boolean hasRank(final int id) {
-        return this.rankMap.containsKey(id);
+    /**
+     * Check if a rank with the given rank id exists.
+     *
+     * @param rankId the rankId
+     * @return has rank with id
+     */
+    public boolean hasRank(final int rankId) {
+        return this.rankMap.containsKey(rankId);
     }
 
-    public boolean hasRank(@NonNull final String name) {
-        return this.rankMappingMap.containsKey(name);
+    /**
+     * Check if a rank with the given rank name exists.
+     *
+     * @param rankName the rankName
+     * @return has rank with name
+     */
+    public boolean hasRank(@NonNull final String rankName) {
+        return this.getRank(rankName).isPresent();
     }
 
-    public Optional<Rank> getRank(final int id) {
-        return Optional.ofNullable(this.rankMap.get(id));
+    /**
+     * Tries to get a rank with the given rank id.
+     *
+     * @param rankId the id
+     * @return the rank
+     */
+    public Optional<Rank> getRank(final int rankId) {
+        return Optional.ofNullable(this.rankMap.get(rankId));
     }
 
-    public Optional<Rank> getRank(@NonNull final String name) {
-        final Integer rankId = this.getRankMappingMap().get(name);
-        if (rankId != null) {
-            return this.getRank(rankId);
+    /**
+     * Tries to get a rank with the given rank name.
+     *
+     * @param rankName the rank name
+     * @return the rank
+     */
+    public Optional<Rank> getRank(@NonNull final String rankName) {
+        synchronized (this.rankMap) {
+            for (final Rank rank : this.rankMap.values()) {
+                if (rank.getRankName().equalsIgnoreCase(rankName)) {
+                    return Optional.of(rank);
+                }
+            }
         }
 
         return Optional.empty();
     }
 
+    /**
+     * Get all ranks
+     *
+     * @return the ranks
+     */
     public Set<Rank> getRanks() {
-        return new HashSet<>(this.getRankMap().values());
+        return new HashSet<>(this.rankMap.values());
     }
 
-    public boolean createRank(@NonNull final String name) {
-        if (this.hasRank(name)) {
+    /**
+     * Create a new rank with the given rankName. All rank names are case insensitive.
+     *
+     * @param rankName the rank name
+     * @return false if a rank already exists with the given name and true on success
+     */
+    public boolean createRank(@NonNull final String rankName) {
+        if (this.hasRank(rankName)) {
             return false;
         }
 
-        final Rank newRank = this.getRankRepository().createRank(name);
+        final Rank newRank = this.rankRepository.createRank(rankName);
         this.addRank(newRank);
 
         return true;
     }
 
+    /**
+     * Delete the rank. This is not possible with the default rank, repository id 1.
+     *
+     * @param rank the rank
+     * @return the boolean
+     */
     public boolean deleteRank(@NonNull final Rank rank) {
-        return this.deleteRank(rank.getDatabaseId());
+        return this.deleteRank(rank.getRepositoryId());
     }
 
+    /**
+     * Delete the rank. This is not possible with the default rank, repository id 1.
+     *
+     * @param rankId the rank id
+     * @return the boolean
+     */
     public boolean deleteRank(final int rankId) {
-        // Never allow anyone to delete the default rank with id 1
+        // Never allow anyone to delete the default rank with the id 1
         if (!this.hasRank(rankId) || rankId == 1) {
             return false;
         }
 
-        this.getRankRepository().deleteRank(rankId);
-        final Rank deletedRank = this.getRankMap().remove(rankId);
-        this.getRankMappingMap().remove(deletedRank.getName());
+        this.rankRepository.deleteRank(rankId);
+        this.rankMap.remove(rankId);
 
         this.invalidateAllPermCaches();
 

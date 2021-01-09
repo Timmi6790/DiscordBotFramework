@@ -12,10 +12,22 @@ import org.jdbi.v3.core.statement.StatementContext;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Map the repository entry to {@link Rank}.
+ */
 @AllArgsConstructor
 public class RankDatabaseMapper extends DatabaseRowMapper implements RowMapper<Rank> {
+    /**
+     * The Rank module.
+     */
     private final RankModule rankModule;
+    /**
+     * The User db module.
+     */
     private final UserDbModule userDbModule;
+    /**
+     * The Permissions module.
+     */
     private final PermissionsModule permissionsModule;
 
     @Override
