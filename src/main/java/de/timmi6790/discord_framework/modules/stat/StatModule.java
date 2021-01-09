@@ -4,7 +4,7 @@ import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.stat.repository.StatRepository;
-import de.timmi6790.discord_framework.modules.stat.repository.StatRepositoryMysql;
+import de.timmi6790.discord_framework.modules.stat.repository.mysql.StatRepositoryMysql;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;

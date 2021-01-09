@@ -1,7 +1,8 @@
-package de.timmi6790.discord_framework.modules.stat.repository;
+package de.timmi6790.discord_framework.modules.stat.repository.mysql;
 
 import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.stat.repository.StatRepository;
 
 public class StatRepositoryMysql implements StatRepository {
     private static final String STAT_NAME = "statName";

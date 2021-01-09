@@ -4,7 +4,7 @@ import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepository;
-import de.timmi6790.discord_framework.modules.setting.repository.SettingRepositoryMysql;
+import de.timmi6790.discord_framework.modules.setting.repository.mysql.SettingRepositoryMysql;
 import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -46,15 +46,15 @@ public class SettingModule extends AbstractModule {
     }
 
     public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
-        setting.setInternalName(this.generateInternalName(module, "setting", setting.getName()));
+        setting.setInternalName(this.generateInternalName(module, "setting", setting.getStatName()));
         setting.setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()));
         setting.setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));
 
         this.settings.put(setting.getDatabaseId(), setting);
-        this.nameIdMatching.put(setting.getName(), setting.getDatabaseId());
+        this.nameIdMatching.put(setting.getStatName(), setting.getDatabaseId());
 
         for (final String aliasName : setting.getAliasNames()) {
-            this.aliasNameMatcher.put(aliasName, setting.getName());
+            this.aliasNameMatcher.put(aliasName, setting.getStatName());
         }
     }
 

@@ -43,7 +43,7 @@ public class SettingsCommand extends AbstractCommand {
         final List<AbstractSetting<?>> similarSettings = DataUtilities.getSimilarityList(
                 settingName,
                 commandParameters.getUserDb().getSettings().keySet(),
-                AbstractSetting::getName,
+                AbstractSetting::getStatName,
                 0.6,
                 3
         );
@@ -58,7 +58,7 @@ public class SettingsCommand extends AbstractCommand {
                 "setting",
                 this.getClass(),
                 new String[0],
-                DataUtilities.convertToStringList(similarSettings, AbstractSetting::getName)
+                DataUtilities.convertToStringList(similarSettings, AbstractSetting::getStatName)
         );
         throw new CommandReturnException();
     }
@@ -97,7 +97,7 @@ public class SettingsCommand extends AbstractCommand {
                 final String value = String.valueOf(entry.getValue());
 
                 embedBuilder.addField(
-                        entry.getKey().getName(),
+                        entry.getKey().getStatName(),
                         String.format(
                                 "%s%nValue: %s",
                                 entry.getKey().getDescription(),
@@ -125,7 +125,7 @@ public class SettingsCommand extends AbstractCommand {
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
-                        .setTitle("Setting - " + setting.getName())
+                        .setTitle("Setting - " + setting.getStatName())
                         .addField("Description", setting.getDescription())
                         .addField("Alias names", String.join(", ", setting.getAliasNames()))
                         .addField("Default value", String.valueOf(setting.getDefaultValue()))
@@ -133,7 +133,7 @@ public class SettingsCommand extends AbstractCommand {
                                 "Tip: You can change the setting with %s%s %s <newValue>",
                                 this.getCommandModule().getMainCommand(),
                                 this.getName(),
-                                setting.getName()
+                                setting.getStatName()
                         ),
                 300
         );

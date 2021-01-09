@@ -32,7 +32,7 @@ class SettingModuleTest {
     @BeforeAll
     static void setup() {
         final ModuleManager moduleManager = mock(ModuleManager.class);
-        
+
         doReturn(permissionsModule).when(moduleManager).getModuleOrThrow(PermissionsModule.class);
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
 
@@ -54,7 +54,7 @@ class SettingModuleTest {
     }
 
     private void hasSetting(final AbstractSetting<?> setting) {
-        assertThat(settingsModule.getSetting(setting.getName())).hasValue(setting);
+        assertThat(settingsModule.getSetting(setting.getStatName())).hasValue(setting);
         for (final String aliasName : setting.getAliasNames()) {
             assertThat(settingsModule.getSetting(aliasName)).hasValue(setting);
         }

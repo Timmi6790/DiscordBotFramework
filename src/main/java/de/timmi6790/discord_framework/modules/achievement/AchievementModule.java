@@ -2,7 +2,7 @@ package de.timmi6790.discord_framework.modules.achievement;
 
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.achievement.repository.AchievementRepository;
-import de.timmi6790.discord_framework.modules.achievement.repository.AchievementRepositoryMysql;
+import de.timmi6790.discord_framework.modules.achievement.repository.mysql.AchievementRepositoryMysql;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import lombok.EqualsAndHashCode;

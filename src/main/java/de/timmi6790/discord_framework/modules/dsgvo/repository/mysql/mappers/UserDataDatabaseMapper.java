@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.dsgvo.repository;
+package de.timmi6790.discord_framework.modules.dsgvo.repository.mysql.mappers;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.modules.dsgvo.UserData;

@@ -1,8 +1,9 @@
-package de.timmi6790.discord_framework.modules.command.repository;
+package de.timmi6790.discord_framework.modules.command.repository.mysql;
 
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
+import de.timmi6790.discord_framework.modules.command.repository.CommandRepository;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 

@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.rank.repository;
+package de.timmi6790.discord_framework.modules.rank.repository.mysql.mappers;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
@@ -13,7 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @AllArgsConstructor
-public class RankMapper extends DatabaseRowMapper implements RowMapper<Rank> {
+public class RankDatabaseMapper extends DatabaseRowMapper implements RowMapper<Rank> {
     private final RankModule rankModule;
     private final UserDbModule userDbModule;
     private final PermissionsModule permissionsModule;

@@ -14,7 +14,7 @@ import java.util.StringJoiner;
 
 @Data
 public abstract class AbstractSetting<T> {
-    private final String name;
+    private final String statName;
     private final String description;
     private final T defaultValue;
     private final String[] aliasNames;
@@ -22,11 +22,11 @@ public abstract class AbstractSetting<T> {
     private int databaseId;
     private int permissionId;
 
-    protected AbstractSetting(@NonNull final String name,
+    protected AbstractSetting(@NonNull final String statName,
                               @NonNull final String description,
                               @NonNull final T defaultValue,
                               @NonNull final String... aliasNames) {
-        this.name = name;
+        this.statName = statName;
         this.description = description;
         this.defaultValue = defaultValue;
         this.aliasNames = aliasNames;

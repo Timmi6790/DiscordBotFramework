@@ -1,6 +1,7 @@
-package de.timmi6790.discord_framework.modules.achievement.repository;
+package de.timmi6790.discord_framework.modules.achievement.repository.mysql;
 
 import de.timmi6790.commons.builders.MapBuilder;
+import de.timmi6790.discord_framework.modules.achievement.repository.AchievementRepository;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 
 /**

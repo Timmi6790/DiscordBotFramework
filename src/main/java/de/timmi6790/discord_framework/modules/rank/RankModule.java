@@ -5,7 +5,7 @@ import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.rank.commands.RankCommand;
 import de.timmi6790.discord_framework.modules.rank.repository.RankRepository;
-import de.timmi6790.discord_framework.modules.rank.repository.RankRepositoryMysql;
+import de.timmi6790.discord_framework.modules.rank.repository.mysql.RankRepositoryMysql;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.guild.repository;
+package de.timmi6790.discord_framework.modules.guild.repository.mysql.mappers;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 @AllArgsConstructor
-public class GuildDbMapper extends DatabaseRowMapper implements RowMapper<GuildDb> {
+public class GuildDbDatabaseMapper extends DatabaseRowMapper implements RowMapper<GuildDb> {
     private final ShardManager discord;
 
     @Override

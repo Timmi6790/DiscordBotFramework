@@ -6,7 +6,7 @@ import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepository;
-import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepositoryMysql;
+import de.timmi6790.discord_framework.modules.channel.repository.mysql.ChannelRepositoryMysql;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;

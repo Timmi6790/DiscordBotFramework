@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.user.repository;
+package de.timmi6790.discord_framework.modules.user.repository.mysql.mappers;
 
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseRowMapper;
@@ -17,7 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @AllArgsConstructor
-public class UserDbMapper extends DatabaseRowMapper implements RowMapper<UserDb> {
+public class UserDbDatabaseMapper extends DatabaseRowMapper implements RowMapper<UserDb> {
     private final UserDbModule userDbModule;
     private final EventModule eventModule;
     private final RankModule rankModule;

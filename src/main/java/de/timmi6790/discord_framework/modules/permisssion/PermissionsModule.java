@@ -4,7 +4,7 @@ package de.timmi6790.discord_framework.modules.permisssion;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.repository.PermissionRepository;
-import de.timmi6790.discord_framework.modules.permisssion.repository.PermissionRepositoryMysql;
+import de.timmi6790.discord_framework.modules.permisssion.repository.mysql.PermissionRepositoryMysql;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 

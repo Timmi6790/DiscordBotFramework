@@ -1,6 +1,8 @@
-package de.timmi6790.discord_framework.modules.dsgvo.repository;
+package de.timmi6790.discord_framework.modules.dsgvo.repository.mysql;
 
 import de.timmi6790.discord_framework.modules.dsgvo.UserData;
+import de.timmi6790.discord_framework.modules.dsgvo.repository.DsgvoRepository;
+import de.timmi6790.discord_framework.modules.dsgvo.repository.mysql.mappers.UserDataDatabaseMapper;
 import org.jdbi.v3.core.Jdbi;
 
 public class DsgvoRepositoryMysql implements DsgvoRepository {

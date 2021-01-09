@@ -1,5 +1,6 @@
-package de.timmi6790.discord_framework.modules.permisssion.repository;
+package de.timmi6790.discord_framework.modules.permisssion.repository.mysql;
 
+import de.timmi6790.discord_framework.modules.permisssion.repository.PermissionRepository;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 

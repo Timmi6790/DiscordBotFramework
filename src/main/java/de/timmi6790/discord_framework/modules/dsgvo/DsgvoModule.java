@@ -7,7 +7,7 @@ import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.dsgvo.commands.AccountDeletionCommand;
 import de.timmi6790.discord_framework.modules.dsgvo.commands.DataRequestCommand;
 import de.timmi6790.discord_framework.modules.dsgvo.repository.DsgvoRepository;
-import de.timmi6790.discord_framework.modules.dsgvo.repository.DsgvoRepositoryMysql;
+import de.timmi6790.discord_framework.modules.dsgvo.repository.mysql.DsgvoRepositoryMysql;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)

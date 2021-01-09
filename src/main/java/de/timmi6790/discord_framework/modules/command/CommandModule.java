@@ -7,7 +7,7 @@ import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.command.listeners.CommandLoggingListener;
 import de.timmi6790.discord_framework.modules.command.listeners.MessageListener;
 import de.timmi6790.discord_framework.modules.command.repository.CommandRepository;
-import de.timmi6790.discord_framework.modules.command.repository.CommandRepositoryMysql;
+import de.timmi6790.discord_framework.modules.command.repository.mysql.CommandRepositoryMysql;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;

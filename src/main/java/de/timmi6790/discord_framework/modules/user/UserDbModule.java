@@ -15,7 +15,7 @@ import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.user.commands.SettingsCommand;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
-import de.timmi6790.discord_framework.modules.user.repository.UserDbRepositoryMysql;
+import de.timmi6790.discord_framework.modules.user.repository.mysql.UserDbRepositoryMysql;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;

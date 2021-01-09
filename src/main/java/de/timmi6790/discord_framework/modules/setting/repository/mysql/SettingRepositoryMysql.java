@@ -1,8 +1,9 @@
-package de.timmi6790.discord_framework.modules.setting.repository;
+package de.timmi6790.discord_framework.modules.setting.repository.mysql;
 
 import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.setting.repository.SettingRepository;
 
 public class SettingRepositoryMysql implements SettingRepository {
     private static final String SETTING_NAME = "settingName";

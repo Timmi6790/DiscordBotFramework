@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.modules.user.repository;
+package de.timmi6790.discord_framework.modules.user.repository.mysql;
 
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
@@ -8,6 +8,8 @@ import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
+import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
+import de.timmi6790.discord_framework.modules.user.repository.mysql.mappers.UserDbDatabaseMapper;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
@@ -56,7 +58,7 @@ public class UserDbRepositoryMysql implements UserDbRepository {
         this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
         this.database.registerRowMapper(
                 UserDb.class,
-                new UserDbMapper(
+                new UserDbDatabaseMapper(
                         module,
                         module.getModuleOrThrow(EventModule.class),
                         module.getModuleOrThrow(RankModule.class),

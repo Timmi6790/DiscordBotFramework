@@ -1,9 +1,11 @@
-package de.timmi6790.discord_framework.modules.rank.repository;
+package de.timmi6790.discord_framework.modules.rank.repository.mysql;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
+import de.timmi6790.discord_framework.modules.rank.repository.RankRepository;
+import de.timmi6790.discord_framework.modules.rank.repository.mysql.mappers.RankDatabaseMapper;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
@@ -55,7 +57,7 @@ public class RankRepositoryMysql implements RankRepository {
         this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
         this.database.registerRowMapper(
                 Rank.class,
-                new RankMapper(
+                new RankDatabaseMapper(
                         module,
                         module.getModuleOrThrow(UserDbModule.class),
                         module.getModuleOrThrow(PermissionsModule.class)
