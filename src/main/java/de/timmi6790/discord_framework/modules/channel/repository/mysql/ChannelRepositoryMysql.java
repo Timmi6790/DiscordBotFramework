@@ -2,7 +2,7 @@ package de.timmi6790.discord_framework.modules.channel.repository.mysql;
 
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepository;
-import de.timmi6790.discord_framework.modules.channel.repository.mysql.mappers.ChannelDbMapper;
+import de.timmi6790.discord_framework.modules.channel.repository.mysql.mappers.ChannelDbDatabaseMapper;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -36,7 +36,7 @@ public class ChannelRepositoryMysql implements ChannelRepository {
                                   final GuildDbModule guildDbModule) {
         this.database = databaseModule.getJdbi();
         this.database.registerRowMapper(
-                new ChannelDbMapper(
+                new ChannelDbDatabaseMapper(
                         guildDbModule,
                         discordShardManager
                 )
