@@ -6,6 +6,9 @@ import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 
+/**
+ * Mysql implementation of the permission repository.
+ */
 public class PermissionRepositoryMysql implements PermissionRepository {
     private static final String GET_LAST_INSERT_ID = "SELECT LAST_INSERT_ID();";
     private static final String GET_PERMISSION_ID = "SELECT id " +
@@ -16,6 +19,11 @@ public class PermissionRepositoryMysql implements PermissionRepository {
 
     private final Jdbi database;
 
+    /**
+     * Instantiates a new Permission repository mysql.
+     *
+     * @param database the database
+     */
     public PermissionRepositoryMysql(final Jdbi database) {
         this.database = database;
     }
