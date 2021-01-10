@@ -87,7 +87,10 @@ public class EventModule extends AbstractModule {
                 this.eventListeners.computeIfAbsent(
                         (Class<GenericEvent>) parameter,
                         key -> MultimapBuilder.enumKeys(EventPriority.class).hashSetValues().build()
-                ).put(annotation.priority(), new EventObject(listener, method, annotation.ignoreCanceled()));
+                ).put(
+                        annotation.priority(),
+                        new EventObject(listener, method, annotation.ignoreCanceled())
+                );
 
                 DiscordBot.getLogger().info(
                         "Added {}.{} as new event listener for {}.",

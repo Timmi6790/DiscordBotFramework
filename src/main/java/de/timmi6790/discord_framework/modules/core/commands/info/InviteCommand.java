@@ -17,11 +17,11 @@ public class InviteCommand extends AbstractCommand {
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        this.sendTimedMessage(commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Invite Link")
-                        .setDescription("[Click Me!](" + this.inviteUrl + ")"),
-                90);
+        this.sendTimedMessage(
+                commandParameters,
+                "Invite Link",
+                "[Click Me!](" + this.inviteUrl + ")"
+        );
         return CommandResult.SUCCESS;
     }
 }

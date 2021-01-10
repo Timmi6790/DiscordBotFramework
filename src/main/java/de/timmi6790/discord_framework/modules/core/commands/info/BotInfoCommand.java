@@ -45,8 +45,7 @@ public class BotInfoCommand extends AbstractCommand {
                         .addField("User Cache", String.valueOf(userCacheSize), true)
                         .addField("Channel Cache", String.valueOf(channelCacheSize), true)
                         .addField("Guild Cache", String.valueOf(guildCacheSize), true)
-                        .addField("Active Emotes", String.valueOf(emoteListenerSize), true),
-                90
+                        .addField("Active Emotes", String.valueOf(emoteListenerSize), true)
         );
 
         return CommandResult.SUCCESS;

@@ -42,7 +42,7 @@ public class AccountDeletionCommand extends AbstractCommand {
     public AccountDeletionCommand() {
         super("deleteMyAccount", "Info", "Wipe all my data!", "");
 
-        this.userDbModule = getModuleManager().getModuleOrThrow(UserDbModule.class);
+        this.userDbModule = this.getModuleManager().getModuleOrThrow(UserDbModule.class);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class AccountDeletionCommand extends AbstractCommand {
                             )
                             .addField(
                                     CONFIRM_COMMAND_NAME,
-                                    getCommandModule().getMainCommand() + " deleteMyAccount " + phrase,
+                                    this.getCommandModule().getMainCommand() + " deleteMyAccount " + phrase,
                                     false
                             ),
                     300
@@ -81,7 +81,7 @@ public class AccountDeletionCommand extends AbstractCommand {
                             .setTitle("Incorrect confirm phrase")
                             .setDescription(MarkdownUtil.monospace(arg) + " is not your confirm phrase!\n" +
                                     "Please use the command in " + MarkdownUtil.monospace(CONFIRM_COMMAND_NAME) + " to delete your account")
-                            .addField(CONFIRM_COMMAND_NAME, getCommandModule().getMainCommand() + " deleteMyAccount " + phrase, false),
+                            .addField(CONFIRM_COMMAND_NAME, this.getCommandModule().getMainCommand() + " deleteMyAccount " + phrase, false),
                     90
             );
 
@@ -94,11 +94,10 @@ public class AccountDeletionCommand extends AbstractCommand {
             return CommandResult.SUCCESS;
         }
 
-        this.sendTimedMessage(commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Bye")
-                        .setDescription("It is sad to see you go USER_NAME, your data should be deleted in the next few seconds!"),
-                90
+        this.sendTimedMessage(
+                commandParameters,
+                "Bye",
+                "It is sad to see you go USER_NAME, your data should be deleted in the next few seconds!"
         );
 
         this.userDeleteConfirmCache.invalidate(userId);

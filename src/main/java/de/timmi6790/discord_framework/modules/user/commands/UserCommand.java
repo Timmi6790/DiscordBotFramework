@@ -81,10 +81,8 @@ public class UserCommand extends AbstractCommand {
 
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Invalidated Cache")
-                        .setDescription(MarkdownUtil.monospace(String.valueOf(userDb.getDatabaseId())) + " was removed from the cache."),
-                90
+                "Invalidated Cache",
+                MarkdownUtil.monospace(String.valueOf(userDb.getDatabaseId())) + " was removed from the cache."
         );
 
         return CommandResult.SUCCESS;
@@ -130,7 +128,8 @@ public class UserCommand extends AbstractCommand {
             this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(allPermissions::add);
         }
 
-        this.sendTimedMessage(commandParameters,
+        this.sendTimedMessage(
+                commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandRatelimit.getAvailableTokens()), true)
@@ -140,8 +139,7 @@ public class UserCommand extends AbstractCommand {
                         .addField("Settings", settings.toString(), false)
                         .addField("Stats", stats.toString(), false)
                         .addField("User Perms", permissions.toString(), false)
-                        .addField("All Perms", allPermissions.toString(), false),
-                90
+                        .addField("All Perms", allPermissions.toString(), false)
         );
 
         return CommandResult.SUCCESS;
@@ -151,20 +149,16 @@ public class UserCommand extends AbstractCommand {
         if (!userDb.isBanned()) {
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle(ERROR_TITLE)
-                            .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is not banned."),
-                    90
+                    ERROR_TITLE,
+                    MarkdownUtil.monospace(discordUser.getAsTag()) + " is not banned."
             );
             return CommandResult.SUCCESS;
         }
 
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Banned")
-                        .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is now unBanned."),
-                90
+                "Banned",
+                MarkdownUtil.monospace(discordUser.getAsTag()) + " is now unBanned."
         );
         userDb.setBanned(false);
 
@@ -175,20 +169,16 @@ public class UserCommand extends AbstractCommand {
         if (userDb.isBanned()) {
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle(ERROR_TITLE)
-                            .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is already banned."),
-                    90
+                    ERROR_TITLE,
+                    MarkdownUtil.monospace(discordUser.getAsTag()) + " is already banned."
             );
             return CommandResult.SUCCESS;
         }
 
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Banned")
-                        .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is now banned."),
-                90
+                "Banned",
+                MarkdownUtil.monospace(discordUser.getAsTag()) + " is now banned."
         );
         userDb.setBanned(true);
 
@@ -202,10 +192,8 @@ public class UserCommand extends AbstractCommand {
         if (userDb.hasPrimaryRank(rank)) {
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle(ERROR_TITLE)
-                            .setDescription("The user already has this rank."),
-                    90
+                    ERROR_TITLE,
+                    "The user already has this rank."
             );
 
             return CommandResult.FAIL;
@@ -214,13 +202,9 @@ public class UserCommand extends AbstractCommand {
         userDb.setPrimaryRank(rank);
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Set Primary Rank")
-                        .setDescription(
-                                "Set primary rank to %s.",
-                                MarkdownUtil.monospace(rank.getRankName())
-                        ),
-                90
+                "Set Primary Rank",
+                "Set primary rank to %s.",
+                MarkdownUtil.monospace(rank.getRankName())
         );
 
         return CommandResult.SUCCESS;
@@ -236,10 +220,8 @@ public class UserCommand extends AbstractCommand {
             if (userDb.hasRank(rank)) {
                 this.sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle(ERROR_TITLE)
-                                .setDescription("The user already has this rank."),
-                        90
+                        ERROR_TITLE,
+                        "The user already has this rank."
                 );
 
                 return CommandResult.FAIL;
@@ -248,23 +230,17 @@ public class UserCommand extends AbstractCommand {
             userDb.addRank(rank);
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle("Added Rank")
-                            .setDescription(
-                                    "Added %s rank to the user.",
-                                    MarkdownUtil.monospace(rank.getRankName())
-                            ),
-                    90
+                    "Added Rank",
+                    "Added %s rank to the user.",
+                    MarkdownUtil.monospace(rank.getRankName())
             );
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasRank(rank)) {
                 this.sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle(ERROR_TITLE)
-                                .setDescription("The user is not in possession of this rank."),
-                        90
+                        ERROR_TITLE,
+                        "The user is not in possession of this rank."
                 );
 
                 return CommandResult.FAIL;
@@ -273,13 +249,9 @@ public class UserCommand extends AbstractCommand {
             userDb.removeRank(rank);
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle("Removed Rank")
-                            .setDescription(
-                                    "Removed %s rank from the user.",
-                                    MarkdownUtil.monospace(rank.getRankName())
-                            ),
-                    90
+                    "Removed Rank",
+                    "Removed %s rank from the user.",
+                    MarkdownUtil.monospace(rank.getRankName())
             );
         }
 
@@ -298,14 +270,10 @@ public class UserCommand extends AbstractCommand {
             if (userDb.hasPermission(permissionId)) {
                 this.sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle(ERROR_TITLE)
-                                .setDescription(
-                                        "%s does already possess the %s permission.",
-                                        MarkdownUtil.monospace(discordUser.getAsTag()),
-                                        MarkdownUtil.monospace(permissionNode)
-                                ),
-                        90
+                        ERROR_TITLE,
+                        "%s does already possess the %s permission.",
+                        MarkdownUtil.monospace(discordUser.getAsTag()),
+                        MarkdownUtil.monospace(permissionNode)
                 );
 
                 return CommandResult.FAIL;
@@ -314,28 +282,20 @@ public class UserCommand extends AbstractCommand {
             userDb.addPermission(permissionId);
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle("Added Permission")
-                            .setDescription(
-                                    "%s added to %s.",
-                                    MarkdownUtil.monospace(permissionNode),
-                                    MarkdownUtil.monospace(discordUser.getAsTag())
-                            ),
-                    90
+                    "Added Permission",
+                    "%s added to %s.",
+                    MarkdownUtil.monospace(permissionNode),
+                    MarkdownUtil.monospace(discordUser.getAsTag())
             );
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasPermission(permissionId)) {
                 this.sendTimedMessage(
                         commandParameters,
-                        this.getEmbedBuilder(commandParameters)
-                                .setTitle(ERROR_TITLE)
-                                .setDescription(
-                                        "%s does not possess the %s permission.",
-                                        MarkdownUtil.monospace(discordUser.getAsTag()),
-                                        MarkdownUtil.monospace(permissionNode)
-                                ),
-                        90
+                        ERROR_TITLE,
+                        "%s does not possess the %s permission.",
+                        MarkdownUtil.monospace(discordUser.getAsTag()),
+                        MarkdownUtil.monospace(permissionNode)
                 );
 
                 return CommandResult.FAIL;
@@ -344,14 +304,10 @@ public class UserCommand extends AbstractCommand {
             userDb.removePermission(permissionId);
             this.sendTimedMessage(
                     commandParameters,
-                    this.getEmbedBuilder(commandParameters)
-                            .setTitle("Removed Permission")
-                            .setDescription(
-                                    "%s removed from %s.",
-                                    MarkdownUtil.monospace(permissionNode),
-                                    MarkdownUtil.monospace(discordUser.getAsTag())
-                            ),
-                    90
+                    "Removed Permission",
+                    "%s removed from %s.",
+                    MarkdownUtil.monospace(permissionNode),
+                    MarkdownUtil.monospace(discordUser.getAsTag())
             );
         }
 

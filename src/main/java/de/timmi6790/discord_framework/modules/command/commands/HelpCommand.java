@@ -80,7 +80,7 @@ public class HelpCommand extends AbstractCommand {
             );
         }
 
-        this.sendTimedMessage(commandParameters, message, 150);
+        this.sendTimedMessage(commandParameters, message);
         return CommandResult.SUCCESS;
     }
 
@@ -105,7 +105,7 @@ public class HelpCommand extends AbstractCommand {
                 .addField("Syntax", command.getSyntax(), false, !command.getSyntax().isEmpty())
                 .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty());
 
-        this.sendTimedMessage(commandParameters, message, 90);
+        this.sendTimedMessage(commandParameters, message);
 
         return CommandResult.SUCCESS;
     }

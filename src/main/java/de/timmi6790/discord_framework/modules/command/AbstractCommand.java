@@ -172,10 +172,8 @@ public abstract class AbstractCommand {
     protected void sendMissingPermissionMessage(@NonNull final CommandParameters commandParameters) {
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Missing perms")
-                        .setDescription("You don't have the permissions to run this command."),
-                90
+                "Missing perms",
+                "You don't have the permissions to run this command."
         );
     }
 
@@ -196,6 +194,7 @@ public abstract class AbstractCommand {
 
     protected void sendTimedMessage(@NonNull final CommandParameters commandParameters,
                                     @NonNull final MultiEmbedBuilder embedBuilder) {
+        // TODO: Calculate the delete time dynamic based on the size of the message
         DiscordMessagesUtilities.sendMessageTimed(
                 commandParameters.getLowestMessageChannel(),
                 embedBuilder,
@@ -248,14 +247,10 @@ public abstract class AbstractCommand {
                                    @NonNull final String argName) {
         this.sendTimedMessage(
                 commandParameters,
-                this.getEmbedBuilder(commandParameters)
-                        .setTitle("Invalid " + argName)
-                        .setDescription(
-                                "%s is not a valid %s.",
-                                MarkdownUtil.monospace(commandParameters.getArgs()[argPos]),
-                                MarkdownUtil.bold(argName.toLowerCase())
-                        ),
-                120
+                "Invalid " + argName,
+                "%s is not a valid %s.",
+                MarkdownUtil.monospace(commandParameters.getArgs()[argPos]),
+                MarkdownUtil.bold(argName.toLowerCase())
         );
 
         throw new CommandReturnException(CommandResult.INVALID_ARGS);
@@ -337,7 +332,7 @@ public abstract class AbstractCommand {
                         .time(() -> this.onCommand(commandParameters));
             } catch (final CommandReturnException e) {
                 e.getEmbedBuilder()
-                        .ifPresent(embedBuilder -> this.sendTimedMessage(commandParameters, embedBuilder, 90));
+                        .ifPresent(embedBuilder -> this.sendTimedMessage(commandParameters, embedBuilder));
                 commandResult = e.getCommandResult();
 
             } catch (final Exception e) {
@@ -456,8 +451,7 @@ public abstract class AbstractCommand {
                                 + "It is required that you enter the bold arguments.")
                         .addField("Required Syntax", requiredSyntax.toString(), false)
                         .addField("Command Syntax", this.getSyntax(), false)
-                        .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty()),
-                90
+                        .addField("Example Commands", exampleCommands, false, !exampleCommands.isEmpty())
         );
     }
 
@@ -470,8 +464,7 @@ public abstract class AbstractCommand {
                         .setDescription("Something went wrong while executing this command.")
                         .addField("Command", this.getName(), false)
                         .addField("Args", String.join(" ", commandParameters.getArgs()), false)
-                        .addField(ERROR, error, false),
-                90
+                        .addField(ERROR, error, false)
         );
     }
 
@@ -722,6 +715,5 @@ public abstract class AbstractCommand {
                                 .setTitle(ERROR)
                                 .setDescription(MarkdownUtil.monospace(permArg) + " is not a valid permission.")
                 ));
-
     }
 }
