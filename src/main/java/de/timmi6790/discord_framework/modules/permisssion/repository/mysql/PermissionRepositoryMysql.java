@@ -10,7 +10,6 @@ import java.util.Optional;
  * Mysql implementation of the permission repository.
  */
 public class PermissionRepositoryMysql implements PermissionRepository {
-    private static final String GET_LAST_INSERT_ID = "SELECT LAST_INSERT_ID();";
     private static final String GET_PERMISSION_ID = "SELECT id " +
             "FROM `permission` " +
             "WHERE permission.permission_node = :permNode " +
@@ -40,15 +39,12 @@ public class PermissionRepositoryMysql implements PermissionRepository {
 
     @Override
     public int insertPermission(@NonNull final String permissionNode) {
-        return this.database.withHandle(handle -> {
-                    handle.createUpdate(INSERT_PERMISSION)
-                            .bind("permNode", permissionNode)
-                            .execute();
-
-                    return handle.createQuery(GET_LAST_INSERT_ID)
-                            .mapTo(int.class)
-                            .first();
-                }
+        return this.database.withHandle(handle ->
+                handle.createUpdate(INSERT_PERMISSION)
+                        .bind("permNode", permissionNode)
+                        .executeAndReturnGeneratedKeys()
+                        .mapTo(int.class)
+                        .first()
         );
     }
 }

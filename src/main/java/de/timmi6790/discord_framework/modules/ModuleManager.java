@@ -44,7 +44,7 @@ public class ModuleManager {
     public ModuleManager(final TaggedLogger logger) {
         this.logger = logger;
 
-        this.pluginPath = Paths.get(Paths.get(".").toAbsolutePath().normalize() + "/plugins/");
+        this.pluginPath = Paths.get("./plugins/");
         Files.createDirectories(this.pluginPath);
     }
 
@@ -306,7 +306,9 @@ public class ModuleManager {
         }
     }
 
-    public void startAll() throws TopicalSortCycleException {
+
+    @SneakyThrows
+    public void startAll() {
         for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules()) {
             this.start(moduleClass);
         }

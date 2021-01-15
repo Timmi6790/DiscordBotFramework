@@ -27,17 +27,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.0.8";
+    public static final String BOT_VERSION = "3.0.10";
     // We need to register it here, because we can only have one global instance of the cache metrics
     public static final CacheMetricsCollector CACHE_METRICS = new CacheMetricsCollector().register();
 
     private static DiscordBot instance;
 
     private final ModuleManager moduleManager = new ModuleManager(getLogger());
-    private final Path basePath = Paths.get(".").toAbsolutePath().normalize();
     private final Set<AbstractModule> internalModules = new HashSet<>();
     private ShardManager discord;
 
@@ -56,7 +57,7 @@ public class DiscordBot {
 
     @SneakyThrows
     protected Config getConfig() {
-        final Path mainConfigPath = Paths.get(this.basePath + "/configs/config.json");
+        final Path mainConfigPath = Paths.get("./configs/config.json");
         return GsonUtilities.readJsonFile(mainConfigPath, Config.class);
     }
 
@@ -83,7 +84,7 @@ public class DiscordBot {
         new HTTPServer(8001);
 
         // Config
-        final Path configFolderPath = Paths.get(this.basePath + "/configs/");
+        final Path configFolderPath = Paths.get("./configs/");
         Files.createDirectories(configFolderPath);
         final Path configPath = Paths.get(configFolderPath + "/config.json");
 
@@ -137,9 +138,17 @@ public class DiscordBot {
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
 
+        getLogger().debug("Initialize all modules");
         this.moduleManager.initializeAll();
-        this.getBaseShard().awaitReady();
-        this.moduleManager.startAll();
+        getLogger().debug("Await discord ready");
+        getLogger().debug("Start all modules");
+        // Delay the module start by 2 seconds to await discord
+        // This is a temporary fix, because the awaitReady method got the bot stuck lately
+        Executors.newSingleThreadScheduledExecutor().schedule(
+                this.moduleManager::startAll,
+                2, TimeUnit.SECONDS
+        );
+        getLogger().debug("Done starting all modules");
     }
 
     public JDA getBaseShard() {

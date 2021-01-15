@@ -29,7 +29,7 @@ public class ConfigModule extends AbstractModule {
     }
 
     private Path getBaseConfigPath() {
-        return Paths.get(this.getDiscordBot().getBasePath() + "/configs/");
+        return Paths.get("./configs/");
     }
 
     private Path getModuleFolderPath(@NonNull final AbstractModule module) {

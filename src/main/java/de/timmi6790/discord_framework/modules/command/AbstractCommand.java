@@ -287,6 +287,7 @@ public abstract class AbstractCommand {
     public void runCommand(final @NonNull CommandParameters commandParameters) {
         final Histogram.Timer fullTimer = COMMAND_EXECUTION_TIME_FULL.labels(this.getName()).startTimer();
         try {
+
             final Bucket rateLimit = this.getCommandModule()
                     .resolveRateBucket(commandParameters.getUserDb().getDiscordId());
             if (!rateLimit.tryConsume(1)) {

@@ -72,7 +72,10 @@ public class EmoteReactionModule extends AbstractModule {
 
         this.emoteMessageCache.put(message.getIdLong(), emoteReactionMessage);
         for (final String emote : emoteReactionMessage.getEmotes().keySet()) {
-            message.addReaction(emote).queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
+            message.addReaction(emote).queue(
+                    null,
+                    new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE, ErrorResponse.MISSING_PERMISSIONS)
+            );
         }
     }
 
