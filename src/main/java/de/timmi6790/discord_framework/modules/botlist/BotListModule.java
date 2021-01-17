@@ -3,6 +3,7 @@ package de.timmi6790.discord_framework.modules.botlist;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import lombok.EqualsAndHashCode;
+import net.dv8tion.jda.api.JDA;
 import org.discordbots.api.client.DiscordBotListAPI;
 
 import java.util.concurrent.Executors;
@@ -49,7 +50,16 @@ public class BotListModule extends AbstractModule {
 
             this.updateTask = Executors.newScheduledThreadPool(1)
                     .scheduleAtFixedRate(
-                            () -> this.botListAPI.setStats(this.getDiscord().getGuilds().size()),
+                            () -> {
+                                for (final JDA shard : this.getDiscord().getShards()) {
+                                    final JDA.ShardInfo shardInfo = shard.getShardInfo();
+                                    this.botListAPI.setStats(
+                                            shardInfo.getShardId(),
+                                            shardInfo.getShardTotal(),
+                                            shard.getGuilds().size()
+                                    );
+                                }
+                            },
                             0,
                             30,
                             TimeUnit.MINUTES
