@@ -8,16 +8,23 @@ import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.core.achievements.CommandAutoCorrectAchievement;
 import de.timmi6790.discord_framework.modules.core.commands.info.BotInfoCommand;
 import de.timmi6790.discord_framework.modules.core.commands.info.InviteCommand;
-import de.timmi6790.discord_framework.modules.core.stats.FailedCommandStat;
-import de.timmi6790.discord_framework.modules.core.stats.IncorrectArgCommandStat;
-import de.timmi6790.discord_framework.modules.core.stats.MissingArgCommandStat;
-import de.timmi6790.discord_framework.modules.core.stats.SuccessfulCommandStat;
+import de.timmi6790.discord_framework.modules.core.stats.FailedCommandResultStat;
+import de.timmi6790.discord_framework.modules.core.stats.IncorrectArgCommandResultStat;
+import de.timmi6790.discord_framework.modules.core.stats.MissingArgCommandResultStat;
+import de.timmi6790.discord_framework.modules.core.stats.SuccessfulCommandResultStat;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Contains command, achievements, stats and settings that would no make sense everywhere else This is supposed to be
+ * removed in the future
+ */
 @EqualsAndHashCode(callSuper = true)
 public class CoreModule extends AbstractModule {
+    /**
+     * Instantiates a new Core module.
+     */
     public CoreModule() {
         super("Core");
 
@@ -59,10 +66,10 @@ public class CoreModule extends AbstractModule {
                             DiscordBot.getLogger().info("Registering stats");
                             statModule.registerStats(
                                     this,
-                                    new FailedCommandStat(),
-                                    new MissingArgCommandStat(),
-                                    new SuccessfulCommandStat(),
-                                    new IncorrectArgCommandStat()
+                                    new FailedCommandResultStat(),
+                                    new MissingArgCommandResultStat(),
+                                    new SuccessfulCommandResultStat(),
+                                    new IncorrectArgCommandResultStat()
                             );
                         }
                 );

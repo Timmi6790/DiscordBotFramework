@@ -9,15 +9,33 @@ import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Bot info command
+ */
 @EqualsAndHashCode(callSuper = true)
 public class BotInfoCommand extends AbstractCommand {
+    /**
+     * The User db module.
+     */
     private final UserDbModule userDbModule;
+    /**
+     * The Channel db module.
+     */
     private final ChannelDbModule channelDbModule;
+    /**
+     * The Guild db module.
+     */
     private final GuildDbModule guildDbModule;
+    /**
+     * The Emote reaction module.
+     */
     private final EmoteReactionModule emoteReactionModule;
 
+    /**
+     * Instantiates a new Bot info command.
+     */
     public BotInfoCommand() {
-        super("binfo", "Management", "", "");
+        super("binfo", "Management", "Show the bot info", "");
 
         this.userDbModule = this.getModuleManager().getModuleOrThrow(UserDbModule.class);
         this.channelDbModule = this.getModuleManager().getModuleOrThrow(ChannelDbModule.class);
