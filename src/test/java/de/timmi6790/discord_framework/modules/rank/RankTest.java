@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
@@ -30,6 +31,7 @@ class RankTest {
     private static final RankModule rankModule = spy(new RankModule());
     private static final PermissionsModule permissionsModule = spy(new PermissionsModule());
     private static final UserDbModule userDbModule = spy(new UserDbModule());
+    private static final EventModule eventModule = new EventModule();
 
     private static final Set<Integer> permissionIds = new HashSet<>();
 
@@ -44,6 +46,7 @@ class RankTest {
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
         when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
         when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {

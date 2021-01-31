@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules.event;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
@@ -13,6 +12,8 @@ import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.events.GenericEvent;
+import org.tinylog.Logger;
+import org.tinylog.TaggedLogger;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -31,8 +32,12 @@ public class EventModule extends AbstractModule {
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
+    private final TaggedLogger logger;
+
     public EventModule() {
         super(EVENT);
+
+        this.logger = Logger.tag("DiscordFramework");
     }
 
     @Override
@@ -41,7 +46,7 @@ public class EventModule extends AbstractModule {
     }
 
     private void handleEventException(final Exception exception, final GenericEvent event, final EventObject listener) {
-        DiscordBot.getLogger().error(exception);
+        this.logger.error(exception);
 
         // Sentry error
         Sentry.captureEvent(new SentryEventBuilder()
@@ -65,7 +70,7 @@ public class EventModule extends AbstractModule {
                 final SubscribeEvent annotation = annotationOpt.get();
 
                 if (method.getParameterCount() != 1) {
-                    DiscordBot.getLogger().warn(
+                    this.logger.warn(
                             "{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
                             listener.getClass(),
                             method.getName(),
@@ -76,7 +81,7 @@ public class EventModule extends AbstractModule {
 
                 final Class<?> parameter = method.getParameterTypes()[0];
                 if (!GenericEvent.class.isAssignableFrom(parameter)) {
-                    DiscordBot.getLogger().warn(
+                    this.logger.warn(
                             "{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
                             listener.getClass(),
                             method.getName());
@@ -92,7 +97,7 @@ public class EventModule extends AbstractModule {
                         new EventObject(listener, method, annotation.ignoreCanceled())
                 );
 
-                DiscordBot.getLogger().info(
+                this.logger.info(
                         "Added {}.{} as new event listener for {}.",
                         listener.getClass(),
                         method.getName(),

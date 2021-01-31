@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.event.EventModule;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ class UserDbModuleTest {
     private static final long TEST_DISCORD_ID2 = 168049519831810048L;
 
     private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
+    private static final EventModule eventModule = new EventModule();
 
     @BeforeAll
     static void setUp() {
@@ -31,7 +33,7 @@ class UserDbModuleTest {
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
         when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
-
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);
