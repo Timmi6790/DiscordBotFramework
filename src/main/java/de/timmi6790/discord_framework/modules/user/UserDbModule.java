@@ -6,12 +6,14 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.commands.SettingsCommand;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
 import de.timmi6790.discord_framework.modules.user.listeners.DsgvoListener;
@@ -76,7 +78,15 @@ public class UserDbModule extends AbstractModule {
     @Override
     public void onInitialize() {
         this.discord = super.getDiscord();
-        this.userDbRepository = new UserDbRepositoryMysql(this);
+        this.userDbRepository = new UserDbRepositoryMysql(
+                this,
+                this.getModuleOrThrow(DatabaseModule.class),
+                this.getModuleOrThrow(EventModule.class),
+                this.getModuleOrThrow(RankModule.class),
+                this.getModule(AchievementModule.class).orElse(null),
+                this.getModule(SettingModule.class).orElse(null),
+                this.getModule(StatModule.class).orElse(null)
+        );
 
         this.getModuleOrThrow(CommandModule.class)
                 .registerCommands(

@@ -11,6 +11,7 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.modules.user.repository.mysql.mappers.UserDbDatabaseMapper;
 import lombok.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
@@ -54,17 +55,23 @@ public class UserDbRepositoryMysql implements UserDbRepository {
 
     private final Jdbi database;
 
-    public UserDbRepositoryMysql(final UserDbModule module) {
-        this.database = module.getModuleOrThrow(DatabaseModule.class).getJdbi();
+    public UserDbRepositoryMysql(final UserDbModule userDbModule,
+                                 final DatabaseModule databaseModule,
+                                 final EventModule eventModule,
+                                 final RankModule rankModule,
+                                 @Nullable final AchievementModule achievementModule,
+                                 @Nullable final SettingModule settingModule,
+                                 @Nullable final StatModule statModule) {
+        this.database = databaseModule.getJdbi();
         this.database.registerRowMapper(
                 UserDb.class,
                 new UserDbDatabaseMapper(
-                        module,
-                        module.getModuleOrThrow(EventModule.class),
-                        module.getModuleOrThrow(RankModule.class),
-                        module.getModule(AchievementModule.class).orElse(null),
-                        module.getModule(SettingModule.class).orElse(null),
-                        module.getModule(StatModule.class).orElse(null)
+                        userDbModule,
+                        eventModule,
+                        rankModule,
+                        achievementModule,
+                        settingModule,
+                        statModule
                 )
         );
     }

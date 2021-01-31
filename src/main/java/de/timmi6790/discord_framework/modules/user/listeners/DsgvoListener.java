@@ -40,7 +40,7 @@ public class DsgvoListener {
 
         // Achievements
         this.userDbModule.getModule(AchievementModule.class).ifPresent(achievementModule -> {
-            final Set<String> achievementNames = new HashSet<>();
+            final Set<String> achievementNames = new HashSet<>(userDb.getAchievementIds().size());
             for (final int achievementId : userDb.getAchievementIds()) {
                 achievementNames.add(
                         achievementModule.getAchievement(achievementId)
@@ -53,7 +53,7 @@ public class DsgvoListener {
 
         // Ranks
         this.userDbModule.getModule(RankModule.class).ifPresent(rankModule -> {
-            final Set<String> subRankNames = new HashSet<>();
+            final Set<String> subRankNames = new HashSet<>(userDb.getRankIds().size());
             for (final int subRankId : userDb.getRankIds()) {
                 subRankNames.add(
                         rankModule.getRank(subRankId)
@@ -72,8 +72,9 @@ public class DsgvoListener {
         });
 
         // Stats
-        final Map<String, Integer> parsedStats = new HashMap<>();
-        for (final Map.Entry<AbstractStat, Integer> entry : userDb.getStatsMap().entrySet()) {
+        final Map<AbstractStat, Integer> statsMap = userDb.getStatsMap();
+        final Map<String, Integer> parsedStats = new HashMap<>(statsMap.size());
+        for (final Map.Entry<AbstractStat, Integer> entry : statsMap.entrySet()) {
             parsedStats.put(
                     entry.getKey().getName(),
                     entry.getValue()
@@ -83,8 +84,9 @@ public class DsgvoListener {
 
         // Settings
         this.userDbModule.getModule(SettingModule.class).ifPresent(settingModule -> {
-            final Map<String, Object> parsedSettings = new HashMap<>();
-            for (final Map.Entry<AbstractSetting<?>, String> entry : userDb.getSettings().entrySet()) {
+            final Map<AbstractSetting<?>, String> settingsMap = userDb.getSettings();
+            final Map<String, Object> parsedSettings = new HashMap<>(settingsMap.size());
+            for (final Map.Entry<AbstractSetting<?>, String> entry : settingsMap.entrySet()) {
                 parsedSettings.put(
                         entry.getKey().getStatName(),
                         entry.getKey().fromDatabaseValue(entry.getValue())
@@ -95,7 +97,7 @@ public class DsgvoListener {
 
         // Perms
         this.userDbModule.getModule(PermissionsModule.class).ifPresent(permissionsModule -> {
-            final Set<String> parsedPermissions = new HashSet<>();
+            final Set<String> parsedPermissions = new HashSet<>(userDb.getPermissionIds().size());
             for (final Integer permissionId : userDb.getPermissionIds()) {
                 parsedPermissions.add(
                         permissionsModule.getPermissionFromId(permissionId)
