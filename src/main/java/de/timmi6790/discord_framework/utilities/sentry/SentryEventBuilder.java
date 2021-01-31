@@ -19,7 +19,7 @@ public class SentryEventBuilder {
     public SentryEventBuilder setMessage(final String message) {
         final Message sentryMessage = new Message();
         sentryMessage.setMessage(message);
-        
+
         this.sentryEvent.setMessage(sentryMessage);
         return this;
     }
@@ -141,11 +141,6 @@ public class SentryEventBuilder {
 
     public SentryEventBuilder setExtra(final String key, final Object value) {
         this.sentryEvent.setExtra(key, value);
-        return this;
-    }
-
-    public SentryEventBuilder setContexts(final Contexts contexts) {
-        this.sentryEvent.setContexts(contexts);
         return this;
     }
 
