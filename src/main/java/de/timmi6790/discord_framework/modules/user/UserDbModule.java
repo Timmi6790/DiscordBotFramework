@@ -14,6 +14,7 @@ import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.user.commands.SettingsCommand;
 import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
+import de.timmi6790.discord_framework.modules.user.listeners.DsgvoListener;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.modules.user.repository.mysql.UserDbRepositoryMysql;
 import lombok.EqualsAndHashCode;
@@ -81,6 +82,11 @@ public class UserDbModule extends AbstractModule {
                 .registerCommands(
                         this,
                         new UserCommand()
+                );
+
+        this.getModuleOrThrow(EventModule.class)
+                .addEventListeners(
+                        new DsgvoListener(this)
                 );
 
         if (this.getModule(SettingModule.class).isPresent()) {
