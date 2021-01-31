@@ -1,5 +1,7 @@
 package de.timmi6790.discord_framework.modules.user.listeners;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.dsgvo.events.UserDataDeleteEvent;
@@ -15,8 +17,6 @@ import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +40,7 @@ public class DsgvoListener {
 
         // Achievements
         this.userDbModule.getModule(AchievementModule.class).ifPresent(achievementModule -> {
-            final Set<String> achievementNames = new HashSet<>(userDb.getAchievementIds().size());
+            final Set<String> achievementNames = Sets.newHashSetWithExpectedSize(userDb.getAchievementIds().size());
             for (final int achievementId : userDb.getAchievementIds()) {
                 achievementNames.add(
                         achievementModule.getAchievement(achievementId)
@@ -53,7 +53,7 @@ public class DsgvoListener {
 
         // Ranks
         this.userDbModule.getModule(RankModule.class).ifPresent(rankModule -> {
-            final Set<String> subRankNames = new HashSet<>(userDb.getRankIds().size());
+            final Set<String> subRankNames = Sets.newHashSetWithExpectedSize(userDb.getRankIds().size());
             for (final int subRankId : userDb.getRankIds()) {
                 subRankNames.add(
                         rankModule.getRank(subRankId)
@@ -73,7 +73,7 @@ public class DsgvoListener {
 
         // Stats
         final Map<AbstractStat, Integer> statsMap = userDb.getStatsMap();
-        final Map<String, Integer> parsedStats = new HashMap<>(statsMap.size());
+        final Map<String, Integer> parsedStats = Maps.newHashMapWithExpectedSize(statsMap.size());
         for (final Map.Entry<AbstractStat, Integer> entry : statsMap.entrySet()) {
             parsedStats.put(
                     entry.getKey().getName(),
@@ -85,7 +85,7 @@ public class DsgvoListener {
         // Settings
         this.userDbModule.getModule(SettingModule.class).ifPresent(settingModule -> {
             final Map<AbstractSetting<?>, String> settingsMap = userDb.getSettings();
-            final Map<String, Object> parsedSettings = new HashMap<>(settingsMap.size());
+            final Map<String, Object> parsedSettings = Maps.newHashMapWithExpectedSize(settingsMap.size());
             for (final Map.Entry<AbstractSetting<?>, String> entry : settingsMap.entrySet()) {
                 parsedSettings.put(
                         entry.getKey().getStatName(),
@@ -97,7 +97,7 @@ public class DsgvoListener {
 
         // Perms
         this.userDbModule.getModule(PermissionsModule.class).ifPresent(permissionsModule -> {
-            final Set<String> parsedPermissions = new HashSet<>(userDb.getPermissionIds().size());
+            final Set<String> parsedPermissions = Sets.newHashSetWithExpectedSize(userDb.getPermissionIds().size());
             for (final Integer permissionId : userDb.getPermissionIds()) {
                 parsedPermissions.add(
                         permissionsModule.getPermissionFromId(permissionId)
