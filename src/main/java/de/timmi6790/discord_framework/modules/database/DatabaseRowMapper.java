@@ -3,9 +3,11 @@ package de.timmi6790.discord_framework.modules.database;
 import lombok.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Utility functions to convert the most common database returns.
@@ -40,9 +42,12 @@ public abstract class DatabaseRowMapper {
             return new HashSet<>();
         }
 
-        return Arrays.stream(string.split(splitter))
-                .map(typeFunction)
-                .collect(Collectors.toSet());
+        final String[] rawValues = string.split(splitter);
+        final Set<T> values = new HashSet<>(rawValues.length);
+        for (final String rawValue : rawValues) {
+            values.add(typeFunction.apply(rawValue));
+        }
+        return values;
     }
 
 

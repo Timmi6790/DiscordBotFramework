@@ -9,11 +9,20 @@ import org.jdbi.v3.core.Jdbi;
 
 import java.util.Map;
 
+/**
+ * Database module.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class DatabaseModule extends AbstractModule {
+    /**
+     * Database access point
+     */
     private Jdbi jdbi;
 
+    /**
+     * Instantiates a new Database module.
+     */
     public DatabaseModule() {
         super("Database");
 
@@ -22,7 +31,14 @@ public class DatabaseModule extends AbstractModule {
         );
     }
 
-    private void databaseMigration(final String url, final String user, final String password) {
+    /**
+     * Runs the database versioning control
+     *
+     * @param url      the url
+     * @param user     the user
+     * @param password the password
+     */
+    private void databaseVersioning(final String url, final String user, final String password) {
         final Flyway flyway = Flyway.configure()
                 .dataSource(url, user, password)
                 .baselineOnMigrate(true)
@@ -35,24 +51,33 @@ public class DatabaseModule extends AbstractModule {
         final Config databaseConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
         this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
-        this.databaseMigration(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
+        this.databaseVersioning(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
     }
 
-    public int retrieveOrCreateId(final String sqlGitId,
+    /**
+     * Retrieve or create id.
+     *
+     * @param sqlSelectIdQuery the sql query to select the id
+     * @param getParameters    the parameters for the sql select query
+     * @param sqlInsertIdQuery the sql query to insert the id into the repository
+     * @param insertParameters the parameters for the sql insert query
+     * @return the repository id
+     */
+    public int retrieveOrCreateId(final String sqlSelectIdQuery,
                                   final Map<String, ?> getParameters,
-                                  final String sqlInsertId,
+                                  final String sqlInsertIdQuery,
                                   final Map<String, ?> insertParameters) {
         return this.jdbi.withHandle(handle ->
-                handle.createQuery(sqlGitId)
+                handle.createQuery(sqlSelectIdQuery)
                         .bindMap(getParameters)
                         .mapTo(int.class)
                         .findFirst()
                         .orElseGet(() -> {
-                            handle.createUpdate(sqlInsertId)
+                            handle.createUpdate(sqlInsertIdQuery)
                                     .bindMap(insertParameters)
                                     .execute();
 
-                            return handle.createQuery(sqlGitId)
+                            return handle.createQuery(sqlSelectIdQuery)
                                     .bindMap(getParameters)
                                     .mapTo(int.class)
                                     .first();
