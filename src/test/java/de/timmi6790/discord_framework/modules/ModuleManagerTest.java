@@ -202,20 +202,6 @@ class ModuleManagerTest {
         public ExampleModule() {
             super("Example");
         }
-
-        @Override
-        public void onInitialize() {
-        }
-
-        @Override
-        public void onEnable() {
-
-        }
-
-        @Override
-        public void onDisable() {
-
-        }
     }
 
     private static class ExampleModule2 extends ExampleModule {

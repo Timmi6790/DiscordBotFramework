@@ -47,8 +47,9 @@ public class EmoteReactionModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.getModuleOrThrow(EventModule.class).addEventListener(this);
+        return true;
     }
 
     public void addEmoteReactionMessage(@NonNull final Message message,

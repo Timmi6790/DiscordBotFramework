@@ -39,9 +39,10 @@ public class AchievementModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.achievementRepository = new AchievementRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
         this.eventModule = this.getModuleOrThrow(EventModule.class);
+        return true;
     }
 
     /**

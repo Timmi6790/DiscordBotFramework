@@ -76,7 +76,7 @@ public class DiscordBot {
             }
         }
     }
-
+    
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
     protected boolean setup() throws IOException {
         // Metrics
@@ -105,7 +105,7 @@ public class DiscordBot {
         return true;
     }
 
-    public void start() throws TopicalSortCycleException, LoginException, InterruptedException, IOException {
+    public void start() throws TopicalSortCycleException, LoginException, IOException {
         this.loadInternalModules();
         if (!this.setup()) {
             return;

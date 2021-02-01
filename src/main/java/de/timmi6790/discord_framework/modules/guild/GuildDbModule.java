@@ -51,11 +51,12 @@ public class GuildDbModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.guildDbRepository = new GuildDbRepositoryMysql(
                 this.getModuleOrThrow(DatabaseModule.class).getJdbi(),
                 this.getDiscord()
         );
+        return true;
     }
 
     protected GuildDb create(final long discordId) {

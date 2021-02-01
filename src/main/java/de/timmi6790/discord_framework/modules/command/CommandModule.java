@@ -79,7 +79,7 @@ public class CommandModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.commandRepository = new CommandRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class).getJdbi());
         this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
@@ -105,13 +105,15 @@ public class CommandModule extends AbstractModule {
                         ),
                         new CommandLoggingListener(this.commandRepository)
                 );
+        return true;
     }
 
     @Override
-    public void onEnable() {
+    public boolean onEnable() {
         if (this.commandConfig.isSetDiscordActivity()) {
             this.getDiscord().setActivity(Activity.playing(this.mainCommand + "help"));
         }
+        return true;
     }
 
     private int getCommandDatabaseId(@NonNull final AbstractCommand command) {

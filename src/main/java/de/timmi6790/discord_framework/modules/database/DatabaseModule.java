@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
+import org.tinylog.Logger;
+import org.tinylog.TaggedLogger;
 
 import java.util.Map;
 
@@ -15,10 +17,17 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class DatabaseModule extends AbstractModule {
+    private static final String TEST_QUERY = "SELECT 1;";
+
     /**
      * Database access point
      */
     private Jdbi jdbi;
+
+    /**
+     * The Logger.
+     */
+    private final TaggedLogger logger = Logger.tag("DiscordFramework");
 
     /**
      * Instantiates a new Database module.
@@ -29,6 +38,24 @@ public class DatabaseModule extends AbstractModule {
         this.addDependenciesAndLoadAfter(
                 ConfigModule.class
         );
+    }
+
+    /**
+     * Check if the connection to the database is valid.
+     *
+     * @return true if the connection is valid
+     */
+    private boolean isConnectedToDatabase() {
+        try {
+            return this.jdbi.withHandle(handle -> {
+                handle
+                        .createUpdate(TEST_QUERY)
+                        .execute();
+                return true;
+            });
+        } catch (final Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -47,11 +74,19 @@ public class DatabaseModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         final Config databaseConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
+
         this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
+        // Check if the connection is valid before doing any futher actions
+        if (!this.isConnectedToDatabase()) {
+            this.logger.error("Invalid database credentials");
+            return false;
+        }
+
         this.databaseVersioning(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
+        return true;
     }
 
     /**

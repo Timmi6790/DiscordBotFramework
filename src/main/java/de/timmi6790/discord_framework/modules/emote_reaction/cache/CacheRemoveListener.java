@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
 public class CacheRemoveListener implements RemovalListener<Long, EmoteReactionMessage> {
-    private final EmoteReactionModule module;
+    private final EmoteReactionModule emoteReactionModule;
 
     @Override
     public void onRemoval(@Nullable final Long key, @Nullable final EmoteReactionMessage value, @NonNull final RemovalCause cause) {
@@ -25,18 +25,18 @@ public class CacheRemoveListener implements RemovalListener<Long, EmoteReactionM
 
         // Deduct the active emotes per player
         for (final long userId : value.getUsers()) {
-            if (this.module.getActiveEmotesPerPlayer().containsKey(userId)) {
-                final AtomicInteger currentCount = this.module.getActiveEmotesPerPlayer().get(userId);
+            if (this.emoteReactionModule.getActiveEmotesPerPlayer().containsKey(userId)) {
+                final AtomicInteger currentCount = this.emoteReactionModule.getActiveEmotesPerPlayer().get(userId);
                 if (currentCount.get() > 1) {
                     currentCount.decrementAndGet();
 
                 } else {
-                    this.module.getActiveEmotesPerPlayer().remove(userId);
+                    this.emoteReactionModule.getActiveEmotesPerPlayer().remove(userId);
                 }
             }
         }
 
-        final MessageChannel channel = this.module.getDiscord().getTextChannelById(value.getChannelId());
+        final MessageChannel channel = this.emoteReactionModule.getDiscord().getTextChannelById(value.getChannelId());
         if (channel == null) {
             return;
         }
@@ -44,11 +44,15 @@ public class CacheRemoveListener implements RemovalListener<Long, EmoteReactionM
         channel.retrieveMessageById(key)
                 .queue(message -> value.getEmotes()
                                 .keySet()
-                                .forEach(emote -> message.removeReaction(emote)
-                                        .queue(null, new ErrorHandler().ignore(
-                                                ErrorResponse.UNKNOWN_MESSAGE,
-                                                ErrorResponse.MISSING_PERMISSIONS)
-                                        )),
+                                .forEach(emote ->
+                                        message.removeReaction(emote)
+                                                .queue(
+                                                        null,
+                                                        new ErrorHandler().ignore(
+                                                                ErrorResponse.UNKNOWN_MESSAGE,
+                                                                ErrorResponse.MISSING_PERMISSIONS)
+                                                )
+                                ),
                         new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
                 );
     }

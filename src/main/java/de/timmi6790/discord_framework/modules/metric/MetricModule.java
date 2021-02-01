@@ -28,7 +28,7 @@ public class MetricModule extends AbstractModule {
     }
 
     @Override
-    public void onEnable() {
+    public boolean onEnable() {
         this.executorService = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 () -> {
                     final ShardManager discord = this.getDiscord();
@@ -37,10 +37,12 @@ public class MetricModule extends AbstractModule {
                 },
                 0, 10, TimeUnit.SECONDS
         );
+        return true;
     }
 
     @Override
-    public void onDisable() {
+    public boolean onDisable() {
         this.executorService.cancel(true);
+        return true;
     }
 }

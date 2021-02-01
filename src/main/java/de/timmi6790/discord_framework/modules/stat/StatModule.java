@@ -32,9 +32,11 @@ public class StatModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.statRepository = new StatRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
         this.eventModule = this.getModuleOrThrow(EventModule.class);
+
+        return true;
     }
 
     public boolean hasStat(final AbstractStat stat) {

@@ -65,7 +65,7 @@ public class RankModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.rankRepository = new RankRepositoryMysql(
                 this,
                 this.getModuleOrThrow(DatabaseModule.class),
@@ -79,6 +79,8 @@ public class RankModule extends AbstractModule {
                         this,
                         new RankCommand()
                 );
+        
+        return true;
     }
 
     /**

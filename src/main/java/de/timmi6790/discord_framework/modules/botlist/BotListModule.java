@@ -30,15 +30,11 @@ public class BotListModule extends AbstractModule {
                 ConfigModule.class
         );
     }
-
+    
     @Override
-    public void onInitialize() {
-        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getId();
-    }
-
-    @Override
-    public void onEnable() {
+    public boolean onEnable() {
         // Bot list server count update task
+        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getId();
         final String discordListToken = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config())
                 .getDiscordListToken();
@@ -65,10 +61,12 @@ public class BotListModule extends AbstractModule {
                             TimeUnit.MINUTES
                     );
         }
+        return true;
     }
 
     @Override
-    public void onDisable() {
+    public boolean onDisable() {
         this.updateTask.cancel(true);
+        return true;
     }
 }

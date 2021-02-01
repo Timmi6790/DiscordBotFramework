@@ -38,7 +38,7 @@ public class CoreModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.getModuleOrThrow(CommandModule.class).registerCommands(
                 this,
                 new BotInfoCommand()
@@ -73,6 +73,7 @@ public class CoreModule extends AbstractModule {
                             );
                         }
                 );
+        return true;
     }
 }
 

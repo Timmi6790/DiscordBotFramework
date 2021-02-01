@@ -13,10 +13,27 @@ import java.util.*;
  */
 @Data
 public abstract class AbstractModule {
+    /**
+     * The Module name.
+     */
     private final String moduleName;
+
+    /**
+     * The Dependencies.
+     */
     private Set<Class<? extends AbstractModule>> dependencies = new HashSet<>();
+    /**
+     * The Load after dependencies.
+     */
     private Set<Class<? extends AbstractModule>> loadAfterDependencies = new HashSet<>();
+    /**
+     * The Load before dependencies.
+     */
     private Set<Class<? extends AbstractModule>> loadBeforeDependencies = new HashSet<>();
+
+    /**
+     * The Required gateway intents.
+     */
     private Set<GatewayIntent> requiredGatewayIntents = EnumSet.noneOf(GatewayIntent.class);
 
     /**
@@ -31,20 +48,29 @@ public abstract class AbstractModule {
     /**
      * Called on module initialization(Pre discord await). This should be used to setup dependencies between the
      * modules.
+     *
+     * @return true if initilization was successful
      */
-    public void onInitialize() {
+    public boolean onInitialize() {
+        return true;
     }
 
     /**
      * Called on module enable(Post discord await). This should be used to setup everything related to discord
+     *
+     * @return true if enable was successful
      */
-    public void onEnable() {
+    public boolean onEnable() {
+        return true;
     }
 
     /**
      * On disable.
+     *
+     * @return true if disable was successful
      */
-    public void onDisable() {
+    public boolean onDisable() {
+        return true;
     }
 
     /**

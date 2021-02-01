@@ -247,9 +247,17 @@ public class ModuleManager {
 
         this.logger.info("Initialize module {}", module.getModuleName());
         try {
-            module.onInitialize();
-            this.initializedModules.add(moduleClass);
-            return true;
+            final boolean initializeStatus = module.onInitialize();
+            if (initializeStatus) {
+                this.initializedModules.add(moduleClass);
+                return true;
+            } else {
+                this.logger.warn(
+                        "{} returned false while trying to initialize it.",
+                        module.getModuleName()
+                );
+                return false;
+            }
         } catch (final Exception e) {
             this.logger.error(module.getModuleName(), e);
             Sentry.captureException(e);
@@ -289,10 +297,18 @@ public class ModuleManager {
 
         this.logger.info("Starting module {}", module.getModuleName());
         try {
-            module.onEnable();
-            this.startedModules.add(moduleClass);
-            this.initializedModules.remove(moduleClass);
-            return true;
+            final boolean enableStatus = module.onEnable();
+            if (enableStatus) {
+                this.startedModules.add(moduleClass);
+                this.initializedModules.remove(moduleClass);
+                return true;
+            } else {
+                this.logger.warn(
+                        "{} returned false while trying to enable it.",
+                        module.getModuleName()
+                );
+                return false;
+            }
         } catch (final Exception e) {
             this.logger.error(module.getModuleName(), e);
             Sentry.captureException(e);
@@ -305,7 +321,6 @@ public class ModuleManager {
             this.initialize(moduleClass);
         }
     }
-
 
     @SneakyThrows
     public void startAll() {

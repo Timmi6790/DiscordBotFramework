@@ -34,7 +34,7 @@ public class SettingModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.settingRepository = new SettingRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
         this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
 
@@ -42,6 +42,8 @@ public class SettingModule extends AbstractModule {
                 this,
                 new CommandAutoCorrectSetting()
         );
+
+        return true;
     }
 
     public void registerSettings(final AbstractModule module, final AbstractSetting<?>... settings) {

@@ -76,7 +76,7 @@ public class UserDbModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.discord = super.getDiscord();
         this.userDbRepository = new UserDbRepositoryMysql(
                 this,
@@ -106,6 +106,8 @@ public class UserDbModule extends AbstractModule {
                             new SettingsCommand()
                     );
         }
+        
+        return true;
     }
 
     protected UserDb create(final long discordId) {

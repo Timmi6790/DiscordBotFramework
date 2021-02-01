@@ -49,12 +49,13 @@ public class ChannelDbModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
+    public boolean onInitialize() {
         this.channelRepository = new ChannelRepositoryMysql(
                 this.getDiscord(),
                 this.getModuleOrThrow(DatabaseModule.class),
                 this.getModuleOrThrow(GuildDbModule.class)
         );
+        return true;
     }
 
     /**

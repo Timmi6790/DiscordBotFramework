@@ -33,8 +33,12 @@ public class PermissionsModule extends AbstractModule {
     }
 
     @Override
-    public void onInitialize() {
-        this.permissionRepository = new PermissionRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class).getJdbi());
+    public boolean onInitialize() {
+        this.permissionRepository = new PermissionRepositoryMysql(
+                this.getModuleOrThrow(DatabaseModule.class).getJdbi()
+        );
+
+        return true;
     }
 
     private int getPermissionIdOrInsert(@NonNull final String permissionNode) {
