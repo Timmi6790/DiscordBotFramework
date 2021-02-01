@@ -20,8 +20,7 @@ public class SentryEventBuilder {
         final Message sentryMessage = new Message();
         sentryMessage.setMessage(message);
 
-        this.sentryEvent.setMessage(sentryMessage);
-        return this;
+        return this.setMessage(sentryMessage);
     }
 
     public SentryEventBuilder setMessage(final Message message) {
