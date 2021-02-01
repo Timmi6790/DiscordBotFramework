@@ -56,17 +56,6 @@ public class GuildDbModule extends AbstractModule {
                 this.getModuleOrThrow(DatabaseModule.class).getJdbi(),
                 this.getDiscord()
         );
-
-        /*
-        if (this.getModule(SettingModule.class).isPresent()) {
-            this.getModuleOrThrow(CommandModule.class)
-                    .registerCommands(
-                            this,
-                            new GuildSettingsCommand()
-                    );
-        }
-
-         */
     }
 
     protected GuildDb create(final long discordId) {

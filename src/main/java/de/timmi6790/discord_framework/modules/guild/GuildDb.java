@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +22,6 @@ public class GuildDb {
     private final long discordId;
 
     private final boolean banned;
-    private final Map<Integer, String> settingsMap;
 
     private final ShardManager discord;
 
@@ -38,14 +36,12 @@ public class GuildDb {
     public GuildDb(final ShardManager discord,
                    final int databaseId,
                    final long discordId,
-                   final boolean banned,
-                   final Map<Integer, String> settingsMap) {
+                   final boolean banned) {
         this.discord = discord;
 
         this.databaseId = databaseId;
         this.discordId = discordId;
         this.banned = banned;
-        this.settingsMap = settingsMap;
     }
 
     public Guild getGuild() {

@@ -47,9 +47,4 @@ public class GuildDbRepositoryMysql implements GuildDbRepository {
                         .findFirst()
         );
     }
-
-    @Override
-    public void updateSetting(final int guildDatabaseId, final int settingId, final String newValue) {
-
-    }
 }

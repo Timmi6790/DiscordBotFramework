@@ -9,7 +9,6 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 
 @AllArgsConstructor
 public class GuildDbDatabaseMapper extends DatabaseRowMapper implements RowMapper<GuildDb> {
@@ -25,8 +24,7 @@ public class GuildDbDatabaseMapper extends DatabaseRowMapper implements RowMappe
                 this.discord,
                 rs.getInt("id"),
                 rs.getLong("discordId"),
-                rs.getBoolean("banned"),
-                new HashMap<>()
+                rs.getBoolean("banned")
         );
     }
 }
