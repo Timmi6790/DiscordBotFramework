@@ -6,7 +6,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
-import de.timmi6790.discord_framework.modules.dsgvo.events.UserDataDeleteEvent;
+import de.timmi6790.discord_framework.modules.dsgvo.DsgvoModule;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -56,15 +56,22 @@ public class AccountDeletionCommand extends AbstractCommand {
             .build(key -> new AtomicInteger(0));
 
     /**
+     * The Dsgvo module.
+     */
+    private final DsgvoModule dsgvoModule;
+
+    /**
      * Instantiates a new Account deletion command.
      */
-    public AccountDeletionCommand() {
+    public AccountDeletionCommand(DsgvoModule dsgvoModule) {
         super(
                 "deleteMyAccount",
                 "Info",
                 "Wipe all my data!",
                 ""
         );
+
+        this.dsgvoModule = dsgvoModule;
     }
 
     /**
@@ -157,12 +164,8 @@ public class AccountDeletionCommand extends AbstractCommand {
         );
 
         // Let each module handle the delete themselves
-        final UserDataDeleteEvent dataDeleteEvent = new UserDataDeleteEvent(
-                commandParameters.getJda(),
-                commandParameters.getUserDb()
-        );
-        this.getEventModule().executeEvent(dataDeleteEvent);
-
+        dsgvoModule.deleteUserData(commandParameters.getUserDb());
+        
         return CommandResult.SUCCESS;
     }
 }

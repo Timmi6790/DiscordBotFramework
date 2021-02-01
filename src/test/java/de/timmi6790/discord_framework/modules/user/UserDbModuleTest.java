@@ -21,7 +21,7 @@ class UserDbModuleTest {
     private static final long TEST_DISCORD_ID2 = 168049519831810048L;
 
     private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
-    private static final EventModule eventModule = new EventModule();
+    private static final EventModule EVENT_MODULE = new EventModule();
 
     @BeforeAll
     static void setUp() {
@@ -33,7 +33,7 @@ class UserDbModuleTest {
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
         when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
-        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(EVENT_MODULE);
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);
