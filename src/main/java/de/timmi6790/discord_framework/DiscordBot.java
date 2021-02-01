@@ -42,7 +42,7 @@ public class DiscordBot {
     private final Set<AbstractModule> internalModules = new HashSet<>();
     private ShardManager discord;
 
-    public static void main(final String[] args) throws LoginException, TopicalSortCycleException, InterruptedException, IOException {
+    public static void main(final String[] args) throws LoginException, TopicalSortCycleException, IOException {
         instance = new DiscordBot();
         instance.start();
     }
@@ -76,7 +76,7 @@ public class DiscordBot {
             }
         }
     }
-    
+
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
     protected boolean setup() throws IOException {
         // Metrics

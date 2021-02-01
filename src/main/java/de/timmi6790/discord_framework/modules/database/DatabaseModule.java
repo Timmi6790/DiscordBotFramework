@@ -51,7 +51,7 @@ public class DatabaseModule extends AbstractModule {
                 handle
                         .createUpdate(TEST_QUERY)
                         .execute();
-                return true;
+                return Boolean.TRUE;
             });
         } catch (final Exception e) {
             return false;
