@@ -41,7 +41,7 @@ public class RankCommand extends AbstractCommand {
 
         // List command
         final String arg0 = this.getArg(commandParameters, 0);
-        if (arg0.equalsIgnoreCase("list")) {
+        if ("list".equalsIgnoreCase(arg0)) {
             return this.listCommand(commandParameters);
         }
 

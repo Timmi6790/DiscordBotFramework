@@ -70,7 +70,7 @@ public abstract class AbstractSetting<T> {
 
     protected void sendInvalidInputMessage(final CommandParameters commandParameters,
                                            final String userInput,
-                                           final List<T> possibleValues) {
+                                           final Iterable<T> possibleValues) {
         final StringJoiner possibleValueFormatted = new StringJoiner("\n");
         for (final T possibleValue : possibleValues) {
             possibleValueFormatted.add(MarkdownUtil.monospace(String.valueOf(possibleValue)));

@@ -17,9 +17,9 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
 
     @Override
     protected Optional<Boolean> parseNewValue(final CommandParameters commandParameters, final String userInput) {
-        if (userInput.equalsIgnoreCase("true")) {
+        if ("true".equalsIgnoreCase(userInput)) {
             return Optional.of(Boolean.TRUE);
-        } else if (userInput.equalsIgnoreCase("false")) {
+        } else if ("false".equalsIgnoreCase(userInput)) {
             return Optional.of(Boolean.FALSE);
         }
 
@@ -38,6 +38,6 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
 
     @Override
     public Boolean fromDatabaseValue(final String value) {
-        return value.equals("1");
+        return "1".equals(value);
     }
 }
