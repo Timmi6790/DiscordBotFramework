@@ -36,7 +36,7 @@ public class DiscordBot {
     // We need to register it here, because we can only have one global instance of the cache metrics
     public static final CacheMetricsCollector CACHE_METRICS = new CacheMetricsCollector().register();
 
-    private static volatile DiscordBot instance;
+    private static final DiscordBot INSTANCE = new DiscordBot();
 
     private final ModuleManager moduleManager = new ModuleManager();
     private final Set<AbstractModule> internalModules = new HashSet<>();
@@ -47,11 +47,7 @@ public class DiscordBot {
     }
 
     public static DiscordBot getInstance() {
-        if (instance == null) {
-            instance = new DiscordBot();
-        }
-
-        return instance;
+        return INSTANCE;
     }
 
     @SneakyThrows
