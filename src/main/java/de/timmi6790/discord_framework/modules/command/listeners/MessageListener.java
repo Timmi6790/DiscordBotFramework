@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command.listeners;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
@@ -15,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 @Getter(value = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Log4j2
 public class MessageListener {
     private static final Pattern FIRST_SPACE_PATTERN = Pattern.compile("^([\\S]*)\\s*(.*)$");
 
@@ -151,7 +152,7 @@ public class MessageListener {
             this.getCommand(commandName, commandParameters)
                     .ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
         } catch (final Exception e) {
-            DiscordBot.getLogger().error(e);
+            log.error(e);
         }
     }
 }

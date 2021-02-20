@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.modules;
 import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import org.junit.jupiter.api.Test;
-import org.tinylog.Logger;
 
 import java.util.Optional;
 
@@ -14,7 +13,7 @@ import static org.mockito.Mockito.verify;
 
 class ModuleManagerTest {
     private ModuleManager getModuleManager() {
-        return new ModuleManager(Logger.tag(""));
+        return new ModuleManager();
     }
 
     @Test

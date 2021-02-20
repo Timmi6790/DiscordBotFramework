@@ -1,11 +1,11 @@
 package de.timmi6790.discord_framework.modules.config;
 
 import de.timmi6790.commons.utilities.GsonUtilities;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -16,6 +16,7 @@ import java.nio.file.Paths;
  * Global module config system
  */
 @EqualsAndHashCode(callSuper = true)
+@Log4j2
 public class ConfigModule extends AbstractModule {
     /**
      * Instantiates a new Config module.
@@ -64,7 +65,7 @@ public class ConfigModule extends AbstractModule {
         if (!Files.exists(configPath)) {
             // New file
             GsonUtilities.saveToJson(configPath, config);
-            DiscordBot.getLogger().info(
+            log.info(
                     "Created {} config file {}",
                     module.getModuleName(),
                     config.getClass().getSimpleName()
@@ -87,7 +88,7 @@ public class ConfigModule extends AbstractModule {
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
-        DiscordBot.getLogger().debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getModuleName());
+        log.debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getModuleName());
         return config;
     }
 

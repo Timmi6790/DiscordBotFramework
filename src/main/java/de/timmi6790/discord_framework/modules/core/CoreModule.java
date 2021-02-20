@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.core;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
@@ -15,12 +14,14 @@ import de.timmi6790.discord_framework.modules.core.stats.SuccessfulCommandResult
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import lombok.EqualsAndHashCode;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Contains command, achievements, stats and settings that would no make sense everywhere else This is supposed to be
  * removed in the future
  */
 @EqualsAndHashCode(callSuper = true)
+@Log4j2
 public class CoreModule extends AbstractModule {
     /**
      * Instantiates a new Core module.
@@ -63,7 +64,7 @@ public class CoreModule extends AbstractModule {
 
         this.getModule(StatModule.class)
                 .ifPresent(statModule -> {
-                            DiscordBot.getLogger().info("Registering stats");
+                            log.info("Registering stats");
                             statModule.registerStats(
                                     this,
                                     new FailedCommandResultStat(),

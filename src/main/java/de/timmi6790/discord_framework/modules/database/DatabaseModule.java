@@ -4,10 +4,9 @@ import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
-import org.tinylog.Logger;
-import org.tinylog.TaggedLogger;
 
 import java.util.Map;
 
@@ -16,6 +15,7 @@ import java.util.Map;
  */
 @EqualsAndHashCode(callSuper = true)
 @Getter
+@Log4j2
 public class DatabaseModule extends AbstractModule {
     private static final String TEST_QUERY = "SELECT 1;";
 
@@ -23,11 +23,6 @@ public class DatabaseModule extends AbstractModule {
      * Database access point
      */
     private Jdbi jdbi;
-
-    /**
-     * The Logger.
-     */
-    private final TaggedLogger logger = Logger.tag("DiscordFramework");
 
     /**
      * Instantiates a new Database module.
@@ -81,7 +76,7 @@ public class DatabaseModule extends AbstractModule {
         this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
         // Check if the connection is valid before doing any futher actions
         if (!this.isConnectedToDatabase()) {
-            this.logger.error("Invalid database credentials");
+            log.error("Invalid database credentials");
             return false;
         }
 

@@ -1,14 +1,15 @@
 package de.timmi6790.discord_framework.utilities;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Log4j2
 public class TopicalSort<T> {
     private final List<T> vertices;
     private final boolean[][] adjacency;
@@ -17,7 +18,7 @@ public class TopicalSort<T> {
         this.vertices = vertices;
         this.adjacency = new boolean[this.vertices.size()][this.vertices.size()];
 
-        DiscordBot.getLogger().debug("Dependencies: " + dependencies);
+        log.debug("Dependencies: " + dependencies);
         dependencies.forEach(edge -> this.adjacency[edge.getId()][edge.getDependencyId()] = true);
     }
 
@@ -30,9 +31,9 @@ public class TopicalSort<T> {
         boolean cycle;
         while (!queue.isEmpty()) {
             cycle = true;
-            Iterator<Integer> queueIterator = queue.iterator();
+            final Iterator<Integer> queueIterator = queue.iterator();
             while (queueIterator.hasNext()) {
-                int element = queueIterator.next();
+                final int element = queueIterator.next();
                 if (!this.hasDependency(element, queue)) {
                     queueIterator.remove();
                     result.add(this.vertices.get(element));
@@ -40,7 +41,7 @@ public class TopicalSort<T> {
                     break;
                 }
             }
-            
+
             if (cycle) {
                 throw new TopicalSortCycleException();
             }

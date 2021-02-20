@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
@@ -19,6 +18,7 @@ import io.github.bucket4j.Bucket;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
+@Log4j2
 public class CommandModule extends AbstractModule {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
 
@@ -128,15 +129,15 @@ public class CommandModule extends AbstractModule {
 
     public boolean registerCommand(@NonNull final AbstractModule module, @NonNull final AbstractCommand command) {
         if (this.commands.containsKey(command.getName())) {
-            DiscordBot.getLogger().error("{} is already registered.", command.getName());
+            log.error("{} is already registered.", command.getName());
             return false;
         }
 
-        DiscordBot.getLogger().info("Registerd {} command.", command.getName());
+        log.info("Registerd {} command.", command.getName());
         this.commands.put(command.getName(), command);
         for (final String aliasName : command.getAliasNames()) {
             if (this.commandAliases.containsKey(aliasName)) {
-                DiscordBot.getLogger().warn(
+                log.warn(
                         "Can't register alias name {} for {}, it already exists.",
                         aliasName,
                         command.getName()

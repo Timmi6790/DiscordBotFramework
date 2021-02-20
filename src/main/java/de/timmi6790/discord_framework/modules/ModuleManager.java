@@ -10,7 +10,7 @@ import io.sentry.Sentry;
 import lombok.Cleanup;
 import lombok.Data;
 import lombok.SneakyThrows;
-import org.tinylog.TaggedLogger;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
 import java.io.InputStreamReader;
@@ -26,6 +26,7 @@ import java.util.*;
  * Global module manager. All models are registered,initialized and started over this manager.
  */
 @Data
+@Log4j2
 public class ModuleManager {
     private static final Gson gson = new GsonBuilder()
             .enableComplexMapKeySerialization()
@@ -37,13 +38,10 @@ public class ModuleManager {
     private final Set<Class<? extends AbstractModule>> initializedModules = new HashSet<>();
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
 
-    private final TaggedLogger logger;
     private final Path pluginPath;
 
     @SneakyThrows
-    public ModuleManager(final TaggedLogger logger) {
-        this.logger = logger;
-
+    public ModuleManager() {
         this.pluginPath = Paths.get("./plugins/");
         Files.createDirectories(this.pluginPath);
     }
@@ -68,7 +66,7 @@ public class ModuleManager {
                 }
 
                 if (!missingDependencies.isEmpty()) {
-                    this.logger.warn(
+                    log.warn(
                             "Can't load {}, because it is missing the {} dependencies.",
                             module.getModuleName(),
                             String.join(",", missingDependencies)
@@ -120,7 +118,7 @@ public class ModuleManager {
         for (final File jar : pluginJars) {
             for (final AbstractModule foundModule : this.loadJarModule(jar, classLoader)) {
                 if (abstractModules.contains(foundModule)) {
-                    this.logger.warn(
+                    log.warn(
                             "Module {} inside {} is already loaded.",
                             foundModule.getModuleName(),
                             jar.getName()
@@ -128,7 +126,7 @@ public class ModuleManager {
                     continue;
                 }
 
-                this.logger.info(
+                log.info(
                         "Found module {} inside {}",
                         foundModule.getModuleName(),
                         jar.getName()
@@ -141,7 +139,7 @@ public class ModuleManager {
     }
 
     private List<AbstractModule> loadJarModule(final File jar, final URLClassLoader classLoader) {
-        this.logger.info("Checking {} for modules.", jar.getName());
+        log.info("Checking {} for modules.", jar.getName());
 
         final List<AbstractModule> modules = new ArrayList<>();
         try {
@@ -150,7 +148,7 @@ public class ModuleManager {
 
             final URL pluginUrl = classLoader.getResource("plugin.json");
             if (pluginUrl == null) {
-                this.logger.warn("Can't load {}, no plugins.json found.", jar.getName());
+                log.warn("Can't load {}, no plugins.json found.", jar.getName());
                 return modules;
             }
 
@@ -159,7 +157,7 @@ public class ModuleManager {
             for (final String path : plugin.getModules()) {
                 final Optional<Class<?>> pluginClassOpt = ReflectionUtilities.loadClassFromClassLoader(path, classLoader);
                 if (!pluginClassOpt.isPresent()) {
-                    this.logger.warn(
+                    log.warn(
                             "Can't load Module {} inside {}, unknown path.",
                             path,
                             jar.getName()
@@ -168,7 +166,7 @@ public class ModuleManager {
                 }
 
                 if (!AbstractModule.class.isAssignableFrom(pluginClassOpt.get())) {
-                    this.logger.warn(
+                    log.warn(
                             "Module {} inside {} is not extending AbstractModule!",
                             path,
                             jar.getName()
@@ -185,7 +183,10 @@ public class ModuleManager {
             }
 
         } catch (final Exception e) {
-            this.logger.warn(e, "Error while trying to load modules from {}.", jar.getName());
+            log.warn(
+                    "Error while trying to load modules from " + jar.getName() + ".",
+                    e
+            );
         }
 
         return modules;
@@ -199,11 +200,11 @@ public class ModuleManager {
 
     public boolean registerModule(final AbstractModule module) {
         if (this.loadedModules.containsKey(module.getClass())) {
-            this.logger.debug("{} is already registered!", module.getModuleName());
+            log.debug("{} is already registered!", module.getModuleName());
             return false;
         }
 
-        this.logger.debug("Registered {}[{}]", module.getModuleName(), module.getClass());
+        log.debug("Registered {}[{}]", module.getModuleName(), module.getClass());
         this.loadedModules.put(module.getClass(), module);
         return true;
     }
@@ -218,25 +219,25 @@ public class ModuleManager {
 
     public boolean initialize(final Class<? extends AbstractModule> moduleClass) {
         if (this.startedModules.contains(moduleClass)) {
-            this.logger.warn("Tried to initialize {} while already being started.", moduleClass);
+            log.warn("Tried to initialize {} while already being started.", moduleClass);
             return false;
         }
 
         if (this.initializedModules.contains(moduleClass)) {
-            this.logger.warn("Tried to initialize {} while already being initialized.", moduleClass);
+            log.warn("Tried to initialize {} while already being initialized.", moduleClass);
             return false;
         }
 
         final AbstractModule module = this.loadedModules.get(moduleClass);
         if (module == null) {
-            this.logger.warn("Tried to start {} while not being loaded.", moduleClass);
+            log.warn("Tried to start {} while not being loaded.", moduleClass);
             return false;
         }
 
         // Check if all load dependencies are innitlized
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfterDependencies()) {
             if (!this.initializedModules.contains(dependencyClass)) {
-                this.logger.warn(
+                log.warn(
                         "Tried to initialize {} without {} dependency being initialized.",
                         moduleClass,
                         dependencyClass
@@ -245,21 +246,21 @@ public class ModuleManager {
             }
         }
 
-        this.logger.info("Initialize module {}", module.getModuleName());
+        log.info("Initialize module {}", module.getModuleName());
         try {
             final boolean initializeStatus = module.onInitialize();
             if (initializeStatus) {
                 this.initializedModules.add(moduleClass);
                 return true;
             } else {
-                this.logger.warn(
+                log.warn(
                         "{} returned false while trying to initialize it.",
                         module.getModuleName()
                 );
                 return false;
             }
         } catch (final Exception e) {
-            this.logger.error(module.getModuleName(), e);
+            log.error(module.getModuleName(), e);
             Sentry.captureException(e);
 
             return false;
@@ -268,25 +269,25 @@ public class ModuleManager {
 
     public boolean start(final Class<? extends AbstractModule> moduleClass) {
         if (this.startedModules.contains(moduleClass)) {
-            this.logger.warn("Tried to start {} while already being started.", moduleClass);
+            log.warn("Tried to start {} while already being started.", moduleClass);
             return false;
         }
 
         if (!this.initializedModules.contains(moduleClass)) {
-            this.logger.warn("Tried to start {} while not being initialized.", moduleClass);
+            log.warn("Tried to start {} while not being initialized.", moduleClass);
             return false;
         }
 
         final AbstractModule module = this.loadedModules.get(moduleClass);
         if (module == null) {
-            this.logger.warn("Tried to start {} while not being loaded.", moduleClass);
+            log.warn("Tried to start {} while not being loaded.", moduleClass);
             return false;
         }
 
         // Check if all load dependencies are started
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfterDependencies()) {
             if (!(this.initializedModules.contains(dependencyClass) || this.startedModules.contains(dependencyClass))) {
-                this.logger.warn(
+                log.warn(
                         "Tried to start {} without {} dependency being started",
                         moduleClass,
                         dependencyClass
@@ -295,7 +296,7 @@ public class ModuleManager {
             }
         }
 
-        this.logger.info("Starting module {}", module.getModuleName());
+        log.info("Starting module {}", module.getModuleName());
         try {
             final boolean enableStatus = module.onEnable();
             if (enableStatus) {
@@ -303,14 +304,14 @@ public class ModuleManager {
                 this.initializedModules.remove(moduleClass);
                 return true;
             } else {
-                this.logger.warn(
+                log.warn(
                         "{} returned false while trying to enable it.",
                         module.getModuleName()
                 );
                 return false;
             }
         } catch (final Exception e) {
-            this.logger.error(module.getModuleName(), e);
+            log.error(module.getModuleName(), e);
             Sentry.captureException(e);
             return false;
         }
@@ -346,7 +347,7 @@ public class ModuleManager {
             this.startedModules.remove(moduleClass);
             return true;
         } catch (final Exception e) {
-            this.logger.error(module.getModuleName(), e);
+            log.error(module.getModuleName(), e);
             Sentry.captureException(e);
 
             return false;

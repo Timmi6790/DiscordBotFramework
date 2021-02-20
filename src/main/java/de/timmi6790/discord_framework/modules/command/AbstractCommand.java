@@ -33,6 +33,7 @@ import io.sentry.SentryLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -54,6 +55,7 @@ import java.util.regex.Pattern;
         "rankModule",
         "discord"
 })
+@Log4j2
 public abstract class AbstractCommand {
     static final Histogram COMMAND_EXECUTION_TIME_FULL = Histogram.build()
             .name("command_execution_full_seconds")
@@ -337,7 +339,7 @@ public abstract class AbstractCommand {
                 commandResult = e.getCommandResult();
 
             } catch (final Exception e) {
-                DiscordBot.getLogger().error(e);
+                log.error(e);
                 this.sendErrorMessage(commandParameters, "Unknown");
 
                 // Sentry error

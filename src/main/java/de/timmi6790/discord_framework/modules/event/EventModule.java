@@ -11,9 +11,8 @@ import io.sentry.SentryLevel;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.events.GenericEvent;
-import org.tinylog.Logger;
-import org.tinylog.TaggedLogger;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -24,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @EqualsAndHashCode(callSuper = true)
+@Log4j2
 public class EventModule extends AbstractModule {
     private static final String EVENT = "Event";
 
@@ -32,12 +32,9 @@ public class EventModule extends AbstractModule {
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    private final TaggedLogger logger;
 
     public EventModule() {
         super(EVENT);
-
-        this.logger = Logger.tag("DiscordFramework");
     }
 
     @Override
@@ -47,7 +44,7 @@ public class EventModule extends AbstractModule {
     }
 
     private void handleEventException(final Exception exception, final GenericEvent event, final EventObject listener) {
-        this.logger.error(exception);
+        log.error(exception);
 
         // Sentry error
         Sentry.captureEvent(new SentryEventBuilder()
@@ -71,7 +68,7 @@ public class EventModule extends AbstractModule {
                 final SubscribeEvent annotation = annotationOpt.get();
 
                 if (method.getParameterCount() != 1) {
-                    this.logger.warn(
+                    log.warn(
                             "{}.{} has the SubscribeEvent Annotation, but has an incorrect parameter count of {}.",
                             listener.getClass(),
                             method.getName(),
@@ -82,7 +79,7 @@ public class EventModule extends AbstractModule {
 
                 final Class<?> parameter = method.getParameterTypes()[0];
                 if (!GenericEvent.class.isAssignableFrom(parameter)) {
-                    this.logger.warn(
+                    log.warn(
                             "{}.{} has the SubscribeEvent Annotation, but the parameter is not extending GenericEvent",
                             listener.getClass(),
                             method.getName());
@@ -98,7 +95,7 @@ public class EventModule extends AbstractModule {
                         new EventObject(listener, method, annotation.ignoreCanceled())
                 );
 
-                this.logger.info(
+                log.info(
                         "Added {}.{} as new event listener for {}.",
                         listener.getClass(),
                         method.getName(),

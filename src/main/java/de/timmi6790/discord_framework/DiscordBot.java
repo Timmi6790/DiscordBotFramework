@@ -11,14 +11,13 @@ import io.prometheus.client.hotspot.DefaultExports;
 import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.reflections.Reflections;
-import org.tinylog.Logger;
-import org.tinylog.TaggedLogger;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
@@ -31,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Getter
+@Log4j2
 public class DiscordBot {
     public static final String BOT_VERSION = "3.1.1";
     // We need to register it here, because we can only have one global instance of the cache metrics
@@ -38,21 +38,20 @@ public class DiscordBot {
 
     private static DiscordBot instance;
 
-    private final ModuleManager moduleManager = new ModuleManager(getLogger());
+    private final ModuleManager moduleManager = new ModuleManager();
     private final Set<AbstractModule> internalModules = new HashSet<>();
     private ShardManager discord;
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, IOException {
-        instance = new DiscordBot();
-        instance.start();
+        DiscordBot.getInstance().start();
     }
 
     public static DiscordBot getInstance() {
-        return instance;
-    }
+        if (instance == null) {
+            instance = new DiscordBot();
+        }
 
-    public static TaggedLogger getLogger() {
-        return Logger.tag("DiscordFramework");
+        return instance;
     }
 
     @SneakyThrows
@@ -72,7 +71,7 @@ public class DiscordBot {
             try {
                 this.internalModules.add(module.getConstructor().newInstance());
             } catch (final Exception e) {
-                getLogger().error(e, "Trying to initialize {}", module);
+                log.error("Trying to initialize " + module, e);
             }
         }
     }
@@ -98,7 +97,7 @@ public class DiscordBot {
 
         GsonUtilities.saveToJsonIfChanged(configPath, config, newConfig);
         if (firstInnit) {
-            DiscordBot.getLogger().info("Created main config file.");
+            log.info("Created main config file.");
             return false;
         }
 
@@ -133,22 +132,22 @@ public class DiscordBot {
             requiredGatewayIntents.addAll(loadedModule.getRequiredGatewayIntents());
         }
 
-        getLogger().debug("Starting discord with {} gateway intents.", requiredGatewayIntents);
+        log.debug("Starting discord with " + requiredGatewayIntents + " gateway intents.");
         this.discord = DefaultShardManagerBuilder.createLight(mainConfig.getDiscordToken(), requiredGatewayIntents)
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
 
-        getLogger().debug("Initialize all modules");
+        log.debug("Initialize all modules");
         this.moduleManager.initializeAll();
-        getLogger().debug("Await discord ready");
-        getLogger().debug("Start all modules");
+        log.debug("Await discord ready");
+        log.debug("Start all modules");
         // Delay the module start by 2 seconds to await discord
         // This is a temporary fix, because the awaitReady method got the bot stuck lately
         Executors.newSingleThreadScheduledExecutor().schedule(
                 this.moduleManager::startAll,
                 2, TimeUnit.SECONDS
         );
-        getLogger().debug("Done starting all modules");
+        log.debug("Done starting all modules");
     }
 
     public JDA getBaseShard() {
