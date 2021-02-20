@@ -339,7 +339,7 @@ public abstract class AbstractCommand {
                 commandResult = e.getCommandResult();
 
             } catch (final Exception e) {
-                log.error(e);
+                log.error("Exception during command execution", e);
                 this.sendErrorMessage(commandParameters, "Unknown");
 
                 // Sentry error

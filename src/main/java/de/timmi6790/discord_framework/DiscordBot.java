@@ -36,7 +36,7 @@ public class DiscordBot {
     // We need to register it here, because we can only have one global instance of the cache metrics
     public static final CacheMetricsCollector CACHE_METRICS = new CacheMetricsCollector().register();
 
-    private static DiscordBot instance;
+    private static volatile DiscordBot instance;
 
     private final ModuleManager moduleManager = new ModuleManager();
     private final Set<AbstractModule> internalModules = new HashSet<>();
@@ -132,7 +132,7 @@ public class DiscordBot {
             requiredGatewayIntents.addAll(loadedModule.getRequiredGatewayIntents());
         }
 
-        log.debug("Starting discord with " + requiredGatewayIntents + " gateway intents.");
+        log.debug("Starting discord with {} gateway intents.", requiredGatewayIntents);
         this.discord = DefaultShardManagerBuilder.createLight(mainConfig.getDiscordToken(), requiredGatewayIntents)
                 .setStatus(OnlineStatus.ONLINE)
                 .build();

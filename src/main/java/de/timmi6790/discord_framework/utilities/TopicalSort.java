@@ -18,7 +18,7 @@ public class TopicalSort<T> {
         this.vertices = vertices;
         this.adjacency = new boolean[this.vertices.size()][this.vertices.size()];
 
-        log.debug("Dependencies: " + dependencies);
+        log.debug("Dependencies: {}", dependencies);
         dependencies.forEach(edge -> this.adjacency[edge.getId()][edge.getDependencyId()] = true);
     }
 

@@ -44,7 +44,7 @@ public class EventModule extends AbstractModule {
     }
 
     private void handleEventException(final Exception exception, final GenericEvent event, final EventObject listener) {
-        log.error(exception);
+        log.error("Exception during event execution", exception);
 
         // Sentry error
         Sentry.captureEvent(new SentryEventBuilder()

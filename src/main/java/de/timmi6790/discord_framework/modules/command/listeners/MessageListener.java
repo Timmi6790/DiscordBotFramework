@@ -148,11 +148,7 @@ public class MessageListener {
 
         final CommandParameters commandParameters = CommandParameters.of(event, spaceMatcher.group(2));
         final String commandName = spaceMatcher.group(1);
-        try {
-            this.getCommand(commandName, commandParameters)
-                    .ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
-        } catch (final Exception e) {
-            log.error(e);
-        }
+        this.getCommand(commandName, commandParameters)
+                .ifPresent(abstractCommand -> abstractCommand.runCommand(commandParameters));
     }
 }
