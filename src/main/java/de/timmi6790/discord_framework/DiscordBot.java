@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Log4j2
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.1.1";
+    public static final String BOT_VERSION = "3.1.2";
     // We need to register it here, because we can only have one global instance of the cache metrics
     public static final CacheMetricsCollector CACHE_METRICS = new CacheMetricsCollector().register();
 
