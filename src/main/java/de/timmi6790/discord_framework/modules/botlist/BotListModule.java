@@ -1,9 +1,11 @@
 package de.timmi6790.discord_framework.modules.botlist;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.discordbots.api.client.DiscordBotListAPI;
 
 import java.util.concurrent.Executors;
@@ -13,8 +15,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * This module is currently only used to sync the guild count with top.gg every 30 minutes
  */
-@EqualsAndHashCode(callSuper = true)
-public class BotListModule extends AbstractModule {
+@EqualsAndHashCode
+public class BotListModule implements Module {
+    private final DiscordBot discordBot;
+    private final ConfigModule configModule;
+
     private ScheduledFuture<?> updateTask;
 
     private String botId;
@@ -23,19 +28,31 @@ public class BotListModule extends AbstractModule {
     /**
      * Instantiates a new Bot list module.
      */
-    public BotListModule() {
-        super("BotList");
-
-        this.addDependenciesAndLoadAfter(
-                ConfigModule.class
-        );
+    public BotListModule(final DiscordBot discordBot, final ConfigModule configModule) {
+        this.discordBot = discordBot;
+        this.configModule = configModule;
     }
-    
+
     @Override
-    public boolean onEnable() {
+    public String getName() {
+        return "BotList";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
+
+    @Override
+    public void onDiscordReady(final ShardManager shardManager) {
         // Bot list server count update task
-        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getId();
-        final String discordListToken = this.getModuleOrThrow(ConfigModule.class)
+        this.botId = this.discordBot.getBaseShard().getSelfUser().getId();
+        final String discordListToken = this.configModule
                 .registerAndGetConfig(this, new Config())
                 .getDiscordListToken();
         if (!discordListToken.isEmpty()) {
@@ -45,9 +62,8 @@ public class BotListModule extends AbstractModule {
                     .build();
 
             this.updateTask = Executors.newScheduledThreadPool(1)
-                    .scheduleAtFixedRate(
-                            () -> {
-                                for (final JDA shard : this.getDiscord().getShards()) {
+                    .scheduleAtFixedRate(() -> {
+                                for (final JDA shard : shardManager.getShards()) {
                                     final JDA.ShardInfo shardInfo = shard.getShardInfo();
                                     this.botListAPI.setStats(
                                             shardInfo.getShardId(),
@@ -61,12 +77,10 @@ public class BotListModule extends AbstractModule {
                             TimeUnit.MINUTES
                     );
         }
-        return true;
     }
 
     @Override
-    public boolean onDisable() {
+    public void onDisable() {
         this.updateTask.cancel(true);
-        return true;
     }
 }

@@ -1,13 +1,9 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.modules.rank.commands.RankCommand;
+
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.rank.repository.RankRepository;
 import de.timmi6790.discord_framework.modules.rank.repository.mysql.RankRepositoryMysql;
-import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.*;
 
 import java.util.*;
@@ -15,9 +11,9 @@ import java.util.*;
 /**
  * Rank module.
  */
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @ToString
-public class RankModule extends AbstractModule {
+public class RankModule implements Module {
     /**
      * Rank id to rank mapping
      */
@@ -27,22 +23,29 @@ public class RankModule extends AbstractModule {
      * The Rank repository.
      */
     @Getter(AccessLevel.PROTECTED)
-    private RankRepository rankRepository;
+    private final RankRepository rankRepository;
 
     /**
      * Instantiates a new Rank module.
      */
-    public RankModule() {
-        super("Rank");
+    public RankModule(final RankRepositoryMysql rankRepository) {
+        this.rankRepository = rankRepository;
+        this.loadRanksFromRepository();
+    }
 
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                CommandModule.class
-        );
+    @Override
+    public String getName() {
+        return "Rank";
+    }
 
-        this.addDependencies(
-                UserDbModule.class
-        );
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     /**
@@ -62,25 +65,6 @@ public class RankModule extends AbstractModule {
     private void addRank(@NonNull final Rank rank) {
         this.rankMap.put(rank.getRepositoryId(), rank);
         this.invalidateAllPermCaches();
-    }
-
-    @Override
-    public boolean onInitialize() {
-        this.rankRepository = new RankRepositoryMysql(
-                this,
-                this.getModuleOrThrow(DatabaseModule.class),
-                this.getModuleOrThrow(UserDbModule.class),
-                this.getModuleOrThrow(PermissionsModule.class)
-        );
-        this.loadRanksFromRepository();
-
-        this.getModuleOrThrow(CommandModule.class)
-                .registerCommands(
-                        this,
-                        new RankCommand()
-                );
-        
-        return true;
     }
 
     /**

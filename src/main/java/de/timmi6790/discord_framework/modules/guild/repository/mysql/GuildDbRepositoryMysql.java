@@ -1,13 +1,17 @@
 package de.timmi6790.discord_framework.modules.guild.repository.mysql;
 
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.repository.GuildDbRepository;
 import de.timmi6790.discord_framework.modules.guild.repository.mysql.mappers.GuildDbDatabaseMapper;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.OptionalDependency;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 
+@Service
 public class GuildDbRepositoryMysql implements GuildDbRepository {
     private static final String GET_GUILD = "SELECT guild.id, discordId, banned " +
             "FROM guild " +
@@ -18,8 +22,9 @@ public class GuildDbRepositoryMysql implements GuildDbRepository {
 
     private final Jdbi database;
 
-    public GuildDbRepositoryMysql(final Jdbi database, final ShardManager discord) {
-        this.database = database;
+    //TODO: Fix ShardManager
+    public GuildDbRepositoryMysql(final DatabaseModule databaseModule, @OptionalDependency final ShardManager discord) {
+        this.database = databaseModule.getJdbi();
         this.database.registerRowMapper(
                 GuildDb.class,
                 new GuildDbDatabaseMapper(discord)

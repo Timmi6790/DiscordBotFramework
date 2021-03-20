@@ -3,8 +3,7 @@ package de.timmi6790.discord_framework;
 import de.timmi6790.commons.utilities.GsonUtilities;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.ModuleManager;
+import de.timmi6790.discord_framework.modules.new_module_manager.ModuleManager;
 import io.prometheus.client.cache.caffeine.CacheMetricsCollector;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -17,14 +16,12 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import org.reflections.Reflections;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +35,15 @@ public class DiscordBot {
 
     private static final DiscordBot INSTANCE = new DiscordBot();
 
-    private final ModuleManager moduleManager = new ModuleManager();
-    private final Set<AbstractModule> internalModules = new HashSet<>();
+    private final ModuleManager moduleManager;
     private ShardManager discord;
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, IOException {
         DiscordBot.getInstance().start();
+    }
+
+    public DiscordBot() {
+        this.moduleManager = new ModuleManager(this);
     }
 
     public static DiscordBot getInstance() {
@@ -54,22 +54,6 @@ public class DiscordBot {
     protected Config getConfig() {
         final Path mainConfigPath = Paths.get("./configs/config.json");
         return GsonUtilities.readJsonFile(mainConfigPath, Config.class);
-    }
-
-    protected Set<Class<? extends AbstractModule>> getInternalModuleClasses() {
-        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.modules");
-        return reflections.getSubTypesOf(AbstractModule.class);
-    }
-
-    protected void loadInternalModules() {
-        // Find all internal modules
-        for (final Class<? extends AbstractModule> module : this.getInternalModuleClasses()) {
-            try {
-                this.internalModules.add(module.getConstructor().newInstance());
-            } catch (final Exception e) {
-                log.error("Trying to initialize " + module, e);
-            }
-        }
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
@@ -87,9 +71,6 @@ public class DiscordBot {
 
         final Config config = firstInnit ? new Config() : this.getConfig();
         final Config newConfig = ReflectionUtilities.deepCopy(config);
-        for (final AbstractModule module : this.internalModules) {
-            newConfig.getEnabledModules().putIfAbsent(module.getModuleName(), Boolean.TRUE);
-        }
 
         GsonUtilities.saveToJsonIfChanged(configPath, config, newConfig);
         if (firstInnit) {
@@ -100,8 +81,7 @@ public class DiscordBot {
         return true;
     }
 
-    public void start() throws TopicalSortCycleException, LoginException, IOException {
-        this.loadInternalModules();
+    public void start() throws LoginException, IOException {
         if (!this.setup()) {
             return;
         }
@@ -114,33 +94,25 @@ public class DiscordBot {
             });
         }
 
-        // Modules
-        for (final AbstractModule module : this.internalModules) {
-            if (Boolean.TRUE.equals(mainConfig.getEnabledModules().getOrDefault(module.getModuleName(), Boolean.TRUE))) {
-                this.moduleManager.registerModule(module);
-            }
-        }
-        this.moduleManager.loadExternalModules();
+        // Model Manager
+        this.moduleManager
+                .loadModules();
 
         // Discord
-        final Set<GatewayIntent> requiredGatewayIntents = new HashSet<>();
-        for (final AbstractModule loadedModule : this.moduleManager.getLoadedModules().values()) {
-            requiredGatewayIntents.addAll(loadedModule.getRequiredGatewayIntents());
-        }
-
+        final Set<GatewayIntent> requiredGatewayIntents = this.moduleManager.getGatewayIntents();
         log.debug("Starting discord with {} gateway intents.", requiredGatewayIntents);
         this.discord = DefaultShardManagerBuilder.createLight(mainConfig.getDiscordToken(), requiredGatewayIntents)
                 .setStatus(OnlineStatus.ONLINE)
                 .build();
 
         log.debug("Initialize all modules");
-        this.moduleManager.initializeAll();
+        // this.moduleManager.initializeAll();
         log.debug("Await discord ready");
         log.debug("Start all modules");
         // Delay the module start by 2 seconds to await discord
         // This is a temporary fix, because the awaitReady method got the bot stuck lately
         Executors.newSingleThreadScheduledExecutor().schedule(
-                this.moduleManager::startAll,
+                () -> this.moduleManager.onDiscordReady(this.discord),
                 2, TimeUnit.SECONDS
         );
         log.debug("Done starting all modules");

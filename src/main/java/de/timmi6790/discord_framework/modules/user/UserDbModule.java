@@ -5,17 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.modules.rank.RankModule;
-import de.timmi6790.discord_framework.modules.setting.SettingModule;
-import de.timmi6790.discord_framework.modules.stat.StatModule;
-import de.timmi6790.discord_framework.modules.user.commands.SettingsCommand;
-import de.timmi6790.discord_framework.modules.user.commands.UserCommand;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.user.listeners.DsgvoListener;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.modules.user.repository.mysql.UserDbRepositoryMysql;
@@ -30,9 +21,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Getter
-public class UserDbModule extends AbstractModule {
+public class UserDbModule implements Module {
     private final LoadingCache<Long, User> discordUserCache = Caffeine.newBuilder()
             .recordStats()
             .expireAfterWrite(5, TimeUnit.MINUTES)
@@ -49,26 +40,18 @@ public class UserDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
-    private UserDbRepository userDbRepository;
+    private final DiscordBot discordBot;
+    private final UserDbRepository userDbRepository;
     private ShardManager discord;
 
-    public UserDbModule() {
-        super("UserDb");
+    public UserDbModule(final UserDbRepositoryMysql userDbRepository,
+                        final DiscordBot discordBot,
+                        final EventModule eventModule) {
+        this.discordBot = discordBot;
+        this.userDbRepository = userDbRepository;
 
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                PermissionsModule.class,
-                CommandModule.class,
-                EventModule.class,
-                RankModule.class
-        );
-
-        this.addLoadAfterDependencies(
-                SettingModule.class
-        );
-
-        this.addDependencies(
-                CommandModule.class
+        eventModule.addEventListeners(
+                new DsgvoListener(this)
         );
 
         // Register metrics
@@ -76,38 +59,23 @@ public class UserDbModule extends AbstractModule {
     }
 
     @Override
-    public boolean onInitialize() {
-        this.discord = super.getDiscord();
-        this.userDbRepository = new UserDbRepositoryMysql(
-                this,
-                this.getModuleOrThrow(DatabaseModule.class),
-                this.getModuleOrThrow(EventModule.class),
-                this.getModuleOrThrow(RankModule.class),
-                this.getModule(AchievementModule.class).orElse(null),
-                this.getModule(SettingModule.class).orElse(null),
-                this.getModule(StatModule.class).orElse(null)
-        );
+    public String getName() {
+        return "UserDb";
+    }
 
-        this.getModuleOrThrow(CommandModule.class)
-                .registerCommands(
-                        this,
-                        new UserCommand()
-                );
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
 
-        this.getModuleOrThrow(EventModule.class)
-                .addEventListeners(
-                        new DsgvoListener(this)
-                );
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
 
-        if (this.getModule(SettingModule.class).isPresent()) {
-            this.getModuleOrThrow(CommandModule.class)
-                    .registerCommands(
-                            this,
-                            new SettingsCommand()
-                    );
-        }
-        
-        return true;
+    @Override
+    public void onDiscordReady(final ShardManager shardManager) {
+        this.discord = shardManager;
     }
 
     protected UserDb create(final long discordId) {

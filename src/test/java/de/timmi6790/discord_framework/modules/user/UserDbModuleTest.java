@@ -1,51 +1,24 @@
 package de.timmi6790.discord_framework.modules.user;
 
-import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.ModuleManager;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 class UserDbModuleTest {
     private static final long TEST_DISCORD_ID = 305911488697204736L;
     private static final long TEST_DISCORD_ID2 = 168049519831810048L;
 
-    private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
+    private static final UserDbModule USER_DB_MODULE = spy(UserDbModule.class);
     private static final EventModule EVENT_MODULE = new EventModule();
 
     @BeforeAll
     static void setUp() {
-        final ModuleManager moduleManager = mock(ModuleManager.class);
 
-        final CommandModule commandModule = spy(new CommandModule());
-        doNothing().when(commandModule).registerCommands(any(), any());
-
-        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
-        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
-        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(EVENT_MODULE);
-
-        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
-            final DiscordBot bot = mock(DiscordBot.class);
-            when(bot.getModuleManager()).thenReturn(moduleManager);
-
-            final ShardManager discord = mock(ShardManager.class);
-            when(bot.getDiscord()).thenReturn(discord);
-
-            botMock.when(DiscordBot::getInstance).thenReturn(bot);
-
-            USER_DB_MODULE.onInitialize();
-        }
     }
 
     @Test

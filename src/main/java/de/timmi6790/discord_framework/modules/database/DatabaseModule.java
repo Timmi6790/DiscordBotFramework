@@ -1,7 +1,8 @@
 package de.timmi6790.discord_framework.modules.database;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
+
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -13,26 +14,52 @@ import java.util.Map;
 /**
  * Database module.
  */
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Getter
 @Log4j2
-public class DatabaseModule extends AbstractModule {
+public class DatabaseModule implements Module {
     private static final String TEST_QUERY = "SELECT 1;";
 
     /**
      * Database access point
      */
-    private Jdbi jdbi;
+    private final Jdbi jdbi;
 
     /**
      * Instantiates a new Database module.
      */
-    public DatabaseModule() {
-        super("Database");
+    public DatabaseModule(final ConfigModule configModule) {
+        final Config databaseConfig = configModule
+                .registerAndGetConfig(this, new Config());
 
-        this.addDependenciesAndLoadAfter(
-                ConfigModule.class
+        this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
+        // Check if the connection is valid before doing any futher actions
+        if (!this.isConnectedToDatabase()) {
+            log.error("Invalid database credentials");
+            // return false;
+            return;
+        }
+
+        this.executeDatabaseVersioning(
+                databaseConfig.getUrl(),
+                databaseConfig.getName(),
+                databaseConfig.getPassword()
         );
+    }
+
+    @Override
+    public String getName() {
+        return "Database";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     /**
@@ -60,28 +87,12 @@ public class DatabaseModule extends AbstractModule {
      * @param user     the user
      * @param password the password
      */
-    private void databaseVersioning(final String url, final String user, final String password) {
+    private void executeDatabaseVersioning(final String url, final String user, final String password) {
         final Flyway flyway = Flyway.configure()
                 .dataSource(url, user, password)
                 .baselineOnMigrate(true)
                 .load();
         flyway.migrate();
-    }
-
-    @Override
-    public boolean onInitialize() {
-        final Config databaseConfig = this.getModuleOrThrow(ConfigModule.class)
-                .registerAndGetConfig(this, new Config());
-
-        this.jdbi = Jdbi.create(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
-        // Check if the connection is valid before doing any futher actions
-        if (!this.isConnectedToDatabase()) {
-            log.error("Invalid database credentials");
-            return false;
-        }
-
-        this.databaseVersioning(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
-        return true;
     }
 
     /**

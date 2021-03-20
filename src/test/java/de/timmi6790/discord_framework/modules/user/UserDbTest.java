@@ -3,13 +3,13 @@ package de.timmi6790.discord_framework.modules.user;
 import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
 import de.timmi6790.discord_framework.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.ModuleManager;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
@@ -39,17 +39,16 @@ class UserDbTest {
     private static final AtomicInteger RANK_ID = new AtomicInteger(0);
 
     private static final ModuleManager moduleManager = mock(ModuleManager.class);
-    private static final RankModule rankModule = spy(new RankModule());
-    private static final UserDbModule userDbModule = spy(new UserDbModule());
-    private static final PermissionsModule permissionsModule = spy(new PermissionsModule());
-    private static final AchievementModule achievementModule = spy(new AchievementModule());
-    private static final SettingModule settingModule = spy(new SettingModule());
-    private static final StatModule statModule = spy(new StatModule());
+    private static final RankModule rankModule = spy(RankModule.class);
+    private static final UserDbModule userDbModule = spy(UserDbModule.class);
+    private static final PermissionsModule permissionsModule = spy(PermissionsModule.class);
+    private static final AchievementModule achievementModule = spy(AchievementModule.class);
+    private static final SettingModule settingModule = spy(SettingModule.class);
+    private static final StatModule statModule = spy(StatModule.class);
 
     @BeforeAll
     static void setUp() {
         final CommandModule commandModule = mock(CommandModule.class);
-        when(commandModule.getModuleManager()).thenReturn(moduleManager);
 
         final EventModule eventModule = mock(EventModule.class);
         when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
@@ -77,13 +76,6 @@ class UserDbTest {
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
 
-            eventModule.onInitialize();
-            permissionsModule.onInitialize();
-            settingModule.onInitialize();
-            achievementModule.onInitialize();
-            statModule.onInitialize();
-            rankModule.onInitialize();
-            userDbModule.onInitialize();
         }
     }
 

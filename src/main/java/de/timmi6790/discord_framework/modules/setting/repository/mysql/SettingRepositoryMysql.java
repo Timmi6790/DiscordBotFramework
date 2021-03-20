@@ -2,8 +2,10 @@ package de.timmi6790.discord_framework.modules.setting.repository.mysql;
 
 import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepository;
 
+@Service
 public class SettingRepositoryMysql implements SettingRepository {
     private static final String SETTING_NAME = "settingName";
 

@@ -5,6 +5,8 @@ import de.timmi6790.discord_framework.modules.channel.repository.ChannelReposito
 import de.timmi6790.discord_framework.modules.channel.repository.mysql.mappers.ChannelDbDatabaseMapper;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.OptionalDependency;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jdbi.v3.core.Jdbi;
 
@@ -13,6 +15,7 @@ import java.util.Optional;
 /**
  * Mysql channel repository implementation
  */
+@Service
 public class ChannelRepositoryMysql implements ChannelRepository {
     private static final String GET_CHANNEL = "SELECT channel.id, channel.discordId, disabled, guild.discordId serverDiscordId " +
             "FROM channel " +
@@ -31,7 +34,8 @@ public class ChannelRepositoryMysql implements ChannelRepository {
      * @param databaseModule      the database module
      * @param guildDbModule       the guildDb module
      */
-    public ChannelRepositoryMysql(final ShardManager discordShardManager,
+    //TODO: Fix ShardManager
+    public ChannelRepositoryMysql(@OptionalDependency final ShardManager discordShardManager,
                                   final DatabaseModule databaseModule,
                                   final GuildDbModule guildDbModule) {
         this.database = databaseModule.getJdbi();

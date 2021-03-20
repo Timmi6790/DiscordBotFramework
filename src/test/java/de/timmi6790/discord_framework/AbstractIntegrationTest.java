@@ -17,13 +17,13 @@ public abstract class AbstractIntegrationTest {
     private static final MariaDBContainer MARIA_DB_CONTAINER = new MariaDBContainer();
 
     @Spy
-    public static final DatabaseModule databaseModule = Mockito.spy(new DatabaseModule());
+    public static final DatabaseModule databaseModule = Mockito.spy(DatabaseModule.class);
 
     static {
         MARIA_DB_CONTAINER.start();
 
         final ConfigModule configModule = Mockito.spy(new ConfigModule());
-        doReturn(configModule).when(databaseModule).getModuleOrThrow(ConfigModule.class);
+        // doReturn(configModule).when(databaseModule).getModuleOrThrow(ConfigModule.class);
 
         final Config databaseConfig = new Config();
         databaseConfig.setUrl(MARIA_DB_CONTAINER.getJdbcUrl());
@@ -31,6 +31,6 @@ public abstract class AbstractIntegrationTest {
         databaseConfig.setPassword(MARIA_DB_CONTAINER.getPassword());
 
         doReturn(databaseConfig).when(configModule).registerAndGetConfig(databaseModule, new Config());
-        databaseModule.onInitialize();
+        // databaseModule.onInitialize();
     }
 }

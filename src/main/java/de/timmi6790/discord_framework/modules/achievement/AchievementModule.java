@@ -1,10 +1,9 @@
 package de.timmi6790.discord_framework.modules.achievement;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.achievement.repository.AchievementRepository;
 import de.timmi6790.discord_framework.modules.achievement.repository.mysql.AchievementRepositoryMysql;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,32 +16,36 @@ import java.util.Optional;
 /**
  * Handles all achievements inside the bot
  */
-@EqualsAndHashCode(callSuper = true)
-public class AchievementModule extends AbstractModule {
+@EqualsAndHashCode
+public class AchievementModule implements Module {
     @Getter
     private final Map<Integer, AbstractAchievement> achievements = new HashMap<>();
     private final Map<String, Integer> nameIdMatching = new CaseInsensitiveMap<>();
 
-    private AchievementRepository achievementRepository;
-    private EventModule eventModule;
+    private final AchievementRepository achievementRepository;
+    private final EventModule eventModule;
 
     /**
      * Instantiates a new Achievement module.
      */
-    public AchievementModule() {
-        super("Achievement");
-
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                EventModule.class
-        );
+    public AchievementModule(final AchievementRepositoryMysql achievementRepository, final EventModule eventModule) {
+        this.achievementRepository = achievementRepository;
+        this.eventModule = eventModule;
     }
 
     @Override
-    public boolean onInitialize() {
-        this.achievementRepository = new AchievementRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
-        this.eventModule = this.getModuleOrThrow(EventModule.class);
-        return true;
+    public String getName() {
+        return "Achievement";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     /**
@@ -52,7 +55,7 @@ public class AchievementModule extends AbstractModule {
      * @param module       the module
      * @param achievements the achievements
      */
-    public void registerAchievements(@NonNull final AbstractModule module,
+    public void registerAchievements(@NonNull final Module module,
                                      final AbstractAchievement... achievements) {
         for (final AbstractAchievement achievement : achievements) {
             this.registerAchievement(module, achievement);
@@ -67,7 +70,7 @@ public class AchievementModule extends AbstractModule {
      * @param achievement the achievement
      * @return did register correctly
      */
-    public boolean registerAchievement(@NonNull final AbstractModule module,
+    public boolean registerAchievement(@NonNull final Module module,
                                        @NonNull final AbstractAchievement achievement) {
         if (this.achievements.containsKey(achievement.getRepositoryId())) {
             return false;

@@ -36,7 +36,7 @@ public class CacheRemoveListener implements RemovalListener<Long, EmoteReactionM
             }
         }
 
-        final MessageChannel channel = this.emoteReactionModule.getDiscord().getTextChannelById(value.getChannelId());
+        final MessageChannel channel = this.emoteReactionModule.getShardManager().getTextChannelById(value.getChannelId());
         if (channel == null) {
             return;
         }

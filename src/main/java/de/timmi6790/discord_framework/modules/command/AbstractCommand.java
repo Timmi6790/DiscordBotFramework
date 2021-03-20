@@ -3,8 +3,6 @@ package de.timmi6790.discord_framework.modules.command;
 import de.timmi6790.commons.utilities.EnumUtilities;
 import de.timmi6790.commons.utilities.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.command.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.modules.command.exceptions.CommandReturnException;
@@ -15,6 +13,8 @@ import de.timmi6790.discord_framework.modules.command.property.properties.Requir
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
+import de.timmi6790.discord_framework.modules.new_module_manager.ModuleManager;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
@@ -32,6 +32,7 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.Permission;
@@ -75,6 +76,7 @@ public abstract class AbstractCommand {
     private static final Pattern DISCORD_USER_ID_PATTERN = Pattern.compile("^(<@[!&])?(\\d*)>?$");
 
     // Modules
+    @Getter(lazy = true)
     private final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
     private final PermissionsModule permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
     private final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
@@ -87,7 +89,7 @@ public abstract class AbstractCommand {
     private final String[] aliasNames;
     private Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> propertiesMap = new HashMap<>();
     private int dbId = -1;
-    private Class<? extends AbstractModule> registeredModule;
+    private Class<? extends Module> registeredModule;
     private int permissionId = -1;
     private String category;
     private String description;
@@ -159,11 +161,11 @@ public abstract class AbstractCommand {
         return this.getDiscordBot().getModuleManager();
     }
 
-    protected final <T extends AbstractModule> Optional<T> getModule(final Class<T> clazz) {
+    protected final <T extends Module> Optional<T> getModule(final Class<T> clazz) {
         return this.getModuleManager().getModule(clazz);
     }
 
-    protected final <T extends AbstractModule> T getModuleOrThrow(final Class<T> clazz) {
+    protected final <T extends Module> T getModuleOrThrow(final Class<T> clazz) {
         return this.getModuleManager().getModuleOrThrow(clazz);
     }
 

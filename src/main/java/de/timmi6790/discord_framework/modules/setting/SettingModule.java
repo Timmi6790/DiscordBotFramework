@@ -1,58 +1,66 @@
 package de.timmi6790.discord_framework.modules.setting;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.setting.repository.SettingRepository;
 import de.timmi6790.discord_framework.modules.setting.repository.mysql.SettingRepositoryMysql;
 import de.timmi6790.discord_framework.modules.setting.settings.CommandAutoCorrectSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@EqualsAndHashCode(callSuper = true)
-public class SettingModule extends AbstractModule {
+@EqualsAndHashCode
+@Log4j2
+public class SettingModule implements Module {
     @Getter
     private final Map<Integer, AbstractSetting<?>> settings = new HashMap<>();
     private final Map<String, Integer> nameIdMatching = new CaseInsensitiveMap<>();
     private final Map<String, String> aliasNameMatcher = new CaseInsensitiveMap<>();
 
-    private SettingRepository settingRepository;
-    private PermissionsModule permissionsModule;
+    private final SettingRepository settingRepository;
+    private final PermissionsModule permissionsModule;
 
-    public SettingModule() {
-        super("Setting");
+    public SettingModule(final SettingRepositoryMysql settingRepository, final PermissionsModule permissionsModule) {
+        System.out.println(settingRepository + " " + permissionsModule);
 
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                PermissionsModule.class
-        );
-    }
-
-    @Override
-    public boolean onInitialize() {
-        this.settingRepository = new SettingRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
-        this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
+        this.settingRepository = settingRepository;
+        this.permissionsModule = permissionsModule;
 
         this.registerSettings(
                 this,
                 new CommandAutoCorrectSetting()
         );
-
-        return true;
     }
 
-    public void registerSettings(final AbstractModule module, final AbstractSetting<?>... settings) {
+    @Override
+    public String getName() {
+        return "Setting";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
+
+    public void registerSettings(final Module module, final AbstractSetting<?>... settings) {
         for (final AbstractSetting<?> setting : settings) {
             this.registerSetting(module, setting);
         }
     }
 
-    public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
+    public void registerSetting(final Module module, final AbstractSetting<?> setting) {
+        log.debug("Register setting {}", setting.getStatName());
         setting.setInternalName(this.generateInternalName(module, "setting", setting.getStatName()))
                 .setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()))
                 .setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));

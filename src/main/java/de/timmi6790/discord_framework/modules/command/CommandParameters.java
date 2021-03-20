@@ -2,11 +2,11 @@ package de.timmi6790.discord_framework.modules.command;
 
 import com.google.common.base.Splitter;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.ModuleManager;
 import de.timmi6790.discord_framework.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.ModuleManager;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.Data;

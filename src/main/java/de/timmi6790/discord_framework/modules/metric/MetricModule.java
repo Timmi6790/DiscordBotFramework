@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.modules.metric;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
+
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import io.prometheus.client.Gauge;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -9,8 +10,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-@EqualsAndHashCode(callSuper = true)
-public class MetricModule extends AbstractModule {
+@EqualsAndHashCode
+public class MetricModule implements Module {
     private static final Gauge DISCORD_GUILDS = Gauge.build()
             .name("discord_guilds")
             .help("Discord guilds.")
@@ -22,27 +23,35 @@ public class MetricModule extends AbstractModule {
             .register();
 
     private ScheduledFuture<?> executorService;
-
-    public MetricModule() {
-        super("Metric");
+    
+    @Override
+    public String getName() {
+        return "Metric";
     }
 
     @Override
-    public boolean onEnable() {
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
+
+    @Override
+    public void onDiscordReady(ShardManager shardManager) {
         this.executorService = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 () -> {
-                    final ShardManager discord = this.getDiscord();
-                    DISCORD_GUILDS.set(discord.getGuilds().size());
-                    DISCORD_SHARDS_RUNNING.set(discord.getShardsRunning());
+                    DISCORD_GUILDS.set(shardManager.getGuilds().size());
+                    DISCORD_SHARDS_RUNNING.set(shardManager.getShardsRunning());
                 },
                 0, 10, TimeUnit.SECONDS
         );
-        return true;
     }
 
     @Override
-    public boolean onDisable() {
+    public void onDisable() {
         this.executorService.cancel(true);
-        return true;
     }
 }

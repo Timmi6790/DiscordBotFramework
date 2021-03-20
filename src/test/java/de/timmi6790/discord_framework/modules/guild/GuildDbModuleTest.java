@@ -1,14 +1,8 @@
 package de.timmi6790.discord_framework.modules.guild;
 
-import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.setting.SettingModule;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 
@@ -16,28 +10,15 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.*;
 
 class GuildDbModuleTest {
     private static final AtomicLong DISCORD_IDS = new AtomicLong(0);
     @Spy
-    private static final GuildDbModule guildDbModule = Mockito.spy(new GuildDbModule());
+    private static final GuildDbModule guildDbModule = Mockito.spy(GuildDbModule.class);
 
     @BeforeAll
     static void setUp() {
-        doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(Optional.empty()).when(guildDbModule).getModule(SettingModule.class);
-
-        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
-            final DiscordBot bot = mock(DiscordBot.class);
-
-            final ShardManager discord = mock(ShardManager.class);
-            when(bot.getDiscord()).thenReturn(discord);
-
-            botMock.when(DiscordBot::getInstance).thenReturn(bot);
-
-            guildDbModule.onInitialize();
-        }
+   
     }
 
     @Test

@@ -1,12 +1,11 @@
 package de.timmi6790.discord_framework.modules.rank.repository.mysql;
 
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.rank.Rank;
-import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.rank.repository.RankRepository;
 import de.timmi6790.discord_framework.modules.rank.repository.mysql.mappers.RankDatabaseMapper;
-import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
@@ -14,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Service
 public class RankRepositoryMysql implements RankRepository {
     private static final String DATABASE_ID = "databaseId";
     private static final String RANK_ID = "rankId";
@@ -26,7 +26,7 @@ public class RankRepositoryMysql implements RankRepository {
     private static final String DELETE_RANK = "DELETE FROM rank WHERE rank.id = :databaseId LIMIT 1;";
 
     private static final String SET_PLAYERS_PRIMARY_RANK_TO_DEFAULT_ON_RANK_DELETE = "UPDATE player SET player.primary_rank = 1 WHERE player.primary_rank = :databaseId;";
-    
+
     private static final String INSERT_RANK = "INSERT INTO `rank`(rank_name) VALUES(:rankName);";
 
     private static final String GET_LAST_INSERT_ID = "SELECT LAST_INSERT_ID();";
@@ -65,15 +65,15 @@ public class RankRepositoryMysql implements RankRepository {
      * @param userDbModule      the user db module
      * @param permissionsModule the permissions module
      */
-    public RankRepositoryMysql(final RankModule rankModule,
-                               final DatabaseModule databaseModule,
-                               final UserDbModule userDbModule,
+    public RankRepositoryMysql(final DatabaseModule databaseModule,
                                final PermissionsModule permissionsModule) {
         this.database = databaseModule.getJdbi();
+
+        // TODO: Fix Depency withself
         this.database.registerRowMapper(
                 new RankDatabaseMapper(
-                        rankModule,
-                        userDbModule,
+                        null,
+                        null,
                         permissionsModule
                 )
         );

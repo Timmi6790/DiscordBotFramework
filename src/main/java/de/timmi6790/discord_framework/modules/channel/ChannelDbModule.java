@@ -4,12 +4,9 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.channel.repository.ChannelRepository;
 import de.timmi6790.discord_framework.modules.channel.repository.mysql.ChannelRepositoryMysql;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -20,8 +17,8 @@ import java.util.concurrent.locks.Lock;
 /**
  * Handles all channel db instances
  */
-@EqualsAndHashCode(callSuper = true)
-public class ChannelDbModule extends AbstractModule {
+@EqualsAndHashCode
+public class ChannelDbModule implements Module {
     private final Striped<Lock> channelCreateLock = Striped.lock(64);
 
     @Getter
@@ -30,32 +27,31 @@ public class ChannelDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
-    private ChannelRepository channelRepository;
+    private final ChannelRepository channelRepository;
 
     /**
      * Instantiates a new Channel db module.
      */
-    public ChannelDbModule() {
-        super("ChannelDb");
-
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                GuildDbModule.class,
-                PermissionsModule.class
-        );
+    public ChannelDbModule(final ChannelRepositoryMysql channelRepositoryMysql) {
+        this.channelRepository = channelRepositoryMysql;
 
         // Register metrics
         DiscordBot.CACHE_METRICS.addCache("channelDB_channel_cache", this.cache);
     }
 
     @Override
-    public boolean onInitialize() {
-        this.channelRepository = new ChannelRepositoryMysql(
-                this.getDiscord(),
-                this.getModuleOrThrow(DatabaseModule.class),
-                this.getModuleOrThrow(GuildDbModule.class)
-        );
-        return true;
+    public String getName() {
+        return "ChannelDb";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     /**

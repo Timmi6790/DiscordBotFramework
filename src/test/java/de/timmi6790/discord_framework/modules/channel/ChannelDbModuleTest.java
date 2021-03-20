@@ -1,21 +1,14 @@
 package de.timmi6790.discord_framework.modules.channel;
 
-import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.ModuleManager;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
-import de.timmi6790.discord_framework.modules.setting.SettingModule;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Spy;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 class ChannelDbModuleTest {
     private static final long TEST_GUILD_ID = 405911488697204736L;
@@ -25,33 +18,13 @@ class ChannelDbModuleTest {
     private static final long TEST_CHANNEL_ID3 = 308911488647204736L;
 
     @Spy
-    private static final GuildDbModule guildDbModule = spy(new GuildDbModule());
+    private static final GuildDbModule guildDbModule = spy(GuildDbModule.class);
     @Spy
-    private static final ChannelDbModule channelDbModule = spy(new ChannelDbModule());
+    private static final ChannelDbModule channelDbModule = spy(ChannelDbModule.class);
 
     @BeforeAll
     static void setup() {
-        final ModuleManager moduleManager = mock(ModuleManager.class);
-        when(moduleManager.getModuleOrThrow(DatabaseModule.class)).thenReturn(AbstractIntegrationTest.databaseModule);
-        when(moduleManager.getModuleOrThrow(GuildDbModule.class)).thenReturn(guildDbModule);
-        when(moduleManager.getModuleOrThrow(ChannelDbModule.class)).thenReturn(channelDbModule);
-        when(moduleManager.getModule(SettingModule.class)).thenReturn(Optional.empty());
 
-        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
-            final DiscordBot bot = mock(DiscordBot.class);
-            when(bot.getModuleManager()).thenReturn(moduleManager);
-
-            final ShardManager discord = mock(ShardManager.class);
-            when(bot.getDiscord()).thenReturn(discord);
-
-            botMock.when(DiscordBot::getInstance).thenReturn(bot);
-
-            guildDbModule.onInitialize();
-            channelDbModule.onInitialize();
-        }
-
-        // We need this to exist;
-        guildDbModule.getOrCreate(TEST_GUILD_ID);
     }
 
     @Test

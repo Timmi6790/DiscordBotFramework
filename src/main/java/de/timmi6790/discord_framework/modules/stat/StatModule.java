@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.modules.stat;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.stat.repository.StatRepository;
 import de.timmi6790.discord_framework.modules.stat.repository.mysql.StatRepositoryMysql;
 import lombok.EqualsAndHashCode;
@@ -13,43 +13,47 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@EqualsAndHashCode(callSuper = true)
-public class StatModule extends AbstractModule {
+@EqualsAndHashCode
+public class StatModule implements Module {
     @Getter
     private final Map<Integer, AbstractStat> stats = new ConcurrentHashMap<>();
     private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
 
-    private StatRepository statRepository;
-    private EventModule eventModule;
+    private final StatRepository statRepository;
+    private final EventModule eventModule;
 
-    public StatModule() {
-        super("StatModule");
+    public StatModule(final StatRepositoryMysql statRepository, final EventModule eventModule) {
+        this.statRepository = statRepository;
 
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                EventModule.class
-        );
+        this.eventModule = eventModule;
     }
 
     @Override
-    public boolean onInitialize() {
-        this.statRepository = new StatRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
-        this.eventModule = this.getModuleOrThrow(EventModule.class);
+    public String getName() {
+        return "StatModule";
+    }
 
-        return true;
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     public boolean hasStat(final AbstractStat stat) {
         return this.getStat(stat.getDatabaseId()).isPresent();
     }
 
-    public void registerStats(@NonNull final AbstractModule module, final AbstractStat... stats) {
+    public void registerStats(@NonNull final Module module, final AbstractStat... stats) {
         for (final AbstractStat stat : stats) {
             this.registerStat(module, stat);
         }
     }
 
-    public boolean registerStat(@NonNull final AbstractModule module, @NonNull final AbstractStat stat) {
+    public boolean registerStat(@NonNull final Module module, @NonNull final AbstractStat stat) {
         if (this.hasStat(stat)) {
             return false;
         }

@@ -1,5 +1,7 @@
 package de.timmi6790.discord_framework.modules.permisssion.repository.mysql;
 
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import de.timmi6790.discord_framework.modules.permisssion.repository.PermissionRepository;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
@@ -9,6 +11,7 @@ import java.util.Optional;
 /**
  * Mysql implementation of the permission repository.
  */
+@Service
 public class PermissionRepositoryMysql implements PermissionRepository {
     private static final String GET_PERMISSION_ID = "SELECT id " +
             "FROM `permission` " +
@@ -23,8 +26,8 @@ public class PermissionRepositoryMysql implements PermissionRepository {
      *
      * @param database the database
      */
-    public PermissionRepositoryMysql(final Jdbi database) {
-        this.database = database;
+    public PermissionRepositoryMysql(final DatabaseModule database) {
+        this.database = database.getJdbi();
     }
 
     @Override

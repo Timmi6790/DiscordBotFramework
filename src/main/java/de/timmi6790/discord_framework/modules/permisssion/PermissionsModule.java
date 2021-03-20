@@ -1,8 +1,7 @@
 package de.timmi6790.discord_framework.modules.permisssion;
 
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.permisssion.repository.PermissionRepository;
 import de.timmi6790.discord_framework.modules.permisssion.repository.mysql.PermissionRepositoryMysql;
 import lombok.EqualsAndHashCode;
@@ -15,30 +14,32 @@ import java.util.Optional;
 /**
  * Stores the permission nodes for all perms(player, group). With an id and perm_node
  */
-@EqualsAndHashCode(callSuper = true)
-public class PermissionsModule extends AbstractModule {
+@EqualsAndHashCode
+public class PermissionsModule implements Module {
     private final Map<Integer, String> permissionsMap = new HashMap<>();
 
-    private PermissionRepository permissionRepository;
+    private final PermissionRepository permissionRepository;
 
     /**
      * Instantiates a new Permissions module.
      */
-    public PermissionsModule() {
-        super("Permissions");
-
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class
-        );
+    public PermissionsModule(final PermissionRepositoryMysql permissionRepository) {
+        this.permissionRepository = permissionRepository;
     }
 
     @Override
-    public boolean onInitialize() {
-        this.permissionRepository = new PermissionRepositoryMysql(
-                this.getModuleOrThrow(DatabaseModule.class).getJdbi()
-        );
+    public String getName() {
+        return "Permissions";
+    }
 
-        return true;
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     private int getPermissionIdOrInsert(@NonNull final String permissionNode) {

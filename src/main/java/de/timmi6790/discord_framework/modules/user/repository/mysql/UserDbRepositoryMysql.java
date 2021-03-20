@@ -3,11 +3,11 @@ package de.timmi6790.discord_framework.modules.user.repository.mysql;
 import de.timmi6790.discord_framework.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import de.timmi6790.discord_framework.modules.rank.RankModule;
 import de.timmi6790.discord_framework.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.modules.stat.StatModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
-import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.modules.user.repository.mysql.mappers.UserDbDatabaseMapper;
 import lombok.NonNull;
@@ -16,6 +16,7 @@ import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 
+@Service
 public class UserDbRepositoryMysql implements UserDbRepository {
     private static final String PLAYER_ID = "playerId";
     private static final String DATABASE_ID = "databaseId";
@@ -55,18 +56,17 @@ public class UserDbRepositoryMysql implements UserDbRepository {
 
     private final Jdbi database;
 
-    public UserDbRepositoryMysql(final UserDbModule userDbModule,
-                                 final DatabaseModule databaseModule,
+    public UserDbRepositoryMysql(final DatabaseModule databaseModule,
                                  final EventModule eventModule,
                                  final RankModule rankModule,
                                  @Nullable final AchievementModule achievementModule,
                                  @Nullable final SettingModule settingModule,
                                  @Nullable final StatModule statModule) {
         this.database = databaseModule.getJdbi();
+        // TODO: Fix dependency with self
         this.database.registerRowMapper(
-                UserDb.class,
                 new UserDbDatabaseMapper(
-                        userDbModule,
+                        null,
                         eventModule,
                         rankModule,
                         achievementModule,

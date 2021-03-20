@@ -3,11 +3,11 @@ package de.timmi6790.discord_framework.modules.emote_reaction;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.AbstractModule;
 import de.timmi6790.discord_framework.modules.emote_reaction.cache.CacheExpireAfter;
 import de.timmi6790.discord_framework.modules.emote_reaction.cache.CacheRemoveListener;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,14 +17,15 @@ import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Getter
-public class EmoteReactionModule extends AbstractModule {
+public class EmoteReactionModule implements Module {
     private static final int ACTIVE_EMOTES_LIMIT = 6;
 
     private final Map<Long, AtomicInteger> activeEmotesPerPlayer = new ConcurrentHashMap<>();
@@ -35,21 +36,33 @@ public class EmoteReactionModule extends AbstractModule {
             .removalListener(new CacheRemoveListener(this))
             .build();
 
-    public EmoteReactionModule() {
-        super("EmoteReaction");
+    private ShardManager shardManager;
 
-        this.addDependenciesAndLoadAfter(
-                EventModule.class
-        );
+    public EmoteReactionModule(final EventModule eventModule) {
+        eventModule.addEventListener(this);
 
         // Register metrics
         DiscordBot.CACHE_METRICS.addCache("emote_reaction_message_cache", this.emoteMessageCache);
     }
 
     @Override
-    public boolean onInitialize() {
-        this.getModuleOrThrow(EventModule.class).addEventListener(this);
-        return true;
+    public String getName() {
+        return "EmoteReaction";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
+
+    @Override
+    public void onDiscordReady(final ShardManager shardManager) {
+        this.shardManager = shardManager;
     }
 
     public void addEmoteReactionMessage(@NonNull final Message message,
@@ -90,7 +103,7 @@ public class EmoteReactionModule extends AbstractModule {
         }
 
         if (emoteReactionMessage.isDeleteMessage()) {
-            final MessageChannel channel = this.getDiscord().getTextChannelById(emoteReactionMessage.getChannelId());
+            final MessageChannel channel = event.getJDA().getTextChannelById(emoteReactionMessage.getChannelId());
             if (channel != null) {
                 channel.deleteMessageById(event.getMessageIdLong()).queue();
             }

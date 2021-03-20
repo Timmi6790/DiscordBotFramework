@@ -4,13 +4,9 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.guild.repository.GuildDbRepository;
 import de.timmi6790.discord_framework.modules.guild.repository.mysql.GuildDbRepositoryMysql;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -18,9 +14,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Getter
-public class GuildDbModule extends AbstractModule {
+public class GuildDbModule implements Module {
     private final Striped<Lock> guildCreateLock = Striped.lock(64);
     private final Cache<Long, GuildDb> cache = Caffeine.newBuilder()
             .recordStats()
@@ -28,35 +24,28 @@ public class GuildDbModule extends AbstractModule {
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
-    private GuildDbRepository guildDbRepository;
+    private final GuildDbRepository guildDbRepository;
 
-    public GuildDbModule() {
-        super("Guild");
-
-        this.addDependenciesAndLoadAfter(
-                DatabaseModule.class,
-                PermissionsModule.class
-        );
-
-        this.addLoadAfterDependencies(
-                SettingModule.class
-        );
-
-        this.addDependencies(
-                CommandModule.class
-        );
+    public GuildDbModule(final GuildDbRepositoryMysql guildDbRepository) {
+        this.guildDbRepository = guildDbRepository;
 
         // Register metrics
         DiscordBot.CACHE_METRICS.addCache("guildDB_guild_cache", this.cache);
     }
 
     @Override
-    public boolean onInitialize() {
-        this.guildDbRepository = new GuildDbRepositoryMysql(
-                this.getModuleOrThrow(DatabaseModule.class).getJdbi(),
-                this.getDiscord()
-        );
-        return true;
+    public String getName() {
+        return "Guild";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     protected GuildDb create(final long discordId) {

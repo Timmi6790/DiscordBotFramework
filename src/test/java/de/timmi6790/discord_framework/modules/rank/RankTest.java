@@ -1,10 +1,5 @@
 package de.timmi6790.discord_framework.modules.rank;
 
-import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.modules.ModuleManager;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
@@ -12,7 +7,6 @@ import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,48 +15,22 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 class RankTest {
     private static final String PERMISSION_PREFIX = "rank_test.";
     private static final AtomicInteger RANK_NAME_NUMBER = new AtomicInteger(0);
 
-    private static final RankModule rankModule = spy(new RankModule());
-    private static final PermissionsModule permissionsModule = spy(new PermissionsModule());
-    private static final UserDbModule userDbModule = spy(new UserDbModule());
+    private static final RankModule rankModule = spy(RankModule.class);
+    private static final PermissionsModule permissionsModule = spy(PermissionsModule.class);
+    private static final UserDbModule userDbModule = spy(UserDbModule.class);
     private static final EventModule eventModule = new EventModule();
 
     private static final Set<Integer> permissionIds = new HashSet<>();
 
     @BeforeAll
     static void setup() {
-        final ModuleManager moduleManager = mock(ModuleManager.class);
 
-        final CommandModule commandModule = spy(new CommandModule());
-        doNothing().when(commandModule).registerCommands(any(), any());
-
-        when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionsModule);
-        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
-        when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
-        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
-        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);
-
-        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
-            final DiscordBot bot = mock(DiscordBot.class);
-            when(bot.getModuleManager()).thenReturn(moduleManager);
-
-            botMock.when(DiscordBot::getInstance).thenReturn(bot);
-
-            permissionsModule.onInitialize();
-            userDbModule.onInitialize();
-            rankModule.onInitialize();
-        }
-
-        for (int count = 0; 10 > count; count++) {
-            permissionIds.add(permissionsModule.addPermission(PERMISSION_PREFIX + count));
-        }
     }
 
     private String getRankName() {

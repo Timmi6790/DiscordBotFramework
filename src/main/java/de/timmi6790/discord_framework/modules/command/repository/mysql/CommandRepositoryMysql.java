@@ -4,11 +4,14 @@ import de.timmi6790.discord_framework.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.modules.command.CommandCause;
 import de.timmi6790.discord_framework.modules.command.CommandResult;
 import de.timmi6790.discord_framework.modules.command.repository.CommandRepository;
+import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.dpi.Service;
 import lombok.NonNull;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Arrays;
 
+@Service
 public class CommandRepositoryMysql implements CommandRepository {
     private static final String COMMAND_NAME = "commandName";
     private static final String CAUSE_NAME = "causeName";
@@ -28,8 +31,8 @@ public class CommandRepositoryMysql implements CommandRepository {
 
     private final Jdbi database;
 
-    public CommandRepositoryMysql(final Jdbi database) {
-        this.database = database;
+    public CommandRepositoryMysql(final DatabaseModule database) {
+        this.database = database.getJdbi();
     }
 
     @Override

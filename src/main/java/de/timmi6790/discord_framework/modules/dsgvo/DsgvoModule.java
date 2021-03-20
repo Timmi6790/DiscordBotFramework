@@ -2,22 +2,22 @@ package de.timmi6790.discord_framework.modules.dsgvo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.modules.dsgvo.commands.AccountDeletionCommand;
 import de.timmi6790.discord_framework.modules.dsgvo.commands.DataRequestCommand;
 import de.timmi6790.discord_framework.modules.dsgvo.events.UserDataDeleteEvent;
 import de.timmi6790.discord_framework.modules.dsgvo.events.UserDataRequestEvent;
 import de.timmi6790.discord_framework.modules.event.EventModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import lombok.EqualsAndHashCode;
 
 /**
  * DSGVO module.
  */
-@EqualsAndHashCode(callSuper = true)
-public class DsgvoModule extends AbstractModule {
+@EqualsAndHashCode
+public class DsgvoModule implements Module {
     /**
      * The Gson.
      */
@@ -26,27 +26,38 @@ public class DsgvoModule extends AbstractModule {
             .enableComplexMapKeySerialization()
             .create();
 
+    private final DiscordBot discordBot;
+    private final EventModule eventModule;
+
     /**
      * Instantiates a new Dsgvo module.
      */
-    public DsgvoModule() {
-        super("DSGVO");
+    public DsgvoModule(final DiscordBot discordBot,
+                       final CommandModule commandModule,
+                       final EventModule eventModule) {
+        this.discordBot = discordBot;
+        this.eventModule = eventModule;
 
-        this.addDependenciesAndLoadAfter(
-                ConfigModule.class,
-                CommandModule.class,
-                EventModule.class
-        );
-    }
-
-    @Override
-    public boolean onInitialize() {
-        this.getModuleOrThrow(CommandModule.class).registerCommands(
+        commandModule.registerCommands(
                 this,
                 new AccountDeletionCommand(this),
                 new DataRequestCommand(this)
         );
-        return true;
+    }
+
+    @Override
+    public String getName() {
+        return "DSGVO";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
     }
 
     /**
@@ -57,10 +68,10 @@ public class DsgvoModule extends AbstractModule {
      */
     public String getUserData(final UserDb userDb) {
         final UserDataRequestEvent dataRequestEvent = new UserDataRequestEvent(
-                this.getDiscordBot().getBaseShard(),
+                this.discordBot.getBaseShard(),
                 userDb
         );
-        this.getModuleOrThrow(EventModule.class).executeEvent(dataRequestEvent);
+        this.eventModule.executeEvent(dataRequestEvent);
 
         return this.gson.toJson(dataRequestEvent.getDataMap());
     }
@@ -72,9 +83,9 @@ public class DsgvoModule extends AbstractModule {
      */
     public void deleteUserData(final UserDb userDb) {
         final UserDataDeleteEvent dataDeleteEvent = new UserDataDeleteEvent(
-                this.getDiscordBot().getBaseShard(),
+                this.discordBot.getBaseShard(),
                 userDb
         );
-        this.getModuleOrThrow(EventModule.class).executeEvent(dataDeleteEvent);
+        this.eventModule.executeEvent(dataDeleteEvent);
     }
 }

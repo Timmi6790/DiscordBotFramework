@@ -1,11 +1,5 @@
 package de.timmi6790.discord_framework.modules.achievement;
 
-import de.timmi6790.discord_framework.AbstractIntegrationTest;
-import de.timmi6790.discord_framework.modules.ModuleManager;
-import de.timmi6790.discord_framework.modules.command.CommandModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.modules.event.EventModule;
-import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.modules.user.UserDb;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -14,12 +8,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 class AchievementModuleTest {
     private static final AtomicInteger SETTING_NAME_NUMBER = new AtomicInteger(0);
 
-    private static final AchievementModule achievementModule = spy(new AchievementModule());
+    private static final AchievementModule achievementModule = spy(AchievementModule.class);
 
     private static String generateAchievementName() {
         return "Achievement" + SETTING_NAME_NUMBER.getAndIncrement();
@@ -27,23 +21,7 @@ class AchievementModuleTest {
 
     @BeforeAll
     static void setup() {
-        final ModuleManager moduleManager = mock(ModuleManager.class);
-        final PermissionsModule permissionsModule = spy(new PermissionsModule());
-        doReturn(permissionsModule).when(moduleManager).getModuleOrThrow(PermissionsModule.class);
-        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
 
-        final CommandModule commandModule = mock(CommandModule.class);
-        when(commandModule.getModuleManager()).thenReturn(moduleManager);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
-
-        final EventModule eventModule = mock(EventModule.class);
-        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
-
-        doReturn(moduleManager).when(permissionsModule).getModuleManager();
-        doReturn(moduleManager).when(achievementModule).getModuleManager();
-
-        permissionsModule.onInitialize();
-        achievementModule.onInitialize();
     }
 
     private void hasAchievements(final AbstractAchievement... achievements) {

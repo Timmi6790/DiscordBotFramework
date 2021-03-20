@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.modules.event;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
-import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -22,9 +23,9 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Log4j2
-public class EventModule extends AbstractModule {
+public class EventModule implements Module {
     private static final String EVENT = "Event";
 
     @Getter(value = AccessLevel.PROTECTED)
@@ -32,15 +33,24 @@ public class EventModule extends AbstractModule {
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-
-    public EventModule() {
-        super(EVENT);
+    @Override
+    public String getName() {
+        return EVENT;
     }
 
     @Override
-    public boolean onEnable() {
-        this.getDiscord().addEventListener(new DiscordEventListener(this));
-        return true;
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
+
+    @Override
+    public void onDiscordReady(final ShardManager shardManager) {
+        shardManager.addEventListener(new DiscordEventListener(this));
     }
 
     private void handleEventException(final Exception exception, final GenericEvent event, final EventObject listener) {

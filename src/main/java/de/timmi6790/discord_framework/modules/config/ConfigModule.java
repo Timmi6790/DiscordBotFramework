@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.modules.config;
 
 import de.timmi6790.commons.utilities.GsonUtilities;
-import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -15,25 +15,39 @@ import java.nio.file.Paths;
 /**
  * Global module config system
  */
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Log4j2
-public class ConfigModule extends AbstractModule {
+public class ConfigModule implements Module {
     /**
      * Instantiates a new Config module.
      */
     public ConfigModule() {
-        super("Config");
     }
 
-    private String getFormattedModuleName(@NonNull final AbstractModule module) {
-        return module.getModuleName().replace(' ', '_').toLowerCase();
+    @Override
+    public String getName() {
+        return "Config";
+    }
+
+    @Override
+    public String getVersion() {
+        return "1.0.0";
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[]{"Timmi6790"};
+    }
+
+    private String getFormattedModuleName(@NonNull final Module module) {
+        return module.getName().replace(' ', '_').toLowerCase();
     }
 
     private Path getBaseConfigPath() {
         return Paths.get("./configs/");
     }
 
-    private Path getModuleFolderPath(@NonNull final AbstractModule module) {
+    private Path getModuleFolderPath(@NonNull final Module module) {
         return Paths.get(
                 this.getBaseConfigPath()
                         + FileSystems.getDefault().getSeparator()
@@ -41,7 +55,7 @@ public class ConfigModule extends AbstractModule {
         );
     }
 
-    private Path getModuleConfigPath(@NonNull final AbstractModule module, @NonNull final Class configClass) {
+    private Path getModuleConfigPath(@NonNull final Module module, @NonNull final Class configClass) {
         return Paths.get(
                 this.getModuleFolderPath(module)
                         + FileSystems.getDefault().getSeparator()
@@ -57,7 +71,7 @@ public class ConfigModule extends AbstractModule {
      * @param config the config object
      */
     @SneakyThrows
-    public void registerConfig(@NonNull final AbstractModule module, @NonNull final Object config) {
+    public void registerConfig(@NonNull final Module module, @NonNull final Object config) {
         final Path configFolderPath = this.getModuleFolderPath(module);
         Files.createDirectories(configFolderPath);
 
@@ -67,7 +81,7 @@ public class ConfigModule extends AbstractModule {
             GsonUtilities.saveToJson(configPath, config);
             log.info(
                     "Created {} config file {}",
-                    module.getModuleName(),
+                    module.getName(),
                     config.getClass().getSimpleName()
             );
         } else {
@@ -86,9 +100,9 @@ public class ConfigModule extends AbstractModule {
      * @return the config object
      */
     @SneakyThrows
-    public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
+    public <T> T getConfig(@NonNull final Module module, @NonNull final Class<T> configClass) {
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
-        log.debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getModuleName());
+        log.debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getName());
         return config;
     }
 
@@ -99,7 +113,7 @@ public class ConfigModule extends AbstractModule {
      * @param configClass the config class
      */
     @SneakyThrows
-    public void saveConfig(@NonNull final AbstractModule module, @NonNull final Class<?> configClass) {
+    public void saveConfig(@NonNull final Module module, @NonNull final Class<?> configClass) {
         final Object currentConfig = this.getConfig(module, configClass);
         if (currentConfig == null) {
             return;
@@ -116,7 +130,7 @@ public class ConfigModule extends AbstractModule {
      * @param config the config
      * @return the config
      */
-    public <T> T registerAndGetConfig(@NonNull final AbstractModule module, @NonNull final T config) {
+    public <T> T registerAndGetConfig(@NonNull final Module module, @NonNull final T config) {
         this.registerConfig(module, config);
         return (T) this.getConfig(module, config.getClass());
     }

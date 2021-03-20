@@ -1,19 +1,16 @@
 package de.timmi6790.discord_framework.modules.command;
 
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.channel.ChannelDbModule;
+
 import de.timmi6790.discord_framework.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.modules.command.listeners.CommandLoggingListener;
 import de.timmi6790.discord_framework.modules.command.listeners.MessageListener;
 import de.timmi6790.discord_framework.modules.command.repository.CommandRepository;
 import de.timmi6790.discord_framework.modules.command.repository.mysql.CommandRepositoryMysql;
 import de.timmi6790.discord_framework.modules.config.ConfigModule;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.modules.event.EventModule;
 import de.timmi6790.discord_framework.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.modules.new_module_manager.Module;
 import de.timmi6790.discord_framework.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.modules.rank.RankModule;
-import de.timmi6790.discord_framework.modules.user.UserDbModule;
 import io.github.bucket4j.Bucket;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,6 +18,7 @@ import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import java.util.ArrayList;
@@ -29,10 +27,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Getter
 @Log4j2
-public class CommandModule extends AbstractModule {
+public class CommandModule implements Module {
     private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
 
     private final RateLimitService commandRateLimitService = new RateLimitService();
@@ -44,32 +42,60 @@ public class CommandModule extends AbstractModule {
     private String mainCommand;
     private long botId;
 
-    private CommandRepository commandRepository;
-    private Config commandConfig;
+    private final CommandRepository commandRepository;
+    private final Config commandConfig;
 
-    public CommandModule() {
-        super("Command");
+    public CommandModule(final CommandRepositoryMysql commandRepository,
+                         final ConfigModule configModule,
+                         final EventModule eventModule,
+                         final GuildDbModule guildDbModule,
+                         final PermissionsModule permissionsModule) {
+        this.commandRepository = commandRepository;
+        this.commandConfig = configModule
+                .registerAndGetConfig(this, new Config());
 
-        this.addDiscordGatewayIntents(
+        this.commandRepository.init(CommandCause.values(), CommandResult.values());
+
+        final HelpCommand helpCommand = new HelpCommand();
+        this.registerCommands(
+                this,
+                helpCommand
+        );
+
+        eventModule
+                .addEventListeners(
+                        new MessageListener(
+                                this,
+                                guildDbModule,
+                                helpCommand
+                        ),
+                        new CommandLoggingListener(this.commandRepository)
+                );
+    }
+
+    @Override
+    public String getName() {
+        return "Command";
+    }
+
+    @Override
+    public String getVersion() {
+        return null;
+    }
+
+    @Override
+    public String[] getAuthors() {
+        return new String[0];
+    }
+
+    @Override
+    public GatewayIntent[] getGatewayIntents() {
+        return new GatewayIntent[]{
                 GatewayIntent.DIRECT_MESSAGE_REACTIONS,
                 GatewayIntent.DIRECT_MESSAGES,
                 GatewayIntent.GUILD_MESSAGE_REACTIONS,
                 GatewayIntent.GUILD_MESSAGES
-        );
-
-        this.addDependenciesAndLoadAfter(
-                ConfigModule.class,
-                EventModule.class,
-                PermissionsModule.class,
-                DatabaseModule.class
-        );
-
-        this.addDependencies(
-                UserDbModule.class,
-                GuildDbModule.class,
-                ChannelDbModule.class,
-                RankModule.class
-        );
+        };
     }
 
     public static Pattern compileMainCommandPattern(@NonNull final String mainCommand, final long botId) {
@@ -80,54 +106,27 @@ public class CommandModule extends AbstractModule {
     }
 
     @Override
-    public boolean onInitialize() {
-        this.commandRepository = new CommandRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class).getJdbi());
-        this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
-                .registerAndGetConfig(this, new Config());
-
-        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getIdLong();
+    public void onDiscordReady(final ShardManager shardManager) {
+        this.botId = shardManager.getShardById(0).getSelfUser().getIdLong();
         this.mainCommand = this.commandConfig.getMainCommand();
         this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
 
-        this.commandRepository.init(CommandCause.values(), CommandResult.values());
-
-        final HelpCommand helpCommand = new HelpCommand();
-        this.registerCommands(
-                this,
-                helpCommand
-        );
-
-        this.getModuleOrThrow(EventModule.class)
-                .addEventListeners(
-                        new MessageListener(
-                                this,
-                                this.getModuleOrThrow(GuildDbModule.class),
-                                helpCommand
-                        ),
-                        new CommandLoggingListener(this.commandRepository)
-                );
-        return true;
-    }
-
-    @Override
-    public boolean onEnable() {
         if (this.commandConfig.isSetDiscordActivity()) {
-            this.getDiscord().setActivity(Activity.playing(this.mainCommand + "help"));
+            shardManager.setActivity(Activity.playing(this.mainCommand + "help"));
         }
-        return true;
     }
 
     private int getCommandDatabaseId(@NonNull final AbstractCommand command) {
         return this.commandRepository.getCommandDatabaseId(command);
     }
 
-    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand... commands) {
+    public void registerCommands(@NonNull final Module module, final AbstractCommand... commands) {
         for (final AbstractCommand command : commands) {
             this.registerCommand(module, command);
         }
     }
 
-    public boolean registerCommand(@NonNull final AbstractModule module, @NonNull final AbstractCommand command) {
+    public boolean registerCommand(@NonNull final Module module, @NonNull final AbstractCommand command) {
         if (this.commands.containsKey(command.getName())) {
             log.error("{} is already registered.", command.getName());
             return false;
@@ -152,10 +151,11 @@ public class CommandModule extends AbstractModule {
             command.setDbId(this.getCommandDatabaseId(command));
         }
         if (command.getPermissionId() == -1) {
-            final String defaultPermissionName = String.format("%s.command.%s", module.getModuleName(), command.getName())
+            final String defaultPermissionName = String.format("%s.command.%s", module.getName(), command.getName())
                     .replace(' ', '_')
                     .toLowerCase();
-            command.setPermission(defaultPermissionName);
+            // TODO: FIX ME
+            // command.setPermission(defaultPermissionName);
         }
         command.setRegisteredModule(module.getClass());
         return true;
