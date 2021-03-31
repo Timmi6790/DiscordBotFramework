@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework;
 
-import de.timmi6790.discord_framework.modules.config.ConfigModule;
-import de.timmi6790.discord_framework.modules.database.Config;
-import de.timmi6790.discord_framework.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
+import de.timmi6790.discord_framework.module.modules.database.Config;
+import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.testcontainers.containers.MariaDBContainer;

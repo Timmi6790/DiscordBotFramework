@@ -2,7 +2,7 @@ package de.timmi6790.discord_framework;
 
 import de.timmi6790.commons.builders.SetBuilder;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import de.timmi6790.discord_framework.modules.AbstractModule;
+import de.timmi6790.discord_framework.module.AbstractModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import org.junit.jupiter.api.Disabled;

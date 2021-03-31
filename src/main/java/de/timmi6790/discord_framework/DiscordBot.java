@@ -3,8 +3,8 @@ package de.timmi6790.discord_framework;
 import de.timmi6790.commons.utilities.GsonUtilities;
 import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import de.timmi6790.discord_framework.modules.AbstractModule;
-import de.timmi6790.discord_framework.modules.ModuleManager;
+import de.timmi6790.discord_framework.module.AbstractModule;
+import de.timmi6790.discord_framework.module.ModuleManager;
 import io.prometheus.client.cache.caffeine.CacheMetricsCollector;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -57,7 +57,7 @@ public class DiscordBot {
     }
 
     protected Set<Class<? extends AbstractModule>> getInternalModuleClasses() {
-        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.modules");
+        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.module.modules");
         return reflections.getSubTypesOf(AbstractModule.class);
     }
 
