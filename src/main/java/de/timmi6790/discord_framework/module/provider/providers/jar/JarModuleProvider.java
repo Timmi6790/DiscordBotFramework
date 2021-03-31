@@ -68,12 +68,10 @@ public class JarModuleProvider implements ModuleProvider {
         log.info("Checking {} for Modules.", jar.getName());
 
         final List<Class<? extends AbstractModule>> abstractModules = new ArrayList<>();
-        try {
-            final URLClassLoader child = new URLClassLoader(
-                    new URL[]{jar.toURI().toURL()},
-                    this.getClass().getClassLoader()
-            );
-
+        try (final URLClassLoader child = new URLClassLoader(
+                new URL[]{jar.toURI().toURL()},
+                this.getClass().getClassLoader()
+        )) {
             final URL pluginUrl = child.getResource("plugin.json");
             if (pluginUrl == null) {
                 log.warn("Can't load {}, no plugins.json found.", jar.getName());
