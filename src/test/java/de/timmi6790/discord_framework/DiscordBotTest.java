@@ -5,7 +5,8 @@ import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import org.junit.jupiter.api.Disabled;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
@@ -38,7 +39,6 @@ class DiscordBotTest {
     }
 
     @Test
-    @Disabled("Not working with github actions because of ModuleManager::getExternalModules")
     void start() throws IOException, TopicalSortCycleException, InterruptedException, LoginException {
         final DiscordBot discordBot = spy(new DiscordBot());
         doReturn(new Config()).when(discordBot).getConfig();
@@ -49,14 +49,14 @@ class DiscordBotTest {
                 .build();
         doReturn(internalModuleClasses).when(discordBot).getInternalModuleClasses();
 
-        try (final MockedStatic<JDABuilder> jdaMock = mockStatic(JDABuilder.class)) {
-            final JDA jda = mock(JDA.class);
+        try (final MockedStatic<DefaultShardManagerBuilder> jdaMock = mockStatic(DefaultShardManagerBuilder.class)) {
+            final ShardManager jda = mock(ShardManager.class);
 
-            final JDABuilder jdaBuilder = mock(JDABuilder.class);
+            final DefaultShardManagerBuilder jdaBuilder = mock(DefaultShardManagerBuilder.class);
             when(jdaBuilder.setStatus(any())).thenReturn(jdaBuilder);
             when(jdaBuilder.build()).thenReturn(jda);
 
-            jdaMock.when(() -> JDABuilder.createLight(any(), anySet())).thenReturn(jdaBuilder);
+            jdaMock.when(() -> DefaultShardManagerBuilder.createLight(any(), anySet())).thenReturn(jdaBuilder);
 
             discordBot.start();
             assertThat(discordBot.getInternalModules()).hasSize(1);
@@ -64,7 +64,6 @@ class DiscordBotTest {
     }
 
     @Test
-    @Disabled("Not working with github actions because of ModuleManager::getExternalModules")
     void start_check_module() throws IOException, TopicalSortCycleException, InterruptedException, LoginException {
         final DiscordBot discordBot = spy(new DiscordBot());
         doReturn(new Config()).when(discordBot).getConfig();
@@ -75,18 +74,18 @@ class DiscordBotTest {
         final TestModule module = spy(new TestModule());
         discordBot.getInternalModules().add(module);
 
-        try (final MockedStatic<JDABuilder> jdaMock = mockStatic(JDABuilder.class)) {
-            final JDA jda = mock(JDA.class);
+        try (final MockedStatic<DefaultShardManagerBuilder> jdaMock = mockStatic(DefaultShardManagerBuilder.class)) {
+            final ShardManager jda = mock(ShardManager.class);
 
-            final JDABuilder jdaBuilder = mock(JDABuilder.class);
+            final DefaultShardManagerBuilder jdaBuilder = mock(DefaultShardManagerBuilder.class);
             when(jdaBuilder.setStatus(any())).thenReturn(jdaBuilder);
             when(jdaBuilder.build()).thenReturn(jda);
 
-            jdaMock.when(() -> JDABuilder.createLight(any(), anySet())).thenReturn(jdaBuilder);
+            jdaMock.when(() -> DefaultShardManagerBuilder.createLight(any(), anySet())).thenReturn(jdaBuilder);
 
             discordBot.start();
             verify(module).onInitialize();
-            verify(module).onEnable();
+            verify(module, timeout(3_000).atLeast(1)).onEnable();
         }
     }
 
