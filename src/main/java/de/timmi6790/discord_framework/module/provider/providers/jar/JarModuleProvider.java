@@ -68,10 +68,13 @@ public class JarModuleProvider implements ModuleProvider {
         log.info("Checking {} for Modules.", jar.getName());
 
         final List<Class<? extends AbstractModule>> abstractModules = new ArrayList<>();
-        try (final URLClassLoader child = new URLClassLoader(
-                new URL[]{jar.toURI().toURL()},
-                this.getClass().getClassLoader()
-        )) {
+        try {
+            // TODO: Find a better solution. We can't close this class loader, because that would make the initialization impossible
+            final URLClassLoader child = new URLClassLoader(
+                    new URL[]{jar.toURI().toURL()},
+                    this.getClass().getClassLoader()
+            );
+
             final URL pluginUrl = child.getResource("plugin.json");
             if (pluginUrl == null) {
                 log.warn("Can't load {}, no plugins.json found.", jar.getName());
@@ -100,9 +103,9 @@ public class JarModuleProvider implements ModuleProvider {
                         continue;
                     }
 
-                    final Class<? extends AbstractModule> AbstractModuleClass = Class.forName(path, true, child)
+                    final Class<? extends AbstractModule> moduleClass = Class.forName(path, true, child)
                             .asSubclass(AbstractModule.class);
-                    abstractModules.add(AbstractModuleClass);
+                    abstractModules.add(moduleClass);
                 }
             }
         } catch (final Exception e) {
