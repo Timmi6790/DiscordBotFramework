@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.module;
 
-import de.timmi6790.discord_framework.module.AbstractModule;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.junit.jupiter.api.Test;
 
@@ -43,14 +42,6 @@ class AbstractModuleTest {
         module.addLoadAfterDependencies(TestModule2.class);
 
         assertThat(module.getLoadAfterDependencies()).containsExactly(TestModule2.class);
-    }
-
-    @Test
-    void addLoadBefore() {
-        final TestModule module = new TestModule();
-        module.addLoadBeforeDependencies(TestModule2.class);
-
-        assertThat(module.getLoadBeforeDependencies()).containsExactly(TestModule2.class);
     }
 
     public static class TestModule extends AbstractModule {

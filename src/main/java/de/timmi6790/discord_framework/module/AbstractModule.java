@@ -26,10 +26,6 @@ public abstract class AbstractModule {
      * The Load after dependencies.
      */
     private Set<Class<? extends AbstractModule>> loadAfterDependencies = new HashSet<>();
-    /**
-     * The Load before dependencies.
-     */
-    private Set<Class<? extends AbstractModule>> loadBeforeDependencies = new HashSet<>();
 
     /**
      * The Required gateway intents.
@@ -125,16 +121,6 @@ public abstract class AbstractModule {
     @SafeVarargs
     protected final void addLoadAfterDependencies(final Class<? extends AbstractModule>... loadAfter) {
         this.loadAfterDependencies.addAll(Arrays.asList(loadAfter));
-    }
-
-    /**
-     * Add load before dependencies.
-     *
-     * @param loadBefore the load before
-     */
-    @SafeVarargs
-    protected final void addLoadBeforeDependencies(final Class<? extends AbstractModule>... loadBefore) {
-        this.loadBeforeDependencies.addAll(Arrays.asList(loadBefore));
     }
 
     /**

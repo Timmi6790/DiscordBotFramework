@@ -21,39 +21,10 @@ public class ModuleManager {
     private final Map<Class<? extends AbstractModule>, AbstractModule> loadedModules = new HashMap<>();
     private final Set<Class<? extends AbstractModule>> initializedModules = new HashSet<>();
     private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
-    
+
     private List<Class<? extends AbstractModule>> getSortedModules() throws TopicalSortCycleException {
         final List<AbstractModule> modules = new ArrayList<>(this.loadedModules.values());
         final List<Class<? extends AbstractModule>> moduleClasses = new ArrayList<>(this.loadedModules.keySet());
-
-        // Dependency check
-        Iterator<AbstractModule> moduleIterator;
-        boolean foundMissing;
-        do {
-            foundMissing = false;
-            moduleIterator = modules.iterator();
-            while (moduleIterator.hasNext()) {
-                final AbstractModule module = moduleIterator.next();
-                final List<String> missingDependencies = new ArrayList<>();
-                for (final Class<? extends AbstractModule> dependencyModule : module.getDependencies()) {
-                    if (!moduleClasses.contains(dependencyModule)) {
-                        missingDependencies.add(dependencyModule.getSimpleName());
-                    }
-                }
-
-                if (!missingDependencies.isEmpty()) {
-                    log.warn(
-                            "Can't load {}, because it is missing the {} dependencies.",
-                            module.getModuleName(),
-                            String.join(",", missingDependencies)
-                    );
-
-                    moduleClasses.remove(module.getClass());
-                    moduleIterator.remove();
-                    foundMissing = true;
-                }
-            }
-        } while (foundMissing);
 
         // Sort modules after load after order
         final List<TopicalSort.Dependency> edges = new ArrayList<>();
@@ -66,14 +37,6 @@ public class ModuleManager {
                 final int loadIndex = moduleClasses.indexOf(loadAfterClass);
                 if (loadIndex != -1) {
                     edges.add(new TopicalSort.Dependency(moduleIndex, loadIndex));
-                }
-            }
-
-            // Load before
-            for (final Class<? extends AbstractModule> loadBeforeClass : module.getLoadBeforeDependencies()) {
-                final int loadIndex = moduleClasses.indexOf(loadBeforeClass);
-                if (loadIndex != -1) {
-                    edges.add(new TopicalSort.Dependency(loadIndex, moduleIndex));
                 }
             }
         }

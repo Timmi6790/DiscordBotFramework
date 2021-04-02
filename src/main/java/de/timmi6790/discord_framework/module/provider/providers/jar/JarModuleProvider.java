@@ -46,14 +46,14 @@ public class JarModuleProvider implements ModuleProvider {
                 .toFile()
                 .listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
 
-        final Set<Class<? extends AbstractModule>> AbstractModules = new HashSet<>();
+        final Set<Class<? extends AbstractModule>> abstractModules = new HashSet<>();
         if (pluginJars != null) {
             for (final File jar : pluginJars) {
-                AbstractModules.addAll(this.getAbstractModulesFromJar(jar));
+                abstractModules.addAll(this.getAbstractModulesFromJar(jar));
             }
         }
 
-        return AbstractModules;
+        return abstractModules;
     }
 
     private Optional<Class<?>> getClass(final String path, final URLClassLoader classLoader) {
@@ -78,7 +78,7 @@ public class JarModuleProvider implements ModuleProvider {
                 log.warn("Can't load {}, no plugins.json found.", jar.getName());
                 return abstractModules;
             }
-            
+
             ModuleUtilities.addJarToSystemClassLoader(jar);
 
             try (final BufferedReader inputStream = new BufferedReader(new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8))) {

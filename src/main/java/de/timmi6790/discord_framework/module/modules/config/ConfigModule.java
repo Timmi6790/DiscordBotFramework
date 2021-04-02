@@ -41,7 +41,7 @@ public class ConfigModule extends AbstractModule {
         );
     }
 
-    private Path getModuleConfigPath(@NonNull final AbstractModule module, @NonNull final Class configClass) {
+    private Path getModuleConfigPath(@NonNull final AbstractModule module, @NonNull final Class<?> configClass) {
         return Paths.get(
                 this.getModuleFolderPath(module)
                         + FileSystems.getDefault().getSeparator()
