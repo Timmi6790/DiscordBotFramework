@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.provider.ModuleProvider;
+import de.timmi6790.discord_framework.utilities.ModuleUtilities;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.BufferedReader;
@@ -68,18 +69,17 @@ public class JarModuleProvider implements ModuleProvider {
         log.info("Checking {} for Modules.", jar.getName());
 
         final List<Class<? extends AbstractModule>> abstractModules = new ArrayList<>();
-        try {
-            // TODO: Find a better solution. We can't close this class loader, because that would make the initialization impossible
-            final URLClassLoader child = new URLClassLoader(
-                    new URL[]{jar.toURI().toURL()},
-                    this.getClass().getClassLoader()
-            );
-
+        try (final URLClassLoader child = new URLClassLoader(
+                new URL[]{jar.toURI().toURL()},
+                this.getClass().getClassLoader()
+        )) {
             final URL pluginUrl = child.getResource("plugin.json");
             if (pluginUrl == null) {
                 log.warn("Can't load {}, no plugins.json found.", jar.getName());
                 return abstractModules;
             }
+            
+            ModuleUtilities.addJarToSystemClassLoader(jar);
 
             try (final BufferedReader inputStream = new BufferedReader(new InputStreamReader(pluginUrl.openStream(), StandardCharsets.UTF_8))) {
                 final PluginConfig plugin = gson.fromJson(inputStream, PluginConfig.class);
