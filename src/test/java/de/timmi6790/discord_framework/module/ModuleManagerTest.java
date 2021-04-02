@@ -1,17 +1,15 @@
 package de.timmi6790.discord_framework.module;
 
-import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.ModuleManager;
+import de.timmi6790.discord_framework.module.exceptions.ModuleNotFoundException;
+import de.timmi6790.discord_framework.module.provider.providers.InternalModuleProvider;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 class ModuleManagerTest {
     private ModuleManager getModuleManager() {
@@ -21,37 +19,34 @@ class ModuleManagerTest {
     @Test
     void registerModule() {
         final ModuleManager moduleManager = this.getModuleManager();
-        final AbstractModule module = new ExampleModule();
-        assertThat(moduleManager.registerModule(module)).isTrue();
-        assertThat(moduleManager.getLoadedModules()).hasSize(1);
+        assertThat(moduleManager.registerModule(ExampleModule.class)).isTrue();
+        assertThat(moduleManager.getModules(ModuleStatus.REGISTERED)).hasSize(1);
     }
 
     @Test
     void register_already_registered_module() {
         final ModuleManager moduleManager = this.getModuleManager();
-        final AbstractModule module = new ExampleModule();
-        moduleManager.registerModule(module);
-        assertThat(moduleManager.registerModule(module)).isFalse();
+        moduleManager.registerModule(AbstractModule.class);
+        assertThat(moduleManager.registerModule(AbstractModule.class)).isFalse();
     }
 
     @Test
     void registerModules() {
         final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModules(
-                new ExampleModule(),
-                new ExampleModule2()
+                ExampleModule.class,
+                ExampleModule2.class
         );
-        assertThat(moduleManager.getLoadedModules()).hasSize(2);
+        assertThat(moduleManager.getModules(ModuleStatus.REGISTERED)).hasSize(2);
     }
 
     @Test
     void getModule() {
         final ModuleManager moduleManager = this.getModuleManager();
-        final ExampleModule module = new ExampleModule();
-        moduleManager.registerModule(module);
+        moduleManager.registerModule(ExampleModule.class);
 
         final Optional<ExampleModule> found = moduleManager.getModule(ExampleModule.class);
-        assertThat(found).isPresent().hasValue(module);
+        assertThat(found).isPresent();
     }
 
     @Test
@@ -59,41 +54,48 @@ class ModuleManagerTest {
         final ModuleManager moduleManager = this.getModuleManager();
         assertThrows(ModuleNotFoundException.class, () -> moduleManager.getModuleOrThrow(ExampleModule.class));
 
-        moduleManager.registerModule(new ExampleModule());
+        moduleManager.registerModule(ExampleModule.class);
         final Optional<ExampleModule> found = moduleManager.getModule(ExampleModule.class);
         assertThat(found).isPresent();
     }
 
     @Test
     void initialize() {
-        final ExampleModule module = spy(new ExampleModule());
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(module);
+        moduleManager.registerModule(ExampleModule.class);
         moduleManager.initialize(ExampleModule.class);
 
-        verify(module).onInitialize();
-        assertThat(moduleManager.getInitializedModules()).containsExactly(ExampleModule.class);
+        final ExampleModule exampleModule = moduleManager.getModuleOrThrow(ExampleModule.class);
+        assertThat(moduleManager.getModules(ModuleStatus.INITIALIZED))
+                .containsExactly(exampleModule);
     }
 
     @Test
     void initialize_missing_dependency() throws TopicalSortCycleException {
-        final ExampleModule dependencyModule = spy(new ExampleModule());
-        dependencyModule.addDependenciesAndLoadAfter(ExampleModule2.class);
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(dependencyModule);
+        moduleManager.registerModule(DependencyModule.class);
         moduleManager.initializeAll();
 
-        assertThat(moduleManager.getInitializedModules()).isEmpty();
+        assertThat(moduleManager.getModules(ModuleStatus.INITIALIZED)).isEmpty();
+    }
+
+    @Test
+    void initialize_with_dependency() throws TopicalSortCycleException {
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.registerModules(
+                DependencyModule.class,
+                ExampleModule.class,
+                ExampleModule2.class
+        );
+        moduleManager.initializeAll();
+
+        assertThat(moduleManager.getModules(ModuleStatus.INITIALIZED)).hasSize(3);
     }
 
     @Test
     void initialize_while_started() throws TopicalSortCycleException {
-        final ExampleModule exampleModule = new ExampleModule();
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(exampleModule);
+        moduleManager.registerModule(ExampleModule.class);
         moduleManager.initializeAll();
         moduleManager.startAll();
 
@@ -102,10 +104,8 @@ class ModuleManagerTest {
 
     @Test
     void initialize_while_initialized() throws TopicalSortCycleException {
-        final ExampleModule exampleModule = new ExampleModule();
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(exampleModule);
+        moduleManager.registerModule(ExampleModule.class);
         moduleManager.initializeAll();
 
         assertThat(moduleManager.initialize(ExampleModule.class)).isFalse();
@@ -113,83 +113,68 @@ class ModuleManagerTest {
 
     @Test
     void start() {
-        final ExampleModule module = spy(new ExampleModule());
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(module);
+        moduleManager.registerModule(ExampleModule.class);
 
         moduleManager.initialize(ExampleModule.class);
         moduleManager.start(ExampleModule.class);
 
-        verify(module).onEnable();
-        assertThat(moduleManager.getStartedModules()).containsExactly(ExampleModule.class);
+        final ExampleModule module = moduleManager.getModuleOrThrow(ExampleModule.class);
+        assertThat(moduleManager.getModules(ModuleStatus.STARTED)).containsExactly(module);
     }
 
     @Test
     void start_without_initialize() {
-        final ExampleModule module = new ExampleModule();
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(module);
+        moduleManager.registerModule(ExampleModule.class);
 
         assertThat(moduleManager.start(ExampleModule.class)).isFalse();
-        assertThat(moduleManager.getStartedModules()).isEmpty();
+        assertThat(moduleManager.getModules(ModuleStatus.STARTED)).isEmpty();
     }
 
     @Test
     void initializeAll() throws TopicalSortCycleException {
-        final ExampleModule module1 = spy(new ExampleModule());
-        final ExampleModule2 module2 = spy(new ExampleModule2());
-
         final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModules(
-                module1,
-                module2
+                ExampleModule.class,
+                ExampleModule2.class
         );
         moduleManager.initializeAll();
 
-        verify(module1).onInitialize();
-        verify(module2).onInitialize();
-        assertThat(moduleManager.getInitializedModules())
-                .containsExactlyInAnyOrder(ExampleModule.class, ExampleModule2.class);
+        final ExampleModule module1 = moduleManager.getModuleOrThrow(ExampleModule.class);
+        final ExampleModule2 module2 = moduleManager.getModuleOrThrow(ExampleModule2.class);
+        assertThat(moduleManager.getModules(ModuleStatus.INITIALIZED)).containsOnly(module1, module2);
     }
 
     @Test
     void startAll() throws TopicalSortCycleException {
-        final ExampleModule module1 = spy(new ExampleModule());
-        final ExampleModule2 module2 = spy(new ExampleModule2());
-
         final ModuleManager moduleManager = this.getModuleManager();
         moduleManager.registerModules(
-                module1,
-                module2
+                ExampleModule.class,
+                ExampleModule2.class
         );
 
         moduleManager.initializeAll();
         moduleManager.startAll();
 
-        verify(module1).onEnable();
-        verify(module2).onEnable();
-
-        assertThat(moduleManager.getStartedModules()).containsExactlyInAnyOrder(ExampleModule.class, ExampleModule2.class);
+        final ExampleModule module1 = moduleManager.getModuleOrThrow(ExampleModule.class);
+        final ExampleModule2 module2 = moduleManager.getModuleOrThrow(ExampleModule2.class);
+        assertThat(moduleManager.getModules(ModuleStatus.STARTED)).containsOnly(module1, module2);
     }
 
 
     @Test
     void stopModule() {
-        final ExampleModule module = spy(new ExampleModule());
-
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(module);
+        moduleManager.registerModule(ExampleModule.class);
 
         moduleManager.initialize(ExampleModule.class);
         moduleManager.start(ExampleModule.class);
         moduleManager.stopModule(ExampleModule.class);
 
-        verify(module).onDisable();
-        assertThat(moduleManager.getStartedModules())
+        assertThat(moduleManager.getModules(ModuleStatus.STARTED))
                 .isEmpty();
-        assertThat(moduleManager.getInitializedModules())
+        assertThat(moduleManager.getModules(ModuleStatus.INITIALIZED))
                 .isEmpty();
     }
 
@@ -199,13 +184,53 @@ class ModuleManagerTest {
         assertThat(moduleManager.stopModule(ExampleModule.class)).isFalse();
     }
 
+    @Test
+    void load_modules_empty_providers() {
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.loadModules();
+
+        final List<ModuleInfo> moduleInfos = moduleManager.getModuleInfos(ModuleStatus.REGISTERED);
+        assertThat(moduleInfos).isEmpty();
+    }
+
+    @Test
+    void load_modules_internal_provider() {
+        final ModuleManager moduleManager = this.getModuleManager();
+        moduleManager.addModuleProviders(
+                new InternalModuleProvider()
+        );
+
+        moduleManager.loadModules();
+
+        final List<ModuleInfo> moduleInfos = moduleManager.getModuleInfos(ModuleStatus.REGISTERED);
+        assertThat(moduleInfos).isNotEmpty();
+    }
+
     private static class ExampleModule extends AbstractModule {
         public ExampleModule() {
             super("Example");
         }
+
+        @Override
+        public boolean onInitialize() {
+            return super.onInitialize();
+        }
     }
 
     private static class ExampleModule2 extends ExampleModule {
+        public ExampleModule2() {
+            super();
+        }
+    }
 
+    private static class DependencyModule extends AbstractModule {
+        public DependencyModule() {
+            super("Test");
+
+            this.addDependenciesAndLoadAfter(
+                    ExampleModule.class,
+                    ExampleModule2.class
+            );
+        }
     }
 }

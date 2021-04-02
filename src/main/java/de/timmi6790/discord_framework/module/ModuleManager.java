@@ -1,8 +1,10 @@
 package de.timmi6790.discord_framework.module;
 
-import de.timmi6790.discord_framework.exceptions.ModuleNotFoundException;
+import com.google.common.collect.Lists;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
-import de.timmi6790.discord_framework.module.provider.providers.jar.JarModuleProvider;
+import de.timmi6790.discord_framework.module.exceptions.ModuleNotFoundException;
+import de.timmi6790.discord_framework.module.exceptions.ModuleUninitializedException;
+import de.timmi6790.discord_framework.module.provider.ModuleProvider;
 import de.timmi6790.discord_framework.utilities.TopicalSort;
 import io.sentry.Sentry;
 import lombok.Data;
@@ -17,20 +19,52 @@ import java.util.*;
  */
 @Data
 @Log4j2
+// TODO: Implement config
 public class ModuleManager {
-    private final Map<Class<? extends AbstractModule>, AbstractModule> loadedModules = new HashMap<>();
-    private final Set<Class<? extends AbstractModule>> initializedModules = new HashSet<>();
-    private final Set<Class<? extends AbstractModule>> startedModules = new HashSet<>();
+    private final List<ModuleProvider> providers = new ArrayList<>();
+    private final Map<Class<? extends AbstractModule>, ModuleInfo> modules = new HashMap<>();
 
-    private List<Class<? extends AbstractModule>> getSortedModules() throws TopicalSortCycleException {
-        final List<AbstractModule> modules = new ArrayList<>(this.loadedModules.values());
-        final List<Class<? extends AbstractModule>> moduleClasses = new ArrayList<>(this.loadedModules.keySet());
+    private boolean hasDependency(final Class<? extends AbstractModule> module,
+                                  final Class<? extends AbstractModule> dependency,
+                                  final ModuleStatus requiredDependencyStatus) {
+        final Optional<ModuleInfo> dependencyModuleInfoOpt = this.getModuleInfo(dependency);
+        if (!dependencyModuleInfoOpt.isPresent()) {
+            log.warn(
+                    "Dependency {} for {} is not registered.",
+                    dependency,
+                    module
+            );
+            return false;
+        }
 
-        // Sort modules after load after order
+        final ModuleStatus dependencyStatus = dependencyModuleInfoOpt.get().getStatus();
+        if (dependencyStatus == requiredDependencyStatus) {
+            log.warn(
+                    "Dependency {} for {} has invalid status of {}",
+                    dependency,
+                    module,
+                    dependencyStatus
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    private List<Class<? extends AbstractModule>> getSortedModules(final ModuleStatus moduleStatus) throws TopicalSortCycleException {
+        final List<ModuleInfo> moduleInfos = this.getModuleInfos(moduleStatus);
+
+        final List<AbstractModule> modules = Lists.newArrayListWithCapacity(moduleInfos.size());
+        final List<Class<? extends AbstractModule>> moduleClasses = Lists.newArrayListWithCapacity(moduleInfos.size());
+        for (final ModuleInfo moduleInfo : moduleInfos) {
+            modules.add(moduleInfo.getModule());
+            moduleClasses.add(moduleInfo.getModuleClass());
+        }
+
+        // Sort modules after load order
         final List<TopicalSort.Dependency> edges = new ArrayList<>();
-        int index = 0;
-        for (final AbstractModule module : modules) {
-            final int moduleIndex = index++;
+        for (int moduleIndex = 0; modules.size() > moduleIndex; moduleIndex++) {
+            final AbstractModule module = modules.get(moduleIndex);
 
             // Load after
             for (final Class<? extends AbstractModule> loadAfterClass : module.getLoadAfterDependencies()) {
@@ -45,51 +79,75 @@ public class ModuleManager {
         return moduleSort.sort();
     }
 
-    private Set<AbstractModule> getExternalModules() {
-        final Set<AbstractModule> abstractModules = new HashSet<>();
+    public void registerModules(final Class<? extends AbstractModule>... moduleClasses) {
+        for (final Class<? extends AbstractModule> moduleClass : moduleClasses) {
+            this.registerModule(moduleClass);
+        }
+    }
 
-        final JarModuleProvider jarModuleProvider = new JarModuleProvider();
-        for (final Class<? extends AbstractModule> moduleClass : jarModuleProvider.getModules()) {
-            try {
-                log.info(
-                        "Creating new instance of {}",
-                        moduleClass
-                );
-                final AbstractModule module = moduleClass
-                        .asSubclass(AbstractModule.class)
-                        .getConstructor()
-                        .newInstance();
-                abstractModules.add(module);
-            } catch (final InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                log.error(
-                        "Execution while trying to create new instance of " + moduleClass,
-                        e
-                );
+    public void registerModules(final Collection<Class<? extends AbstractModule>> moduleClasses) {
+        for (final Class<? extends AbstractModule> moduleClass : moduleClasses) {
+            this.registerModule(moduleClass);
+        }
+    }
+
+    public List<ModuleInfo> getModuleInfos(final ModuleStatus status) {
+        final List<ModuleInfo> modules = Lists.newArrayListWithExpectedSize(this.modules.size());
+
+        for (final ModuleInfo moduleInfo : this.modules.values()) {
+            if (moduleInfo.getStatus() == status) {
+                modules.add(moduleInfo);
             }
         }
 
-        return abstractModules;
+        return modules;
     }
 
-    public void registerModules(final AbstractModule... modules) {
-        for (final AbstractModule module : modules) {
-            this.registerModule(module);
+    public Optional<ModuleInfo> getModuleInfo(final Class<? extends AbstractModule> clazz) {
+        return Optional.ofNullable(this.modules.get(clazz));
+    }
+
+    public List<AbstractModule> getModules(final ModuleStatus status) {
+        final List<ModuleInfo> moduleInfos = this.getModuleInfos(status);
+        final List<AbstractModule> modules = Lists.newArrayListWithExpectedSize(moduleInfos.size());
+
+        for (final ModuleInfo moduleInfo : moduleInfos) {
+            modules.add(moduleInfo.getModule());
         }
+        return modules;
     }
 
-    public boolean registerModule(final AbstractModule module) {
-        if (this.loadedModules.containsKey(module.getClass())) {
-            log.debug("{} is already registered!", module.getModuleName());
+    public boolean registerModule(final Class<? extends AbstractModule> moduleClass) {
+        if (this.modules.containsKey(moduleClass)) {
+            log.debug("{} is already registered!", moduleClass);
             return false;
         }
 
-        log.debug("Registered {}[{}]", module.getModuleName(), module.getClass());
-        this.loadedModules.put(module.getClass(), module);
+        final AbstractModule module;
+        try {
+            module = moduleClass
+                    .asSubclass(AbstractModule.class)
+                    .getConstructor()
+                    .newInstance();
+        } catch (final InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            log.error(e.getMessage(), e);
+            Sentry.captureException(e);
+            return false;
+        }
+
+        log.debug("Registered {}[{}]", module.getModuleName(), moduleClass);
+        this.modules.put(
+                moduleClass,
+                new ModuleInfo(
+                        moduleClass,
+                        module
+                )
+        );
         return true;
     }
 
     public <T extends AbstractModule> Optional<T> getModule(final Class<T> clazz) {
-        return (Optional<T>) Optional.ofNullable(this.loadedModules.get(clazz));
+        return (Optional<T>) this.getModuleInfo(clazz).map(ModuleInfo::getModule);
     }
 
     public <T extends AbstractModule> T getModuleOrThrow(final Class<T> clazz) {
@@ -97,30 +155,35 @@ public class ModuleManager {
     }
 
     public boolean initialize(final Class<? extends AbstractModule> moduleClass) {
-        if (this.startedModules.contains(moduleClass)) {
-            log.warn("Tried to initialize {} while already being started.", moduleClass);
+        final Optional<ModuleInfo> moduleInfoOpt = this.getModuleInfo(moduleClass);
+        if (!moduleInfoOpt.isPresent()) {
+            log.warn("The module {} is not registered!", moduleClass);
             return false;
         }
 
-        if (this.initializedModules.contains(moduleClass)) {
-            log.warn("Tried to initialize {} while already being initialized.", moduleClass);
+        final ModuleInfo moduleInfo = moduleInfoOpt.get();
+        if (moduleInfo.getStatus() != ModuleStatus.REGISTERED) {
+            log.warn(
+                    "Tried to initialize {} while invalid status of {} found. " +
+                            "You can only initialize modules with the {} status.",
+                    moduleClass,
+                    moduleInfo.getStatus(),
+                    ModuleStatus.REGISTERED
+            );
             return false;
         }
 
-        final AbstractModule module = this.loadedModules.get(moduleClass);
-        if (module == null) {
+        final AbstractModule module;
+        try {
+            module = moduleInfo.getModule();
+        } catch (final ModuleUninitializedException e) {
             log.warn("Tried to start {} while not being loaded.", moduleClass);
             return false;
         }
 
-        // Check if all load dependencies are innitlized
+        // Check if all load dependencies are registered
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfterDependencies()) {
-            if (!this.initializedModules.contains(dependencyClass)) {
-                log.warn(
-                        "Tried to initialize {} without {} dependency being initialized.",
-                        moduleClass,
-                        dependencyClass
-                );
+            if (!this.hasDependency(moduleClass, dependencyClass, ModuleStatus.REGISTERED)) {
                 return false;
             }
         }
@@ -129,7 +192,7 @@ public class ModuleManager {
         try {
             final boolean initializeStatus = module.onInitialize();
             if (initializeStatus) {
-                this.initializedModules.add(moduleClass);
+                moduleInfo.setStatus(ModuleStatus.INITIALIZED);
                 return true;
             } else {
                 log.warn(
@@ -147,30 +210,28 @@ public class ModuleManager {
     }
 
     public boolean start(final Class<? extends AbstractModule> moduleClass) {
-        if (this.startedModules.contains(moduleClass)) {
-            log.warn("Tried to start {} while already being started.", moduleClass);
+        final Optional<ModuleInfo> moduleInfoOpt = this.getModuleInfo(moduleClass);
+        if (!moduleInfoOpt.isPresent()) {
+            log.warn("The module {} is not registered!", moduleClass);
             return false;
         }
 
-        if (!this.initializedModules.contains(moduleClass)) {
-            log.warn("Tried to start {} while not being initialized.", moduleClass);
+        final ModuleInfo moduleInfo = moduleInfoOpt.get();
+        if (moduleInfo.getStatus() != ModuleStatus.INITIALIZED) {
+            log.warn(
+                    "Tried to start {} while invalid status of {} found. " +
+                            "You can only initialize modules with the {} status.",
+                    moduleClass,
+                    moduleInfo.getStatus(),
+                    ModuleStatus.INITIALIZED
+            );
             return false;
         }
 
-        final AbstractModule module = this.loadedModules.get(moduleClass);
-        if (module == null) {
-            log.warn("Tried to start {} while not being loaded.", moduleClass);
-            return false;
-        }
-
-        // Check if all load dependencies are started
+        final AbstractModule module = moduleInfo.getModule();
+        // Check if all load dependencies are initialized
         for (final Class<? extends AbstractModule> dependencyClass : module.getLoadAfterDependencies()) {
-            if (!(this.initializedModules.contains(dependencyClass) || this.startedModules.contains(dependencyClass))) {
-                log.warn(
-                        "Tried to start {} without {} dependency being started",
-                        moduleClass,
-                        dependencyClass
-                );
+            if (!this.hasDependency(moduleClass, dependencyClass, ModuleStatus.INITIALIZED)) {
                 return false;
             }
         }
@@ -179,8 +240,7 @@ public class ModuleManager {
         try {
             final boolean enableStatus = module.onEnable();
             if (enableStatus) {
-                this.startedModules.add(moduleClass);
-                this.initializedModules.remove(moduleClass);
+                moduleInfo.setStatus(ModuleStatus.STARTED);
                 return true;
             } else {
                 log.warn(
@@ -197,36 +257,51 @@ public class ModuleManager {
     }
 
     public void initializeAll() throws TopicalSortCycleException {
-        for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules()) {
+        for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules(ModuleStatus.REGISTERED)) {
             this.initialize(moduleClass);
         }
     }
 
     @SneakyThrows
     public void startAll() {
-        for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules()) {
+        for (final Class<? extends AbstractModule> moduleClass : this.getSortedModules(ModuleStatus.INITIALIZED)) {
             this.start(moduleClass);
         }
     }
 
-    public void loadExternalModules() {
-        for (final AbstractModule module : this.getExternalModules()) {
-            this.registerModule(module);
+    public void addModuleProviders(final ModuleProvider... moduleProviders) {
+        for (final ModuleProvider moduleProvider : moduleProviders) {
+            this.addModuleProvider(moduleProvider);
+        }
+    }
+
+    public void addModuleProvider(final ModuleProvider moduleProvider) {
+        this.providers.add(moduleProvider);
+    }
+
+    public void loadModules() {
+        for (final ModuleProvider moduleProvider : this.providers) {
+            log.info("Load modules from {}-Provider", moduleProvider.getName());
+            final Collection<Class<? extends AbstractModule>> foundModules = moduleProvider.getModules();
+            log.info("Found {} modules from {}-Provider", foundModules.size(), moduleProvider.getName());
+            this.registerModules(foundModules);
         }
     }
 
     public boolean stopModule(final Class<? extends AbstractModule> moduleClass) {
-        final AbstractModule module = this.loadedModules.get(moduleClass);
-        if (module == null || !this.startedModules.contains(moduleClass)) {
+        final Optional<ModuleInfo> moduleInfoOpt = this.getModuleInfo(moduleClass);
+        if (!moduleInfoOpt.isPresent() || moduleInfoOpt.get().getStatus() == ModuleStatus.REGISTERED) {
             return false;
         }
 
+        final ModuleInfo moduleInfo = moduleInfoOpt.get();
+        log.info("Stopping module {}", moduleInfo.getModule().getModuleName());
         try {
-            module.onDisable();
-            this.startedModules.remove(moduleClass);
+            moduleInfo.getModule().onDisable();
+            moduleInfo.setStatus(ModuleStatus.REGISTERED);
             return true;
         } catch (final Exception e) {
-            log.error(module.getModuleName(), e);
+            log.error(moduleInfo.getModule().getModuleName(), e);
             Sentry.captureException(e);
 
             return false;

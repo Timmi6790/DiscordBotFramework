@@ -5,6 +5,9 @@ import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.ModuleManager;
+import de.timmi6790.discord_framework.module.ModuleStatus;
+import de.timmi6790.discord_framework.module.provider.providers.InternalModuleProvider;
+import de.timmi6790.discord_framework.module.provider.providers.jar.JarModuleProvider;
 import io.prometheus.client.cache.caffeine.CacheMetricsCollector;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -17,7 +20,6 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import org.reflections.Reflections;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
@@ -39,7 +41,6 @@ public class DiscordBot {
     private static final DiscordBot INSTANCE = new DiscordBot();
 
     private final ModuleManager moduleManager = new ModuleManager();
-    private final Set<AbstractModule> internalModules = new HashSet<>();
     private ShardManager discord;
 
     public static void main(final String[] args) throws LoginException, TopicalSortCycleException, IOException {
@@ -54,22 +55,6 @@ public class DiscordBot {
     protected Config getConfig() {
         final Path mainConfigPath = Paths.get("./configs/config.json");
         return GsonUtilities.readJsonFile(mainConfigPath, Config.class);
-    }
-
-    protected Set<Class<? extends AbstractModule>> getInternalModuleClasses() {
-        final Reflections reflections = new Reflections("de.timmi6790.discord_framework.module.modules");
-        return reflections.getSubTypesOf(AbstractModule.class);
-    }
-
-    protected void loadInternalModules() {
-        // Find all internal modules
-        for (final Class<? extends AbstractModule> module : this.getInternalModuleClasses()) {
-            try {
-                this.internalModules.add(module.getConstructor().newInstance());
-            } catch (final Exception e) {
-                log.error("Trying to initialize " + module, e);
-            }
-        }
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
@@ -87,9 +72,6 @@ public class DiscordBot {
 
         final Config config = firstInnit ? new Config() : this.getConfig();
         final Config newConfig = ReflectionUtilities.deepCopy(config);
-        for (final AbstractModule module : this.internalModules) {
-            newConfig.getEnabledModules().putIfAbsent(module.getModuleName(), Boolean.TRUE);
-        }
 
         GsonUtilities.saveToJsonIfChanged(configPath, config, newConfig);
         if (firstInnit) {
@@ -101,7 +83,6 @@ public class DiscordBot {
     }
 
     public void start() throws TopicalSortCycleException, LoginException, IOException {
-        this.loadInternalModules();
         if (!this.setup()) {
             return;
         }
@@ -115,16 +96,15 @@ public class DiscordBot {
         }
 
         // Modules
-        for (final AbstractModule module : this.internalModules) {
-            if (Boolean.TRUE.equals(mainConfig.getEnabledModules().getOrDefault(module.getModuleName(), Boolean.TRUE))) {
-                this.moduleManager.registerModule(module);
-            }
-        }
-        this.moduleManager.loadExternalModules();
+        this.moduleManager.addModuleProviders(
+                new InternalModuleProvider(),
+                new JarModuleProvider()
+        );
+        this.moduleManager.loadModules();
 
         // Discord
         final Set<GatewayIntent> requiredGatewayIntents = new HashSet<>();
-        for (final AbstractModule loadedModule : this.moduleManager.getLoadedModules().values()) {
+        for (final AbstractModule loadedModule : this.moduleManager.getModules(ModuleStatus.REGISTERED)) {
             requiredGatewayIntents.addAll(loadedModule.getRequiredGatewayIntents());
         }
 
