@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +25,8 @@ import java.util.*;
 @Data
 @Log4j2
 public class ModuleManager {
-    private static final Path CONFIG_PATH = Paths.get("./configs/module.json");
+    private static final Path CONFIG_DIRECTORY_PATH = Paths.get("./configs/");
+    private static final Path CONFIG_PATH = Paths.get(CONFIG_DIRECTORY_PATH.toFile().getPath() + "module.json");
 
     private final List<ModuleProvider> providers = new ArrayList<>();
     private final Map<Class<? extends AbstractModule>, ModuleInfo> modules = new HashMap<>();
@@ -35,7 +37,12 @@ public class ModuleManager {
         final boolean hasConfig = Files.exists(CONFIG_PATH);
         if (!hasConfig) {
             log.info("Creating new config file");
-            GsonUtilities.saveToJson(CONFIG_PATH, new ModuleConfig());
+            try {
+                Files.createDirectories(CONFIG_DIRECTORY_PATH);
+                GsonUtilities.saveToJson(CONFIG_PATH, new ModuleConfig());
+            } catch (final IOException e) {
+                log.error("Can't create config file", e);
+            }
         }
 
         this.config = GsonUtilities.readJsonFile(CONFIG_PATH, ModuleConfig.class);
