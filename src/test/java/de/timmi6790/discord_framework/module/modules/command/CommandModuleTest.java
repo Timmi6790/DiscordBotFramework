@@ -165,7 +165,7 @@ class CommandModuleTest {
         assertThat(commandModule.getCommands()).containsExactly(testCommand);
     }
 
-    private static class TestModule extends AbstractModule {
+    public static class TestModule extends AbstractModule {
         public TestModule() {
             super("TestModule");
         }
