@@ -26,8 +26,8 @@ class ModuleManagerTest {
     @Test
     void register_already_registered_module() {
         final ModuleManager moduleManager = this.getModuleManager();
-        moduleManager.registerModule(AbstractModule.class);
-        assertThat(moduleManager.registerModule(AbstractModule.class)).isFalse();
+        moduleManager.registerModule(ExampleModule.class);
+        assertThat(moduleManager.registerModule(ExampleModule.class)).isFalse();
     }
 
     @Test

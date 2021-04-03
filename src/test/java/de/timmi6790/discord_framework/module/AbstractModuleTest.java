@@ -45,13 +45,13 @@ class AbstractModuleTest {
     }
 
     public static class TestModule extends AbstractModule {
-        TestModule() {
+        public TestModule() {
             super("Test");
         }
     }
 
     public static class TestModule2 extends AbstractModule {
-        TestModule2() {
+        public TestModule2() {
             super("Test2");
         }
     }
