@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework;
 
 import de.timmi6790.commons.utilities.GsonUtilities;
-import de.timmi6790.commons.utilities.ReflectionUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.ModuleManager;
@@ -69,11 +68,8 @@ public class DiscordBot {
         final Path configPath = Paths.get(configFolderPath + "/config.json");
 
         final boolean firstInnit = !Files.exists(configPath);
-
         final Config config = firstInnit ? new Config() : this.getConfig();
-        final Config newConfig = ReflectionUtilities.deepCopy(config);
-
-        GsonUtilities.saveToJsonIfChanged(configPath, config, newConfig);
+        GsonUtilities.saveToJson(configPath, config);
         if (firstInnit) {
             log.info("Created main config file.");
             return false;

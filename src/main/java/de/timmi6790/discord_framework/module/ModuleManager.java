@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.module;
 
 import com.google.common.collect.Lists;
+import de.timmi6790.commons.utilities.GsonUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.module.exceptions.ModuleUninitializedException;
@@ -12,6 +13,9 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -19,10 +23,34 @@ import java.util.*;
  */
 @Data
 @Log4j2
-// TODO: Implement config
 public class ModuleManager {
+    private static final Path CONFIG_PATH = Paths.get("./configs/module.json");
+
     private final List<ModuleProvider> providers = new ArrayList<>();
     private final Map<Class<? extends AbstractModule>, ModuleInfo> modules = new HashMap<>();
+
+    private final ModuleConfig config;
+
+    public ModuleManager() {
+        final boolean hasConfig = Files.exists(CONFIG_PATH);
+        if (!hasConfig) {
+            log.info("Creating new config file");
+            GsonUtilities.saveToJson(CONFIG_PATH, new ModuleConfig());
+        }
+
+        this.config = GsonUtilities.readJsonFile(CONFIG_PATH, ModuleConfig.class);
+    }
+
+    private void addModuleToConfig(final String moduleName) {
+        if (!this.config.getEnabledModules().containsKey(moduleName)) {
+            this.config.getEnabledModules().put(moduleName, Boolean.TRUE);
+            GsonUtilities.saveToJson(CONFIG_PATH, this.config);
+        }
+    }
+
+    private boolean isModuleEnabled(final String moduleName) {
+        return this.config.getEnabledModules().getOrDefault(moduleName, true);
+    }
 
     private boolean hasDependency(final Class<? extends AbstractModule> module,
                                   final Class<? extends AbstractModule> dependency,
@@ -54,17 +82,17 @@ public class ModuleManager {
     private List<Class<? extends AbstractModule>> getSortedModules(final ModuleStatus moduleStatus) throws TopicalSortCycleException {
         final List<ModuleInfo> moduleInfos = this.getModuleInfos(moduleStatus);
 
-        final List<AbstractModule> modules = Lists.newArrayListWithCapacity(moduleInfos.size());
+        final List<AbstractModule> moduleList = Lists.newArrayListWithCapacity(moduleInfos.size());
         final List<Class<? extends AbstractModule>> moduleClasses = Lists.newArrayListWithCapacity(moduleInfos.size());
         for (final ModuleInfo moduleInfo : moduleInfos) {
-            modules.add(moduleInfo.getModule());
+            moduleList.add(moduleInfo.getModule());
             moduleClasses.add(moduleInfo.getModuleClass());
         }
 
         // Sort modules after load order
         final List<TopicalSort.Dependency> edges = new ArrayList<>();
-        for (int moduleIndex = 0; modules.size() > moduleIndex; moduleIndex++) {
-            final AbstractModule module = modules.get(moduleIndex);
+        for (int moduleIndex = 0; moduleList.size() > moduleIndex; moduleIndex++) {
+            final AbstractModule module = moduleList.get(moduleIndex);
 
             // Load after
             for (final Class<? extends AbstractModule> loadAfterClass : module.getLoadAfterDependencies()) {
@@ -79,7 +107,7 @@ public class ModuleManager {
         return moduleSort.sort();
     }
 
-    public void registerModules(final Class<? extends AbstractModule>... moduleClasses) {
+    public final void registerModules(final Class<? extends AbstractModule>... moduleClasses) {
         for (final Class<? extends AbstractModule> moduleClass : moduleClasses) {
             this.registerModule(moduleClass);
         }
@@ -92,15 +120,13 @@ public class ModuleManager {
     }
 
     public List<ModuleInfo> getModuleInfos(final ModuleStatus status) {
-        final List<ModuleInfo> modules = Lists.newArrayListWithExpectedSize(this.modules.size());
-
+        final List<ModuleInfo> moduleInfos = Lists.newArrayListWithExpectedSize(this.modules.size());
         for (final ModuleInfo moduleInfo : this.modules.values()) {
             if (moduleInfo.getStatus() == status) {
-                modules.add(moduleInfo);
+                moduleInfos.add(moduleInfo);
             }
         }
-
-        return modules;
+        return moduleInfos;
     }
 
     public Optional<ModuleInfo> getModuleInfo(final Class<? extends AbstractModule> clazz) {
@@ -109,12 +135,12 @@ public class ModuleManager {
 
     public List<AbstractModule> getModules(final ModuleStatus status) {
         final List<ModuleInfo> moduleInfos = this.getModuleInfos(status);
-        final List<AbstractModule> modules = Lists.newArrayListWithExpectedSize(moduleInfos.size());
+        final List<AbstractModule> moduleList = Lists.newArrayListWithExpectedSize(moduleInfos.size());
 
         for (final ModuleInfo moduleInfo : moduleInfos) {
-            modules.add(moduleInfo.getModule());
+            moduleList.add(moduleInfo.getModule());
         }
-        return modules;
+        return moduleList;
     }
 
     public boolean registerModule(final Class<? extends AbstractModule> moduleClass) {
@@ -135,7 +161,18 @@ public class ModuleManager {
             return false;
         }
 
+        // Check if the module is disabled through the config file
+        if (!this.isModuleEnabled(module.getModuleName())) {
+            log.info(
+                    "Canceled register of {}[{}]. It is disabled inside the config file.",
+                    module.getModuleName(),
+                    moduleClass
+            );
+            return false;
+        }
+
         log.debug("Registered {}[{}]", module.getModuleName(), moduleClass);
+        this.addModuleToConfig(module.getModuleName());
         this.modules.put(
                 moduleClass,
                 new ModuleInfo(
