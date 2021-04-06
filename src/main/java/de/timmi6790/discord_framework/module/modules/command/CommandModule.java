@@ -133,7 +133,7 @@ public class CommandModule extends AbstractModule {
             return false;
         }
 
-        log.info("Registerd {} command.", command.getName());
+        log.info("Registered {} command.", command.getName());
         this.commands.put(command.getName(), command);
         for (final String aliasName : command.getAliasNames()) {
             if (this.commandAliases.containsKey(aliasName)) {

@@ -57,14 +57,16 @@ import java.util.regex.Pattern;
 })
 @Log4j2
 public abstract class AbstractCommand {
+    private static final String COMMAND = "command";
+
     static final Histogram COMMAND_EXECUTION_TIME_FULL = Histogram.build()
             .name("command_execution_full_seconds")
-            .labelNames("command")
+            .labelNames(COMMAND)
             .help("Full command execution time in seconds. This includes all pre checks.")
             .register();
     static final Histogram COMMAND_EXECUTION_TIME = Histogram.build()
             .name("command_execution_seconds")
-            .labelNames("command")
+            .labelNames(COMMAND)
             .help("Command execution time in seconds.")
             .register();
     protected static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(
@@ -349,7 +351,7 @@ public abstract class AbstractCommand {
                                 .setData("channelId", String.valueOf(commandParameters.getChannelDb().getRepositoryId()))
                                 .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
                                 .setData("args", Arrays.toString(commandParameters.getArgs()))
-                                .setData("command", this.name)
+                                .setData(COMMAND, this.name)
                                 .build())
                         .setLevel(SentryLevel.ERROR)
                         .setMessage("Command Exception")
@@ -660,7 +662,7 @@ public abstract class AbstractCommand {
                 commandParameters,
                 commandName,
                 argPos,
-                "command",
+                COMMAND,
                 HelpCommand.class,
                 new String[0],
                 DataUtilities.convertToStringList(similarCommands, AbstractCommand::getName)

@@ -88,7 +88,11 @@ public class ConfigModule extends AbstractModule {
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
         final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
-        log.debug("Loaded {} {} from file.", configClass.getSimpleName(), module.getModuleName());
+        log.debug(
+                "Loaded config \"{}\" for {} from file.",
+                configClass.getSimpleName(),
+                module.getModuleName()
+        );
         return config;
     }
 
