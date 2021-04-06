@@ -56,7 +56,7 @@ public class ModuleManager {
     }
 
     private boolean isModuleEnabled(final String moduleName) {
-        return this.config.getEnabledModules().getOrDefault(moduleName, true);
+        return this.config.getEnabledModules().getOrDefault(moduleName, Boolean.TRUE);
     }
 
     private boolean hasDependency(final Class<? extends AbstractModule> module,
