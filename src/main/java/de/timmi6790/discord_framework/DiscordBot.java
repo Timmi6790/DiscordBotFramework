@@ -1,12 +1,12 @@
 package de.timmi6790.discord_framework;
 
-import de.timmi6790.commons.utilities.GsonUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.ModuleStatus;
 import de.timmi6790.discord_framework.module.provider.providers.InternalModuleProvider;
 import de.timmi6790.discord_framework.module.provider.providers.jar.JarModuleProvider;
+import de.timmi6790.discord_framework.utilities.commons.GsonUtilities;
 import io.prometheus.client.cache.caffeine.CacheMetricsCollector;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -53,10 +53,9 @@ public class DiscordBot {
     @SneakyThrows
     protected Config getConfig() {
         final Path mainConfigPath = Paths.get("./configs/config.json");
-        return GsonUtilities.readJsonFile(mainConfigPath, Config.class);
+        return GsonUtilities.readJsonFile(mainConfigPath, Config.class).orElseThrow(RuntimeException::new);
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_EXIT")
     protected boolean setup() throws IOException {
         // Metrics
         DefaultExports.initialize();

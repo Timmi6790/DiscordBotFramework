@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.command;
 
-import de.timmi6790.commons.utilities.EnumUtilities;
-import de.timmi6790.commons.utilities.StringUtilities;
+import de.timmi6790.discord_framework.utilities.commons.EnumUtilities;
+import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.ModuleManager;

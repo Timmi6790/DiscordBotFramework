@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module;
 
 import com.google.common.collect.Lists;
-import de.timmi6790.commons.utilities.GsonUtilities;
+import de.timmi6790.discord_framework.utilities.commons.GsonUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.module.exceptions.ModuleUninitializedException;
@@ -45,7 +45,7 @@ public class ModuleManager {
             }
         }
 
-        this.config = GsonUtilities.readJsonFile(CONFIG_PATH, ModuleConfig.class);
+        this.config = GsonUtilities.readJsonFile(CONFIG_PATH, ModuleConfig.class).orElseThrow(RuntimeException::new);
     }
 
     private void addModuleToConfig(final String moduleName) {

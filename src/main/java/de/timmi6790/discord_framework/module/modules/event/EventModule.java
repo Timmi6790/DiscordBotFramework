@@ -2,7 +2,7 @@ package de.timmi6790.discord_framework.module.modules.event;
 
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
-import de.timmi6790.commons.utilities.ReflectionUtilities;
+import de.timmi6790.discord_framework.utilities.commons.ReflectionUtilities;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;

@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.command.commands;
 
-import de.timmi6790.commons.utilities.StringUtilities;
+import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.command.CommandResult;

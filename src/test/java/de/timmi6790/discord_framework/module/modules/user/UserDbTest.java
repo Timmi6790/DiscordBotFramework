@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.module.modules.user;
 
-import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
@@ -27,6 +26,7 @@ import org.mockito.MockedStatic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -362,9 +362,7 @@ class UserDbTest {
             statModule.registerStat(userDbModule, testStat);
             userDb.increaseStat(testStat);
             assertThat(userDb.getStatsMap()).containsExactlyInAnyOrderEntriesOf(
-                    MapBuilder.<AbstractStat, Integer>ofHashMap()
-                            .put(testStat, 1)
-                            .build()
+                    Map.of(testStat, 1)
             );
 
             // Two stats
@@ -372,10 +370,8 @@ class UserDbTest {
             statModule.registerStat(userDbModule, testStat2);
             userDb.setStatValue(testStat2, 290);
             assertThat(userDb.getStatsMap()).containsExactlyInAnyOrderEntriesOf(
-                    MapBuilder.<AbstractStat, Integer>ofHashMap()
-                            .put(testStat, 1)
-                            .put(testStat2, 290)
-                            .build()
+                    Map.of(testStat, 1,
+                            testStat2, 290)
             );
         });
 

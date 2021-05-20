@@ -1,8 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.achievement.repository.mysql;
 
-import de.timmi6790.commons.builders.MapBuilder;
 import de.timmi6790.discord_framework.module.modules.achievement.repository.AchievementRepository;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
+
+import java.util.Map;
 
 /**
  * Mysql achievement repository implementation
@@ -28,13 +29,9 @@ public class AchievementRepositoryMysql implements AchievementRepository {
     public int retrieveOrCreateAchievementId(final String internalAchievementName) {
         return this.databaseModule.retrieveOrCreateId(
                 GET_ACHIEVEMENT_ID,
-                MapBuilder.<String, Object>ofHashMap()
-                        .put(ACHIEVEMENT_NAME, internalAchievementName)
-                        .build(),
+                Map.of(ACHIEVEMENT_NAME, internalAchievementName),
                 INSERT_NEW_ACHIEVEMENT,
-                MapBuilder.<String, Object>ofHashMap()
-                        .put(ACHIEVEMENT_NAME, internalAchievementName)
-                        .build()
+                Map.of(ACHIEVEMENT_NAME, internalAchievementName)
         );
     }
 }

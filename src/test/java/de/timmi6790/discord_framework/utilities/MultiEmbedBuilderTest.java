@@ -1,9 +1,9 @@
 package de.timmi6790.discord_framework.utilities;
 
-import de.timmi6790.commons.Pair;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.antlr.v4.runtime.misc.Pair;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -171,7 +171,7 @@ class MultiEmbedBuilderTest {
                     for (final MessageEmbed messageEmbed : messageEmbeds) {
                         for (final MessageEmbed.Field field : messageEmbed.getFields()) {
                             final Pair<String, String> input = values.get(count);
-                            if (!field.getName().equals(input.getLeft()) || !field.getValue().equals(input.getRight())) {
+                            if (!field.getName().equals(input.a) || !field.getValue().equals(input.b)) {
                                 return false;
                             }
                             count++;

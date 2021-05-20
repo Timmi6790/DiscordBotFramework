@@ -82,9 +82,9 @@
 
         <!-- Dependencies -->
         <dependency>
-            <groupId>com.github.Timmi6790</groupId>
-            <artifactId>Commons</artifactId>
-            <version>4e06ba7769</version>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.6</version>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
@@ -131,11 +131,6 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>3.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ocpsoft.prettytime</groupId>
-            <artifactId>prettytime-nlp</artifactId>
-            <version>5.0.1.Final</version>
         </dependency>
         <dependency>
             <groupId>org.discordbots</groupId>
@@ -246,22 +241,38 @@
 
         <!-- Required for the testing plugin to work -->
         <dependency>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-checkstyle-plugin</artifactId>
-            <version>3.1.1</version>
-            <type>maven-plugin</type>
-            <scope>test</scope>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>findbugs-maven-plugin</artifactId>
-            <version>3.0.3</version>
-            <type>maven-plugin</type>
-            <scope>test</scope>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.7</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.10.1</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Automatic-Module-Name>de.timmi6790.DiscordBotFramework</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
@@ -346,26 +357,4 @@
             </plugins>
         </pluginManagement>
     </build>
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.3</version>
-                <configuration>
-                    <findbugsXmlOutput>true</findbugsXmlOutput>
-                    <includeTests>true</includeTests>
-                    <xmlOutput>true</xmlOutput>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
-                <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
 </project>

@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.config;
 
-import de.timmi6790.commons.utilities.GsonUtilities;
+import de.timmi6790.discord_framework.utilities.commons.GsonUtilities;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -87,7 +87,7 @@ public class ConfigModule extends AbstractModule {
      */
     @SneakyThrows
     public <T> T getConfig(@NonNull final AbstractModule module, @NonNull final Class<T> configClass) {
-        final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass);
+        final T config = GsonUtilities.readJsonFile(this.getModuleConfigPath(module, configClass), configClass).orElseThrow(RuntimeException::new);
         log.debug(
                 "Loaded config \"{}\" for {} from file.",
                 configClass.getSimpleName(),
