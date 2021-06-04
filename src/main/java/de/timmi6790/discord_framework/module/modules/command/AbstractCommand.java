@@ -14,8 +14,8 @@ import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.AbstractEmoteReaction;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.CommandEmoteReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.CommandEmoteAction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.EmoteAction;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
@@ -230,7 +230,7 @@ public abstract class AbstractCommand {
     protected void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
                                     @NonNull final String title,
                                     @NonNull final String description,
-                                    @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+                                    @NonNull final Map<String, EmoteAction> emotes) {
         this.sendEmoteMessage(
                 commandParameters,
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
@@ -242,7 +242,7 @@ public abstract class AbstractCommand {
 
     protected void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
                                     @NonNull final MultiEmbedBuilder embedBuilder,
-                                    @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+                                    @NonNull final Map<String, EmoteAction> emotes) {
         DiscordMessagesUtilities.sendEmoteMessage(commandParameters, embedBuilder, emotes);
     }
 
@@ -488,7 +488,7 @@ public abstract class AbstractCommand {
 
         }
 
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
+        final Map<String, EmoteAction> emotes = new LinkedHashMap<>();
         final StringBuilder helpDescription = new StringBuilder(String.format(
                 "%s is not a valid %s.%n",
                 MarkdownUtil.monospace(userArg),
@@ -524,7 +524,7 @@ public abstract class AbstractCommand {
                 newArgsParameter[argPos] = similarNames.get(index);
                 final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgsParameter);
 
-                emotes.put(emote, new CommandEmoteReaction(this, newCommandParameters));
+                emotes.put(emote, new CommandEmoteAction(this, newCommandParameters));
             }
 
             if (command != null) {
@@ -538,7 +538,7 @@ public abstract class AbstractCommand {
 
         if (command != null) {
             final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgs);
-            emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(command, newCommandParameters));
+            emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteAction(command, newCommandParameters));
         }
 
         this.sendEmoteMessage(

@@ -19,7 +19,6 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.Map;
 import java.util.StringJoiner;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @EqualsAndHashCode(callSuper = true)
 public class UserCommand extends AbstractCommand {
@@ -90,7 +89,6 @@ public class UserCommand extends AbstractCommand {
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
         final Bucket commandRatelimit = this.getCommandModule().resolveRateBucket(userDb.getUser().getIdLong());
-        final int activeEmotes = this.getEmoteReactionModule().getActiveEmotesPerPlayer().getOrDefault(userDb.getDiscordId(), new AtomicInteger(0)).get();
 
         final StringJoiner settings = new StringJoiner("\n");
         for (final Map.Entry<AbstractSetting<?>, String> entry : userDb.getSettings().entrySet()) {
@@ -133,7 +131,6 @@ public class UserCommand extends AbstractCommand {
                 this.getEmbedBuilder(commandParameters)
                         .setTitle("User Info")
                         .addField("Command Spam Cache", String.valueOf(commandRatelimit.getAvailableTokens()), true)
-                        .addField("Active Emotes", String.valueOf(activeEmotes), true)
                         .addField("Ranks", primaryRank + "[" + subRanks + "]", true)
                         .addField("Achievements", achievements.toString(), false)
                         .addField("Settings", settings.toString(), false)

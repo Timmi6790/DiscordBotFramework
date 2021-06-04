@@ -3,9 +3,9 @@ package de.timmi6790.discord_framework.utilities.discord;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionMessage;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReaction;
 import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.EmoteAction;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -143,7 +143,7 @@ public class DiscordMessagesUtilities {
 
     public void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
                                  @NonNull final MultiEmbedBuilder embedBuilder,
-                                 @NonNull final Map<String, AbstractEmoteReaction> emotes) {
+                                 @NonNull final Map<String, EmoteAction> emotes) {
         commandParameters.getLowestMessageChannel()
                 .sendMessage(
                         embedBuilder
@@ -157,7 +157,7 @@ public class DiscordMessagesUtilities {
                                 .getModuleOrThrow(EmoteReactionModule.class)
                                 .addEmoteReactionMessage(
                                         message,
-                                        new EmoteReactionMessage(
+                                        new EmoteReaction(
                                                 emotes,
                                                 commandParameters.getUser().getIdLong(),
                                                 commandParameters.getLowestMessageChannel().getIdLong()

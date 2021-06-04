@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions;
+package de.timmi6790.discord_framework.module.modules.reactions.emote.actions;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
@@ -9,13 +9,14 @@ import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.Data;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 
 @Data
-public class CommandEmoteReaction implements AbstractEmoteReaction {
+public class CommandEmoteAction implements EmoteAction {
     private final Class<? extends AbstractCommand> commandClass;
     private final Values values;
 
-    public CommandEmoteReaction(final AbstractCommand commandClass, final CommandParameters commandParameters) {
+    public CommandEmoteAction(final AbstractCommand commandClass, final CommandParameters commandParameters) {
         this.commandClass = commandClass.getClass();
         this.values = new Values(
                 commandParameters.getArgs(),
@@ -27,7 +28,7 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
     }
 
     @Override
-    public void onEmote() {
+    public void onEmote(final MessageReactionAddEvent reactionAddEvent) {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.commandClass)
                 .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));

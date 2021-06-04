@@ -53,7 +53,7 @@ public class BotInfoCommand extends AbstractCommand {
         final long userCacheSize = this.userDbModule.getCache().estimatedSize();
         final long channelCacheSize = this.channelDbModule.getCache().estimatedSize();
         final long guildCacheSize = this.guildDbModule.getCache().estimatedSize();
-        final long emoteListenerSize = this.emoteReactionModule.getEmoteMessageCache().estimatedSize();
+        final long emoteListenerSize = this.emoteReactionModule.getMessageCache().estimatedSize();
 
         this.sendTimedMessage(commandParameters,
                 this.getEmbedBuilder(commandParameters)

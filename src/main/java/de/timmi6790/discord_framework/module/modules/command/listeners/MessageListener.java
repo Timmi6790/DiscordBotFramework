@@ -5,8 +5,8 @@ import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.AbstractEmoteReaction;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.CommandEmoteReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.CommandEmoteAction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.EmoteAction;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
@@ -80,7 +80,7 @@ public class MessageListener {
                                                    @NonNull final List<AbstractCommand> similarCommands,
                                                    @NonNull final String firstArg) {
         final StringBuilder description = new StringBuilder();
-        final Map<String, AbstractEmoteReaction> emotes = new LinkedHashMap<>();
+        final Map<String, EmoteAction> emotes = new LinkedHashMap<>();
 
         if (similarCommands.isEmpty()) {
             description.append(String.format(
@@ -108,12 +108,12 @@ public class MessageListener {
                                 similarCommand.getDescription()
                         )
                 );
-                emotes.put(emote, new CommandEmoteReaction(similarCommand, commandParameters));
+                emotes.put(emote, new CommandEmoteAction(similarCommand, commandParameters));
             }
             description.append('\n').append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
 
-        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteReaction(this.helpCommand, commandParameters));
+        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteAction(this.helpCommand, commandParameters));
         DiscordMessagesUtilities.sendEmoteMessage(
                 commandParameters,
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)

@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.module.modules.reactions.button.listener;
+package de.timmi6790.discord_framework.module.modules.reactions.button.listeners;
 
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReaction;
