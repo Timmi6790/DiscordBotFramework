@@ -108,12 +108,12 @@ public class MessageListener {
                                 similarCommand.getDescription()
                         )
                 );
-                emotes.put(emote, new CommandEmoteAction(similarCommand, commandParameters));
+                emotes.put(emote, new CommandEmoteAction(similarCommand.getClass(), commandParameters));
             }
             description.append('\n').append(DiscordEmotes.FOLDER.getEmote()).append(" All commands");
         }
 
-        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteAction(this.helpCommand, commandParameters));
+        emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteAction(this.helpCommand.getClass(), commandParameters));
         DiscordMessagesUtilities.sendEmoteMessage(
                 commandParameters,
                 DiscordMessagesUtilities.getEmbedBuilder(commandParameters)

@@ -16,8 +16,8 @@ public class CommandEmoteAction implements EmoteAction {
     private final Class<? extends AbstractCommand> commandClass;
     private final Values values;
 
-    public CommandEmoteAction(final AbstractCommand commandClass, final CommandParameters commandParameters) {
-        this.commandClass = commandClass.getClass();
+    public CommandEmoteAction(final Class<? extends AbstractCommand> commandClass, final CommandParameters commandParameters) {
+        this.commandClass = commandClass;
         this.values = new Values(
                 commandParameters.getArgs(),
                 commandParameters.isGuildCommand(),

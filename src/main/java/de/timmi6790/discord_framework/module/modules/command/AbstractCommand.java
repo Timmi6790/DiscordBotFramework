@@ -524,7 +524,7 @@ public abstract class AbstractCommand {
                 newArgsParameter[argPos] = similarNames.get(index);
                 final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgsParameter);
 
-                emotes.put(emote, new CommandEmoteAction(this, newCommandParameters));
+                emotes.put(emote, new CommandEmoteAction(this.getClass(), newCommandParameters));
             }
 
             if (command != null) {
@@ -538,7 +538,7 @@ public abstract class AbstractCommand {
 
         if (command != null) {
             final CommandParameters newCommandParameters = CommandParameters.of(commandParameters, newArgs);
-            emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteAction(command, newCommandParameters));
+            emotes.put(DiscordEmotes.FOLDER.getEmote(), new CommandEmoteAction(command.getClass(), newCommandParameters));
         }
 
         this.sendEmoteMessage(

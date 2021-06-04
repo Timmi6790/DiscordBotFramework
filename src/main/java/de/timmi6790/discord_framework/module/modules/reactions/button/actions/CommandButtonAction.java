@@ -15,7 +15,7 @@ public class CommandButtonAction implements ButtonAction {
     private final Class<? extends AbstractCommand> commandClass;
     private final ParsedValues values;
 
-    public CommandButtonAction(final Class<AbstractCommand> commandClass, final CommandParameters commandParameters) {
+    public CommandButtonAction(final Class<? extends AbstractCommand> commandClass, final CommandParameters commandParameters) {
         this.commandClass = commandClass;
         this.values = new ParsedValues(
                 commandParameters.getArgs(),
