@@ -74,7 +74,6 @@ public class DataUtilities {
         return sortedValues.subList(0, Math.min(limit, sortedValues.size()));
     }
 
-
     /**
      * Converts the given collection into a string collection
      *
