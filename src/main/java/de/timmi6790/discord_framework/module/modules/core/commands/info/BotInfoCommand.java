@@ -4,8 +4,8 @@ import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.command.CommandResult;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.EmoteReactionModule;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.EqualsAndHashCode;
 

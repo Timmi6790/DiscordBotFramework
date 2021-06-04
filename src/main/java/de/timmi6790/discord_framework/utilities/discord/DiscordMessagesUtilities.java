@@ -2,9 +2,10 @@ package de.timmi6790.discord_framework.utilities.discord;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.EmoteReactionMessage;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.EmoteReactionModule;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionMessage;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.AbstractEmoteReaction;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -123,6 +124,21 @@ public class DiscordMessagesUtilities {
                     .flatMap(Message::delete)
                     .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
         }
+    }
+
+    public void sendButtonMessage(final CommandParameters commandParameters,
+                                  final MultiEmbedBuilder embedBuilder,
+                                  final Map<net.dv8tion.jda.api.interactions.components.Button, ButtonAction> buttons) {
+        // TODO: Enforce the 5 button limit silently
+        commandParameters.getLowestMessageChannel()
+                .sendMessage(
+                        embedBuilder
+                                .setFooter("↓ Click Me!")
+                                .buildSingle()
+                )
+                .setActionRow(buttons.keySet())
+                .queue();
+
     }
 
     public void sendEmoteMessage(@NonNull final CommandParameters commandParameters,

@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.module.modules.emote_reaction.emotereactions;
+package de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions;
 
 import lombok.Data;
 

@@ -1,9 +1,9 @@
-package de.timmi6790.discord_framework.module.modules.emote_reaction.cache;
+package de.timmi6790.discord_framework.module.modules.reactions.emote.cache;
 
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.EmoteReactionMessage;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.EmoteReactionModule;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionMessage;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
 import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;

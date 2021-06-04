@@ -1,6 +1,6 @@
-package de.timmi6790.discord_framework.module.modules.emote_reaction;
+package de.timmi6790.discord_framework.module.modules.reactions.emote;
 
-import de.timmi6790.discord_framework.module.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.AbstractEmoteReaction;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
@@ -18,7 +18,6 @@ public class EmoteReactionMessage {
     private final int deleteTime;
     private final boolean oneTimeUse;
     private final boolean deleteMessage;
-    private final Set<Long> relatedMessageIds = new HashSet<>();
 
     public EmoteReactionMessage(final Map<String, AbstractEmoteReaction> emotes,
                                 final Long userId,

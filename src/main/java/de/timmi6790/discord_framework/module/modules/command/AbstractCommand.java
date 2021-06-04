@@ -1,7 +1,5 @@
 package de.timmi6790.discord_framework.module.modules.command;
 
-import de.timmi6790.discord_framework.utilities.commons.EnumUtilities;
-import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.ModuleManager;
@@ -12,16 +10,18 @@ import de.timmi6790.discord_framework.module.modules.command.property.CommandPro
 import de.timmi6790.discord_framework.module.modules.command.property.properties.ExampleCommandsCommandProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.RequiredDiscordBotPermsCommandProperty;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.emotereactions.AbstractEmoteReaction;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.AbstractEmoteReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.emotereactions.CommandEmoteReaction;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
+import de.timmi6790.discord_framework.utilities.commons.EnumUtilities;
+import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;

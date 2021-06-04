@@ -1,13 +1,13 @@
-package de.timmi6790.discord_framework.module.modules.emote_reaction;
+package de.timmi6790.discord_framework.module.modules.reactions.emote;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.cache.CacheExpireAfter;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.cache.CacheRemoveListener;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.cache.CacheExpireAfter;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.cache.CacheRemoveListener;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -43,12 +43,13 @@ public class EmoteReactionModule extends AbstractModule {
         );
 
         // Register metrics
-        DiscordBot.CACHE_METRICS.addCache("emote_reaction_message_cache", this.emoteMessageCache);
+        DiscordBot.CACHE_METRICS.addCache("reaction_emote_message_cache", this.emoteMessageCache);
     }
 
     @Override
     public boolean onInitialize() {
-        this.getModuleOrThrow(EventModule.class).addEventListener(this);
+        this.getModuleOrThrow(EventModule.class)
+                .addEventListener(this);
         return true;
     }
 

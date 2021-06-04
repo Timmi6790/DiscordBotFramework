@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.module.modules.emote_reaction.emotereactions;
+package de.timmi6790.discord_framework.module.modules.reactions.button.actions;
 
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
@@ -9,15 +9,15 @@ import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.Data;
+import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 
-@Data
-public class CommandEmoteReaction implements AbstractEmoteReaction {
+public class CommandButtonAction implements ButtonAction {
     private final Class<? extends AbstractCommand> commandClass;
-    private final Values values;
+    private final ParsedValues values;
 
-    public CommandEmoteReaction(final AbstractCommand commandClass, final CommandParameters commandParameters) {
-        this.commandClass = commandClass.getClass();
-        this.values = new Values(
+    public CommandButtonAction(final Class<AbstractCommand> commandClass, final CommandParameters commandParameters) {
+        this.commandClass = commandClass;
+        this.values = new ParsedValues(
                 commandParameters.getArgs(),
                 commandParameters.isGuildCommand(),
                 commandParameters.getChannelDb().getDiscordId(),
@@ -27,14 +27,14 @@ public class CommandEmoteReaction implements AbstractEmoteReaction {
     }
 
     @Override
-    public void onEmote() {
+    public void onButtonClick(final ButtonClickEvent buttonClickEvent) {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.commandClass)
                 .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));
     }
 
     @Data
-    private static class Values {
+    private static class ParsedValues {
         private final String[] args;
         private final boolean guildCommand;
         private final long channelDiscordId;

@@ -1,7 +1,7 @@
-package de.timmi6790.discord_framework.module.modules.emote_reaction.cache;
+package de.timmi6790.discord_framework.module.modules.reactions.emote.cache;
 
 import com.github.benmanes.caffeine.cache.Expiry;
-import de.timmi6790.discord_framework.module.modules.emote_reaction.EmoteReactionMessage;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionMessage;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
