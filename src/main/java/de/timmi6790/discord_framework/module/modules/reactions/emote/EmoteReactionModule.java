@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.reactions.common.cache.CacheExpireAfter;
+import de.timmi6790.discord_framework.module.modules.reactions.emote.listeners.EmoteReactionListener;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -38,7 +39,7 @@ public class EmoteReactionModule extends AbstractModule {
     @Override
     public boolean onInitialize() {
         this.getModuleOrThrow(EventModule.class)
-                .addEventListener(this);
+                .addEventListener(new EmoteReactionListener(this));
         return true;
     }
 
