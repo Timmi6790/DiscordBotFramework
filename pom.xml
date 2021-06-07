@@ -278,6 +278,9 @@
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
+                    <from>
+                        <image>adoptopenjdk/openjdk16:alpine-jre</image>
+                    </from>
                     <to>
                         <image>timmi6790/discordbotframework</image>
                         <tags>
