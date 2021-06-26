@@ -56,20 +56,14 @@ public class RankCommand extends AbstractCommand {
 
         // All other commands
         final Rank rank = this.getRankThrow(commandParameters, 0);
-        switch (args1) {
-            case INFO:
-                return this.infoCommand(commandParameters, rank);
-            case DELETE:
-                return this.deleteRankCommand(commandParameters, rank);
-            case RENAME:
-                return this.renameRankCommand(commandParameters, rank);
-            case EXTEND:
-                return this.extendCommand(commandParameters, rank);
-            case PERMS:
-                return this.permsCommand(commandParameters, rank);
-            default:
-                return CommandResult.ERROR;
-        }
+        return switch (args1) {
+            case INFO -> this.infoCommand(commandParameters, rank);
+            case DELETE -> this.deleteRankCommand(commandParameters, rank);
+            case RENAME -> this.renameRankCommand(commandParameters, rank);
+            case EXTEND -> this.extendCommand(commandParameters, rank);
+            case PERMS -> this.permsCommand(commandParameters, rank);
+            default -> CommandResult.ERROR;
+        };
     }
 
     // Sub commands

@@ -1,13 +1,12 @@
 package de.timmi6790.discord_framework.utilities.commons;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
 /**
  * String utilities.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class StringUtilities {
     /**
      * Capitalize the input string.
@@ -15,7 +14,7 @@ public class StringUtilities {
      * @param string the string
      * @return the capitalized string
      */
-    public static String capitalize(@NonNull final String string) {
+    public String capitalize(@NonNull final String string) {
         if (string.isEmpty()) {
             return string;
         }

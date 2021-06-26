@@ -3,8 +3,8 @@ package de.timmi6790.discord_framework.module.modules.command.property.propertie
 import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.command.property.CommandProperty;
-import lombok.NonNull;
 import net.dv8tion.jda.api.Permission;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -23,8 +23,8 @@ public class RequiredDiscordUserPermsCommandProperty implements CommandProperty<
     }
 
     @Override
-    public boolean onPermissionCheck(@NonNull final AbstractCommand command,
-                                     @NonNull final CommandParameters commandParameters) {
+    public boolean onPermissionCheck(final @NotNull AbstractCommand command,
+                                     final @NotNull CommandParameters commandParameters) {
         if (commandParameters.isGuildCommand()) {
             final Set<Permission> userPermissions = commandParameters.getGuildMember().getPermissions();
             for (final Permission requiredPermission : this.getValue()) {

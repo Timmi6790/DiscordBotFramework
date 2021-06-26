@@ -46,7 +46,7 @@ public class BotInfoCommand extends AbstractCommand {
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
         // discord stats
-        final int guilds = this.getDiscord().getGuilds().size();
+        final long guilds = this.getDiscord().getGuildCache().size();
         final int shards = this.getDiscord().getShardsTotal();
 
         // Module stats

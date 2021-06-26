@@ -25,6 +25,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -459,8 +460,8 @@ class AbstractCommandTest {
         }
 
         @Override
-        public boolean onPermissionCheck(@NonNull final AbstractCommand command,
-                                         @NonNull final CommandParameters commandParameters) {
+        public boolean onPermissionCheck(@NonNull final @NotNull AbstractCommand command,
+                                         @NonNull final @NotNull CommandParameters commandParameters) {
             return this.getValue();
         }
 

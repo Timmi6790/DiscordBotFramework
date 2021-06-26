@@ -55,24 +55,15 @@ public class UserCommand extends AbstractCommand {
         final UserDb userDb = this.getUserDbModule().getOrCreate(user.getIdLong());
         final ValidArgs1 arg1 = this.getFromEnumIgnoreCaseThrow(commandParameters, 1, ValidArgs1.values());
 
-        switch (arg1) {
-            case INFO:
-                return this.infoCommand(commandParameters, userDb);
-            case UN_BAN:
-                return this.unBanCommand(commandParameters, userDb, user);
-            case BAN:
-                return this.banCommand(commandParameters, userDb, user);
-            case SET_PRIMARY_RANK:
-                return this.setPrimaryRankCommand(commandParameters, userDb);
-            case RANK:
-                return this.rankCommand(commandParameters, userDb);
-            case PERMS:
-                return this.permsCommand(commandParameters, userDb, user);
-            case INVALIDATE:
-                return this.invalidateCommand(commandParameters, userDb);
-            default:
-                return CommandResult.ERROR;
-        }
+        return switch (arg1) {
+            case INFO -> this.infoCommand(commandParameters, userDb);
+            case UN_BAN -> this.unBanCommand(commandParameters, userDb, user);
+            case BAN -> this.banCommand(commandParameters, userDb, user);
+            case SET_PRIMARY_RANK -> this.setPrimaryRankCommand(commandParameters, userDb);
+            case RANK -> this.rankCommand(commandParameters, userDb);
+            case PERMS -> this.permsCommand(commandParameters, userDb, user);
+            case INVALIDATE -> this.invalidateCommand(commandParameters, userDb);
+        };
     }
 
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {

@@ -136,7 +136,7 @@ public class MessageListener {
                 event.getMessage().getContentRaw(),
                 this.getCommandModule().getMainCommandPattern()
         );
-        if (!parsedStart.isPresent()) {
+        if (parsedStart.isEmpty()) {
             return;
         }
 

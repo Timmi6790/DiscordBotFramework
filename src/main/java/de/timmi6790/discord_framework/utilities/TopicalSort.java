@@ -19,7 +19,9 @@ public class TopicalSort<T> {
         this.adjacency = new boolean[this.vertices.size()][this.vertices.size()];
 
         log.debug("Dependencies: {}", dependencies);
-        dependencies.forEach(edge -> this.adjacency[edge.getId()][edge.getDependencyId()] = true);
+        for (final Dependency edge : dependencies) {
+            this.adjacency[edge.getId()][edge.getDependencyId()] = true;
+        }
     }
 
     public List<T> sort() throws TopicalSortCycleException {

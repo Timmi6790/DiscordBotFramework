@@ -7,11 +7,13 @@ import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.reactions.button.listeners.ButtonReactionListener;
 import de.timmi6790.discord_framework.module.modules.reactions.common.cache.CacheExpireAfter;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Message;
 
 import java.util.Optional;
 
+@EqualsAndHashCode(callSuper = true)
 public class ButtonReactionModule extends AbstractModule {
     private final Cache<Long, ButtonReaction> messageCache = Caffeine.newBuilder()
             .recordStats()

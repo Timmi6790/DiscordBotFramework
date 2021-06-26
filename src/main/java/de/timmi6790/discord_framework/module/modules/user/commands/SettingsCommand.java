@@ -23,11 +23,13 @@ public class SettingsCommand extends AbstractCommand {
     private final SettingModule settingModule;
 
     public SettingsCommand() {
-        super("settings",
+        super(
+                "settings",
                 "Info",
                 "Settings",
                 "[setting] [newValue]",
-                "st", "setting");
+                "st", "setting"
+        );
 
         this.settingModule = this.getModuleManager().getModuleOrThrow(SettingModule.class);
     }

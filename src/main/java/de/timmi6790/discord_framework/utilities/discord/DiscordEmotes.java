@@ -28,29 +28,18 @@ public enum DiscordEmotes {
     private final String emote;
 
     public static DiscordEmotes getNumberEmote(final int number) {
-        switch (number) {
-            case 1:
-                return ONE;
-            case 2:
-                return TWO;
-            case 3:
-                return THREE;
-            case 4:
-                return FOUR;
-            case 5:
-                return FIVE;
-            case 6:
-                return SIX;
-            case 7:
-                return SEVEN;
-            case 8:
-                return EIGHT;
-            case 9:
-                return NINE;
-            case 10:
-                return TEN;
-            default:
-                return ZERO;
-        }
+        return switch (number) {
+            case 1 -> ONE;
+            case 2 -> TWO;
+            case 3 -> THREE;
+            case 4 -> FOUR;
+            case 5 -> FIVE;
+            case 6 -> SIX;
+            case 7 -> SEVEN;
+            case 8 -> EIGHT;
+            case 9 -> NINE;
+            case 10 -> TEN;
+            default -> ZERO;
+        };
     }
 }

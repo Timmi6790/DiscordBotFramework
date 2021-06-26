@@ -2,9 +2,9 @@ package de.timmi6790.discord_framework.utilities.commons;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,9 +17,10 @@ import java.util.Optional;
 /**
  * File utilities.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
+@Log4j2
 public class GsonUtilities {
-    private static final Gson gson = new GsonBuilder()
+    private final Gson gson = new GsonBuilder()
             .enableComplexMapKeySerialization()
             .serializeNulls()
             .setPrettyPrinting()
@@ -34,9 +35,9 @@ public class GsonUtilities {
      * @param newVersion the new object version
      * @return success status
      */
-    public static <T> boolean saveToJsonIfChanged(@NonNull final Path path,
-                                                  @NonNull final T oldVersion,
-                                                  @NonNull final T newVersion) {
+    public <T> boolean saveToJsonIfChanged(@NonNull final Path path,
+                                           @NonNull final T oldVersion,
+                                           @NonNull final T newVersion) {
         if (oldVersion.equals(newVersion)) {
             return false;
         }
@@ -52,11 +53,11 @@ public class GsonUtilities {
      * @param path   the path
      * @param object the object
      */
-    public static <T> void saveToJson(@NonNull final Path path, @NonNull final T object) {
+    public <T> void saveToJson(@NonNull final Path path, @NonNull final T object) {
         try {
             Files.write(path, Collections.singleton(gson.toJson(object)));
         } catch (final IOException e) {
-            // Logger.error(e, "Error while trying to save file.");
+            log.error("Error while trying to save file.", e);
         }
     }
 
@@ -68,7 +69,7 @@ public class GsonUtilities {
      * @param clazz the clazz of the json file
      * @return the parsed object
      */
-    public static <T> Optional<T> readJsonFile(@NonNull final Path path, @NonNull final Class<T> clazz) {
+    public <T> Optional<T> readJsonFile(@NonNull final Path path, @NonNull final Class<T> clazz) {
         try (final BufferedReader bufferedReader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return Optional.ofNullable(gson.fromJson(bufferedReader, clazz));
         } catch (final IOException e) {

@@ -6,11 +6,13 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
+import java.io.Serial;
 import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CommandReturnException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = -7239128594396319097L;
     private final MultiEmbedBuilder embedBuilder;
     private final CommandResult commandResult;

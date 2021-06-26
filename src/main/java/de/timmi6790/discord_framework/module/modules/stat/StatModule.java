@@ -9,15 +9,15 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @EqualsAndHashCode(callSuper = true)
 public class StatModule extends AbstractModule {
     @Getter
-    private final Map<Integer, AbstractStat> stats = new ConcurrentHashMap<>();
-    private final Map<String, Integer> nameIdMatching = new ConcurrentHashMap<>();
+    private final Map<Integer, AbstractStat> stats = new HashMap<>();
+    private final Map<String, Integer> nameIdMatching = new HashMap<>();
 
     private StatRepository statRepository;
     private EventModule eventModule;

@@ -8,7 +8,6 @@ import de.timmi6790.discord_framework.module.modules.setting.repository.mysql.Se
 import de.timmi6790.discord_framework.module.modules.setting.settings.CommandAutoCorrectSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +17,8 @@ import java.util.Optional;
 public class SettingModule extends AbstractModule {
     @Getter
     private final Map<Integer, AbstractSetting<?>> settings = new HashMap<>();
-    private final Map<String, Integer> nameIdMatching = new CaseInsensitiveMap<>();
-    private final Map<String, String> aliasNameMatcher = new CaseInsensitiveMap<>();
+    private final Map<String, Integer> nameIdMatching = new HashMap<>();
+    private final Map<String, String> aliasNameMatcher = new HashMap<>();
 
     private SettingRepository settingRepository;
     private PermissionsModule permissionsModule;
@@ -57,17 +56,11 @@ public class SettingModule extends AbstractModule {
                 .setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()))
                 .setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));
 
-        synchronized (this.settings) {
-            this.settings.put(setting.getDatabaseId(), setting);
-        }
-        synchronized (this.nameIdMatching) {
-            this.nameIdMatching.put(setting.getStatName(), setting.getDatabaseId());
-        }
+        this.settings.put(setting.getDatabaseId(), setting);
+        this.nameIdMatching.put(setting.getStatName(), setting.getDatabaseId());
 
-        synchronized (this.aliasNameMatcher) {
-            for (final String aliasName : setting.getAliasNames()) {
-                this.aliasNameMatcher.put(aliasName, setting.getStatName());
-            }
+        for (final String aliasName : setting.getAliasNames()) {
+            this.aliasNameMatcher.put(aliasName, setting.getStatName());
         }
     }
 

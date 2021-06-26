@@ -1,12 +1,12 @@
 package de.timmi6790.discord_framework.module;
 
 import com.google.common.collect.Lists;
-import de.timmi6790.discord_framework.utilities.commons.GsonUtilities;
 import de.timmi6790.discord_framework.exceptions.TopicalSortCycleException;
 import de.timmi6790.discord_framework.module.exceptions.ModuleNotFoundException;
 import de.timmi6790.discord_framework.module.exceptions.ModuleUninitializedException;
 import de.timmi6790.discord_framework.module.provider.ModuleProvider;
 import de.timmi6790.discord_framework.utilities.TopicalSort;
+import de.timmi6790.discord_framework.utilities.commons.GsonUtilities;
 import io.sentry.Sentry;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -63,7 +63,7 @@ public class ModuleManager {
                                   final Class<? extends AbstractModule> dependency,
                                   final ModuleStatus requiredDependencyStatus) {
         final Optional<ModuleInfo> dependencyModuleInfoOpt = this.getModuleInfo(dependency);
-        if (!dependencyModuleInfoOpt.isPresent()) {
+        if (dependencyModuleInfoOpt.isEmpty()) {
             log.warn(
                     "Dependency {} for {} is not registered.",
                     dependency,
@@ -200,7 +200,7 @@ public class ModuleManager {
 
     public boolean initialize(final Class<? extends AbstractModule> moduleClass) {
         final Optional<ModuleInfo> moduleInfoOpt = this.getModuleInfo(moduleClass);
-        if (!moduleInfoOpt.isPresent()) {
+        if (moduleInfoOpt.isEmpty()) {
             log.warn("The module {} is not registered!", moduleClass);
             return false;
         }
@@ -255,7 +255,7 @@ public class ModuleManager {
 
     public boolean start(final Class<? extends AbstractModule> moduleClass) {
         final Optional<ModuleInfo> moduleInfoOpt = this.getModuleInfo(moduleClass);
-        if (!moduleInfoOpt.isPresent()) {
+        if (moduleInfoOpt.isEmpty()) {
             log.warn("The module {} is not registered!", moduleClass);
             return false;
         }
@@ -334,7 +334,7 @@ public class ModuleManager {
 
     public boolean stopModule(final Class<? extends AbstractModule> moduleClass) {
         final Optional<ModuleInfo> moduleInfoOpt = this.getModuleInfo(moduleClass);
-        if (!moduleInfoOpt.isPresent() || moduleInfoOpt.get().getStatus() == ModuleStatus.REGISTERED) {
+        if (moduleInfoOpt.isEmpty() || moduleInfoOpt.get().getStatus() == ModuleStatus.REGISTERED) {
             return false;
         }
 
