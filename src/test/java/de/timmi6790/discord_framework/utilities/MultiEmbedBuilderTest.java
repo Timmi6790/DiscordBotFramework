@@ -65,7 +65,7 @@ class MultiEmbedBuilderTest {
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder()
                 .setTitle(title);
 
-        final MessageEmbed[] messageEmbeds = embedBuilder.build();
+        final MessageEmbed[] messageEmbeds = embedBuilder.build().toArray(new MessageEmbed[0]);
         assertThat(messageEmbeds)
                 .hasSize(1)
                 .matches(new TotalSizePredicate(), "Total size")
@@ -84,7 +84,7 @@ class MultiEmbedBuilderTest {
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder()
                 .setDescription(getRandomString(totalSize));
 
-        AssertionsForClassTypes.assertThat(embedBuilder.build())
+        AssertionsForClassTypes.assertThat(embedBuilder.build().toArray(new MessageEmbed[0]))
                 .hasSize((int) Math.ceil((float) totalSize / MultiEmbedBuilder.EMBED_DESCRIPTION_MAX))
                 .matches(messageEmbeds -> {
                     int totalDescriptionSize = 0;
@@ -108,7 +108,7 @@ class MultiEmbedBuilderTest {
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
         embedBuilder.setDescription(description);
 
-        assertThat(embedBuilder.build())
+        assertThat(embedBuilder.build().toArray(new MessageEmbed[0]))
                 .matches(new TotalSizePredicate(), "Total size")
                 .matches(new OrderPredicate(), "Order")
                 .matches(messageEmbeds -> {
@@ -129,7 +129,7 @@ class MultiEmbedBuilderTest {
             embedBuilder.addField(String.valueOf(index), String.valueOf(index));
         }
 
-        assertThat(embedBuilder.build())
+        assertThat(embedBuilder.build().toArray(new MessageEmbed[0]))
                 .hasSize((int) Math.ceil((float) fieldCount / MultiEmbedBuilder.EMBED_FIELD_MAX))
                 .matches(messageEmbeds -> {
                     int fields = 0;
@@ -157,7 +157,7 @@ class MultiEmbedBuilderTest {
             embedBuilder.addField(name, value);
         }
 
-        assertThat(embedBuilder.build())
+        assertThat(embedBuilder.build().toArray(new MessageEmbed[0]))
                 .matches(messageEmbeds -> {
                     int fields = 0;
                     for (final MessageEmbed messageEmbed : messageEmbeds) {

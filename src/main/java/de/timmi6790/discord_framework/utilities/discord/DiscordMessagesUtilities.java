@@ -9,7 +9,10 @@ import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.Emo
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -65,11 +68,11 @@ public class DiscordMessagesUtilities {
             return false;
         }
 
-        user.openPrivateChannel().queue(privateChannel -> {
-            for (final MessageEmbed message : embedBuilder.build()) {
-                privateChannel.sendMessage(message).queue();
-            }
-        });
+        user.openPrivateChannel().queue(privateChannel ->
+                privateChannel
+                        .sendMessageEmbeds(embedBuilder.build())
+                        .queue()
+        );
 
         return true;
     }
@@ -85,11 +88,9 @@ public class DiscordMessagesUtilities {
     public void sendMessage(final @NonNull MessageChannel textChannel,
                             final @NonNull MultiEmbedBuilder embedBuilder,
                             final @NonNull Consumer<Message> success) {
-        for (final MessageEmbed message : embedBuilder.build()) {
-            textChannel
-                    .sendMessage(message)
-                    .queue(success);
-        }
+        textChannel
+                .sendMessageEmbeds(embedBuilder.build())
+                .queue(success);
     }
 
     /**
@@ -100,11 +101,9 @@ public class DiscordMessagesUtilities {
      */
     public void sendMessage(final @NonNull MessageChannel textChannel,
                             final @NonNull MultiEmbedBuilder embedBuilder) {
-        for (final MessageEmbed message : embedBuilder.build()) {
-            textChannel
-                    .sendMessage(message)
-                    .queue();
-        }
+        textChannel
+                .sendMessageEmbeds(embedBuilder.build())
+                .queue();
     }
 
     /**
@@ -117,13 +116,11 @@ public class DiscordMessagesUtilities {
     public void sendMessageTimed(@NonNull final MessageChannel textChannel,
                                  @NonNull final MultiEmbedBuilder embedBuilder,
                                  final long deleteAfterSeconds) {
-        for (final MessageEmbed message : embedBuilder.build()) {
-            textChannel
-                    .sendMessage(message)
-                    .delay(deleteAfterSeconds, TimeUnit.SECONDS)
-                    .flatMap(Message::delete)
-                    .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
-        }
+        textChannel
+                .sendMessageEmbeds(embedBuilder.build())
+                .delay(deleteAfterSeconds, TimeUnit.SECONDS)
+                .flatMap(Message::delete)
+                .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
     }
 
     public void sendButtonMessage(final CommandParameters commandParameters,
@@ -131,7 +128,7 @@ public class DiscordMessagesUtilities {
                                   final Map<net.dv8tion.jda.api.interactions.components.Button, ButtonAction> buttons) {
         // TODO: Enforce the 5 button limit silently
         commandParameters.getLowestMessageChannel()
-                .sendMessage(
+                .sendMessageEmbeds(
                         embedBuilder
                                 .setFooter("↓ Click Me!")
                                 .buildSingle()
@@ -145,7 +142,7 @@ public class DiscordMessagesUtilities {
                                  @NonNull final MultiEmbedBuilder embedBuilder,
                                  @NonNull final Map<String, EmoteAction> emotes) {
         commandParameters.getLowestMessageChannel()
-                .sendMessage(
+                .sendMessageEmbeds(
                         embedBuilder
                                 .setFooter("↓ Click Me!")
                                 .buildSingle()

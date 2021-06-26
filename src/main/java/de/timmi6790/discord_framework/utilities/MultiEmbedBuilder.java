@@ -16,6 +16,7 @@ import java.awt.*;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -160,7 +161,7 @@ public class MultiEmbedBuilder {
         );
     }
 
-    public MessageEmbed[] build() {
+    public Collection<MessageEmbed> build() {
         Checks.check(!this.isEmpty(), "Cannot build an empty embed!");
 
         final List<MessageEmbed> embeds = new ArrayList<>();
@@ -202,7 +203,7 @@ public class MultiEmbedBuilder {
                 true
         ));
 
-        return embeds.toArray(new MessageEmbed[0]);
+        return embeds;
     }
 
     public MessageEmbed buildSingle() {
