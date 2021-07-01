@@ -15,14 +15,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Data
-@EqualsAndHashCode(exclude = {"discord"})
-@ToString(exclude = {"discord"})
 public class GuildDb {
-    private final int databaseId;
     private final long discordId;
-
     private final boolean banned;
 
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private final ShardManager discord;
 
     private final LoadingCache<Long, Member> memberCache = Caffeine.newBuilder()
@@ -34,12 +32,10 @@ public class GuildDb {
             });
 
     public GuildDb(final ShardManager discord,
-                   final int databaseId,
                    final long discordId,
                    final boolean banned) {
         this.discord = discord;
 
-        this.databaseId = databaseId;
         this.discordId = discordId;
         this.banned = banned;
     }

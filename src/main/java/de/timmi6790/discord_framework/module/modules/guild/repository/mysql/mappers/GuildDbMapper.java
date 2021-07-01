@@ -11,19 +11,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @AllArgsConstructor
-public class GuildDbDatabaseMapper extends DatabaseRowMapper implements RowMapper<GuildDb> {
+public class GuildDbMapper extends DatabaseRowMapper implements RowMapper<GuildDb> {
     private final ShardManager discord;
 
     @Override
     public GuildDb map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        if (rs.getInt("id") == 0) {
-            return null;
-        }
-
         return new GuildDb(
                 this.discord,
-                rs.getInt("id"),
-                rs.getLong("discordId"),
+                rs.getLong("discord_id"),
                 rs.getBoolean("banned")
         );
     }
