@@ -5,8 +5,6 @@ import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.module.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.module.modules.command.listeners.CommandLoggingListener;
 import de.timmi6790.discord_framework.module.modules.command.listeners.MessageListener;
-import de.timmi6790.discord_framework.module.modules.command.repository.CommandRepository;
-import de.timmi6790.discord_framework.module.modules.command.repository.mysql.CommandRepositoryMysql;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
@@ -44,7 +42,6 @@ public class CommandModule extends AbstractModule {
     private String mainCommand;
     private long botId;
 
-    private CommandRepository commandRepository;
     private Config commandConfig;
 
     public CommandModule() {
@@ -81,15 +78,12 @@ public class CommandModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.commandRepository = new CommandRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class).getJdbi());
         this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
         this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getIdLong();
         this.mainCommand = this.commandConfig.getMainCommand();
         this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
-
-        this.commandRepository.init(CommandCause.values(), CommandResult.values());
 
         final HelpCommand helpCommand = new HelpCommand();
         this.registerCommands(
@@ -104,7 +98,7 @@ public class CommandModule extends AbstractModule {
                                 this.getModuleOrThrow(GuildDbModule.class),
                                 helpCommand
                         ),
-                        new CommandLoggingListener(this.commandRepository)
+                        new CommandLoggingListener()
                 );
         return true;
     }
@@ -115,10 +109,6 @@ public class CommandModule extends AbstractModule {
             this.getDiscord().setActivity(Activity.playing(this.mainCommand + "help"));
         }
         return true;
-    }
-
-    private int getCommandDatabaseId(@NonNull final AbstractCommand command) {
-        return this.commandRepository.getCommandDatabaseId(command);
     }
 
     public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand... commands) {
@@ -148,9 +138,6 @@ public class CommandModule extends AbstractModule {
             this.commandAliases.put(aliasName, command.getName());
         }
 
-        if (command.getDbId() == -1) {
-            command.setDbId(this.getCommandDatabaseId(command));
-        }
         if (command.getPermissionId() == -1) {
             final String defaultPermissionName = String.format("%s.command.%s", module.getModuleName(), command.getName())
                     .replace(' ', '_')

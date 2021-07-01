@@ -1,5 +1,4 @@
 CREATE SCHEMA "channel";
-CREATE SCHEMA "command";
 CREATE SCHEMA "guild";
 CREATE SCHEMA "rank";
 CREATE SCHEMA "user";
@@ -12,50 +11,6 @@ CREATE TABLE "channel"."channels"
     "register_date" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY ("discord_id")
 );
-
-CREATE TABLE "command"."command_causes"
-(
-    "id"         serial4,
-    "cause_name" varchar(124) NOT NULL,
-    PRIMARY KEY ("id")
-);
-CREATE UNIQUE INDEX "command_causes-command_name_lower" ON "command"."command_causes" USING btree (
-                                                                                                   LOWER(cause_name)
-    );
-
-CREATE TABLE "command"."command_logs"
-(
-    "id"                serial4,
-    "command_id"        int4        NOT NULL,
-    "command_cause_id"  int4        NOT NULL,
-    "command_status_id" int4        NOT NULL,
-    "in_guild"          bool        NOT NULL,
-    "date"              timestamptz NOT NULL,
-    PRIMARY KEY ("id")
-);
-CREATE INDEX "command_logs-date" ON "command"."command_logs" USING btree (
-                                                                          "date"
-    );
-
-CREATE TABLE "command"."command_status"
-(
-    "id"          serial4,
-    "status_name" varchar(124) NOT NULL,
-    PRIMARY KEY ("id")
-);
-CREATE UNIQUE INDEX "command_status-status_name_lower" ON "command"."command_status" USING btree (
-                                                                                                  LOWER(status_name)
-    );
-
-CREATE TABLE "command"."commands"
-(
-    "id"           serial4,
-    "command_name" varchar(124) NOT NULL,
-    PRIMARY KEY ("id")
-);
-CREATE UNIQUE INDEX "commands-command_name_lower" ON "command"."commands" USING btree (
-                                                                                       LOWER(command_name)
-    );
 
 CREATE TABLE "guild"."guild_settings"
 (
@@ -200,28 +155,6 @@ CREATE TABLE "user"."users"
 
 ALTER TABLE "channel"."channels"
     ADD CONSTRAINT "channels-guild_id" FOREIGN KEY ("guild_id") REFERENCES "guild"."guilds" ("discord_id");
-DROP INDEX "command"."command_causes-command_name_lower";
-CREATE UNIQUE INDEX "command_causes-command_name_lower" ON "command"."command_causes" USING btree (
-                                                                                                   LOWER(cause_name)
-    );
-DROP INDEX "command"."command_logs-date";
-ALTER TABLE "command"."command_logs"
-    ADD CONSTRAINT "command_logs-command_status_id" FOREIGN KEY ("command_status_id") REFERENCES "command"."command_status" ("id");
-ALTER TABLE "command"."command_logs"
-    ADD CONSTRAINT "command_logs-command_id" FOREIGN KEY ("command_id") REFERENCES "command"."commands" ("id");
-ALTER TABLE "command"."command_logs"
-    ADD CONSTRAINT "command_logs-command_cause" FOREIGN KEY ("command_cause_id") REFERENCES "command"."command_causes" ("id");
-CREATE INDEX "command_logs-date" ON "command"."command_logs" USING btree (
-                                                                          "date"
-    );
-DROP INDEX "command"."command_status-status_name_lower";
-CREATE UNIQUE INDEX "command_status-status_name_lower" ON "command"."command_status" USING btree (
-                                                                                                  LOWER(status_name)
-    );
-DROP INDEX "command"."commands-command_name_lower";
-CREATE UNIQUE INDEX "commands-command_name_lower" ON "command"."commands" USING btree (
-                                                                                       LOWER(command_name)
-    );
 ALTER TABLE "guild"."guild_settings"
     ADD CONSTRAINT "guild_settings-guild_id" FOREIGN KEY ("guild_id") REFERENCES "guild"."guilds" ("discord_id");
 ALTER TABLE "guild"."guild_settings"
