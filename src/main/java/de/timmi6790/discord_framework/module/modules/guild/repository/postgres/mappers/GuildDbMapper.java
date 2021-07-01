@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.module.modules.guild.repository.postgres.mappers;
 
-import de.timmi6790.discord_framework.module.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDb;
 import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -11,7 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @AllArgsConstructor
-public class GuildDbMapper extends DatabaseRowMapper implements RowMapper<GuildDb> {
+public class GuildDbMapper implements RowMapper<GuildDb> {
     private final ShardManager discord;
 
     @Override

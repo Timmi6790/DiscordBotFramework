@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.channel.repository.postgres.mappers;
 
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
-import de.timmi6790.discord_framework.module.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
 import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -15,7 +14,7 @@ import java.sql.SQLException;
  * Maps the database row to {@link ChannelDb}
  */
 @AllArgsConstructor
-public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<ChannelDb> {
+public class ChannelDbMapper implements RowMapper<ChannelDb> {
     private final GuildDbModule guildDbModule;
     private final ShardManager discord;
 
