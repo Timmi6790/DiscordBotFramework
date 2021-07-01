@@ -1,86 +1,48 @@
 package de.timmi6790.discord_framework.module.modules.user;
 
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
-import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
-import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.setting.settings.CommandAutoCorrectSetting;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
-import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import de.timmi6790.discord_framework.module.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.module.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import lombok.ToString;
+import lombok.*;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 
 @Data
-@EqualsAndHashCode(exclude = {"userDbModule", "achievementModule", "settingModule", "statModule", "eventModule", "rankModule"})
-@ToString(exclude = {"userDbModule", "achievementModule", "settingModule", "statModule", "eventModule", "rankModule"})
+@AllArgsConstructor
 public class UserDb {
-    private final int databaseId;
     private final long discordId;
-    private final Set<Integer> rankIds;
-    private final Set<Integer> permissionIds;
-    private final Map<Integer, String> settingsMap;
-    private final Map<Integer, Integer> stats;
-    private final Set<Integer> achievementIds;
-    private int primaryRankId;
+    private final Set<Rank> ranks = Collections.newSetFromMap(new WeakHashMap<>());
+    private final Set<Integer> permissionIds = new HashSet<>();
+    // TODO: Maybe already convert it and instead save it as object
+    private final Map<AbstractSetting<?>, String> settings = new WeakHashMap<>();
+    private final Map<AbstractStat, Integer> stats = new WeakHashMap<>();
+    private final Set<AbstractAchievement> achievements = Collections.newSetFromMap(new WeakHashMap<>());
+    private Rank primaryRank;
     private boolean banned;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final UserDbModule userDbModule;
-    @Nullable
-    private final AchievementModule achievementModule;
-    @Nullable
-    private final SettingModule settingModule;
-    @Nullable
-    private final StatModule statModule;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final EventModule eventModule;
-    private final RankModule rankModule;
-
-    public UserDb(final UserDbModule userDbModule,
-                  final EventModule eventModule,
-                  final RankModule rankModule,
-                  @Nullable final AchievementModule achievementModule,
-                  @Nullable final SettingModule settingModule,
-                  @Nullable final StatModule statModule,
-                  final int databaseId,
-                  final long discordId,
-                  final int primaryRankId,
-                  final Set<Integer> rankIds,
-                  final boolean banned,
-                  final Set<Integer> permissionIds,
-                  final Map<Integer, String> settingsMap,
-                  final Map<Integer, Integer> stats,
-                  final Set<Integer> achievementIds) {
-        this.databaseId = databaseId;
-        this.discordId = discordId;
-        this.primaryRankId = primaryRankId;
-        this.rankIds = rankIds;
-        this.banned = banned;
-        this.permissionIds = permissionIds;
-        this.settingsMap = settingsMap;
-        this.stats = stats;
-        this.achievementIds = achievementIds;
-        this.achievementModule = achievementModule;
-
-        this.userDbModule = userDbModule;
-        this.eventModule = eventModule;
-        this.settingModule = settingModule;
-        this.statModule = statModule;
-        this.rankModule = rankModule;
-    }
+    @Nullable
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final SettingModule settingModule;
 
     protected UserDbRepository getUserDbRepository() {
         return this.userDbModule.getUserDbRepository();
@@ -109,7 +71,7 @@ public class UserDb {
             return false;
         }
 
-        this.getUserDbRepository().setBanStatus(this.getDatabaseId(), newBanStatus);
+        this.getUserDbRepository().setBanStatus(this.discordId, newBanStatus);
         this.banned = newBanStatus;
         return true;
     }
@@ -118,10 +80,9 @@ public class UserDb {
     public Set<Integer> getAllPermissionIds() {
         final Set<Integer> permissionSet = new HashSet<>(this.permissionIds);
 
-        this.rankModule.getRank(this.primaryRankId)
-                .ifPresent(rank -> permissionSet.addAll(rank.getPermissionIds(true)));
-        for (final int rankId : this.getRankIds()) {
-            this.rankModule.getRank(rankId).ifPresent(rank -> permissionSet.addAll(rank.getPermissionIds(true)));
+        permissionSet.addAll(this.primaryRank.getPermissionIds(true));
+        for (final Rank rank : this.getRanks()) {
+            permissionSet.addAll(rank.getPermissionIds(true));
         }
 
         return permissionSet;
@@ -136,7 +97,7 @@ public class UserDb {
             return false;
         }
 
-        this.getUserDbRepository().addPermission(this.getDatabaseId(), permissionId);
+        this.getUserDbRepository().addPermission(this.discordId, permissionId);
         this.permissionIds.add(permissionId);
 
         return true;
@@ -148,88 +109,56 @@ public class UserDb {
         }
 
         this.permissionIds.remove(permissionId);
-        this.getUserDbRepository().removePermission(this.getDatabaseId(), permissionId);
+        this.getUserDbRepository().removePermission(this.discordId, permissionId);
 
         return true;
     }
 
     // Ranks
-    public boolean hasPrimaryRank(final int rankId) {
-        return this.primaryRankId == rankId;
-    }
-
     public boolean hasPrimaryRank(@NonNull final Rank rank) {
-        return this.hasPrimaryRank(rank.getRepositoryId());
-    }
-
-    public boolean setPrimaryRankId(final int rankId) {
-        if (rankId == this.primaryRankId) {
-            return false;
-        }
-
-        this.getUserDbRepository().setPrimaryRank(this.getDatabaseId(), rankId);
-        this.primaryRankId = rankId;
-
-        return true;
+        return this.primaryRank == rank;
     }
 
     public boolean setPrimaryRank(@NonNull final Rank rank) {
-        return this.setPrimaryRankId(rank.getRepositoryId());
-    }
-
-    public boolean hasRank(final int rankId) {
-        return this.rankIds.contains(rankId);
-    }
-
-    public boolean hasRank(@NonNull final Rank rank) {
-        return this.hasRank(rank.getRepositoryId());
-    }
-
-    public boolean addRank(final int rankId) {
-        if (this.hasRank(rankId)) {
+        if (this.primaryRank == rank) {
             return false;
         }
 
-        this.getUserDbRepository().addRank(this.getDatabaseId(), rankId);
-        this.rankIds.add(rankId);
+        this.getUserDbRepository().setPrimaryRank(this.discordId, rank.getRepositoryId());
+        this.primaryRank = rank;
 
         return true;
     }
 
-    public boolean addRank(@NonNull final Rank rank) {
-        return this.addRank(rank.getRepositoryId());
+    public boolean hasRank(@NonNull final Rank rank) {
+        return this.ranks.contains(rank);
     }
 
-    public boolean removeRank(final int rankId) {
-        if (!this.hasRank(rankId)) {
+    public boolean addRank(@NonNull final Rank rank) {
+        if (this.hasRank(rank)) {
             return false;
         }
 
-        this.getUserDbRepository().removeRank(this.getDatabaseId(), rankId);
-        this.rankIds.remove(rankId);
+        this.getUserDbRepository().addRank(this.discordId, rank.getRepositoryId());
+        this.ranks.add(rank);
 
         return true;
     }
 
     public boolean removeRank(@NonNull final Rank rank) {
-        return this.removeRank(rank.getRepositoryId());
+        if (!this.hasRank(rank)) {
+            return false;
+        }
+
+        this.getUserDbRepository().removeRank(this.discordId, rank.getRepositoryId());
+        this.ranks.remove(rank);
+
+        return true;
     }
 
     // Achievements
-    public List<AbstractAchievement> getAchievements() {
-        if (this.achievementModule == null) {
-            return new ArrayList<>();
-        }
-
-        final List<AbstractAchievement> achievements = new ArrayList<>();
-        for (final int achievementId : this.getAchievementIds()) {
-            this.achievementModule.getAchievement(achievementId).ifPresent(achievements::add);
-        }
-        return achievements;
-    }
-
     public boolean hasAchievement(@NonNull final AbstractAchievement achievement) {
-        return this.achievementIds.contains(achievement.getRepositoryId());
+        return this.achievements.contains(achievement);
     }
 
     public boolean grantAchievement(@NonNull final AbstractAchievement achievement, final boolean sendUnlockMessage) {
@@ -237,8 +166,8 @@ public class UserDb {
             return false;
         }
 
-        this.getUserDbRepository().grantPlayerAchievement(this.getDatabaseId(), achievement.getRepositoryId());
-        this.achievementIds.add(achievement.getRepositoryId());
+        this.getUserDbRepository().grantAchievement(this.discordId, achievement.getRepositoryId());
+        this.achievements.add(achievement);
         achievement.onUnlock(this);
         if (sendUnlockMessage) {
             // Show all the perks the players unlocked with this achievement
@@ -265,7 +194,7 @@ public class UserDb {
 
     // Stats
     public Optional<Integer> getStatValue(final AbstractStat stat) {
-        return Optional.ofNullable(this.stats.get(stat.getDatabaseId()));
+        return Optional.ofNullable(this.stats.get(stat));
     }
 
     public void increaseStat(final AbstractStat stat) {
@@ -281,14 +210,13 @@ public class UserDb {
 
     public void setStatValue(final AbstractStat stat, final int value) {
         final Optional<Integer> currentValueOpt = this.getStatValue(stat);
-
         if (currentValueOpt.isPresent()) {
-            this.getUserDbRepository().updateStat(this.getDatabaseId(), stat.getDatabaseId(), value);
+            this.getUserDbRepository().updateStat(this.discordId, stat.getDatabaseId(), value);
         } else {
-            this.getUserDbRepository().insertStat(this.getDatabaseId(), stat.getDatabaseId(), value);
+            this.getUserDbRepository().insertStat(this.discordId, stat.getDatabaseId(), value);
         }
 
-        this.stats.put(stat.getDatabaseId(), value);
+        this.stats.put(stat, value);
 
         final StatsChangeEvent statsChangeEvent = new StatsChangeEvent(
                 this.userDbModule.getDiscordBot().getBaseShard(),
@@ -299,18 +227,6 @@ public class UserDb {
         );
 
         this.eventModule.executeEvent(statsChangeEvent);
-    }
-
-    public Map<AbstractStat, Integer> getStatsMap() {
-        if (this.statModule == null) {
-            return new HashMap<>();
-        }
-
-        final Map<AbstractStat, Integer> statMap = new HashMap<>();
-        for (final Map.Entry<Integer, Integer> entry : this.getStats().entrySet()) {
-            this.statModule.getStat(entry.getKey()).ifPresent(stat -> statMap.put(stat, entry.getValue()));
-        }
-        return statMap;
     }
 
     // Settings
@@ -343,17 +259,20 @@ public class UserDb {
     }
 
     public <T> boolean hasSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
-        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
-        return settingOpt.filter(this::hasSetting).isPresent();
+        return this.getSettingFromClass(settingClazz)
+                .filter(this::hasSetting)
+                .isPresent();
     }
 
     public boolean hasSetting(final AbstractSetting<?> setting) {
-        return this.getAllPermissionIds().contains(setting.getPermissionId());
+        return this.getAllPermissionIds()
+                .contains(setting.getPermissionId());
     }
 
     public <T> boolean grantSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
-        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
-        return settingOpt.filter(this::grantSetting).isPresent();
+        return this.getSettingFromClass(settingClazz)
+                .filter(this::grantSetting)
+                .isPresent();
     }
 
     public <T> boolean grantSetting(final AbstractSetting<T> setting) {
@@ -366,26 +285,32 @@ public class UserDb {
     }
 
     public <T> void setSetting(final Class<? extends AbstractSetting<T>> settingClazz, final T value) {
-        this.getSettingFromClass(settingClazz).ifPresent(setting -> this.setSetting(setting, value));
+        this.getSettingFromClass(settingClazz)
+                .ifPresent(setting -> this.setSetting(setting, value));
     }
 
     public <T> void setSetting(final AbstractSetting<T> setting, final T value) {
         final String newValue = setting.toDatabaseValue(value);
-        if (this.settingsMap.containsKey(setting.getDatabaseId())) {
-            this.getUserDbRepository().updateSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
+        if (this.settings.containsKey(setting)) {
+            this.getUserDbRepository().updateSetting(
+                    this.discordId,
+                    setting.getDatabaseId(),
+                    newValue
+            );
         } else {
-            this.getUserDbRepository().grantSetting(this.getDatabaseId(), setting.getDatabaseId(), newValue);
+            this.getUserDbRepository().grantSetting(
+                    this.discordId,
+                    setting.getDatabaseId(),
+                    newValue
+            );
         }
 
-        this.settingsMap.put(setting.getDatabaseId(), newValue);
+        this.settings.put(setting, newValue);
     }
 
     public <T> Optional<T> getSetting(final Class<? extends AbstractSetting<T>> settingClazz) {
-        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
-        if (settingOpt.isPresent()) {
-            return this.getSetting(settingOpt.get());
-        }
-        return Optional.empty();
+        return this.getSettingFromClass(settingClazz)
+                .flatMap(this::getSetting);
     }
 
     public <T> Optional<T> getSetting(final AbstractSetting<T> setting) {
@@ -394,7 +319,7 @@ public class UserDb {
             return Optional.empty();
         }
 
-        final String value = this.settingsMap.get(setting.getDatabaseId());
+        final String value = this.settings.get(setting);
         if (value != null) {
             return Optional.ofNullable(setting.fromDatabaseValue(value));
         }
@@ -403,15 +328,14 @@ public class UserDb {
     }
 
     public <T> T getSettingOrDefault(final Class<? extends AbstractSetting<T>> settingClazz, final T defaultValue) {
-        final Optional<? extends AbstractSetting<T>> settingOpt = this.getSettingFromClass(settingClazz);
-        if (settingOpt.isPresent()) {
-            return this.getSettingOrDefault(settingOpt.get(), defaultValue);
-        }
-        return defaultValue;
+        return this.getSettingFromClass(settingClazz)
+                .map(setting -> this.getSettingOrDefault(setting, defaultValue))
+                .orElse(defaultValue);
     }
 
     public <T> T getSettingOrDefault(final AbstractSetting<T> setting, final T defaultValue) {
-        return this.getSetting(setting).orElse(defaultValue);
+        return this.getSetting(setting)
+                .orElse(defaultValue);
     }
 
     public boolean hasAutoCorrection() {
@@ -419,5 +343,26 @@ public class UserDb {
                 CommandAutoCorrectSetting.class,
                 Boolean.FALSE
         );
+    }
+
+    // Repository help methods
+    public void addRankRepositoryOnly(@Nonnull final Rank rank) {
+        this.ranks.add(rank);
+    }
+
+    public void addPermissionRepositoryOnly(final int permissionId) {
+        this.permissionIds.add(permissionId);
+    }
+
+    public void addSettingRepositoryOnly(@Nonnull final AbstractSetting<?> setting, @Nonnull final String value) {
+        this.settings.put(setting, value);
+    }
+
+    public void addStatRepositoryOnly(@Nonnull final AbstractStat stat, final int value) {
+        this.stats.put(stat, value);
+    }
+
+    public void addAchievementRepositoryOnly(@Nonnull final AbstractAchievement achievement) {
+        this.achievements.add(achievement);
     }
 }

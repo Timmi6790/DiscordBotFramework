@@ -88,7 +88,6 @@ public abstract class AbstractCommand {
     private final String syntax;
     private final String[] aliasNames;
     private Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> propertiesMap = new HashMap<>();
-    private int dbId = -1;
     private Class<? extends AbstractModule> registeredModule;
     private int permissionId = -1;
     private String category;
@@ -348,8 +347,8 @@ public abstract class AbstractCommand {
                 Sentry.captureEvent(new SentryEventBuilder()
                         .addBreadcrumb(new BreadcrumbBuilder()
                                 .setCategory("Command")
-                                .setData("channelId", String.valueOf(commandParameters.getChannelDb().getRepositoryId()))
-                                .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
+                                .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDiscordId()))
+                                .setData("userId", String.valueOf(commandParameters.getUserDb().getDiscordId()))
                                 .setData("args", Arrays.toString(commandParameters.getArgs()))
                                 .setData(COMMAND, this.name)
                                 .build())

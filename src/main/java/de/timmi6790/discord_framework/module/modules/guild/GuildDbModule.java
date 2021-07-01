@@ -8,7 +8,7 @@ import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.repository.GuildDbRepository;
-import de.timmi6790.discord_framework.module.modules.guild.repository.mysql.GuildDbRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.guild.repository.postgres.GuildDbPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import lombok.EqualsAndHashCode;
@@ -52,7 +52,7 @@ public class GuildDbModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.guildDbRepository = new GuildDbRepositoryMysql(
+        this.guildDbRepository = new GuildDbPostgresRepository(
                 this.getModuleOrThrow(DatabaseModule.class).getJdbi(),
                 this.getDiscord()
         );
@@ -70,7 +70,7 @@ public class GuildDbModule extends AbstractModule {
                 return guildDbOpt.get();
             }
 
-            final GuildDb guildDb = this.getGuildDbRepository().create(discordId);
+            final GuildDb guildDb = this.getGuildDbRepository().createGuild(discordId);
             this.getCache().put(discordId, guildDb);
             return guildDb;
         } finally {
@@ -84,7 +84,7 @@ public class GuildDbModule extends AbstractModule {
             return Optional.of(guildDbCache);
         }
 
-        final Optional<GuildDb> guildDbOpt = this.getGuildDbRepository().get(discordId);
+        final Optional<GuildDb> guildDbOpt = this.getGuildDbRepository().getGuild(discordId);
         guildDbOpt.ifPresent(userDb -> this.getCache().put(discordId, userDb));
 
         return guildDbOpt;

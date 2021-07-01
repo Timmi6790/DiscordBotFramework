@@ -6,7 +6,7 @@ import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.channel.repository.ChannelRepository;
-import de.timmi6790.discord_framework.module.modules.channel.repository.mysql.ChannelRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.channel.repository.postgres.ChannelPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
@@ -50,7 +50,7 @@ public class ChannelDbModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.channelRepository = new ChannelRepositoryMysql(
+        this.channelRepository = new ChannelPostgresRepository(
                 this.getDiscord(),
                 this.getModuleOrThrow(DatabaseModule.class),
                 this.getModuleOrThrow(GuildDbModule.class)

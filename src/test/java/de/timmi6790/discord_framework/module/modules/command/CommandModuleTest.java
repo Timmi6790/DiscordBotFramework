@@ -176,7 +176,6 @@ class CommandModuleTest {
             super(name, "", "", "");
 
             this.setPermissionId(1);
-            this.setDbId(1);
         }
 
         public TestCommand() {

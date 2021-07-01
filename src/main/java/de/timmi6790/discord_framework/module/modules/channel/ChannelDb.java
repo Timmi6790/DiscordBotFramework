@@ -11,31 +11,27 @@ import net.dv8tion.jda.api.sharding.ShardManager;
  * Repository instance of a discord channel, used in all custom bot logics as a reference to the discord channel.
  */
 @Data
-@EqualsAndHashCode(exclude = {"discord"})
-@ToString(exclude = {"discord"})
 public class ChannelDb {
-    private final int repositoryId;
     private final long discordId;
     private final GuildDb guildDb;
     private boolean disabled;
 
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private final ShardManager discord;
 
     /**
      * Instantiates a new ChannelDb.
      *
-     * @param guildDb      the guildDb
-     * @param discord      the discord instance
-     * @param repositoryId the repository id
-     * @param discordId    the discord id
-     * @param disabled     is channel disabled
+     * @param guildDb   the guildDb
+     * @param discord   the discord instance
+     * @param discordId the discord id
+     * @param disabled  is channel disabled
      */
     public ChannelDb(final GuildDb guildDb,
                      final ShardManager discord,
-                     final int repositoryId,
                      final long discordId,
                      final boolean disabled) {
-        this.repositoryId = repositoryId;
         this.discordId = discordId;
         this.disabled = disabled;
 

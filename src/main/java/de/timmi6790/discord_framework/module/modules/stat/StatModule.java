@@ -4,7 +4,7 @@ import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.stat.repository.StatRepository;
-import de.timmi6790.discord_framework.module.modules.stat.repository.mysql.StatRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.stat.repository.postgres.StatPostgresRepository;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -31,9 +31,16 @@ public class StatModule extends AbstractModule {
         );
     }
 
+    protected int getStatIdOrCreate(final String internalName) {
+        return this.statRepository.getStatId(internalName)
+                .orElseGet(() -> this.statRepository.createStat(internalName));
+    }
+
     @Override
     public boolean onInitialize() {
-        this.statRepository = new StatRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
+        this.statRepository = new StatPostgresRepository(
+                this.getModuleOrThrow(DatabaseModule.class).getJdbi()
+        );
         this.eventModule = this.getModuleOrThrow(EventModule.class);
 
         return true;
@@ -55,7 +62,7 @@ public class StatModule extends AbstractModule {
         }
 
         stat.setInternalName(this.generateInternalName(module, "stat", stat.getName()));
-        stat.setDatabaseId(this.statRepository.retrieveOrCreateSettingId(stat.getInternalName()));
+        stat.setDatabaseId(this.getStatIdOrCreate(stat.getInternalName()));
 
         this.stats.put(stat.getDatabaseId(), stat);
         this.nameIdMatching.put(stat.getName(), stat.getDatabaseId());

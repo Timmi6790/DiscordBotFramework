@@ -18,7 +18,7 @@ import de.timmi6790.discord_framework.module.modules.user.commands.SettingsComma
 import de.timmi6790.discord_framework.module.modules.user.commands.UserCommand;
 import de.timmi6790.discord_framework.module.modules.user.listeners.DsgvoListener;
 import de.timmi6790.discord_framework.module.modules.user.repository.UserDbRepository;
-import de.timmi6790.discord_framework.module.modules.user.repository.mysql.UserDbRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.user.repository.postgres.UserDbPostgresRepository;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -78,7 +78,7 @@ public class UserDbModule extends AbstractModule {
     @Override
     public boolean onInitialize() {
         this.discord = super.getDiscord();
-        this.userDbRepository = new UserDbRepositoryMysql(
+        this.userDbRepository = new UserDbPostgresRepository(
                 this,
                 this.getModuleOrThrow(DatabaseModule.class),
                 this.getModuleOrThrow(EventModule.class),
@@ -106,7 +106,7 @@ public class UserDbModule extends AbstractModule {
                             new SettingsCommand()
                     );
         }
-        
+
         return true;
     }
 
@@ -150,7 +150,7 @@ public class UserDbModule extends AbstractModule {
     }
 
     public void delete(@NonNull final UserDb userDb) {
-        this.getUserDbRepository().delete(userDb);
+        this.getUserDbRepository().delete(userDb.getDiscordId());
         this.getCache().invalidate(userDb.getDiscordId());
     }
 }

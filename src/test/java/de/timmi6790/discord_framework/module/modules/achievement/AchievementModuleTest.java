@@ -81,7 +81,6 @@ class AchievementModuleTest {
     @Test
     void getAchievement() {
         final TestAchievement achievement = new TestAchievement(generateAchievementName());
-        System.out.println(achievement);
         achievementModule.registerAchievement(achievementModule, achievement);
         this.hasAchievements(achievement);
     }

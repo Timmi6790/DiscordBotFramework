@@ -7,16 +7,13 @@ import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -303,37 +300,6 @@ class RankTest {
                 .isNotEqualTo(currentName)
                 .isEqualTo(newName);
 
-        this.validateRepository(rank);
-    }
-
-    @Test
-    void retrievePlayerCount() {
-        final UserDb user1 = userDbModule.getOrCreate(1);
-        final UserDb user2 = userDbModule.getOrCreate(2);
-
-        final Rank rank = this.createRank();
-        assertThat(rank.retrievePlayerCount()).isZero();
-
-        user1.setPrimaryRank(rank);
-        user2.setPrimaryRank(rank);
-        assertThat(rank.retrievePlayerCount()).isEqualTo(2);
-
-        this.validateRepository(rank);
-    }
-
-    @Test
-    void retrieveAllPlayers() {
-        final Rank rank = this.createRank();
-        assertThat(rank.retrieveAllPlayers().toArray(new UserDb[0])).isEmpty();
-
-        final List<UserDb> userDbList = new ArrayList<>();
-        for (int count = 0; 10 > count; count++) {
-            final UserDb userDb = userDbModule.getOrCreate(count);
-            userDb.setPrimaryRank(rank);
-            userDbList.add(userDb);
-        }
-
-        assertThat(rank.retrieveAllPlayers()).containsExactlyInAnyOrderElementsOf(userDbList);
         this.validateRepository(rank);
     }
 }

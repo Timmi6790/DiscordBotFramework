@@ -1,5 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.stat.repository;
 
+import java.util.Optional;
+
 public interface StatRepository {
-    int retrieveOrCreateSettingId(String internalName);
+    Optional<Integer> getStatId(String internalName);
+
+    int createStat(String internalName);
 }

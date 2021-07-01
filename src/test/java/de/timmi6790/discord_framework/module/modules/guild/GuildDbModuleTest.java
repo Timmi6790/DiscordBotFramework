@@ -49,8 +49,12 @@ class GuildDbModuleTest {
 
         guildDbModule.create(discordId);
 
-        final Optional<GuildDb> guildFound = guildDbModule.get(discordId);
-        assertThat(guildFound).isPresent();
+        final Optional<GuildDb> guildFoundOpt = guildDbModule.get(discordId);
+        assertThat(guildFoundOpt).isPresent();
+
+        final GuildDb guild = guildFoundOpt.get();
+        assertThat(guild.getDiscordId()).isEqualTo(discordId);
+        assertThat(guild.isBanned()).isFalse();
     }
 
     @Test
@@ -66,8 +70,8 @@ class GuildDbModuleTest {
         final Optional<GuildDb> guildldDatabase = guildDbModule.get(discordId);
         assertThat(guildldDatabase).isPresent();
 
-        AssertionsForClassTypes.assertThat(guildDbCreate.getDatabaseId())
-                .isEqualTo(guildDbCache.get().getDatabaseId())
-                .isEqualTo(guildldDatabase.get().getDatabaseId());
+        AssertionsForClassTypes.assertThat(guildDbCreate.getDiscordId())
+                .isEqualTo(guildDbCache.get().getDiscordId())
+                .isEqualTo(guildldDatabase.get().getDiscordId());
     }
 }

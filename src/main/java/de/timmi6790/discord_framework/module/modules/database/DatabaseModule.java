@@ -10,8 +10,6 @@ import lombok.extern.log4j.Log4j2;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 
-import java.util.Map;
-
 /**
  * Database module.
  */
@@ -63,11 +61,10 @@ public class DatabaseModule extends AbstractModule {
      * @param password the password
      */
     private void databaseVersioning(final String url, final String user, final String password) {
-        final Flyway flyway = Flyway.configure()
+        Flyway.configure()
                 .dataSource(url, user, password)
-                .baselineOnMigrate(true)
-                .load();
-        flyway.migrate();
+                .load()
+                .migrate();
     }
 
     @Override
@@ -80,7 +77,8 @@ public class DatabaseModule extends AbstractModule {
         hikariConfig.setUsername(databaseConfig.getName());
         hikariConfig.setPassword(databaseConfig.getPassword());
 
-        hikariConfig.addDataSourceProperty("dataSourceClassName", "org.mariadb.jdbc.MariaDbDataSource");
+        hikariConfig.addDataSourceProperty("dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
+        // I'm not sure if those properties even work for postgres
         hikariConfig.addDataSourceProperty("cachePrepStmts", true);
         hikariConfig.addDataSourceProperty("prepStmtCacheSize", 250);
         hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
@@ -95,36 +93,5 @@ public class DatabaseModule extends AbstractModule {
 
         this.databaseVersioning(databaseConfig.getUrl(), databaseConfig.getName(), databaseConfig.getPassword());
         return true;
-    }
-
-    /**
-     * Retrieve or create id.
-     *
-     * @param sqlSelectIdQuery the sql query to select the id
-     * @param getParameters    the parameters for the sql select query
-     * @param sqlInsertIdQuery the sql query to insert the id into the repository
-     * @param insertParameters the parameters for the sql insert query
-     * @return the repository id
-     */
-    public int retrieveOrCreateId(final String sqlSelectIdQuery,
-                                  final Map<String, ?> getParameters,
-                                  final String sqlInsertIdQuery,
-                                  final Map<String, ?> insertParameters) {
-        return this.jdbi.withHandle(handle ->
-                handle.createQuery(sqlSelectIdQuery)
-                        .bindMap(getParameters)
-                        .mapTo(int.class)
-                        .findFirst()
-                        .orElseGet(() -> {
-                            handle.createUpdate(sqlInsertIdQuery)
-                                    .bindMap(insertParameters)
-                                    .execute();
-
-                            return handle.createQuery(sqlSelectIdQuery)
-                                    .bindMap(getParameters)
-                                    .mapTo(int.class)
-                                    .first();
-                        })
-        );
     }
 }
