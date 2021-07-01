@@ -14,7 +14,7 @@ import java.util.Optional;
  * Postgres channel repository implementation
  */
 public class ChannelPostgresRepository implements ChannelRepository {
-    private static final String GET_CHANNEL = "SELECT channel.discord_id, channel.disabled, channel.guild_id +" +
+    private static final String GET_CHANNEL = "SELECT channel.discord_id, channel.disabled, channel.guild_id " +
             "FROM channel.channels channel " +
             "WHERE channel.discord_id = :discordId " +
             "LIMIT 1;";
