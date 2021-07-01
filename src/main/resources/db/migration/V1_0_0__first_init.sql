@@ -117,10 +117,8 @@ CREATE UNIQUE INDEX "stats_stat_name" ON "public"."stats" USING btree (
 
 CREATE TABLE "rank"."rank_permissions"
 (
-    "id"            int4 NOT NULL,
     "rank_id"       int4 NOT NULL,
     "permission_id" int4 NOT NULL,
-    PRIMARY KEY ("id"),
     CONSTRAINT "rank_permissions-rank_id-permission_id" UNIQUE ("rank_id", "permission_id")
 );
 
@@ -193,10 +191,10 @@ CREATE TABLE "user"."user_stats"
 
 CREATE TABLE "user"."users"
 (
-    "discordId"     int8        NOT NULL,
-    "primary_rank"  int4        NOT NULL,
-    "banned"        bool        NOT NULL DEFAULT FALSE,
-    "register_date" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "discordId"       int8        NOT NULL,
+    "primary_rank_id" int4        NOT NULL DEFAULT 1,
+    "banned"          bool        NOT NULL DEFAULT FALSE,
+    "register_date"   timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY ("discordId")
 );
 
@@ -277,7 +275,7 @@ ALTER TABLE "user"."user_stats"
 ALTER TABLE "user"."user_stats"
     ADD CONSTRAINT "user_stats-stat_id" FOREIGN KEY ("stat_id") REFERENCES "public"."stats" ("id");
 ALTER TABLE "user"."users"
-    ADD CONSTRAINT "users-primary_rank" FOREIGN KEY ("primary_rank") REFERENCES "rank"."ranks" ("id");
+    ADD CONSTRAINT "users-primary_rank_id" FOREIGN KEY ("primary_rank_id") REFERENCES "rank"."ranks" ("id") ON DELETE SET DEFAULT;
 
 INSERT INTO "rank"."ranks"(rank_name)
 VALUES ('Default');

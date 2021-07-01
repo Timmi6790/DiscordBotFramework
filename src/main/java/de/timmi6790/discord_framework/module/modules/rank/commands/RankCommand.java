@@ -275,7 +275,8 @@ public class RankCommand extends AbstractCommand {
         }
         extendedPerms.sort(Comparator.naturalOrder());
 
-        final String userCount = String.valueOf(rank.retrievePlayerCount());
+        // TODO: Reimplement
+        final String userCount = "TODO";// String.valueOf(rank.retrievePlayerCount());
 
         this.sendTimedMessage(
                 commandParameters,

@@ -1,15 +1,12 @@
 package de.timmi6790.discord_framework.module.modules.rank;
 
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.module.modules.user.UserDb;
-import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.*;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Rank instance.
@@ -17,21 +14,18 @@ import java.util.stream.Collectors;
 @Data
 @Getter(AccessLevel.NONE)
 @Setter(AccessLevel.NONE)
-@EqualsAndHashCode(exclude = {"rankModule", "userDbModule", "permissionsModule", "cachedAllPermissions"})
-@ToString(exclude = {"rankModule", "userDbModule", "permissionsModule", "cachedAllPermissions"})
 public class Rank {
-    // Dependency modules
     /**
      * The Rank module.
      */
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final RankModule rankModule;
-    /**
-     * The User db module.
-     */
-    private final UserDbModule userDbModule;
     /**
      * The Permissions module.
      */
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final PermissionsModule permissionsModule;
 
     // Data
@@ -59,13 +53,14 @@ public class Rank {
      * Calculating all permissions is expensive that is the reason after calculating it once it is cached. The cache is
      * invalidated after specific actions like, rank deleting, rank permission modifications.
      */
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Integer> cachedAllPermissions;
 
     /**
      * Instantiates a new Rank.
      *
      * @param rankModule        the rank module
-     * @param userDbModule      the user db module
      * @param permissionsModule the permissions module
      * @param repositoryId      the database id
      * @param rankName          the rank name
@@ -73,14 +68,12 @@ public class Rank {
      * @param permissionIds     the permission ids
      */
     public Rank(final RankModule rankModule,
-                final UserDbModule userDbModule,
                 final PermissionsModule permissionsModule,
                 final int repositoryId,
                 final String rankName,
                 final Set<Integer> extendedRankIds,
                 final Set<Integer> permissionIds) {
         this.rankModule = rankModule;
-        this.userDbModule = userDbModule;
         this.permissionsModule = permissionsModule;
         this.repositoryId = repositoryId;
         this.rankName = rankName;
@@ -151,6 +144,15 @@ public class Rank {
      */
     public boolean hasPermission(final int permissionId, final boolean includedExtendedRanks) {
         return this.getPermissionIds(includedExtendedRanks).contains(permissionId);
+    }
+
+    /**
+     * Repository help method. DON'T USE THIS OUTSIDE OF THE REPOSITORY!
+     *
+     * @param permissionId the permission id
+     */
+    public void addPermissionRepositoryOnly(final int permissionId) {
+        this.permissionIds.add(permissionId);
     }
 
     /**
@@ -251,6 +253,15 @@ public class Rank {
     }
 
     /**
+     * Repository help method. DON'T USE THIS OUTSIDE OF THE REPOSITORY!
+     *
+     * @param rankId the rank id
+     */
+    public void addExtendedRankRepositoryOnly(final int rankId) {
+        this.extendedRankIds.add(rankId);
+    }
+
+    /**
      * Tries to add the rankId as an extended rank. This will fail if it is the same rank or we already extend on it.
      *
      * @param rankId the rank id
@@ -262,7 +273,7 @@ public class Rank {
         }
 
         this.rankModule.getRankRepository().addExtendedRank(this.getRepositoryId(), rankId);
-        this.getExtendedRankIds().add(rankId);
+        this.extendedRankIds.add(rankId);
 
         this.rankModule.invalidateAllPermCaches();
 
@@ -314,29 +325,5 @@ public class Rank {
         this.rankModule.getRankRepository().setRankName(this.getRepositoryId(), newRankName);
         this.rankName = newRankName;
         return true;
-    }
-
-    // Players
-
-    /**
-     * Retrieve the amount of players with the rank.
-     *
-     * @return the the amount of players with the rank
-     */
-    public long retrievePlayerCount() {
-        return this.rankModule.getRankRepository().retrieveAllPlayerIdsForRank(this.getRepositoryId()).size();
-    }
-
-    /**
-     * Retrieve all players with the rank.
-     *
-     * @return all players with the rank.
-     */
-    public Set<UserDb> retrieveAllPlayers() {
-        // I think it is the best solution to just get the discord ids
-        final Set<Long> playerIds = this.rankModule.getRankRepository().retrieveAllPlayerIdsForRank(this.getRepositoryId());
-        return playerIds.parallelStream()
-                .map(this.userDbModule::getOrCreate)
-                .collect(Collectors.toSet());
     }
 }

@@ -4,7 +4,6 @@ import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import lombok.NonNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Rank repository.
@@ -79,12 +78,4 @@ public interface RankRepository {
      * @param newRankName the newRankName
      */
     void setRankName(int rankId, final String newRankName);
-
-    /**
-     * Retrieve all player ids with the rank.
-     *
-     * @param rankId the rank id
-     * @return all players with the rank
-     */
-    Set<Long> retrieveAllPlayerIdsForRank(int rankId);
 }
