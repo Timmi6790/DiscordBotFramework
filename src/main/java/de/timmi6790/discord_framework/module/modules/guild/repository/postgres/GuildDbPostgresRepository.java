@@ -1,8 +1,8 @@
-package de.timmi6790.discord_framework.module.modules.guild.repository.mysql;
+package de.timmi6790.discord_framework.module.modules.guild.repository.postgres;
 
 import de.timmi6790.discord_framework.module.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.module.modules.guild.repository.GuildDbRepository;
-import de.timmi6790.discord_framework.module.modules.guild.repository.mysql.mappers.GuildDbMapper;
+import de.timmi6790.discord_framework.module.modules.guild.repository.postgres.mappers.GuildDbMapper;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jdbi.v3.core.Jdbi;
 
@@ -20,7 +20,7 @@ public class GuildDbPostgresRepository implements GuildDbRepository {
 
     public GuildDbPostgresRepository(final Jdbi database, final ShardManager discord) {
         this.database = database;
-        
+
         this.database
                 .registerRowMapper(new GuildDbMapper(discord));
     }

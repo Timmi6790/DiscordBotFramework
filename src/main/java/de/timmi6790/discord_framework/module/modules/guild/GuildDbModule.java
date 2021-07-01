@@ -8,7 +8,7 @@ import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.repository.GuildDbRepository;
-import de.timmi6790.discord_framework.module.modules.guild.repository.mysql.GuildDbPostgresRepository;
+import de.timmi6790.discord_framework.module.modules.guild.repository.postgres.GuildDbPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import lombok.EqualsAndHashCode;

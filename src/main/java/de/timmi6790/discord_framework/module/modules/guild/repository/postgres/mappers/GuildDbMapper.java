@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.module.modules.guild.repository.mysql.mappers;
+package de.timmi6790.discord_framework.module.modules.guild.repository.postgres.mappers;
 
 import de.timmi6790.discord_framework.module.modules.database.DatabaseRowMapper;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDb;
