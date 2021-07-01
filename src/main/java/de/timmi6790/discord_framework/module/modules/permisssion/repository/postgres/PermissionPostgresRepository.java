@@ -1,31 +1,24 @@
-package de.timmi6790.discord_framework.module.modules.permisssion.repository.mysql;
+package de.timmi6790.discord_framework.module.modules.permisssion.repository.postgres;
 
 import de.timmi6790.discord_framework.module.modules.permisssion.repository.PermissionRepository;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.Optional;
 
 /**
- * Mysql implementation of the permission repository.
+ * Postgres implementation of the permission repository.
  */
-public class PermissionRepositoryMysql implements PermissionRepository {
+@RequiredArgsConstructor
+public class PermissionPostgresRepository implements PermissionRepository {
     private static final String GET_PERMISSION_ID = "SELECT id " +
-            "FROM `permission` " +
+            "FROM permissions permission " +
             "WHERE permission.permission_node = :permNode " +
             "LIMIT 1;";
-    private static final String INSERT_PERMISSION = "INSERT INTO permission(permission_node) VALUES(:permNode);";
+    private static final String INSERT_PERMISSION = "INSERT INTO permissions(permission_node) VALUES(:permNode) RETURNING id;";
 
     private final Jdbi database;
-
-    /**
-     * Instantiates a new Permission repository mysql.
-     *
-     * @param database the database
-     */
-    public PermissionRepositoryMysql(final Jdbi database) {
-        this.database = database;
-    }
 
     @Override
     public Optional<Integer> retrievePermissionId(@NonNull final String permissionNode) {
@@ -40,9 +33,8 @@ public class PermissionRepositoryMysql implements PermissionRepository {
     @Override
     public int insertPermission(@NonNull final String permissionNode) {
         return this.database.withHandle(handle ->
-                handle.createUpdate(INSERT_PERMISSION)
+                handle.createQuery(INSERT_PERMISSION)
                         .bind("permNode", permissionNode)
-                        .executeAndReturnGeneratedKeys()
                         .mapTo(int.class)
                         .first()
         );

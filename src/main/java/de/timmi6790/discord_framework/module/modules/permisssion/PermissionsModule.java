@@ -4,7 +4,7 @@ package de.timmi6790.discord_framework.module.modules.permisssion;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.repository.PermissionRepository;
-import de.timmi6790.discord_framework.module.modules.permisssion.repository.mysql.PermissionRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.permisssion.repository.postgres.PermissionPostgresRepository;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
@@ -34,7 +34,7 @@ public class PermissionsModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.permissionRepository = new PermissionRepositoryMysql(
+        this.permissionRepository = new PermissionPostgresRepository(
                 this.getModuleOrThrow(DatabaseModule.class).getJdbi()
         );
 
