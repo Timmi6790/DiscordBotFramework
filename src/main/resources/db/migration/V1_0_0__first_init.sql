@@ -7,7 +7,7 @@ CREATE SCHEMA "user";
 CREATE TABLE "channel"."channels"
 (
     "discord_id"    int8        NOT NULL,
-    "guild_id"      int4        NOT NULL,
+    "guild_id"      int8        NOT NULL,
     "disabled"      bool        NOT NULL DEFAULT FALSE,
     "register_date" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY ("discord_id")

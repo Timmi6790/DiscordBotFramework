@@ -1,8 +1,8 @@
-package de.timmi6790.discord_framework.module.modules.channel.repository.mysql;
+package de.timmi6790.discord_framework.module.modules.channel.repository.postgres;
 
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.module.modules.channel.repository.ChannelRepository;
-import de.timmi6790.discord_framework.module.modules.channel.repository.mysql.mappers.ChannelDbDatabaseMapper;
+import de.timmi6790.discord_framework.module.modules.channel.repository.postgres.mappers.ChannelDbMapper;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -11,32 +11,31 @@ import org.jdbi.v3.core.Jdbi;
 import java.util.Optional;
 
 /**
- * Mysql channel repository implementation
+ * Postgres channel repository implementation
  */
-public class ChannelRepositoryMysql implements ChannelRepository {
-    private static final String GET_CHANNEL = "SELECT channel.id, channel.discordId, disabled, guild.discordId serverDiscordId " +
-            "FROM channel " +
-            "INNER JOIN guild ON guild.id = channel.guild_id " +
-            "WHERE channel.discordId = :discordId " +
+public class ChannelPostgresRepository implements ChannelRepository {
+    private static final String GET_CHANNEL = "SELECT channel.discord_id, channel.disabled, channel.guild_id +" +
+            "FROM channel.channels channel " +
+            "WHERE channel.discord_id = :discordId " +
             "LIMIT 1;";
 
-    private static final String INSERT_CHANNEL = "INSERT INTO channel(discordId, guild_id) VALUES (:discordId, (SELECT id FROM guild WHERE guild.discordId = :guildId LIMIT 1));";
+    private static final String INSERT_CHANNEL = "INSERT INTO channel.channels(discord_id, guild_id) VALUES (:discordId, :guildId) RETURNING discord_id, disabled, guild_id;";
 
     private final Jdbi database;
 
     /**
-     * Instantiates a new Channel repository mysql.
+     * Instantiates a new Channel repository.
      *
      * @param discordShardManager the discord shard manager
      * @param databaseModule      the database module
      * @param guildDbModule       the guildDb module
      */
-    public ChannelRepositoryMysql(final ShardManager discordShardManager,
-                                  final DatabaseModule databaseModule,
-                                  final GuildDbModule guildDbModule) {
+    public ChannelPostgresRepository(final ShardManager discordShardManager,
+                                     final DatabaseModule databaseModule,
+                                     final GuildDbModule guildDbModule) {
         this.database = databaseModule.getJdbi();
         this.database.registerRowMapper(
-                new ChannelDbDatabaseMapper(
+                new ChannelDbMapper(
                         guildDbModule,
                         discordShardManager
                 )
@@ -45,16 +44,13 @@ public class ChannelRepositoryMysql implements ChannelRepository {
 
     @Override
     public ChannelDb create(final long discordChannelId, final long discordGuildID) {
-        // Make sure that the channel is not present
-        this.database.useHandle(handle ->
-                handle.createUpdate(INSERT_CHANNEL)
+        return this.database.withHandle(handle ->
+                handle.createQuery(INSERT_CHANNEL)
                         .bind("discordId", discordChannelId)
                         .bind("guildId", discordGuildID)
-                        .execute()
+                        .mapTo(ChannelDb.class)
+                        .first()
         );
-
-        // Should never throw
-        return this.get(discordChannelId).orElseThrow(RuntimeException::new);
     }
 
     @Override

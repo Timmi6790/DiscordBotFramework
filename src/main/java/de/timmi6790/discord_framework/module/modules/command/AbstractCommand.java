@@ -348,7 +348,7 @@ public abstract class AbstractCommand {
                 Sentry.captureEvent(new SentryEventBuilder()
                         .addBreadcrumb(new BreadcrumbBuilder()
                                 .setCategory("Command")
-                                .setData("channelId", String.valueOf(commandParameters.getChannelDb().getRepositoryId()))
+                                .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDiscordId()))
                                 .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
                                 .setData("args", Arrays.toString(commandParameters.getArgs()))
                                 .setData(COMMAND, this.name)

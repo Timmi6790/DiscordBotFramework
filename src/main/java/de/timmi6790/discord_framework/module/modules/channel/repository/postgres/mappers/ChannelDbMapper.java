@@ -1,4 +1,4 @@
-package de.timmi6790.discord_framework.module.modules.channel.repository.mysql.mappers;
+package de.timmi6790.discord_framework.module.modules.channel.repository.postgres.mappers;
 
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseRowMapper;
@@ -15,21 +15,16 @@ import java.sql.SQLException;
  * Maps the database row to {@link ChannelDb}
  */
 @AllArgsConstructor
-public class ChannelDbDatabaseMapper extends DatabaseRowMapper implements RowMapper<ChannelDb> {
+public class ChannelDbMapper extends DatabaseRowMapper implements RowMapper<ChannelDb> {
     private final GuildDbModule guildDbModule;
     private final ShardManager discord;
 
     @Override
     public ChannelDb map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-        if (rs.getInt("id") == 0) {
-            return null;
-        }
-
         return new ChannelDb(
-                this.guildDbModule.getOrCreate(rs.getLong("serverDiscordId")),
+                this.guildDbModule.getOrCreate(rs.getLong("guild_id")),
                 this.discord,
-                rs.getInt("id"),
-                rs.getLong("discordId"),
+                rs.getLong("discord_id"),
                 rs.getBoolean("disabled")
         );
     }

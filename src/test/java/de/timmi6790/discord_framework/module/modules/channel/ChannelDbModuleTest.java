@@ -72,7 +72,6 @@ class ChannelDbModuleTest {
         final ChannelDb channelDbCreate2 = channelDbModule.getOrCreate(TEST_CHANNEL_ID2, TEST_GUILD_ID);
 
         assertThat(channelDbCreate.getDiscordId()).isEqualTo(channelDbCreate2.getDiscordId());
-        assertThat(channelDbCreate.getRepositoryId()).isEqualTo(channelDbCreate2.getRepositoryId());
     }
 
     @Test
