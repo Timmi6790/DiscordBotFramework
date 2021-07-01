@@ -4,7 +4,7 @@ import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.setting.repository.SettingRepository;
-import de.timmi6790.discord_framework.module.modules.setting.repository.mysql.SettingRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.setting.repository.postgres.SettingPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.setting.settings.CommandAutoCorrectSetting;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -32,9 +32,16 @@ public class SettingModule extends AbstractModule {
         );
     }
 
+    protected int getSettingIdOrCreate(final String internalName) {
+        return this.settingRepository.getSettingId(internalName)
+                .orElseGet(() -> this.settingRepository.createSetting(internalName));
+    }
+
     @Override
     public boolean onInitialize() {
-        this.settingRepository = new SettingRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
+        this.settingRepository = new SettingPostgresRepository(
+                this.getModuleOrThrow(DatabaseModule.class).getJdbi()
+        );
         this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
 
         this.registerSettings(
@@ -53,7 +60,7 @@ public class SettingModule extends AbstractModule {
 
     public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
         setting.setInternalName(this.generateInternalName(module, "setting", setting.getStatName()))
-                .setDatabaseId(this.settingRepository.retrieveOrCreateSettingId(setting.getInternalName()))
+                .setDatabaseId(this.getSettingIdOrCreate(setting.getInternalName()))
                 .setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));
 
         this.settings.put(setting.getDatabaseId(), setting);

@@ -1,5 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.setting.repository;
 
+import java.util.Optional;
+
 public interface SettingRepository {
-    int retrieveOrCreateSettingId(String internalName);
+    Optional<Integer> getSettingId(String internalName);
+
+    int createSetting(String internalName);
 }
