@@ -38,6 +38,11 @@ public class AchievementModule extends AbstractModule {
         );
     }
 
+    protected int getAchievementIdOrCreate(final String internalAchievementName) {
+        return this.achievementRepository.getAchievementId(internalAchievementName)
+                .orElseGet(() -> this.achievementRepository.createAchievement(internalAchievementName));
+    }
+
     @Override
     public boolean onInitialize() {
         this.achievementRepository = new AchievementPostgresRepository(
@@ -84,7 +89,7 @@ public class AchievementModule extends AbstractModule {
         achievement.setInternalAchievementName(internalAchievementName);
 
         // Get or create the repository id
-        final int achievementRepositoryId = this.achievementRepository.retrieveOrCreateAchievementId(achievement.getInternalAchievementName());
+        final int achievementRepositoryId = this.getAchievementIdOrCreate(achievement.getInternalAchievementName());
         achievement.setRepositoryId(achievementRepositoryId);
 
         this.achievements.put(achievement.getRepositoryId(), achievement);
