@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import net.dv8tion.jda.api.JDA;
@@ -29,6 +30,7 @@ class DsgvoModuleTest {
     private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
     private static final EventModule EVENT_MODULE = new EventModule();
     private static final DsgvoModule DSGVO_MODULE = spy(new DsgvoModule());
+    private static final RankModule RANK_MODULE = spy(new RankModule());
     private static final ModuleManager MODULE_MANAGER = mock(ModuleManager.class);
 
     @BeforeAll
@@ -40,6 +42,7 @@ class DsgvoModuleTest {
         when(MODULE_MANAGER.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
         when(MODULE_MANAGER.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
         when(MODULE_MANAGER.getModuleOrThrow(EventModule.class)).thenReturn(EVENT_MODULE);
+        when(MODULE_MANAGER.getModuleOrThrow(RankModule.class)).thenReturn(RANK_MODULE);
         when(MODULE_MANAGER.getModuleOrThrow(DsgvoModule.class)).thenReturn(DSGVO_MODULE);
 
         final DiscordBot discordBot = mock(DiscordBot.class);
@@ -58,6 +61,7 @@ class DsgvoModuleTest {
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
 
+            RANK_MODULE.onInitialize();
             USER_DB_MODULE.onInitialize();
         }
     }

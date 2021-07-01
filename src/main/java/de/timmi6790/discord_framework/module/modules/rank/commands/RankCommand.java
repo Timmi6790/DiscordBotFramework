@@ -275,16 +275,12 @@ public class RankCommand extends AbstractCommand {
         }
         extendedPerms.sort(Comparator.naturalOrder());
 
-        // TODO: Reimplement
-        final String userCount = "TODO";// String.valueOf(rank.retrievePlayerCount());
-
         this.sendTimedMessage(
                 commandParameters,
                 this.getEmbedBuilder(commandParameters)
                         .setTitle(rank.getRankName() + " - Rank")
                         .addField("DatabaseId", String.valueOf(rank.getRepositoryId()), true)
                         .addField("Name", rank.getRankName(), true)
-                        .addField("User Count", userCount, true)
                         .addField("ExtendedRanks", String.join("\n", extendedRank), true)
                         .addField("ExtendedPerms", String.join("\n", extendedPerms), false)
                         .addField("Perms", String.join("\n", perms), false),

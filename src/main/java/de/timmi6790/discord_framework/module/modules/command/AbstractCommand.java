@@ -349,7 +349,7 @@ public abstract class AbstractCommand {
                         .addBreadcrumb(new BreadcrumbBuilder()
                                 .setCategory("Command")
                                 .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDiscordId()))
-                                .setData("userId", String.valueOf(commandParameters.getUserDb().getDatabaseId()))
+                                .setData("userId", String.valueOf(commandParameters.getUserDb().getDiscordId()))
                                 .setData("args", Arrays.toString(commandParameters.getArgs()))
                                 .setData(COMMAND, this.name)
                                 .build())

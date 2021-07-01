@@ -354,14 +354,14 @@ class UserDbTest {
         final UserDb userDb = this.generateUser();
 
         // Empty check
-        assertThat(userDb.getStatsMap()).isEmpty();
+        assertThat(userDb.getStats()).isEmpty();
 
         this.mockDiscord(() -> {
             // One stat
             final TestStat testStat = new TestStat();
             statModule.registerStat(userDbModule, testStat);
             userDb.increaseStat(testStat);
-            assertThat(userDb.getStatsMap()).containsExactlyInAnyOrderEntriesOf(
+            assertThat(userDb.getStats()).containsExactlyInAnyOrderEntriesOf(
                     Map.of(testStat, 1)
             );
 
@@ -369,7 +369,7 @@ class UserDbTest {
             final TestStat2 testStat2 = new TestStat2();
             statModule.registerStat(userDbModule, testStat2);
             userDb.setStatValue(testStat2, 290);
-            assertThat(userDb.getStatsMap()).containsExactlyInAnyOrderEntriesOf(
+            assertThat(userDb.getStats()).containsExactlyInAnyOrderEntriesOf(
                     Map.of(testStat, 1,
                             testStat2, 290)
             );
@@ -391,6 +391,7 @@ class UserDbTest {
 
         // One Entry
         userDb.grantSetting(CommandAutoCorrectSetting.class);
+        System.out.println(userDb.getSettings());
         assertThat(userDb.getSettings()).hasSize(1);
 
         this.validateRepository(userDb);

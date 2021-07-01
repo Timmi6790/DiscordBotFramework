@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ class UserDbModuleTest {
 
     private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
     private static final EventModule EVENT_MODULE = new EventModule();
+    private static final RankModule RANK_MODULE = spy(new RankModule());
 
     @BeforeAll
     static void setUp() {
@@ -32,6 +34,7 @@ class UserDbModuleTest {
 
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
         when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(RANK_MODULE);
         when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
         when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(EVENT_MODULE);
 
@@ -44,6 +47,7 @@ class UserDbModuleTest {
 
             botMock.when(DiscordBot::getInstance).thenReturn(bot);
 
+            RANK_MODULE.onInitialize();
             USER_DB_MODULE.onInitialize();
         }
     }

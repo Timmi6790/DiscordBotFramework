@@ -72,7 +72,7 @@ public class UserCommand extends AbstractCommand {
         this.sendTimedMessage(
                 commandParameters,
                 "Invalidated Cache",
-                MarkdownUtil.monospace(String.valueOf(userDb.getDatabaseId())) + " was removed from the cache."
+                MarkdownUtil.monospace(String.valueOf(userDb.getDiscordId())) + " was removed from the cache."
         );
 
         return CommandResult.SUCCESS;
@@ -87,7 +87,7 @@ public class UserCommand extends AbstractCommand {
         }
 
         final StringJoiner stats = new StringJoiner("\n");
-        for (final Map.Entry<AbstractStat, Integer> entry : userDb.getStatsMap().entrySet()) {
+        for (final Map.Entry<AbstractStat, Integer> entry : userDb.getStats().entrySet()) {
             stats.add(entry.getKey().getInternalName() + ": " + entry.getValue());
         }
 
@@ -96,15 +96,10 @@ public class UserCommand extends AbstractCommand {
             achievements.add(achievement.getAchievementName());
         }
 
-        final String primaryRank = this.getRankModule().getRank(userDb.getPrimaryRankId())
-                .map(Rank::getRankName)
-                .orElse("Unknown");
-
+        final String primaryRank = userDb.getPrimaryRank().getRankName();
         final StringJoiner subRanks = new StringJoiner("; ");
-        for (final int rankId : userDb.getRankIds()) {
-            this.getRankModule().getRank(rankId)
-                    .map(Rank::getRankName)
-                    .ifPresent(subRanks::add);
+        for (final Rank rank : userDb.getRanks()) {
+            subRanks.add(rank.getRankName());
         }
 
         final StringJoiner permissions = new StringJoiner("\n");

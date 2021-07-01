@@ -40,12 +40,10 @@ public class DsgvoListener {
 
         // Achievements
         this.userDbModule.getModule(AchievementModule.class).ifPresent(achievementModule -> {
-            final Set<String> achievementNames = Sets.newHashSetWithExpectedSize(userDb.getAchievementIds().size());
-            for (final int achievementId : userDb.getAchievementIds()) {
+            final Set<String> achievementNames = Sets.newHashSetWithExpectedSize(userDb.getAchievements().size());
+            for (final AbstractAchievement achievement : userDb.getAchievements()) {
                 achievementNames.add(
-                        achievementModule.getAchievement(achievementId)
-                                .map(AbstractAchievement::getAchievementName)
-                                .orElse(FALLBACK_NAME)
+                        achievement.getAchievementName()
                 );
             }
             event.addData("achievements", achievementNames);
@@ -53,26 +51,22 @@ public class DsgvoListener {
 
         // Ranks
         this.userDbModule.getModule(RankModule.class).ifPresent(rankModule -> {
-            final Set<String> subRankNames = Sets.newHashSetWithExpectedSize(userDb.getRankIds().size());
-            for (final int subRankId : userDb.getRankIds()) {
+            final Set<String> subRankNames = Sets.newHashSetWithExpectedSize(userDb.getRanks().size());
+            for (final Rank rank : userDb.getRanks()) {
                 subRankNames.add(
-                        rankModule.getRank(subRankId)
-                                .map(Rank::getRankName)
-                                .orElse(FALLBACK_NAME)
+                        rank.getRankName()
                 );
             }
 
             event.addData(
                     "mainRank",
-                    rankModule.getRank(userDb.getPrimaryRankId())
-                            .map(Rank::getRankName)
-                            .orElse(FALLBACK_NAME)
+                    userDb.getPrimaryRank().getRankName()
             );
             event.addData("subRanks", subRankNames);
         });
 
         // Stats
-        final Map<AbstractStat, Integer> statsMap = userDb.getStatsMap();
+        final Map<AbstractStat, Integer> statsMap = userDb.getStats();
         final Map<String, Integer> parsedStats = Maps.newHashMapWithExpectedSize(statsMap.size());
         for (final Map.Entry<AbstractStat, Integer> entry : statsMap.entrySet()) {
             parsedStats.put(

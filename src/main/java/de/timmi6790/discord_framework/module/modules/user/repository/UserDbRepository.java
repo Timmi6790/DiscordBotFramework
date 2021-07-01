@@ -1,36 +1,35 @@
 package de.timmi6790.discord_framework.module.modules.user.repository;
 
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
-import lombok.NonNull;
 
 import java.util.Optional;
 
 public interface UserDbRepository {
-    UserDb create(long discordId);
+    UserDb create(long userId);
 
-    Optional<UserDb> get(long discordId);
+    Optional<UserDb> get(long userId);
 
-    void delete(@NonNull UserDb userDb);
+    void delete(long userId);
 
-    void setBanStatus(int userDatabaseId, boolean isBanned);
+    void setBanStatus(long userId, boolean isBanned);
 
-    void addPermission(int userDatabaseId, int permissionId);
+    void addPermission(long userId, int permissionId);
 
-    void removePermission(int userDatabaseId, int permissionId);
+    void removePermission(long userId, int permissionId);
 
-    void setPrimaryRank(int userDatabaseId, int rankId);
+    void setPrimaryRank(long userId, int rankId);
 
-    void addRank(int userDatabaseId, int rankId);
+    void addRank(long userId, int rankId);
 
-    void removeRank(int userDatabaseId, int rankId);
+    void removeRank(long userId, int rankId);
 
-    void insertStat(int userDatabaseId, int statId, int statValue);
+    void insertStat(long userId, int statId, int statValue);
 
-    void updateStat(int userDatabaseId, int statId, int statValue);
+    void updateStat(long userId, int statId, int statValue);
 
-    void grantSetting(int userDatabaseId, int settingId, String defaultValue);
+    void grantSetting(long userId, int settingId, String defaultValue);
 
-    void updateSetting(int userDatabaseId, int settingId, String newValue);
+    void updateSetting(long userId, int settingId, String newValue);
 
-    void grantPlayerAchievement(int playerId, int achievementId);
+    void grantAchievement(long userId, int achievementId);
 }

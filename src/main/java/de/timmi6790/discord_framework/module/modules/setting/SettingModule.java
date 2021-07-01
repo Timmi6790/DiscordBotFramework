@@ -73,11 +73,16 @@ public class SettingModule extends AbstractModule {
 
     public Optional<AbstractSetting<?>> getSetting(final String settingName) {
         final String name = this.aliasNameMatcher.getOrDefault(settingName, settingName);
-        if (!this.nameIdMatching.containsKey(name)) {
+        final Integer settingId = this.nameIdMatching.get(name);
+        if (settingId == null) {
             return Optional.empty();
         }
 
-        return Optional.ofNullable(this.settings.get(this.nameIdMatching.get(name)));
+        return this.getSetting(settingId);
+    }
+
+    public Optional<AbstractSetting<?>> getSetting(final int settingId) {
+        return Optional.ofNullable(this.settings.get(settingId));
     }
 
     public <T> Optional<? extends AbstractSetting<T>> getSetting(final Class<? extends AbstractSetting<T>> clazz) {

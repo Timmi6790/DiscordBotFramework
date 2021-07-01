@@ -118,6 +118,15 @@ public class RankModule extends AbstractModule {
     }
 
     /**
+     * Gets default rank.
+     *
+     * @return the default rank
+     */
+    public Rank getDefaultRank() {
+        return this.getRank(1).orElseThrow(NullPointerException::new);
+    }
+
+    /**
      * Tries to get a rank with the given rank name.
      *
      * @param rankName the rank name
