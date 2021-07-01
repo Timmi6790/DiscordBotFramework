@@ -63,11 +63,10 @@ public class DatabaseModule extends AbstractModule {
      * @param password the password
      */
     private void databaseVersioning(final String url, final String user, final String password) {
-        final Flyway flyway = Flyway.configure()
+        Flyway.configure()
                 .dataSource(url, user, password)
-                .baselineOnMigrate(true)
-                .load();
-        flyway.migrate();
+                .load()
+                .migrate();
     }
 
     @Override
@@ -80,7 +79,8 @@ public class DatabaseModule extends AbstractModule {
         hikariConfig.setUsername(databaseConfig.getName());
         hikariConfig.setPassword(databaseConfig.getPassword());
 
-        hikariConfig.addDataSourceProperty("dataSourceClassName", "org.mariadb.jdbc.MariaDbDataSource");
+        hikariConfig.addDataSourceProperty("dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
+        // I'm not sure if those properties even work for postgres
         hikariConfig.addDataSourceProperty("cachePrepStmts", true);
         hikariConfig.addDataSourceProperty("prepStmtCacheSize", 250);
         hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
