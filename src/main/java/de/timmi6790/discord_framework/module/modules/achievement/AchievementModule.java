@@ -2,7 +2,7 @@ package de.timmi6790.discord_framework.module.modules.achievement;
 
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.repository.AchievementRepository;
-import de.timmi6790.discord_framework.module.modules.achievement.repository.mysql.AchievementRepositoryMysql;
+import de.timmi6790.discord_framework.module.modules.achievement.repository.postgres.AchievementPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import lombok.EqualsAndHashCode;
@@ -40,7 +40,9 @@ public class AchievementModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.achievementRepository = new AchievementRepositoryMysql(this.getModuleOrThrow(DatabaseModule.class));
+        this.achievementRepository = new AchievementPostgresRepository(
+                this.getModuleOrThrow(DatabaseModule.class).getJdbi()
+        );
         this.eventModule = this.getModuleOrThrow(EventModule.class);
         return true;
     }
