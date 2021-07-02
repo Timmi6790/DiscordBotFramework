@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
+import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -32,6 +33,10 @@ public class DatabaseModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 ConfigModule.class
+        );
+
+        this.addLoadAfterDependencies(
+                MetricModule.class
         );
     }
 
@@ -67,12 +72,9 @@ public class DatabaseModule extends AbstractModule {
                 .migrate();
     }
 
-    @Override
-    public boolean onInitialize() {
-        final Config databaseConfig = this.getModuleOrThrow(ConfigModule.class)
-                .registerAndGetConfig(this, new Config());
-
+    private HikariConfig getHikariConfig(final Config databaseConfig) {
         final HikariConfig hikariConfig = new HikariConfig();
+        
         hikariConfig.setJdbcUrl(databaseConfig.getUrl());
         hikariConfig.setUsername(databaseConfig.getName());
         hikariConfig.setPassword(databaseConfig.getPassword());
@@ -83,6 +85,21 @@ public class DatabaseModule extends AbstractModule {
         hikariConfig.addDataSourceProperty("prepStmtCacheSize", 250);
         hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
         hikariConfig.addDataSourceProperty("useServerPrepStmts", true);
+
+        return hikariConfig;
+    }
+
+    @Override
+    public boolean onInitialize() {
+        final Config databaseConfig = this.getModuleOrThrow(ConfigModule.class)
+                .registerAndGetConfig(this, new Config());
+
+        final HikariConfig hikariConfig = this.getHikariConfig(databaseConfig);
+
+        // Metrics
+        this.getModule(MetricModule.class).ifPresent(metric ->
+                hikariConfig.setMetricRegistry(metric.getMeterRegistry())
+        );
 
         this.jdbi = Jdbi.create(new HikariDataSource(hikariConfig));
         // Check if the connection is valid before doing any further actions
