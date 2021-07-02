@@ -3,13 +3,14 @@ package de.timmi6790.discord_framework.module.modules.channel;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.channel.repository.ChannelRepository;
 import de.timmi6790.discord_framework.module.modules.channel.repository.postgres.ChannelPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -44,8 +45,9 @@ public class ChannelDbModule extends AbstractModule {
                 PermissionsModule.class
         );
 
-        // Register metrics
-        DiscordBot.CACHE_METRICS.addCache("channelDB_channel_cache", this.cache);
+        this.addLoadAfterDependencies(
+                MetricModule.class
+        );
     }
 
     @Override
@@ -55,6 +57,16 @@ public class ChannelDbModule extends AbstractModule {
                 this.getModuleOrThrow(DatabaseModule.class),
                 this.getModuleOrThrow(GuildDbModule.class)
         );
+
+        // Register metrics
+        this.getModule(MetricModule.class).ifPresent(metric ->
+                CaffeineCacheMetrics.monitor(
+                        metric.getMeterRegistry(),
+                        this.cache,
+                        "channelDB_channel"
+                )
+        );
+
         return true;
     }
 

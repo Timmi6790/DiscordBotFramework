@@ -7,9 +7,6 @@ import de.timmi6790.discord_framework.module.ModuleStatus;
 import de.timmi6790.discord_framework.module.provider.providers.InternalModuleProvider;
 import de.timmi6790.discord_framework.module.provider.providers.jar.JarModuleProvider;
 import de.timmi6790.discord_framework.utilities.commons.GsonUtilities;
-import io.prometheus.client.cache.caffeine.CacheMetricsCollector;
-import io.prometheus.client.exporter.HTTPServer;
-import io.prometheus.client.hotspot.DefaultExports;
 import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -34,8 +31,6 @@ import java.util.concurrent.TimeUnit;
 @Log4j2
 public class DiscordBot {
     public static final String BOT_VERSION = "3.1.6";
-    // We need to register it here, because we can only have one global instance of the cache metrics
-    public static final CacheMetricsCollector CACHE_METRICS = new CacheMetricsCollector().register();
 
     private static final DiscordBot INSTANCE = new DiscordBot();
 
@@ -57,10 +52,6 @@ public class DiscordBot {
     }
 
     protected boolean setup() throws IOException {
-        // Metrics
-        DefaultExports.initialize();
-        new HTTPServer(8001);
-
         // Config
         final Path configFolderPath = Paths.get("./configs/");
         Files.createDirectories(configFolderPath);

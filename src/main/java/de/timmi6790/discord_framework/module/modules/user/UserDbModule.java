@@ -4,12 +4,12 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
@@ -19,6 +19,7 @@ import de.timmi6790.discord_framework.module.modules.user.commands.UserCommand;
 import de.timmi6790.discord_framework.module.modules.user.listeners.DsgvoListener;
 import de.timmi6790.discord_framework.module.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.module.modules.user.repository.postgres.UserDbPostgresRepository;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -64,15 +65,13 @@ public class UserDbModule extends AbstractModule {
         );
 
         this.addLoadAfterDependencies(
-                SettingModule.class
+                SettingModule.class,
+                MetricModule.class
         );
 
         this.addDependencies(
                 CommandModule.class
         );
-
-        // Register metrics
-        DiscordBot.CACHE_METRICS.addCache("userDB_user_cache", this.cache);
     }
 
     @Override
@@ -106,6 +105,15 @@ public class UserDbModule extends AbstractModule {
                             new SettingsCommand()
                     );
         }
+
+        // Register metrics
+        this.getModule(MetricModule.class).ifPresent(metric ->
+                CaffeineCacheMetrics.monitor(
+                        metric.getMeterRegistry(),
+                        this.cache,
+                        "userDB_user"
+                )
+        );
 
         return true;
     }
