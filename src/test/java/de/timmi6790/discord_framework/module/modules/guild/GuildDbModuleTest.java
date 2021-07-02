@@ -2,8 +2,8 @@ package de.timmi6790.discord_framework.module.modules.guild;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
+import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
@@ -25,11 +25,13 @@ class GuildDbModuleTest {
 
     @BeforeAll
     static void setUp() {
-        doReturn(AbstractIntegrationTest.databaseModule).when(guildDbModule).getModuleOrThrow(DatabaseModule.class);
-        doReturn(Optional.empty()).when(guildDbModule).getModule(SettingModule.class);
+        final ModuleManager moduleManager = mock(ModuleManager.class);
+        when(moduleManager.getModuleOrThrow(DatabaseModule.class)).thenReturn(AbstractIntegrationTest.databaseModule);
+        when(moduleManager.getModuleOrThrow(GuildDbModule.class)).thenReturn(guildDbModule);
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
 
             final ShardManager discord = mock(ShardManager.class);
             when(bot.getDiscord()).thenReturn(discord);

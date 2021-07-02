@@ -3,14 +3,15 @@ package de.timmi6790.discord_framework.module.modules.guild;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
-import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.repository.GuildDbRepository;
 import de.timmi6790.discord_framework.module.modules.guild.repository.postgres.GuildDbPostgresRepository;
+import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -39,15 +40,13 @@ public class GuildDbModule extends AbstractModule {
         );
 
         this.addLoadAfterDependencies(
-                SettingModule.class
+                SettingModule.class,
+                MetricModule.class
         );
 
         this.addDependencies(
                 CommandModule.class
         );
-
-        // Register metrics
-        DiscordBot.CACHE_METRICS.addCache("guildDB_guild_cache", this.cache);
     }
 
     @Override
@@ -56,6 +55,16 @@ public class GuildDbModule extends AbstractModule {
                 this.getModuleOrThrow(DatabaseModule.class).getJdbi(),
                 this.getDiscord()
         );
+
+        // Register metrics
+        this.getModule(MetricModule.class).ifPresent(metric ->
+                CaffeineCacheMetrics.monitor(
+                        metric.getMeterRegistry(),
+                        this.cache,
+                        "guildDB_guild"
+                )
+        );
+
         return true;
     }
 
