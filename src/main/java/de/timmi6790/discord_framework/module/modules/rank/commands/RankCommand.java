@@ -1,9 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.rank.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command_old.property.properties.MinArgCommandProperty;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import net.dv8tion.jda.api.utils.MarkdownUtil;

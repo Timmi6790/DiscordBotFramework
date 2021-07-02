@@ -1,9 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.user.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command_old.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;

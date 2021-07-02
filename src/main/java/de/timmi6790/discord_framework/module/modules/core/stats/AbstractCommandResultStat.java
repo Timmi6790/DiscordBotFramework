@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.core.stats;
 
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.events.CommandExecutionEvent;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command_old.events.CommandExecutionEvent;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import lombok.EqualsAndHashCode;

@@ -3,9 +3,9 @@ package de.timmi6790.discord_framework.module.modules.dsgvo.commands;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
 import de.timmi6790.discord_framework.module.modules.dsgvo.DsgvoModule;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -63,7 +63,7 @@ public class AccountDeletionCommand extends AbstractCommand {
     /**
      * Instantiates a new Account deletion command.
      */
-    public AccountDeletionCommand(DsgvoModule dsgvoModule) {
+    public AccountDeletionCommand(final DsgvoModule dsgvoModule) {
         super(
                 "deleteMyAccount",
                 "Info",
@@ -164,8 +164,8 @@ public class AccountDeletionCommand extends AbstractCommand {
         );
 
         // Let each module handle the delete themselves
-        dsgvoModule.deleteUserData(commandParameters.getUserDb());
-        
+        this.dsgvoModule.deleteUserData(commandParameters.getUserDb());
+
         return CommandResult.SUCCESS;
     }
 }

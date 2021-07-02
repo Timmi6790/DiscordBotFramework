@@ -1,9 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.dsgvo.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.CooldownCommandProperty;
+import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command_old.property.properties.CooldownCommandProperty;
 import de.timmi6790.discord_framework.module.modules.dsgvo.DsgvoModule;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;

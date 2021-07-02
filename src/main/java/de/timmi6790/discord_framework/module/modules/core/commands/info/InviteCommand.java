@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.module.modules.core.commands.info;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
 import lombok.EqualsAndHashCode;
 
 /**

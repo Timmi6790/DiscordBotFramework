@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
 import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReaction;
 import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;

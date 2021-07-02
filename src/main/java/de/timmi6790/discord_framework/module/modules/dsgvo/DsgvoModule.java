@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.module.modules.dsgvo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command_old.CommandModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.dsgvo.commands.AccountDeletionCommand;
 import de.timmi6790.discord_framework.module.modules.dsgvo.commands.DataRequestCommand;
