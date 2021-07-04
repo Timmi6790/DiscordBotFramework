@@ -45,7 +45,7 @@ public class CommandModule extends AbstractModule {
     private Config commandConfig;
 
     public CommandModule() {
-        super("Command");
+        super("CommandOld");
 
         this.addDiscordGatewayIntents(
                 GatewayIntent.DIRECT_MESSAGE_REACTIONS,
