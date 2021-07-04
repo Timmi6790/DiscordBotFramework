@@ -24,6 +24,7 @@ import java.util.concurrent.locks.Lock;
 @EqualsAndHashCode(callSuper = true)
 public class ChannelDbModule extends AbstractModule {
     private final Striped<Lock> channelCreateLock = Striped.lock(64);
+    private final Striped<Lock> channelGetOrCreateLock = Striped.lock(64);
 
     @Getter
     private final Cache<Long, ChannelDb> cache = Caffeine.newBuilder()
@@ -32,6 +33,7 @@ public class ChannelDbModule extends AbstractModule {
             .build();
 
     private ChannelRepository channelRepository;
+    private GuildDbModule guildDbModule;
 
     /**
      * Instantiates a new Channel db module.
@@ -52,10 +54,11 @@ public class ChannelDbModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
+        this.guildDbModule = this.getModuleOrThrow(GuildDbModule.class);
         this.channelRepository = new ChannelPostgresRepository(
                 this.getDiscord(),
                 this.getModuleOrThrow(DatabaseModule.class),
-                this.getModuleOrThrow(GuildDbModule.class)
+                this.guildDbModule
         );
 
         // Register metrics
@@ -82,11 +85,8 @@ public class ChannelDbModule extends AbstractModule {
         final Lock lock = this.channelCreateLock.get(discordChannelId);
         lock.lock();
         try {
-            // Make sure that the channel is not present
-            final Optional<ChannelDb> channelDbOpt = this.get(discordChannelId);
-            if (channelDbOpt.isPresent()) {
-                return channelDbOpt.get();
-            }
+            // Assure that the guild exist
+            this.guildDbModule.getOrCreate(discordGuildId);
 
             final ChannelDb channelDb = this.channelRepository.create(discordChannelId, discordGuildId);
             this.getCache().put(discordChannelId, channelDb);
@@ -108,10 +108,15 @@ public class ChannelDbModule extends AbstractModule {
             return Optional.of(channelDbCache);
         }
 
-        final Optional<ChannelDb> channelDbOpt = this.channelRepository.get(discordChannelId);
-        channelDbOpt.ifPresent(userDb -> this.cache.put(discordChannelId, userDb));
-
-        return channelDbOpt;
+        final Lock lock = this.channelCreateLock.get(discordChannelId);
+        lock.lock();
+        try {
+            final Optional<ChannelDb> channelDbOpt = this.channelRepository.get(discordChannelId);
+            channelDbOpt.ifPresent(userDb -> this.cache.put(discordChannelId, userDb));
+            return channelDbOpt;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -122,6 +127,12 @@ public class ChannelDbModule extends AbstractModule {
      * @return the channel db instance
      */
     public ChannelDb getOrCreate(final long discordChannelId, final long discordGuildId) {
-        return this.get(discordChannelId).orElseGet(() -> this.create(discordChannelId, discordGuildId));
+        final Lock lock = this.channelGetOrCreateLock.get(discordChannelId);
+        lock.lock();
+        try {
+            return this.get(discordChannelId).orElseGet(() -> this.create(discordChannelId, discordGuildId));
+        } finally {
+            lock.unlock();
+        }
     }
 }
