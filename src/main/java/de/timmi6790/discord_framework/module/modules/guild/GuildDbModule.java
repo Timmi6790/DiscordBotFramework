@@ -23,6 +23,7 @@ import java.util.concurrent.locks.Lock;
 @Getter
 public class GuildDbModule extends AbstractModule {
     private final Striped<Lock> guildCreateLock = Striped.lock(64);
+    private final Striped<Lock> guildGetOrCreateLock = Striped.lock(64);
     private final Cache<Long, GuildDb> cache = Caffeine.newBuilder()
             .recordStats()
             .maximumSize(10_000)
@@ -73,12 +74,6 @@ public class GuildDbModule extends AbstractModule {
         final Lock lock = this.guildCreateLock.get(discordId);
         lock.lock();
         try {
-            // Make sure that the guild is not present
-            final Optional<GuildDb> guildDbOpt = this.get(discordId);
-            if (guildDbOpt.isPresent()) {
-                return guildDbOpt.get();
-            }
-
             final GuildDb guildDb = this.getGuildDbRepository().createGuild(discordId);
             this.getCache().put(discordId, guildDb);
             return guildDb;
@@ -93,13 +88,25 @@ public class GuildDbModule extends AbstractModule {
             return Optional.of(guildDbCache);
         }
 
-        final Optional<GuildDb> guildDbOpt = this.getGuildDbRepository().getGuild(discordId);
-        guildDbOpt.ifPresent(userDb -> this.getCache().put(discordId, userDb));
+        final Lock lock = this.guildCreateLock.get(discordId);
+        lock.lock();
+        try {
+            final Optional<GuildDb> guildDbOpt = this.getGuildDbRepository().getGuild(discordId);
+            guildDbOpt.ifPresent(userDb -> this.getCache().put(discordId, userDb));
 
-        return guildDbOpt;
+            return guildDbOpt;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public GuildDb getOrCreate(final long discordId) {
-        return this.get(discordId).orElseGet(() -> this.create(discordId));
+        final Lock lock = this.guildGetOrCreateLock.get(discordId);
+        lock.lock();
+        try {
+            return this.get(discordId).orElseGet(() -> this.create(discordId));
+        } finally {
+            lock.unlock();
+        }
     }
 }
