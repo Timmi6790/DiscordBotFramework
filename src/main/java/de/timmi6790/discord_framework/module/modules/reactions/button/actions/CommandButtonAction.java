@@ -3,19 +3,19 @@ package de.timmi6790.discord_framework.module.modules.reactions.button.actions;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
-import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandCause;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandCause;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.Data;
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 
 public class CommandButtonAction implements ButtonAction {
-    private final Class<? extends AbstractCommand> commandClass;
+    private final Class<? extends Command> commandClass;
     private final ParsedValues values;
 
-    public CommandButtonAction(final Class<? extends AbstractCommand> commandClass, final CommandParameters commandParameters) {
+    public CommandButtonAction(final Class<? extends Command> commandClass, final CommandParameters commandParameters) {
         this.commandClass = commandClass;
         this.values = new ParsedValues(
                 commandParameters.getArgs(),
@@ -30,7 +30,7 @@ public class CommandButtonAction implements ButtonAction {
     public void onButtonClick(final ButtonClickEvent buttonClickEvent) {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.commandClass)
-                .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));
+                .ifPresent(command -> command.executeCommand(this.values.getCommandParameters()));
     }
 
     @Data
@@ -43,11 +43,10 @@ public class CommandButtonAction implements ButtonAction {
 
         public CommandParameters getCommandParameters() {
             final ModuleManager moduleManager = DiscordBot.getInstance().getModuleManager();
-            return new CommandParameters(
-                    String.join(" ", this.args),
+            return CommandParameters.of(
                     this.args,
                     this.guildCommand,
-                    CommandCause.EMOTES,
+                    BaseCommandCause.EMOTES,
                     moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(this.channelDiscordId, this.guildDiscordId),
                     moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(this.userDiscordId)
             );
