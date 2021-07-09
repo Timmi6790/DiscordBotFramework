@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.core.stats;
 
-import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command_old.events.CommandExecutionEvent;
+import de.timmi6790.discord_framework.module.modules.command.events.PostCommandExecutionEvent;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import lombok.EqualsAndHashCode;
@@ -36,7 +36,7 @@ public abstract class AbstractCommandResultStat extends AbstractStat {
      * @param commandExecutionEvent the command execution event
      */
     @SubscribeEvent
-    public void onCommandExecution(final CommandExecutionEvent.Post commandExecutionEvent) {
+    public void onCommandExecution(final PostCommandExecutionEvent commandExecutionEvent) {
         if (commandExecutionEvent.getCommandResult() == this.requiredCommandResult) {
             this.increaseStat(commandExecutionEvent.getParameters().getUserDb());
         }

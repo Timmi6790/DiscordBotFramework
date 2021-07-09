@@ -2,15 +2,15 @@ package de.timmi6790.discord_framework.module.modules.core;
 
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.core.achievements.CommandAutoCorrectAchievement;
-import de.timmi6790.discord_framework.module.modules.core.commands.info.BotInfoCommand;
 import de.timmi6790.discord_framework.module.modules.core.commands.info.InviteCommand;
 import de.timmi6790.discord_framework.module.modules.core.stats.FailedCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.IncorrectArgCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.MissingArgCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.SuccessfulCommandResultStat;
+import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import lombok.EqualsAndHashCode;
@@ -40,18 +40,19 @@ public class CoreModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.getModuleOrThrow(CommandModule.class).registerCommands(
-                this,
-                new BotInfoCommand()
-        );
-
         final String inviteUrl = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config())
                 .getInviteUrl();
         if (inviteUrl != null && !inviteUrl.isEmpty()) {
-            this.getModuleOrThrow(CommandModule.class).registerCommands(
+            final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+            final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
+            commandModule.registerCommands(
                     this,
-                    new InviteCommand(inviteUrl)
+                    new InviteCommand(
+                            inviteUrl,
+                            commandModule,
+                            eventModule
+                    )
             );
         }
 
