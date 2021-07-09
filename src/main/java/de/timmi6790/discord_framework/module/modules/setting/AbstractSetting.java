@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.setting;
 
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
@@ -78,7 +78,7 @@ public abstract class AbstractSetting<T> {
 
         DiscordMessagesUtilities.sendMessageTimed(
                 commandParameters.getLowestMessageChannel(),
-                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                commandParameters.getEmbedBuilder()
                         .setTitle("Can't change setting")
                         .setDescription(
                                 "%s it not a valid value.\nPlease use one of the following values:\n%s",
@@ -96,7 +96,7 @@ public abstract class AbstractSetting<T> {
         final String oldValueFormatted = oldValueString.isEmpty() ? EmbedBuilder.ZERO_WIDTH_SPACE : oldValueString;
         DiscordMessagesUtilities.sendMessageTimed(
                 commandParameters.getLowestMessageChannel(),
-                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+                commandParameters.getEmbedBuilder()
                         .setTitle("Changed Setting")
                         .setDescription(
                                 "Changed value from %s to %s.",
