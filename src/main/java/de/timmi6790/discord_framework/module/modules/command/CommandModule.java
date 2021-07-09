@@ -66,10 +66,12 @@ public class CommandModule extends AbstractModule {
         this.config = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
-        final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
         this.registerCommand(
                 this,
-                new HelpCommand(this, eventModule)
+                new HelpCommand(
+                        this,
+                        this.getModuleOrThrow(EventModule.class)
+                )
         );
 
         return true;
@@ -166,9 +168,8 @@ public class CommandModule extends AbstractModule {
             command.setPermissionId(permissionId);
         }
 
-        // TODO: Optimize command log
         log.info(
-                "{} registered {} command",
+                "[{}] Registered {} command",
                 module.getModuleName(),
                 command.getName()
         );
@@ -179,7 +180,7 @@ public class CommandModule extends AbstractModule {
                 this.commandAliases.put(aliasName, command.getName());
             } else {
                 log.warn(
-                        "The module {} tried to register an already existing alias name {} for {} that is already used for the {} command",
+                        "[{}] Tried to register an already existing alias name {} for {} that is already used for the {} command",
                         module.getModuleName(),
                         aliasName,
                         command.getName(),
