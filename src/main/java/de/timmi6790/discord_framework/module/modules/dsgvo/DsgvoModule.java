@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.module.modules.dsgvo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.dsgvo.commands.AccountDeletionCommand;
 import de.timmi6790.discord_framework.module.modules.dsgvo.commands.DataRequestCommand;
@@ -41,10 +41,12 @@ public class DsgvoModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.getModuleOrThrow(CommandModule.class).registerCommands(
+        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
+        commandModule.registerCommands(
                 this,
-                new AccountDeletionCommand(this),
-                new DataRequestCommand(this)
+                new AccountDeletionCommand(this, commandModule, eventModule),
+                new DataRequestCommand(this, commandModule, eventModule)
         );
         return true;
     }
