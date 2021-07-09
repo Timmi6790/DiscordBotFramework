@@ -1,8 +1,7 @@
-package de.timmi6790.discord_framework.module.modules.command_old.property;
+package de.timmi6790.discord_framework.module.modules.command.property;
 
-import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
-import lombok.NonNull;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 
 /**
  * CommandProperty interface. Used to control settings for permission and execution checks
@@ -24,8 +23,8 @@ public interface CommandProperty<T> {
      * @param commandParameters the command parameters
      * @return is successful
      */
-    default boolean onPermissionCheck(@NonNull final AbstractCommand command,
-                                      @NonNull final CommandParameters commandParameters) {
+    default boolean onPermissionCheck(final Command command,
+                                      final CommandParameters commandParameters) {
         return true;
     }
 
@@ -36,8 +35,8 @@ public interface CommandProperty<T> {
      * @param commandParameters the command parameters
      * @return is successful
      */
-    default boolean onCommandExecution(@NonNull final AbstractCommand command,
-                                       @NonNull final CommandParameters commandParameters) {
+    default boolean onCommandExecution(final Command command,
+                                       final CommandParameters commandParameters) {
         return true;
     }
 }
