@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
 import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReaction;
 import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
@@ -25,21 +25,6 @@ import java.util.function.Consumer;
 @UtilityClass
 public class DiscordMessagesUtilities {
     protected final Color DEFAULT_EMBED_COLOUR = Color.MAGENTA;
-
-    /**
-     * Gets the default embed builder. With the author of the user and the colour is either the member guild colour of
-     * his highest role or for private messages Color.MAGENTA
-     *
-     * @param commandParameters the command parameters
-     * @return the embed builder
-     */
-    public MultiEmbedBuilder getEmbedBuilder(final @NonNull CommandParameters commandParameters) {
-        return getEmbedBuilder(
-                commandParameters.getUser(),
-                commandParameters.isGuildCommand() ? commandParameters.getGuildMember() : null
-        );
-    }
-
 
     /**
      * Gets the default embed builder. With the author of the user and the colour is either the member guild colour of
