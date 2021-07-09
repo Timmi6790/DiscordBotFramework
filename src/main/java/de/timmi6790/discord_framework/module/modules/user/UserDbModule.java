@@ -6,7 +6,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
@@ -77,20 +77,29 @@ public class UserDbModule extends AbstractModule {
     @Override
     public boolean onInitialize() {
         this.discord = super.getDiscord();
+        final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
         this.userDbRepository = new UserDbPostgresRepository(
                 this,
                 this.getModuleOrThrow(DatabaseModule.class),
-                this.getModuleOrThrow(EventModule.class),
+                eventModule,
                 this.getModuleOrThrow(RankModule.class),
                 this.getModule(AchievementModule.class).orElse(null),
                 this.getModule(SettingModule.class).orElse(null),
                 this.getModule(StatModule.class).orElse(null)
         );
 
-        this.getModuleOrThrow(CommandModule.class)
+        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        commandModule
                 .registerCommands(
                         this,
-                        new UserCommand()
+                        new UserCommand(
+                                this,
+                                this.getModuleOrThrow(PermissionsModule.class),
+                                this.getModuleOrThrow(RankModule.class),
+                                this.getModule(SettingModule.class).orElse(null),
+                                commandModule,
+                                eventModule
+                        )
                 );
 
         this.getModuleOrThrow(EventModule.class)
@@ -98,13 +107,17 @@ public class UserDbModule extends AbstractModule {
                         new DsgvoListener(this)
                 );
 
-        if (this.getModule(SettingModule.class).isPresent()) {
-            this.getModuleOrThrow(CommandModule.class)
-                    .registerCommands(
-                            this,
-                            new SettingsCommand()
-                    );
-        }
+        this.getModule(SettingModule.class).ifPresent(settingModule ->
+                commandModule
+                        .registerCommands(
+                                this,
+                                new SettingsCommand(
+                                        settingModule,
+                                        commandModule,
+                                        eventModule
+                                )
+                        )
+        );
 
         // Register metrics
         this.getModule(MetricModule.class).ifPresent(metric ->

@@ -1,9 +1,16 @@
 package de.timmi6790.discord_framework.module.modules.user.commands;
 
-import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command_old.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
+import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
@@ -19,19 +26,22 @@ import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public class SettingsCommand extends AbstractCommand {
+public class SettingsCommand extends Command {
     private final SettingModule settingModule;
 
-    public SettingsCommand() {
-        super(
-                "settings",
-                "Info",
-                "Settings",
-                "[setting] [newValue]",
-                "st", "setting"
+    public SettingsCommand(final SettingModule settingModule,
+                           final CommandModule commandModule,
+                           final EventModule eventModule) {
+        super("settings", commandModule, eventModule);
+
+        this.addProperties(
+                new CategoryProperty("Info"),
+                new DescriptionProperty("Settings"),
+                new SyntaxProperty("[setting] [newValue]"),
+                new AliasNamesProperty("st", "setting")
         );
 
-        this.settingModule = this.getModuleManager().getModuleOrThrow(SettingModule.class);
+        this.settingModule = settingModule;
     }
 
     private AbstractSetting<?> getSettingThrow(final CommandParameters commandParameters, final int argPos) {
@@ -53,6 +63,8 @@ public class SettingsCommand extends AbstractCommand {
             return similarSettings.get(0);
         }
 
+        // TODO: Re-implement help system
+        /*
         this.sendHelpMessage(
                 commandParameters,
                 settingName,
@@ -62,6 +74,8 @@ public class SettingsCommand extends AbstractCommand {
                 new String[0],
                 DataUtilities.convertToStringList(similarSettings, AbstractSetting::getStatName)
         );
+
+         */
         throw new CommandReturnException();
     }
 
@@ -88,7 +102,7 @@ public class SettingsCommand extends AbstractCommand {
     }
 
     private CommandResult showCurrentSettings(final CommandParameters commandParameters) {
-        final MultiEmbedBuilder embedBuilder = this.getEmbedBuilder(commandParameters)
+        final MultiEmbedBuilder embedBuilder = commandParameters.getEmbedBuilder()
                 .setTitle("Settings");
 
         final Map<AbstractSetting<?>, String> playerSettings = commandParameters.getUserDb().getSettings();
@@ -115,18 +129,13 @@ public class SettingsCommand extends AbstractCommand {
             );
         }
 
-        this.sendTimedMessage(
-                commandParameters,
-                embedBuilder,
-                400
-        );
-        return CommandResult.SUCCESS;
+        commandParameters.sendMessage(embedBuilder);
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult showSettingInfo(final CommandParameters commandParameters, final AbstractSetting<?> setting) {
-        this.sendTimedMessage(
-                commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
                         .setTitle("Setting - " + setting.getStatName())
                         .addField("Description", setting.getDescription())
                         .addField("Alias names", String.join(", ", setting.getAliasNames()))
@@ -136,17 +145,16 @@ public class SettingsCommand extends AbstractCommand {
                                 this.getCommandModule().getMainCommand(),
                                 this.getName(),
                                 setting.getStatName()
-                        ),
-                300
+                        )
         );
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult changeSetting(final CommandParameters commandParameters,
                                         final AbstractSetting<?> setting,
                                         final String newValue) {
         setting.handleCommand(commandParameters, newValue);
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 }

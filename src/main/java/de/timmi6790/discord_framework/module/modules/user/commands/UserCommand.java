@@ -1,43 +1,74 @@
 package de.timmi6790.discord_framework.module.modules.user.commands;
 
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
-import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command_old.property.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.controll.MinArgProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
+import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
+import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
+import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
+import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
-import io.github.bucket4j.Bucket;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.StringJoiner;
 
 @EqualsAndHashCode(callSuper = true)
-public class UserCommand extends AbstractCommand {
+public class UserCommand extends Command {
     private static final String ERROR_TITLE = "Error";
 
-    @Getter(lazy = true)
-    private final UserDbModule userDbModule = this.getModuleManager().getModuleOrThrow(UserDbModule.class);
-    @Getter(lazy = true)
-    private final EmoteReactionModule emoteReactionModule = this.getModuleManager().getModuleOrThrow(EmoteReactionModule.class);
+    private final UserDbModule userDbModule;
+    private final PermissionsModule permissionModule;
+    @Nullable
+    private final SettingModule settingsModule;
+    private final RankModule rankModule;
 
-    public UserCommand() {
-        super("user",
-                "Management",
-                "User control command",
-                "<discordUser> <perms|rank|setPrimaryRank|ban|unBan|info|invalidate> " +
-                        "<add;remove;list|add;remove|rank|||||> <command;permNode|rank|>");
+    public UserCommand(final UserDbModule userDbModule,
+                       final PermissionsModule permissionModule,
+                       final RankModule rankModule,
+                       @Nullable final SettingModule settingsModule,
+                       final CommandModule commandModule,
+                       final EventModule eventModule) {
+        super("user", commandModule, eventModule);
 
-        this.addProperty(
-                new MinArgCommandProperty(2)
+        this.addProperties(
+                new CategoryProperty("Management"),
+                new DescriptionProperty("User control command"),
+                new SyntaxProperty("<discordUser> <perms|rank|setPrimaryRank|ban|unBan|info|invalidate> " +
+                        "<add;remove;list|add;remove|rank|||||> <command;permNode|rank|>"),
+                new AliasNamesProperty("h"),
+                new MinArgProperty(2)
+        );
+
+        this.userDbModule = userDbModule;
+        this.permissionModule = permissionModule;
+        this.rankModule = rankModule;
+        this.settingsModule = settingsModule;
+    }
+
+    private int getPermissionIdOrThrow(final CommandParameters commandParameters, final int argPosition) {
+        return ArgumentUtilities.getPermissionIdOrThrow(
+                commandParameters,
+                argPosition,
+                this.getCommandModule(),
+                this.settingsModule,
+                this.permissionModule
         );
     }
 
@@ -51,9 +82,9 @@ public class UserCommand extends AbstractCommand {
         // <discordUser> <info>
         // <discordUser> <invalidate>
 
-        final User user = this.getDiscordUserThrow(commandParameters, 0);
-        final UserDb userDb = this.getUserDbModule().getOrCreate(user.getIdLong());
-        final ValidArgs1 arg1 = this.getFromEnumIgnoreCaseThrow(commandParameters, 1, ValidArgs1.values());
+        final User user = ArgumentUtilities.getDiscordUserOrThrow(commandParameters, 0);
+        final UserDb userDb = this.userDbModule.getOrCreate(user.getIdLong());
+        final ValidArgs1 arg1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 1, ValidArgs1.values());
 
         return switch (arg1) {
             case INFO -> this.infoCommand(commandParameters, userDb);
@@ -67,20 +98,18 @@ public class UserCommand extends AbstractCommand {
     }
 
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        this.getUserDbModule().getCache().invalidate(userDb.getDiscordId());
+        this.userDbModule.getCache().invalidate(userDb.getDiscordId());
 
-        this.sendTimedMessage(
-                commandParameters,
-                "Invalidated Cache",
-                MarkdownUtil.monospace(String.valueOf(userDb.getDiscordId())) + " was removed from the cache."
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Invalidated Cache")
+                        .setDescription(MarkdownUtil.monospace(String.valueOf(userDb.getDiscordId())) + " was removed from the cache.")
         );
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult infoCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        final Bucket commandRatelimit = this.getCommandModule().resolveRateBucket(userDb.getUser().getIdLong());
-
         final StringJoiner settings = new StringJoiner("\n");
         for (final Map.Entry<AbstractSetting<?>, String> entry : userDb.getSettings().entrySet()) {
             settings.add(entry.getKey().getInternalName() + ": " + entry.getValue());
@@ -104,19 +133,17 @@ public class UserCommand extends AbstractCommand {
 
         final StringJoiner permissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getPermissionIds()) {
-            this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(permissions::add);
+            this.permissionModule.getPermissionFromId(permissionId).ifPresent(permissions::add);
         }
 
         final StringJoiner allPermissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getAllPermissionIds()) {
-            this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(allPermissions::add);
+            this.permissionModule.getPermissionFromId(permissionId).ifPresent(allPermissions::add);
         }
 
-        this.sendTimedMessage(
-                commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
                         .setTitle("User Info")
-                        .addField("Command Spam Cache", String.valueOf(commandRatelimit.getAvailableTokens()), true)
                         .addField("Ranks", primaryRank + "[" + subRanks + "]", true)
                         .addField("Achievements", achievements.toString(), false)
                         .addField("Settings", settings.toString(), false)
@@ -125,176 +152,181 @@ public class UserCommand extends AbstractCommand {
                         .addField("All Perms", allPermissions.toString(), false)
         );
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult unBanCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
         if (!userDb.isBanned()) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    ERROR_TITLE,
-                    MarkdownUtil.monospace(discordUser.getAsTag()) + " is not banned."
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(ERROR_TITLE)
+                            .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is not banned.")
             );
-            return CommandResult.SUCCESS;
+            return BaseCommandResult.SUCCESSFUL;
         }
 
-        this.sendTimedMessage(
-                commandParameters,
-                "Banned",
-                MarkdownUtil.monospace(discordUser.getAsTag()) + " is now unBanned."
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Banned")
+                        .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is now unBanned.")
         );
         userDb.setBanned(false);
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult banCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
         if (userDb.isBanned()) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    ERROR_TITLE,
-                    MarkdownUtil.monospace(discordUser.getAsTag()) + " is already banned."
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(ERROR_TITLE)
+                            .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is already banned.")
             );
-            return CommandResult.SUCCESS;
+            return BaseCommandResult.SUCCESSFUL;
         }
 
-        this.sendTimedMessage(
-                commandParameters,
-                "Banned",
-                MarkdownUtil.monospace(discordUser.getAsTag()) + " is now banned."
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Banned")
+                        .setDescription(MarkdownUtil.monospace(discordUser.getAsTag()) + " is now banned.")
         );
         userDb.setBanned(true);
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult setPrimaryRankCommand(final CommandParameters commandParameters, final UserDb userDb) {
         this.checkArgLength(commandParameters, 3);
 
-        final Rank rank = this.getRankThrow(commandParameters, 2);
+        final Rank rank = ArgumentUtilities.getRankOrThrow(commandParameters, 2, this.rankModule);
         if (userDb.hasPrimaryRank(rank)) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    ERROR_TITLE,
-                    "The user already has this rank."
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(ERROR_TITLE)
+                            .setDescription("The user already has this rank.")
             );
-
-            return CommandResult.FAIL;
+            return BaseCommandResult.FAIL;
         }
 
         userDb.setPrimaryRank(rank);
-        this.sendTimedMessage(
-                commandParameters,
-                "Set Primary Rank",
-                "Set primary rank to %s.",
-                MarkdownUtil.monospace(rank.getRankName())
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Set Primary Rank")
+                        .setDescription(MarkdownUtil.monospace(rank.getRankName()))
         );
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult rankCommand(final CommandParameters commandParameters, final UserDb userDb) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
-        final Rank rank = this.getRankThrow(commandParameters, 3);
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.values());
+        final Rank rank = ArgumentUtilities.getRankOrThrow(commandParameters, 3, this.rankModule);
 
         if (AddRemoveArgs.ADD == mode) {
             if (userDb.hasRank(rank)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "The user already has this rank."
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription("The user already has this rank.")
                 );
-
-                return CommandResult.FAIL;
+                return BaseCommandResult.FAIL;
             }
 
             userDb.addRank(rank);
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Added Rank",
-                    "Added %s rank to the user.",
-                    MarkdownUtil.monospace(rank.getRankName())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Added Rank")
+                            .setDescription(
+                                    "Added %s rank to the user.",
+                                    MarkdownUtil.monospace(rank.getRankName())
+                            )
             );
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasRank(rank)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "The user is not in possession of this rank."
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription("The user is not in possession of this rank.")
                 );
-
-                return CommandResult.FAIL;
+                return BaseCommandResult.FAIL;
             }
 
             userDb.removeRank(rank);
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Removed Rank",
-                    "Removed %s rank from the user.",
-                    MarkdownUtil.monospace(rank.getRankName())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Removed Rank")
+                            .setDescription(
+                                    "Removed %s rank from the user.",
+                                    MarkdownUtil.monospace(rank.getRankName())
+                            )
             );
         }
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult permsCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
-        final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.values());
+        final int permissionId = this.getPermissionIdOrThrow(commandParameters, 3);
+        final String permissionNode = this.permissionModule.getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {
             if (userDb.hasPermission(permissionId)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "%s does already possess the %s permission.",
-                        MarkdownUtil.monospace(discordUser.getAsTag()),
-                        MarkdownUtil.monospace(permissionNode)
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription(
+                                        "%s does already possess the %s permission.",
+                                        MarkdownUtil.monospace(discordUser.getAsTag()),
+                                        MarkdownUtil.monospace(permissionNode)
+                                )
                 );
-
-                return CommandResult.FAIL;
+                return BaseCommandResult.FAIL;
             }
 
             userDb.addPermission(permissionId);
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Added Permission",
-                    "%s added to %s.",
-                    MarkdownUtil.monospace(permissionNode),
-                    MarkdownUtil.monospace(discordUser.getAsTag())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Added Permission")
+                            .setDescription(
+                                    "%s added to %s.",
+                                    MarkdownUtil.monospace(permissionNode),
+                                    MarkdownUtil.monospace(discordUser.getAsTag())
+                            )
             );
-
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!userDb.hasPermission(permissionId)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "%s does not possess the %s permission.",
-                        MarkdownUtil.monospace(discordUser.getAsTag()),
-                        MarkdownUtil.monospace(permissionNode)
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription(
+                                        "%s does not possess the %s permission.",
+                                        MarkdownUtil.monospace(discordUser.getAsTag()),
+                                        MarkdownUtil.monospace(permissionNode)
+                                )
                 );
-
-                return CommandResult.FAIL;
+                return BaseCommandResult.FAIL;
             }
 
             userDb.removePermission(permissionId);
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Removed Permission",
-                    "%s removed from %s.",
-                    MarkdownUtil.monospace(permissionNode),
-                    MarkdownUtil.monospace(discordUser.getAsTag())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Removed Permission")
+                            .setDescription(
+                                    "%s removed from %s.",
+                                    MarkdownUtil.monospace(permissionNode),
+                                    MarkdownUtil.monospace(discordUser.getAsTag())
+                            )
             );
         }
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     // Utilities
