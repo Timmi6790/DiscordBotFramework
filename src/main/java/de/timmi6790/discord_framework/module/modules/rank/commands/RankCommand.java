@@ -1,31 +1,63 @@
 package de.timmi6790.discord_framework.module.modules.rank.commands;
 
-import de.timmi6790.discord_framework.module.modules.command_old.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command_old.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command_old.property.properties.MinArgCommandProperty;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.controll.MinArgProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
+import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
+import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
+import de.timmi6790.discord_framework.module.modules.rank.RankModule;
+import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class RankCommand extends AbstractCommand {
+public class RankCommand extends Command {
     private static final String ERROR_TITLE = "Error";
 
-    public RankCommand() {
+    private final RankModule rankModule;
+    private final PermissionsModule permissionsModule;
+    @Nullable
+    private final SettingModule settingsModule;
+
+    public RankCommand(final RankModule rankModule,
+                       final PermissionsModule permissionsModule,
+                       @Nullable final SettingModule settingsModule,
+                       final CommandModule commandModule,
+                       final EventModule eventModule) {
         // TODO: Add a better command system, to support more complex commands
-        super(
-                "rank",
-                "Management",
-                "Rank control command",
-                "<rankName|list> <perms;extend;rename;rename;create;delete;info|> <add,remove;add,remove;newName|> <command,permNode;rankName|>"
+        super("rank", commandModule, eventModule);
+
+        this.addProperties(
+                new CategoryProperty("Management"),
+                new DescriptionProperty("Rank control command"),
+                new SyntaxProperty("<rankName|list> <perms;extend;rename;rename;create;delete;info|> <add,remove;add,remove;newName|> <command,permNode;rankName|>"),
+                new MinArgProperty(1)
         );
 
-        this.addProperty(
-                new MinArgCommandProperty(1)
+        this.rankModule = rankModule;
+        this.permissionsModule = permissionsModule;
+        this.settingsModule = settingsModule;
+    }
+
+    private int getPermissionIdOrThrow(final CommandParameters commandParameters, final int argPosition) {
+        return ArgumentUtilities.getPermissionIdOrThrow(
+                commandParameters,
+                argPosition,
+                this.getCommandModule(),
+                this.settingsModule,
+                this.permissionsModule
         );
     }
 
@@ -40,7 +72,7 @@ public class RankCommand extends AbstractCommand {
         // <rankName> <info>
 
         // List command
-        final String arg0 = this.getArg(commandParameters, 0);
+        final String arg0 = commandParameters.getArg(0);
         if ("list".equalsIgnoreCase(arg0)) {
             return this.listCommand(commandParameters);
         }
@@ -49,20 +81,20 @@ public class RankCommand extends AbstractCommand {
         this.checkArgLength(commandParameters, 2);
 
         // Special handling for create
-        final ValidArgs1 args1 = this.getFromEnumIgnoreCaseThrow(commandParameters, 1, ValidArgs1.values());
+        final ValidArgs1 args1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 1, ValidArgs1.values());
         if (commandParameters.getArgs().length >= 2 && args1 == ValidArgs1.CREATE) {
             return this.createRankCommand(commandParameters, arg0);
         }
 
         // All other commands
-        final Rank rank = this.getRankThrow(commandParameters, 0);
+        final Rank rank = ArgumentUtilities.getRankOrThrow(commandParameters, 0, this.rankModule);
         return switch (args1) {
             case INFO -> this.infoCommand(commandParameters, rank);
             case DELETE -> this.deleteRankCommand(commandParameters, rank);
             case RENAME -> this.renameRankCommand(commandParameters, rank);
             case EXTEND -> this.extendCommand(commandParameters, rank);
             case PERMS -> this.permsCommand(commandParameters, rank);
-            default -> CommandResult.ERROR;
+            default -> BaseCommandResult.ERROR;
         };
     }
 
@@ -70,193 +102,208 @@ public class RankCommand extends AbstractCommand {
     private CommandResult permsCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
-        final int permissionId = this.getPermissionIdThrow(commandParameters, 3);
-        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.values());
+        final int permissionId = this.getPermissionIdOrThrow(commandParameters, 3);
+        final String permissionNode = this.permissionsModule.getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {
             // Check if the rank already has this permission
             if (rank.hasPermission(permissionId, false)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "%s does already possess the %s permission.",
-                        MarkdownUtil.monospace(rank.getRankName()),
-                        MarkdownUtil.monospace(permissionNode)
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription(
+                                        "%s does already possess the %s permission.",
+                                        MarkdownUtil.monospace(rank.getRankName()),
+                                        MarkdownUtil.monospace(permissionNode)
+                                )
                 );
-
-                return CommandResult.FAIL;
+                return BaseCommandResult.FAIL;
             }
 
             // Add new permission to rank
             rank.addPermission(permissionId);
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Added Permission",
-                    "%s added to %s.",
-                    MarkdownUtil.monospace(permissionNode),
-                    MarkdownUtil.monospace(rank.getRankName())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Added Permission")
+                            .setDescription(
+                                    "%s added to %s.",
+                                    MarkdownUtil.monospace(permissionNode),
+                                    MarkdownUtil.monospace(rank.getRankName())
+                            )
             );
-
-            return CommandResult.SUCCESS;
+            return BaseCommandResult.SUCCESSFUL;
 
         } else if (AddRemoveArgs.REMOVE == mode) {
             // Check if the rank has the permission
             if (!rank.hasPermission(permissionId, false)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "%s does not possess the %s permission.",
-                        MarkdownUtil.monospace(rank.getRankName()),
-                        MarkdownUtil.monospace(permissionNode)
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription(
+                                        "%s does not possess the %s permission.",
+                                        MarkdownUtil.monospace(rank.getRankName()),
+                                        MarkdownUtil.monospace(permissionNode)
+                                )
                 );
-
-                return CommandResult.FAIL;
+                return BaseCommandResult.FAIL;
             }
 
             // Remove permission from rank
             rank.removePermission(permissionId);
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Removed Permission",
-                    "%s removed from %s.",
-                    MarkdownUtil.monospace(permissionNode),
-                    MarkdownUtil.monospace(rank.getRankName())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Removed Permission")
+                            .setDescription(
+                                    "%s removed from %s.",
+                                    MarkdownUtil.monospace(permissionNode),
+                                    MarkdownUtil.monospace(rank.getRankName())
+                            )
             );
-
-            return CommandResult.SUCCESS;
+            return BaseCommandResult.SUCCESSFUL;
         }
 
-        return CommandResult.ERROR;
+        return BaseCommandResult.ERROR;
     }
 
     private CommandResult extendCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = this.getFromEnumIgnoreCaseThrow(commandParameters, 2, AddRemoveArgs.values());
-        final Rank extendedRank = this.getRankThrow(commandParameters, 3);
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.values());
+        final Rank extendedRank = ArgumentUtilities.getRankOrThrow(commandParameters, 3, this.rankModule);
 
         // Can't target the same rank
         if (rank.getRepositoryId() == extendedRank.getRepositoryId()) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    ERROR_TITLE,
-                    "You can't target the same rank."
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(ERROR_TITLE)
+                            .setDescription("You can't target the same rank.")
             );
-
-            return CommandResult.INVALID_ARGS;
+            return BaseCommandResult.INVALID_ARGS;
         }
 
         if (AddRemoveArgs.ADD == mode) {
             if (rank.hasExtendedRank(extendedRank)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "%s is already extending %s.",
-                        MarkdownUtil.monospace(rank.getRankName()),
-                        MarkdownUtil.monospace(extendedRank.getRankName())
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription(
+                                        "%s is already extending %s.",
+                                        MarkdownUtil.monospace(rank.getRankName()),
+                                        MarkdownUtil.monospace(extendedRank.getRankName())
+                                )
                 );
-
-                return CommandResult.INVALID_ARGS;
+                return BaseCommandResult.INVALID_ARGS;
             }
 
             rank.addExtendedRank(extendedRank);
-            this.sendTimedMessage(
-                    commandParameters,
-                    rank.getRankName() + " - Extended Rank",
-                    "%s added to %s.",
-                    MarkdownUtil.monospace(extendedRank.getRankName()),
-                    MarkdownUtil.monospace(rank.getRankName())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(rank.getRankName() + " - Extended Rank")
+                            .setDescription(
+                                    "%s added to %s.",
+                                    MarkdownUtil.monospace(extendedRank.getRankName()),
+                                    MarkdownUtil.monospace(rank.getRankName())
+                            )
             );
         } else if (AddRemoveArgs.REMOVE == mode) {
             if (!rank.hasExtendedRank(extendedRank)) {
-                this.sendTimedMessage(
-                        commandParameters,
-                        ERROR_TITLE,
-                        "%s is not extending %s.",
-                        MarkdownUtil.monospace(rank.getRankName()),
-                        MarkdownUtil.monospace(extendedRank.getRankName())
+                commandParameters.sendMessage(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle(ERROR_TITLE)
+                                .setDescription(
+                                        "%s is not extending %s.",
+                                        MarkdownUtil.monospace(rank.getRankName()),
+                                        MarkdownUtil.monospace(extendedRank.getRankName())
+                                )
                 );
-
-                return CommandResult.INVALID_ARGS;
+                return BaseCommandResult.INVALID_ARGS;
             }
 
             rank.removeExtendedRank(extendedRank);
-            this.sendTimedMessage(
-                    commandParameters,
-                    rank.getRankName() + " - Extended Rank",
-                    "%s removed from %s.",
-                    MarkdownUtil.monospace(extendedRank.getRankName()),
-                    MarkdownUtil.monospace(rank.getRankName())
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(rank.getRankName() + " - Extended Rank")
+                            .setDescription(
+                                    "%s removed from %s.",
+                                    MarkdownUtil.monospace(extendedRank.getRankName()),
+                                    MarkdownUtil.monospace(rank.getRankName())
+                            )
             );
         }
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult renameRankCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 3);
 
         final String oldName = rank.getRankName();
-        final String newName = this.getArg(commandParameters, 2);
+        final String newName = commandParameters.getArg(2);
         rank.setRankName(newName);
 
-        this.sendTimedMessage(
-                commandParameters,
-                rank.getRankName(),
-                "%s changed to %s.",
-                MarkdownUtil.monospace(oldName),
-                MarkdownUtil.monospace(newName)
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle(rank.getRankName())
+                        .setDescription(
+                                "%s changed to %s.",
+                                MarkdownUtil.monospace(oldName),
+                                MarkdownUtil.monospace(newName)
+                        )
         );
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult createRankCommand(final CommandParameters commandParameters, final String rankName) {
-        final boolean success = this.getRankModule().createRank(rankName);
+        final boolean success = this.rankModule.createRank(rankName);
         if (success) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Created",
-                    "Successfully created %s.",
-                    MarkdownUtil.monospace(rankName)
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Created")
+                            .setDescription(
+                                    "Successfully created %s.",
+                                    MarkdownUtil.monospace(rankName)
+                            )
             );
-
-            return CommandResult.SUCCESS;
+            return BaseCommandResult.SUCCESSFUL;
         } else {
-            this.sendTimedMessage(
-                    commandParameters,
-                    ERROR_TITLE,
-                    "Something went wrong while creating %s.",
-                    MarkdownUtil.monospace(rankName)
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(ERROR_TITLE)
+                            .setDescription(
+                                    "Something went wrong while creating %s.",
+                                    MarkdownUtil.monospace(rankName)
+                            )
             );
-
-            return CommandResult.ERROR;
+            return BaseCommandResult.ERROR;
         }
     }
 
     private CommandResult deleteRankCommand(final CommandParameters commandParameters, final Rank rank) {
-        final boolean isRankDeleted = this.getRankModule().deleteRank(rank);
+        final boolean isRankDeleted = this.rankModule.deleteRank(rank);
         if (isRankDeleted) {
-            this.sendTimedMessage(
-                    commandParameters,
-                    "Deleted",
-                    "Successfully deleted %s[%s].",
-                    MarkdownUtil.monospace(rank.getRankName()),
-                    MarkdownUtil.monospace(String.valueOf(rank.getRepositoryId()))
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Deleted")
+                            .setDescription(
+                                    "Successfully deleted %s[%s].",
+                                    MarkdownUtil.monospace(rank.getRankName()),
+                                    MarkdownUtil.monospace(String.valueOf(rank.getRepositoryId()))
+                            )
             );
-
-            return CommandResult.SUCCESS;
+            return BaseCommandResult.SUCCESSFUL;
         } else {
-            this.sendTimedMessage(
-                    commandParameters,
-                    ERROR_TITLE,
-                    "Something went wrong while deleting %s[%s].",
-                    MarkdownUtil.monospace(rank.getRankName()),
-                    MarkdownUtil.monospace(String.valueOf(rank.getRepositoryId()))
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle(ERROR_TITLE)
+                            .setDescription(
+                                    "Something went wrong while deleting %s[%s].",
+                                    MarkdownUtil.monospace(rank.getRankName()),
+                                    MarkdownUtil.monospace(String.valueOf(rank.getRepositoryId()))
+                            )
             );
-
-            return CommandResult.ERROR;
+            return BaseCommandResult.ERROR;
         }
     }
 
@@ -275,31 +322,29 @@ public class RankCommand extends AbstractCommand {
         }
         extendedPerms.sort(Comparator.naturalOrder());
 
-        this.sendTimedMessage(
-                commandParameters,
-                this.getEmbedBuilder(commandParameters)
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
                         .setTitle(rank.getRankName() + " - Rank")
                         .addField("DatabaseId", String.valueOf(rank.getRepositoryId()), true)
                         .addField("Name", rank.getRankName(), true)
                         .addField("ExtendedRanks", String.join("\n", extendedRank), true)
                         .addField("ExtendedPerms", String.join("\n", extendedPerms), false)
-                        .addField("Perms", String.join("\n", perms), false),
-                150
+                        .addField("Perms", String.join("\n", perms), false)
         );
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private CommandResult listCommand(final CommandParameters commandParameters) {
-        final List<String> rankNames = DataUtilities.convertToStringList(this.getRankModule().getRanks(), Rank::getRankName);
+        final List<String> rankNames = DataUtilities.convertToStringList(this.rankModule.getRanks(), Rank::getRankName);
         rankNames.sort(Comparator.naturalOrder());
 
-        this.sendTimedMessage(
-                commandParameters,
-                "Ranks",
-                String.join("\n", rankNames)
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Ranks")
+                        .setDescription(String.join("\n", rankNames))
         );
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 
     private enum ValidArgs1 {
