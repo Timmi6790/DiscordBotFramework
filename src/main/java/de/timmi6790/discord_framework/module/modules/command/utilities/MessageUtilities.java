@@ -79,4 +79,21 @@ public class MessageUtilities {
                         .addField("Example Commands", getFormattedExampleCommands, false, !getFormattedExampleCommands.isEmpty())
         );
     }
+
+    public void sendErrorMessage(final CommandParameters commandParameters, final String description) {
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Error")
+                        .setDescription(description)
+        );
+    }
+
+    public void sendInvalidArgumentMessage(final CommandParameters commandParameters,
+                                           final String userInput,
+                                           final String argumentName) {
+        sendErrorMessage(
+                commandParameters,
+                MarkdownUtil.monospace(userInput) + " is not a valid " + MarkdownUtil.bold(argumentName) + " input."
+        );
+    }
 }
