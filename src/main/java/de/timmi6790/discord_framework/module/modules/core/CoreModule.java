@@ -10,7 +10,6 @@ import de.timmi6790.discord_framework.module.modules.core.stats.FailedCommandRes
 import de.timmi6790.discord_framework.module.modules.core.stats.IncorrectArgCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.MissingArgCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.SuccessfulCommandResultStat;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import lombok.EqualsAndHashCode;
@@ -45,13 +44,11 @@ public class CoreModule extends AbstractModule {
                 .getInviteUrl();
         if (inviteUrl != null && !inviteUrl.isEmpty()) {
             final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
-            final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
             commandModule.registerCommands(
                     this,
                     new InviteCommand(
                             inviteUrl,
-                            commandModule,
-                            eventModule
+                            commandModule
                     )
             );
         }

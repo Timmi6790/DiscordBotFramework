@@ -11,12 +11,15 @@ import lombok.Getter;
 @Getter
 public class PostCommandExecutionEvent extends CommandExecutionEvent {
     private final CommandResult commandResult;
+    private final long executionTimeInNano;
 
     public PostCommandExecutionEvent(final Command command,
                                      final CommandParameters commandParameters,
-                                     final CommandResult commandResult) {
+                                     final CommandResult commandResult,
+                                     final long executionTimeInNano) {
         super(commandParameters.getJda(), command, commandParameters);
 
         this.commandResult = commandResult;
+        this.executionTimeInNano = executionTimeInNano;
     }
 }

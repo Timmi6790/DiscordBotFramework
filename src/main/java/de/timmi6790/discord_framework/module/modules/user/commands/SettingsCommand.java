@@ -10,7 +10,6 @@ import de.timmi6790.discord_framework.module.modules.command.property.properties
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
@@ -30,9 +29,8 @@ public class SettingsCommand extends Command {
     private final SettingModule settingModule;
 
     public SettingsCommand(final SettingModule settingModule,
-                           final CommandModule commandModule,
-                           final EventModule eventModule) {
-        super("settings", commandModule, eventModule);
+                           final CommandModule commandModule) {
+        super("settings", commandModule);
 
         this.addProperties(
                 new CategoryProperty("Info"),

@@ -3,7 +3,6 @@ package de.timmi6790.discord_framework.module.modules.rank;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.commands.RankCommand;
 import de.timmi6790.discord_framework.module.modules.rank.repository.RankRepository;
@@ -71,16 +70,13 @@ public class RankModule extends AbstractModule {
         this.loadRanksFromRepository();
 
         final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
-        final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
         commandModule
                 .registerCommands(
                         this,
                         new RankCommand(
                                 this,
-                                this.getModuleOrThrow(PermissionsModule.class),
                                 this.getModule(SettingModule.class).orElse(null),
-                                commandModule,
-                                eventModule
+                                commandModule
                         )
                 );
 

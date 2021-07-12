@@ -10,8 +10,6 @@ import de.timmi6790.discord_framework.module.modules.command.property.properties
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
-import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
@@ -27,17 +25,14 @@ public class RankCommand extends Command {
     private static final String ERROR_TITLE = "Error";
 
     private final RankModule rankModule;
-    private final PermissionsModule permissionsModule;
     @Nullable
     private final SettingModule settingsModule;
 
     public RankCommand(final RankModule rankModule,
-                       final PermissionsModule permissionsModule,
                        @Nullable final SettingModule settingsModule,
-                       final CommandModule commandModule,
-                       final EventModule eventModule) {
+                       final CommandModule commandModule) {
         // TODO: Add a better command system, to support more complex commands
-        super("rank", commandModule, eventModule);
+        super("rank", commandModule);
 
         this.addProperties(
                 new CategoryProperty("Management"),
@@ -47,7 +42,6 @@ public class RankCommand extends Command {
         );
 
         this.rankModule = rankModule;
-        this.permissionsModule = permissionsModule;
         this.settingsModule = settingsModule;
     }
 
@@ -57,7 +51,7 @@ public class RankCommand extends Command {
                 argPosition,
                 this.getCommandModule(),
                 this.settingsModule,
-                this.permissionsModule
+                this.getPermissionsModule()
         );
     }
 
@@ -104,7 +98,7 @@ public class RankCommand extends Command {
 
         final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.class);
         final int permissionId = this.getPermissionIdOrThrow(commandParameters, 3);
-        final String permissionNode = this.permissionsModule.getPermissionFromId(permissionId)
+        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {

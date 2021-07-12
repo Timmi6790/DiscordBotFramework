@@ -81,9 +81,9 @@ class CommandTest {
 
     private Command createCommand() {
         final CommandModule commandModule = mock(CommandModule.class);
-        final EventModule eventModule = mock(EventModule.class);
-
-        return spy(new TestCommand(commandModule, eventModule));
+        when(commandModule.getEventModule()).thenReturn(mock(EventModule.class));
+        
+        return spy(new TestCommand(commandModule));
     }
 
     @Test
@@ -453,8 +453,8 @@ class CommandTest {
     }
 
     private static class TestCommand extends Command {
-        protected TestCommand(final CommandModule commandModule, final EventModule eventModule) {
-            super("test", commandModule, eventModule);
+        protected TestCommand(final CommandModule commandModule) {
+            super("test", commandModule);
         }
 
         @Override

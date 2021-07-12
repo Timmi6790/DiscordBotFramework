@@ -11,7 +11,6 @@ import de.timmi6790.discord_framework.module.modules.command.models.CommandResul
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.dsgvo.DsgvoModule;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -69,9 +68,8 @@ public class AccountDeletionCommand extends Command {
      * Instantiates a new Account deletion command.
      */
     public AccountDeletionCommand(final DsgvoModule dsgvoModule,
-                                  final CommandModule commandModule,
-                                  final EventModule eventModule) {
-        super("deleteMyAccount", commandModule, eventModule);
+                                  final CommandModule commandModule) {
+        super("deleteMyAccount", commandModule);
 
         this.addProperties(
                 new CategoryProperty("Info"),

@@ -117,14 +117,6 @@ class CommandModuleTest {
     }
 
     @Test
-    void getMainCommand() {
-    }
-
-    @Test
-    void getBotId() {
-    }
-
-    @Test
     void getCommand_name() {
         final CommandModule commandModule = new CommandModule();
         final Command command = this.createCommand("test");
@@ -284,8 +276,8 @@ class CommandModuleTest {
     }
 
     private static class TestCommand extends Command {
-        protected TestCommand(final CommandModule commandModule, final EventModule eventModule) {
-            super("test", commandModule, eventModule);
+        protected TestCommand(final CommandModule commandModule) {
+            super("test", commandModule);
         }
 
         @Override

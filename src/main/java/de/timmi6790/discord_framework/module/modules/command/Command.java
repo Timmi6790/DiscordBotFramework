@@ -12,6 +12,8 @@ import de.timmi6790.discord_framework.module.modules.command.property.properties
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.module.modules.command.utilities.MessageUtilities;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
+import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
@@ -25,7 +27,6 @@ import java.util.function.Supplier;
 
 @Data
 @Log4j2
-// TODO: Add metrics
 public abstract class Command {
     private static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(
             Permission.MESSAGE_WRITE,
@@ -34,9 +35,7 @@ public abstract class Command {
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private final EventModule eventModule;
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
+    @Getter(AccessLevel.PROTECTED)
     private final CommandModule commandModule;
 
     private final String name;
@@ -44,10 +43,9 @@ public abstract class Command {
     private final Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> properties = new HashMap<>();
     private int permissionId = -1;
 
-    protected Command(final String name, final CommandModule commandModule, final EventModule eventModule) {
+    protected Command(final String name, final CommandModule commandModule) {
         this.name = name;
         this.commandModule = commandModule;
-        this.eventModule = eventModule;
     }
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
@@ -71,6 +69,18 @@ public abstract class Command {
         for (final CommandProperty<?> property : properties) {
             this.addProperty(property);
         }
+    }
+
+    protected EventModule getEventModule() {
+        return this.commandModule.getEventModule();
+    }
+
+    protected PermissionsModule getPermissionsModule() {
+        return this.commandModule.getPermissionsModule();
+    }
+
+    protected Optional<MetricModule> getMetricModule() {
+        return this.commandModule.getMetricModule();
     }
 
     public boolean hasDefaultPermission() {
@@ -143,6 +153,8 @@ public abstract class Command {
         this.getEventModule().executeEvent(new PreCommandExecutionEvent(this, commandParameters));
 
         CommandResult commandResult;
+        final long startTime = System.nanoTime();
+        final long executionTime;
         try {
             commandResult = this.onCommand(commandParameters);
         } catch (final CommandReturnException exception) {
@@ -163,14 +175,25 @@ public abstract class Command {
                     .setThrowable(exception)
                     .build());
             commandResult = BaseCommandResult.EXCEPTION;
+        } finally {
+            executionTime = System.nanoTime() - startTime;
+        }
+
+        // Assure that the command result is never null
+        if (commandResult == null) {
+            log.warn("Returned invalid CommandResult of null");
+            commandResult = BaseCommandResult.UNKNOWN;
         }
 
         // Command post event
-        this.getEventModule().executeEvent(new PostCommandExecutionEvent(
-                this,
-                commandParameters,
-                commandResult == null ? BaseCommandResult.UNKNOWN : commandResult
-        ));
+        this.getEventModule().executeEvent(
+                new PostCommandExecutionEvent(
+                        this,
+                        commandParameters,
+                        commandResult,
+                        executionTime
+                )
+        );
     }
 
     public <V extends CommandProperty<?>> Optional<V> getProperty(final Class<V> propertyClass) {

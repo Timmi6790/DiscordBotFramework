@@ -8,7 +8,6 @@ import de.timmi6790.discord_framework.module.modules.command.models.CommandResul
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import lombok.EqualsAndHashCode;
 
 /**
@@ -27,9 +26,8 @@ public class InviteCommand extends Command {
      * @param inviteUrl the invite url
      */
     public InviteCommand(final String inviteUrl,
-                         final CommandModule commandModule,
-                         final EventModule eventModule) {
-        super("invite", commandModule, eventModule);
+                         final CommandModule commandModule) {
+        super("invite", commandModule);
 
         this.inviteUrl = inviteUrl;
 

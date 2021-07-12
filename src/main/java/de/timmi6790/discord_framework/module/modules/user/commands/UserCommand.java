@@ -12,8 +12,6 @@ import de.timmi6790.discord_framework.module.modules.command.property.properties
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
-import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
@@ -34,18 +32,15 @@ public class UserCommand extends Command {
     private static final String ERROR_TITLE = "Error";
 
     private final UserDbModule userDbModule;
-    private final PermissionsModule permissionModule;
     @Nullable
     private final SettingModule settingsModule;
     private final RankModule rankModule;
 
     public UserCommand(final UserDbModule userDbModule,
-                       final PermissionsModule permissionModule,
                        final RankModule rankModule,
                        @Nullable final SettingModule settingsModule,
-                       final CommandModule commandModule,
-                       final EventModule eventModule) {
-        super("user", commandModule, eventModule);
+                       final CommandModule commandModule) {
+        super("user", commandModule);
 
         this.addProperties(
                 new CategoryProperty("Management"),
@@ -57,7 +52,6 @@ public class UserCommand extends Command {
         );
 
         this.userDbModule = userDbModule;
-        this.permissionModule = permissionModule;
         this.rankModule = rankModule;
         this.settingsModule = settingsModule;
     }
@@ -68,7 +62,7 @@ public class UserCommand extends Command {
                 argPosition,
                 this.getCommandModule(),
                 this.settingsModule,
-                this.permissionModule
+                this.getPermissionsModule()
         );
     }
 
@@ -133,12 +127,12 @@ public class UserCommand extends Command {
 
         final StringJoiner permissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getPermissionIds()) {
-            this.permissionModule.getPermissionFromId(permissionId).ifPresent(permissions::add);
+            this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(permissions::add);
         }
 
         final StringJoiner allPermissions = new StringJoiner("\n");
         for (final int permissionId : userDb.getAllPermissionIds()) {
-            this.permissionModule.getPermissionFromId(permissionId).ifPresent(allPermissions::add);
+            this.getPermissionsModule().getPermissionFromId(permissionId).ifPresent(allPermissions::add);
         }
 
         commandParameters.sendMessage(
@@ -273,7 +267,7 @@ public class UserCommand extends Command {
 
         final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.class);
         final int permissionId = this.getPermissionIdOrThrow(commandParameters, 3);
-        final String permissionNode = this.permissionModule.getPermissionFromId(permissionId)
+        final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
 
         if (AddRemoveArgs.ADD == mode) {

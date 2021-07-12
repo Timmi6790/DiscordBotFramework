@@ -9,7 +9,6 @@ import de.timmi6790.discord_framework.module.modules.command.models.CommandResul
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.*;
 import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
 import de.timmi6790.discord_framework.module.modules.command.utilities.MessageUtilities;
-import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import lombok.EqualsAndHashCode;
@@ -27,8 +26,8 @@ public class HelpCommand extends Command {
     @ToString.Exclude
     private final CommandModule commandModule;
 
-    public HelpCommand(final CommandModule commandModule, final EventModule eventModule) {
-        super("help", commandModule, eventModule);
+    public HelpCommand(final CommandModule commandModule) {
+        super("help", commandModule);
 
         this.commandModule = commandModule;
 
