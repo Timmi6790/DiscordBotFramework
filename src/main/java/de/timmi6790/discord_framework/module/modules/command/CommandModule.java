@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.module.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.module.modules.command.listeners.MessageListener;
+import de.timmi6790.discord_framework.module.modules.command.listeners.MetricListener;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
@@ -30,9 +31,13 @@ public class CommandModule extends AbstractModule {
     private final Map<String, Command> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
 
-    @Getter(AccessLevel.PROTECTED)
-    private PermissionsModule permissionsModule;
     private Config config;
+
+    @Getter(AccessLevel.PUBLIC)
+    private PermissionsModule permissionsModule;
+    @Getter(AccessLevel.PUBLIC)
+    private EventModule eventModule;
+    private MetricModule metricModule;
 
     public CommandModule() {
         super("Command");
@@ -63,16 +68,26 @@ public class CommandModule extends AbstractModule {
     @Override
     public boolean onInitialize() {
         this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
+        this.eventModule = this.getModuleOrThrow(EventModule.class);
+        this.metricModule = this.getModule(MetricModule.class).orElse(null);
+
         this.config = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
         this.registerCommand(
                 this,
                 new HelpCommand(
-                        this,
-                        this.getModuleOrThrow(EventModule.class)
+                        this
                 )
         );
+
+        if (this.metricModule != null) {
+            this.eventModule.addEventListener(
+                    new MetricListener(
+                            this.metricModule
+                    )
+            );
+        }
 
         return true;
     }
@@ -105,6 +120,10 @@ public class CommandModule extends AbstractModule {
         )
                 .replace(' ', '_')
                 .toLowerCase();
+    }
+
+    public Optional<MetricModule> getMetricModule() {
+        return Optional.ofNullable(this.metricModule);
     }
 
     public String getMainCommand() {
