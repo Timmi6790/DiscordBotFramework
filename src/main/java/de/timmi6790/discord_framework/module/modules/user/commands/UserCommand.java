@@ -47,7 +47,7 @@ public class UserCommand extends Command {
                 new DescriptionProperty("User control command"),
                 new SyntaxProperty("<discordUser> <perms|rank|setPrimaryRank|ban|unBan|info|invalidate> " +
                         "<add;remove;list|add;remove|rank|||||> <command;permNode|rank|>"),
-                new AliasNamesProperty("h"),
+                new AliasNamesProperty("u"),
                 new MinArgProperty(2)
         );
 
