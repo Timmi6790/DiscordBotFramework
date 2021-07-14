@@ -9,14 +9,13 @@ import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
-import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.commons.EnumUtilities;
 import lombok.experimental.UtilityClass;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -56,16 +55,19 @@ public class ArgumentUtilities {
     }
 
     public <E extends Enum<?>> E getFromEnumIgnoreCaseOrThrow(final CommandParameters commandParameters,
+                                                              final Class<? extends Command> commandClass,
                                                               final int argPos,
                                                               final Class<E> enumClass) {
         return getFromEnumIgnoreCaseOrThrow(
                 commandParameters,
+                commandClass,
                 argPos,
                 enumClass.getEnumConstants()
         );
     }
 
     public <E extends Enum<?>> E getFromEnumIgnoreCaseOrThrow(final CommandParameters commandParameters,
+                                                              final Class<? extends Command> commandClass,
                                                               final int argPos,
                                                               final E[] enumValues) {
         final String userArg = commandParameters.getArg(argPos);
@@ -74,64 +76,19 @@ public class ArgumentUtilities {
             return arg.get();
         }
 
-        // TODO: Add help menu
-        /*
-        this.sendHelpMessage(commandParameters,
+        commandParameters.getCommandModule().sendArgumentCorrectionMessage(
+                commandParameters,
                 userArg,
                 argPos,
                 "argument",
                 null,
-                null,
-                EnumUtilities.getPrettyNames(enumValues)
+                new String[0],
+                commandClass,
+                Arrays.asList(enumValues),
+                EnumUtilities::getPrettyName
         );
 
-         */
         throw new CommandReturnException();
-    }
-
-    public Optional<Command> getCommand(final CommandParameters commandParameters,
-                                        final CommandModule commandModule,
-                                        final String commandName) {
-        final Optional<Command> commandOpt = commandModule.getCommand(commandName);
-        if (commandOpt.isPresent()) {
-            return commandOpt;
-        }
-
-        final List<Command> similarCommands = DataUtilities.getSimilarityList(
-                commandName,
-                commandModule.getCommands(command -> command.canExecute(commandParameters)),
-                Command::getName,
-                0.6,
-                5
-        );
-        if (similarCommands.isEmpty()) {
-            commandParameters.sendMessage(
-                    commandParameters.getEmbedBuilder()
-                            .setTitle("Can't find a valid command")
-                            .setDescription(
-                                    "Your input %s is not similar with one of the valid commands." +
-                                            "Use the %s command to see all valid commands.",
-                                    MarkdownUtil.monospace(commandName),
-                                    MarkdownUtil.monospace(commandModule.getMainCommand() + "help")
-                            )
-            );
-
-            return Optional.empty();
-        }
-
-        // Handle auto correction
-        if (commandParameters.getUserDb().hasAutoCorrection()) {
-            return Optional.of(similarCommands.get(0));
-        }
-
-        // TODO: Send help thing
-        commandParameters.sendMessage(
-                commandParameters.getEmbedBuilder()
-                        .setTitle("Can't find a valid command")
-                        .setDescription("TODO: Shown help menu")
-        );
-
-        return Optional.empty();
     }
 
     public <T> T getOrThrow(final CommandParameters commandParameters,

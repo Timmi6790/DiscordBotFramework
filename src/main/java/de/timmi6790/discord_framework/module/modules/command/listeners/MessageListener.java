@@ -7,14 +7,25 @@ import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandCause;
 import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReactionModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.CommandButtonAction;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
+import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import lombok.SneakyThrows;
+import net.dv8tion.jda.api.entities.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -28,6 +39,7 @@ public class MessageListener {
     private final CommandModule commandModule;
     private final UserDbModule userDbModule;
     private final ChannelDbModule channelDbModule;
+    private final ButtonReactionModule buttonReactionModule;
     private final Command helpCommand;
 
     private final long botId;
@@ -35,10 +47,12 @@ public class MessageListener {
     public MessageListener(final CommandModule commandModule,
                            final UserDbModule userDbModule,
                            final ChannelDbModule channelDbModule,
+                           final ButtonReactionModule buttonReactionModule,
                            final Command helpCommand) {
         this.commandModule = commandModule;
         this.userDbModule = userDbModule;
         this.channelDbModule = channelDbModule;
+        this.buttonReactionModule = buttonReactionModule;
         this.helpCommand = helpCommand;
         this.botId = commandModule.getBotId();
 
@@ -48,6 +62,83 @@ public class MessageListener {
                 this.botId
         );
         this.commandPattern = Pattern.compile(constructedCommandPattern);
+    }
+
+    private void sendHelpMessage(final CommandParameters commandParameters,
+                                 final String commandName,
+                                 final List<Command> similarCommands) {
+        final Map<Button, ButtonAction> buttons = new LinkedHashMap<>();
+        final StringBuilder description = new StringBuilder(
+                String.format(
+                        "%s is not a valid %s.%n",
+                        MarkdownUtil.monospace(commandName),
+                        "command"
+                )
+        ).append("Is it possible that you wanted to write?\n\n");
+
+        final int allowedButtons = 4;
+        for (int index = 0; Math.min(allowedButtons, similarCommands.size()) > index; index++) {
+            final Command similarValue = similarCommands.get(index);
+            final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+
+            description.append(String.format(
+                    "%s %s%n",
+                    emote,
+                    similarValue.getName()
+            ));
+
+            buttons.put(
+                    Button.of(ButtonStyle.SECONDARY, emote, "").withEmoji(Emoji.fromUnicode(emote)),
+                    new CommandButtonAction(
+                            similarValue.getClass(),
+                            commandParameters
+                    )
+            );
+        }
+
+        description.append(String.format(
+                "%n%s %s",
+                DiscordEmotes.FOLDER.getEmote(),
+                MarkdownUtil.bold("All commands")
+        ));
+
+        final CommandParameters newCommandParameters = CommandParameters.of(
+                "",
+                commandParameters.isGuildCommand(),
+                commandParameters.getCommandCause(),
+                this.commandModule,
+                commandParameters.getChannelDb(),
+                commandParameters.getUserDb()
+        );
+        final String everythingEmote = DiscordEmotes.FOLDER.getEmote();
+        buttons.put(
+                Button.of(ButtonStyle.SECONDARY, everythingEmote, "")
+                        .withEmoji(Emoji.fromUnicode(everythingEmote)),
+                new CommandButtonAction(
+                        this.helpCommand.getClass(),
+                        newCommandParameters
+                )
+        );
+
+        // Send message
+        commandParameters.getLowestMessageChannel()
+                .sendMessageEmbeds(
+                        commandParameters.getEmbedBuilder()
+                                .setTitle("Invalid Command")
+                                .setDescription(description.toString())
+                                .setFooter("↓ Click Me!")
+                                .buildSingle()
+                )
+                .setActionRows(ActionRow.of(buttons.keySet()))
+                .queue(message ->
+                        this.buttonReactionModule.addButtonReactionMessage(
+                                message,
+                                new ButtonReaction(
+                                        buttons,
+                                        commandParameters.getUserDb().getDiscordId()
+                                )
+                        )
+                );
     }
 
     private Optional<Command> getCommand(final String commandName, final CommandParameters commandParameters) {
@@ -87,12 +178,8 @@ public class MessageListener {
             return Optional.of(similarCommands.get(0));
         }
 
-        // TODO: Send help thing
-        commandParameters.sendMessage(
-                commandParameters.getEmbedBuilder()
-                        .setTitle("Can't find a valid command")
-                        .setDescription("TODO: Shown help menu")
-        );
+        // Send help message
+        this.sendHelpMessage(commandParameters, commandName, similarCommands);
 
         return Optional.empty();
     }
@@ -130,6 +217,7 @@ public class MessageListener {
                 rawArguments,
                 event.isFromGuild(),
                 BaseCommandCause.MESSAGE,
+                this.commandModule,
                 channelDbFuture.get(),
                 userDbFuture.get()
         );

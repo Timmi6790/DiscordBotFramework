@@ -14,6 +14,7 @@ import de.timmi6790.discord_framework.module.modules.command.utilities.MessageUt
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReactionModule;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
@@ -21,8 +22,10 @@ import io.sentry.SentryLevel;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.Permission;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Data
@@ -77,6 +80,10 @@ public abstract class Command {
 
     protected PermissionsModule getPermissionsModule() {
         return this.commandModule.getPermissionsModule();
+    }
+
+    protected ButtonReactionModule getButtonReactionModule() {
+        return this.commandModule.getButtonReactionModule();
     }
 
     protected Optional<MetricModule> getMetricModule() {
@@ -223,5 +230,26 @@ public abstract class Command {
             );
             throw new CommandReturnException();
         }
+    }
+
+    protected <T> void sendArgumentCorrectionMessage(final CommandParameters commandParameters,
+                                                     final String userArg,
+                                                     final int argPos,
+                                                     final String argName,
+                                                     @Nullable final Class<? extends Command> mainCommandClass,
+                                                     final String[] mainNewArgs,
+                                                     final List<T> similarValues,
+                                                     final Function<T, String> valueToString) {
+        this.commandModule.sendArgumentCorrectionMessage(
+                commandParameters,
+                userArg,
+                argPos,
+                argName,
+                mainCommandClass,
+                mainNewArgs,
+                this.getClass(),
+                similarValues,
+                valueToString
+        );
     }
 }

@@ -5,24 +5,37 @@ import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.module.modules.command.commands.HelpCommand;
 import de.timmi6790.discord_framework.module.modules.command.listeners.MessageListener;
 import de.timmi6790.discord_framework.module.modules.command.listeners.MetricListener;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.command.utilities.ArrayUtilities;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReactionModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.CommandButtonAction;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
+import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
+import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Emoji;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @EqualsAndHashCode(callSuper = true)
@@ -38,6 +51,8 @@ public class CommandModule extends AbstractModule {
     @Getter(AccessLevel.PUBLIC)
     private EventModule eventModule;
     private MetricModule metricModule;
+    @Getter(AccessLevel.PUBLIC)
+    private ButtonReactionModule buttonReactionModule;
 
     public CommandModule() {
         super("Command");
@@ -52,7 +67,8 @@ public class CommandModule extends AbstractModule {
         this.addDependenciesAndLoadAfter(
                 EventModule.class,
                 ConfigModule.class,
-                PermissionsModule.class
+                PermissionsModule.class,
+                ButtonReactionModule.class
         );
 
         this.addLoadAfterDependencies(
@@ -70,6 +86,7 @@ public class CommandModule extends AbstractModule {
         this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
         this.eventModule = this.getModuleOrThrow(EventModule.class);
         this.metricModule = this.getModule(MetricModule.class).orElse(null);
+        this.buttonReactionModule = this.getModuleOrThrow(ButtonReactionModule.class);
 
         this.config = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
@@ -105,6 +122,7 @@ public class CommandModule extends AbstractModule {
                         this,
                         this.getModuleOrThrow(UserDbModule.class),
                         this.getModuleOrThrow(ChannelDbModule.class),
+                        this.buttonReactionModule,
                         this.getCommand(HelpCommand.class).orElseThrow(RuntimeException::new)
                 )
         );
@@ -209,5 +227,140 @@ public class CommandModule extends AbstractModule {
         }
 
         return true;
+    }
+
+    // TODO: Rewrite this at one point
+    public <T> void sendArgumentCorrectionMessage(final CommandParameters commandParameters,
+                                                  final String userArg,
+                                                  final int argPos,
+                                                  final String argName,
+                                                  @Nullable final Class<? extends Command> mainCommandClass,
+                                                  final String[] mainNewArgs,
+                                                  final Class<? extends Command> valueCommandClass,
+                                                  final List<T> similarValues,
+                                                  final Function<T, String> valueToString) {
+        final Command mainCommand;
+        if (mainCommandClass == null) {
+            mainCommand = null;
+        } else {
+            mainCommand = this.getCommand(mainCommandClass).orElse(null);
+        }
+
+        final Map<Button, ButtonAction> buttons = new LinkedHashMap<>();
+        final StringBuilder description = new StringBuilder(
+                String.format(
+                        "%s is not a valid %s.%n",
+                        MarkdownUtil.monospace(userArg),
+                        argName
+                )
+        );
+
+        // Only main command
+        if (similarValues.isEmpty() && mainCommand != null) {
+            description.append(String.format(
+                    "Use the %s command or click the %s emote to see all %ss.",
+                    MarkdownUtil.bold(
+                            String.join(" ",
+                                    this.getMainCommand(),
+                                    mainCommand.getName(),
+                                    String.join(" ", mainNewArgs)
+                            )
+                    ),
+                    DiscordEmotes.FOLDER.getEmote(),
+                    argName
+            ));
+        } else {
+            // Contains help values
+            description.append("Is it possible that you wanted to write?\n\n");
+
+            // We can only have 5 buttons per message
+            final int allowedButtons = mainCommand != null ? 4 : 5;
+            for (int index = 0; Math.min(allowedButtons, similarValues.size()) > index; index++) {
+                final String similarValue = valueToString.apply(similarValues.get(index));
+                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+
+                description.append(String.format(
+                        "%s %s%n",
+                        emote,
+                        similarValue
+                ));
+
+                buttons.put(
+                        Button.of(ButtonStyle.SECONDARY, emote, "").withEmoji(Emoji.fromUnicode(emote)),
+                        new CommandButtonAction(
+                                valueCommandClass,
+                                CommandParameters.of(
+                                        ArrayUtilities.modifyArrayAtPosition(
+                                                commandParameters.getArgs(),
+                                                similarValue,
+                                                argPos
+                                        ),
+                                        commandParameters.isGuildCommand(),
+                                        commandParameters.getCommandCause(),
+                                        this,
+                                        commandParameters.getChannelDb(),
+                                        commandParameters.getUserDb()
+                                )
+                        )
+                );
+            }
+
+            if (mainCommand != null) {
+                description.append(String.format(
+                        "%n%s %s",
+                        DiscordEmotes.FOLDER.getEmote(),
+                        MarkdownUtil.bold("All " + argName + "s")
+                ));
+            }
+        }
+
+
+        if (mainCommand != null) {
+            final CommandParameters newCommandParameters = CommandParameters.of(
+                    mainNewArgs,
+                    commandParameters.isGuildCommand(),
+                    commandParameters.getCommandCause(),
+                    this,
+                    commandParameters.getChannelDb(),
+                    commandParameters.getUserDb()
+            );
+            final String everythingEmote = DiscordEmotes.FOLDER.getEmote();
+            buttons.put(
+                    Button.of(ButtonStyle.SECONDARY, everythingEmote, "")
+                            .withEmoji(Emoji.fromUnicode(everythingEmote)),
+                    new CommandButtonAction(
+                            mainCommand.getClass(),
+                            newCommandParameters
+                    )
+            );
+        }
+
+        // Send message
+        final MessageEmbed messageEmbed = commandParameters.getEmbedBuilder()
+                .setTitle("Invalid " + StringUtilities.capitalize(argName))
+                .setDescription(description.toString())
+                .setFooter("↓ Click Me!")
+                .buildSingle();
+
+        // Handle empty actions
+        // We need to handle them because jda will throw an exception otherwise
+        if (buttons.isEmpty()) {
+            commandParameters.getLowestMessageChannel()
+                    .sendMessageEmbeds(messageEmbed)
+                    .queue();
+        } else {
+            commandParameters.getLowestMessageChannel()
+                    .sendMessageEmbeds(messageEmbed)
+                    .setActionRows(ActionRow.of(buttons.keySet()))
+                    .queue(message ->
+                            this.buttonReactionModule.addButtonReactionMessage(
+                                    message,
+                                    new ButtonReaction(
+                                            buttons,
+                                            commandParameters.getUserDb().getDiscordId()
+                                    )
+                            )
+                    );
+        }
     }
 }

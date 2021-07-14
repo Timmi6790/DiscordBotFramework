@@ -75,7 +75,12 @@ public class RankCommand extends Command {
         this.checkArgLength(commandParameters, 2);
 
         // Special handling for create
-        final ValidArgs1 args1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 1, ValidArgs1.class);
+        final ValidArgs1 args1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+                commandParameters,
+                this.getClass(),
+                1,
+                ValidArgs1.class
+        );
         if (commandParameters.getArgs().length >= 2 && args1 == ValidArgs1.CREATE) {
             return this.createRankCommand(commandParameters, arg0);
         }
@@ -96,7 +101,12 @@ public class RankCommand extends Command {
     private CommandResult permsCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.class);
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+                commandParameters,
+                this.getClass(),
+                2,
+                AddRemoveArgs.class
+        );
         final int permissionId = this.getPermissionIdOrThrow(commandParameters, 3);
         final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);
@@ -164,7 +174,12 @@ public class RankCommand extends Command {
     private CommandResult extendCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.class);
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+                commandParameters,
+                this.getClass(),
+                2,
+                AddRemoveArgs.class
+        );
         final Rank extendedRank = ArgumentUtilities.getRankOrThrow(commandParameters, 3, this.rankModule);
 
         // Can't target the same rank

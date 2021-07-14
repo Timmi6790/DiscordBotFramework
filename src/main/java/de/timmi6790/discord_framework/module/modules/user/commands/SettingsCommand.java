@@ -61,19 +61,16 @@ public class SettingsCommand extends Command {
             return similarSettings.get(0);
         }
 
-        // TODO: Re-implement help system
-        /*
-        this.sendHelpMessage(
+        this.sendArgumentCorrectionMessage(
                 commandParameters,
                 settingName,
                 argPos,
                 "setting",
                 this.getClass(),
                 new String[0],
-                DataUtilities.convertToStringList(similarSettings, AbstractSetting::getStatName)
+                similarSettings,
+                AbstractSetting::getStatName
         );
-
-         */
         throw new CommandReturnException();
     }
 

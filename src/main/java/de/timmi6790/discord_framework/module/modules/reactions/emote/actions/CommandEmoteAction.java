@@ -48,6 +48,7 @@ public class CommandEmoteAction implements EmoteAction {
                     this.args,
                     this.guildCommand,
                     BaseCommandCause.EMOTES,
+                    moduleManager.getModuleOrThrow(CommandModule.class),
                     moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(this.channelDiscordId, this.guildDiscordId),
                     moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(this.userDiscordId)
             );

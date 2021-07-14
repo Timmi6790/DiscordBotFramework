@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.command.models;
 
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
@@ -27,6 +28,7 @@ public class CommandParameters {
                                        final String[] args,
                                        final boolean guildCommand,
                                        final CommandCause commandCause,
+                                       final CommandModule commandModule,
                                        final ChannelDb channelDb,
                                        final UserDb userDb) {
         return new CommandParameters(
@@ -34,6 +36,7 @@ public class CommandParameters {
                 args,
                 guildCommand,
                 commandCause,
+                commandModule,
                 channelDb,
                 userDb
         );
@@ -42,6 +45,7 @@ public class CommandParameters {
     public static CommandParameters of(final String rawArgs,
                                        final boolean guildCommand,
                                        final CommandCause commandCause,
+                                       final CommandModule commandModule,
                                        final ChannelDb channelDb,
                                        final UserDb userDb) {
         final String[] args = ArgumentUtilities.parseRawArguments(rawArgs);
@@ -50,6 +54,7 @@ public class CommandParameters {
                 args,
                 guildCommand,
                 commandCause,
+                commandModule,
                 channelDb,
                 userDb
         );
@@ -58,6 +63,7 @@ public class CommandParameters {
     public static CommandParameters of(final String[] args,
                                        final boolean guildCommand,
                                        final CommandCause commandCause,
+                                       final CommandModule commandModule,
                                        final ChannelDb channelDb,
                                        final UserDb userDb) {
         final String rawArgs = String.join(" ", args);
@@ -66,6 +72,7 @@ public class CommandParameters {
                 args,
                 guildCommand,
                 commandCause,
+                commandModule,
                 channelDb,
                 userDb
         );
@@ -75,6 +82,7 @@ public class CommandParameters {
     private final String[] args;
     private final boolean guildCommand;
     private final CommandCause commandCause;
+    private final CommandModule commandModule;
     private final ChannelDb channelDb;
     private final UserDb userDb;
 

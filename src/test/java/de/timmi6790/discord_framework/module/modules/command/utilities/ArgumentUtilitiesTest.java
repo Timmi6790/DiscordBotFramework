@@ -107,6 +107,7 @@ class ArgumentUtilitiesTest {
         final CommandParameters commandParameters = this.createCommandParameters(argPosition, expected.name().toLowerCase());
         final TestEnum result = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
                 commandParameters,
+                Command.class,
                 argPosition,
                 TestEnum.class
         );
@@ -121,6 +122,7 @@ class ArgumentUtilitiesTest {
         final CommandParameters commandParameters = this.createCommandParameters(argPosition, expected.name().toLowerCase());
         final TestEnum result = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
                 commandParameters,
+                Command.class,
                 argPosition,
                 TestEnum.values()
         );
@@ -131,39 +133,22 @@ class ArgumentUtilitiesTest {
     void getFromEnumIgnoreCaseOrThrow_exception() {
         final int argPosition = 0;
 
-        final CommandParameters commandParameters = this.createCommandParameters(argPosition, "D");
+        final CommandModule commandModule = mock(CommandModule.class);
 
-        // TODO: Add verify for help message
+        final CommandParameters commandParameters = mock(CommandParameters.class);
+        when(commandParameters.getArg(argPosition)).thenReturn("D");
+        when(commandParameters.getCommandModule()).thenReturn(commandModule);
+
         final TestEnum[] enumValues = TestEnum.values();
         assertThrows(
                 CommandReturnException.class,
                 () -> ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
                         commandParameters,
+                        Command.class,
                         argPosition,
                         enumValues
                 )
         );
-    }
-
-    @Test
-    void getCommand() {
-        final String argument = "test";
-        final int argPosition = 0;
-
-        final Command expected = mock(Command.class);
-        final CommandModule commandModule = mock(CommandModule.class);
-        when(commandModule.getCommand(argument)).thenReturn(Optional.of(expected));
-
-        final CommandParameters commandParameters = this.createCommandParameters(argPosition, argument);
-
-        final Optional<Command> result = ArgumentUtilities.getCommand(
-                commandParameters,
-                commandModule,
-                argument
-        );
-        assertThat(result)
-                .isPresent()
-                .contains(expected);
     }
 
     @Test

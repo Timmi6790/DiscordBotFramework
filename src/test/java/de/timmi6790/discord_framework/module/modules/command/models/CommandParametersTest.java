@@ -1,6 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.command.models;
 
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.guild.GuildDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import net.dv8tion.jda.api.entities.Guild;
@@ -19,6 +20,7 @@ class CommandParametersTest {
                         "test",
                         true,
                         BaseCommandCause.MESSAGE,
+                        mock(CommandModule.class),
                         channelDb,
                         userDb
                 )
@@ -31,6 +33,7 @@ class CommandParametersTest {
                         args,
                         true,
                         BaseCommandCause.MESSAGE,
+                        mock(CommandModule.class),
                         mock(ChannelDb.class),
                         mock(UserDb.class)
                 )
@@ -102,6 +105,7 @@ class CommandParametersTest {
                 "test",
                 true,
                 BaseCommandCause.MESSAGE,
+                mock(CommandModule.class),
                 channelDb,
                 mock(UserDb.class)
         );
@@ -117,6 +121,7 @@ class CommandParametersTest {
                 "test",
                 false,
                 BaseCommandCause.MESSAGE,
+                mock(CommandModule.class),
                 channelDb,
                 mock(UserDb.class)
         );

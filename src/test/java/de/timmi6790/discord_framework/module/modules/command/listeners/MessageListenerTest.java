@@ -4,6 +4,7 @@ import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.module.modules.command.Command;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReactionModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import net.dv8tion.jda.api.entities.Guild;
@@ -40,10 +41,13 @@ class MessageListenerTest {
         final UserDb userDb = mock(UserDb.class);
         when(userDbModule.getOrCreate(anyLong())).thenReturn(userDb);
 
+        final ButtonReactionModule buttonReactionModule = mock(ButtonReactionModule.class);
+
         return new MessageListener(
                 commandModule,
                 userDbModule,
                 channelDbModule,
+                buttonReactionModule,
                 helpCommand
         );
     }
@@ -66,10 +70,13 @@ class MessageListenerTest {
         final UserDb userDb = mock(UserDb.class);
         when(userDbModule.getOrCreate(anyLong())).thenReturn(userDb);
 
+        final ButtonReactionModule buttonReactionModule = mock(ButtonReactionModule.class);
+
         return new MessageListener(
                 commandModule,
                 userDbModule,
                 channelDbModule,
+                buttonReactionModule,
                 helpCommand
         );
     }

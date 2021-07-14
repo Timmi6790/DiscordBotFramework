@@ -78,7 +78,12 @@ public class UserCommand extends Command {
 
         final User user = ArgumentUtilities.getDiscordUserOrThrow(commandParameters, 0);
         final UserDb userDb = this.userDbModule.getOrCreate(user.getIdLong());
-        final ValidArgs1 arg1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 1, ValidArgs1.class);
+        final ValidArgs1 arg1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+                commandParameters,
+                this.getClass(),
+                1,
+                ValidArgs1.class
+        );
 
         return switch (arg1) {
             case INFO -> this.infoCommand(commandParameters, userDb);
@@ -215,7 +220,12 @@ public class UserCommand extends Command {
     private CommandResult rankCommand(final CommandParameters commandParameters, final UserDb userDb) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.class);
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+                commandParameters,
+                this.getClass(),
+                2,
+                AddRemoveArgs.class
+        );
         final Rank rank = ArgumentUtilities.getRankOrThrow(commandParameters, 3, this.rankModule);
 
         if (AddRemoveArgs.ADD == mode) {
@@ -265,7 +275,12 @@ public class UserCommand extends Command {
     private CommandResult permsCommand(final CommandParameters commandParameters, final UserDb userDb, final User discordUser) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(commandParameters, 2, AddRemoveArgs.class);
+        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+                commandParameters,
+                this.getClass(),
+                2,
+                AddRemoveArgs.class
+        );
         final int permissionId = this.getPermissionIdOrThrow(commandParameters, 3);
         final String permissionNode = this.getPermissionsModule().getPermissionFromId(permissionId)
                 .orElseThrow(RuntimeException::new);

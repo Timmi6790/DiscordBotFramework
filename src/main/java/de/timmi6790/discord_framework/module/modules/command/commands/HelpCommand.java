@@ -7,8 +7,8 @@ import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandR
 import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
 import de.timmi6790.discord_framework.module.modules.command.property.properties.info.*;
-import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
 import de.timmi6790.discord_framework.module.modules.command.utilities.MessageUtilities;
+import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import lombok.EqualsAndHashCode;
@@ -116,11 +116,11 @@ public class HelpCommand extends Command {
      * @return the command result
      */
     protected CommandResult showCommandHelpMessage(final CommandParameters commandParameters) {
-        final Command command = ArgumentUtilities.getCommand(
+        final Command command = this.getCommandOrThrow(
                 commandParameters,
                 this.commandModule,
-                commandParameters.getArg(0)
-        ).orElseThrow(CommandReturnException::new);
+                0
+        );
         if (!command.canExecute(commandParameters)) {
             MessageUtilities.sendMissingPermissionsMessage(commandParameters);
             return BaseCommandResult.SUCCESSFUL;
@@ -145,5 +145,54 @@ public class HelpCommand extends Command {
 
         commandParameters.sendMessage(message);
         return BaseCommandResult.SUCCESSFUL;
+    }
+
+    protected Command getCommandOrThrow(final CommandParameters commandParameters,
+                                        final CommandModule commandModule,
+                                        final int argPos) {
+        final String commandName = commandParameters.getArg(argPos);
+        final Optional<Command> commandOpt = commandModule.getCommand(commandName);
+        if (commandOpt.isPresent()) {
+            return commandOpt.get();
+        }
+
+        final List<Command> similarCommands = DataUtilities.getSimilarityList(
+                commandName,
+                commandModule.getCommands(command -> command.canExecute(commandParameters)),
+                Command::getName,
+                0.6,
+                5
+        );
+        if (similarCommands.isEmpty()) {
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
+                            .setTitle("Can't find a valid command")
+                            .setDescription(
+                                    "Your input %s is not similar with one of the valid commands." +
+                                            "Use the %s command to see all valid commands.",
+                                    MarkdownUtil.monospace(commandName),
+                                    MarkdownUtil.monospace(commandModule.getMainCommand() + this.getName())
+                            )
+            );
+        } else {
+            // Handle auto correction
+            if (commandParameters.getUserDb().hasAutoCorrection()) {
+                return similarCommands.get(0);
+            }
+
+            commandModule.sendArgumentCorrectionMessage(
+                    commandParameters,
+                    commandName,
+                    argPos,
+                    "command",
+                    this.getClass(),
+                    new String[0],
+                    this.getClass(),
+                    similarCommands,
+                    Command::getName
+            );
+        }
+
+        throw new CommandReturnException();
     }
 }
