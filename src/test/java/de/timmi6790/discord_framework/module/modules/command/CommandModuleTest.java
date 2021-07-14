@@ -1,226 +1,288 @@
 package de.timmi6790.discord_framework.module.modules.command;
 
-import de.timmi6790.discord_framework.AbstractIntegrationTest;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.ModuleManager;
-import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
+import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
-import lombok.SneakyThrows;
+import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.SelfUser;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class CommandModuleTest {
-    @SneakyThrows
-    private CommandModule getCommandModule() {
-        return new CommandModule();
+    private Command createCommand(final String name) {
+        final Command command = mock(Command.class);
+        return this.createCommand(command, name);
     }
 
-    @SneakyThrows
-    private <T extends AbstractCommand> T createCommand(final Class<?> commandClass, final CommandModule commandModule) {
-        final ModuleManager moduleManager = mock(ModuleManager.class);
+    private Command createCommand(final String name, final String... aliasNames) {
+        final Command command = mock(Command.class);
+        return this.createCommand(command, name, aliasNames);
+    }
 
+    private Command createCommand(final Command command, final String name) {
+        return this.createCommand(command, name, new String[0]);
+    }
+
+    private Command createCommand(final Command command, final String name, final String[] aliasNames) {
+        when(command.getName()).thenReturn(name);
+        when(command.getPropertyValueOrDefault(eq(AliasNamesProperty.class), any())).thenReturn(aliasNames);
+        return command;
+    }
+
+    @Test
+    void onInitialize() {
+        final PermissionsModule permissionModule = mock(PermissionsModule.class);
+        final ConfigModule configModule = mock(ConfigModule.class);
         final EventModule eventModule = mock(EventModule.class);
+
+        final ModuleManager moduleManager = mock(ModuleManager.class);
+        when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionModule);
+        when(moduleManager.getModuleOrThrow(ConfigModule.class)).thenReturn(configModule);
         when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
 
-        final AchievementModule achievementModule = new AchievementModule();
-
-        doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
-        doReturn(achievementModule).when(moduleManager).getModuleOrThrow(AchievementModule.class);
+        final CommandModule commandModule = new CommandModule();
 
         try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
             final DiscordBot bot = mock(DiscordBot.class);
             when(bot.getModuleManager()).thenReturn(moduleManager);
 
-            botMock.when(DiscordBot::getInstance).thenReturn(bot);
-            achievementModule.onInitialize();
+            final ShardManager discord = mock(ShardManager.class);
+            when(bot.getDiscord()).thenReturn(discord);
 
-            return (T) commandClass.getConstructor().newInstance();
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            final boolean success = commandModule.onInitialize();
+            assertThat(success).isTrue();
         }
     }
 
     @Test
-    void registerCommand() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
+    void onEnable() {
+        final PermissionsModule permissionModule = mock(PermissionsModule.class);
+        final EventModule eventModule = mock(EventModule.class);
+        final UserDbModule userDbModule = mock(UserDbModule.class);
+        final ChannelDbModule channelDbModule = mock(ChannelDbModule.class);
 
-        final boolean registered = commandModule.registerCommand(testModule, testCommand);
-        assertThat(registered).isTrue();
-        assertThat(commandModule.getCommands()).containsExactly(testCommand);
+        final ConfigModule configModule = mock(ConfigModule.class);
+        when(configModule.registerAndGetConfig(any(), any())).thenReturn(new Config());
+
+        final ModuleManager moduleManager = mock(ModuleManager.class);
+        when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionModule);
+        when(moduleManager.getModuleOrThrow(ConfigModule.class)).thenReturn(configModule);
+        when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
+        when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);
+        when(moduleManager.getModuleOrThrow(ChannelDbModule.class)).thenReturn(channelDbModule);
+
+        final CommandModule commandModule = new CommandModule();
+
+        try (final MockedStatic<DiscordBot> botMock = mockStatic(DiscordBot.class)) {
+            final DiscordBot bot = mock(DiscordBot.class);
+            when(bot.getModuleManager()).thenReturn(moduleManager);
+
+            final ShardManager discord = mock(ShardManager.class);
+            when(bot.getDiscord()).thenReturn(discord);
+
+            final JDA jda = mock(JDA.class);
+            final SelfUser selfUser = mock(SelfUser.class);
+            when(selfUser.getIdLong()).thenReturn(1L);
+            when(jda.getSelfUser()).thenReturn(selfUser);
+            when(bot.getBaseShard()).thenReturn(jda);
+
+            botMock.when(DiscordBot::getInstance).thenReturn(bot);
+
+            commandModule.onInitialize();
+            final boolean success = commandModule.onEnable();
+            assertThat(success).isTrue();
+        }
+    }
+
+    @Test
+    void getCommand_name() {
+        final CommandModule commandModule = new CommandModule();
+        final Command command = this.createCommand("test");
+
+        final Optional<Command> commandNotFound = commandModule.getCommand(command.getName());
+        assertThat(commandNotFound).isEmpty();
+
+        // Register command
+        commandModule.registerCommand(commandModule, command);
+
+        final Optional<Command> commandFound = commandModule.getCommand(command.getName());
+        assertThat(commandFound).isPresent();
+    }
+
+    @Test
+    void getCommand_alias_name() {
+        final String aliasName = "aliasName";
+        final CommandModule commandModule = new CommandModule();
+        final Command command = this.createCommand("test", aliasName);
+
+        final Optional<Command> commandNotFound = commandModule.getCommand(aliasName);
+        assertThat(commandNotFound).isEmpty();
+
+        // Register command
+        commandModule.registerCommand(commandModule, command);
+
+        final Optional<Command> commandFound = commandModule.getCommand(aliasName);
+        assertThat(commandFound).isPresent();
+    }
+
+    @Test
+    void getCommand_class() {
+        final CommandModule commandModule = new CommandModule();
+
+        // Register a fill command for the loop to iterate
+        final Command commandFill = this.createCommand(mock(TestCommand.class), "test1");
+        commandModule.registerCommand(commandModule, commandFill);
+
+        final Command command = this.createCommand("test");
+
+        final Optional<Command> commandNotFound = commandModule.getCommand(command.getClass());
+        assertThat(commandNotFound).isEmpty();
+
+        // Register command
+        commandModule.registerCommand(commandModule, command);
+
+        final Optional<Command> commandFound = commandModule.getCommand(command.getClass());
+        assertThat(commandFound).isPresent();
+    }
+
+    @Test
+    void getCommands_predicate() {
+        final CommandModule commandModule = new CommandModule();
+
+        final Map<String, Command> registeredCommands = Maps.newHashMapWithExpectedSize(5);
+        for (int count = 0; 10 > count; count++) {
+            final Command command = this.createCommand(String.valueOf(count));
+
+            commandModule.registerCommand(commandModule, command);
+            if (count % 2 == 0) {
+                registeredCommands.put(command.getName(), command);
+            }
+        }
+
+        final Set<Command> foundCommands = commandModule.getCommands(command -> registeredCommands.containsKey(command.getName()));
+        assertThat(foundCommands).containsExactlyInAnyOrderElementsOf(registeredCommands.values());
     }
 
     @Test
     void registerCommands() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
-        final TestCommand2 testCommand2 = this.createCommand(TestCommand2.class, commandModule);
-
-        commandModule.registerCommands(
-                testModule,
-                testCommand,
-                testCommand2
-        );
-        assertThat(commandModule.getCommands()).containsExactlyInAnyOrder(testCommand, testCommand2);
-    }
-
-    @Test
-    void getCommandClass() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
-
-        commandModule.registerCommands(testModule, testCommand);
-        final Optional<AbstractCommand> commandFound = commandModule.getCommand(TestCommand.class);
-        assertThat(commandFound)
-                .isPresent()
-                .hasValue(testCommand);
-    }
-
-    @Test
-    void getCommandClassEmpty() {
-        final CommandModule commandModule = this.getCommandModule();
-
-        final Optional<AbstractCommand> commandFound = commandModule.getCommand(TestCommand.class);
-        assertThat(commandFound)
-                .isNotPresent();
-    }
-
-    @Test
-    void getCommandName() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
-
-        commandModule.registerCommands(testModule, testCommand);
-        final Optional<AbstractCommand> commandFound = commandModule.getCommand(testCommand.getName());
-        assertThat(commandFound)
-                .isPresent()
-                .hasValue(testCommand);
-    }
-
-    @Test
-    void getCommands() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-
-        final List<AbstractCommand> addedCommands = new ArrayList<>();
-        Collections.addAll(
-                addedCommands,
-                this.createCommand(TestCommand.class, commandModule),
-                this.createCommand(TestCommand2.class, commandModule),
-                this.createCommand(TestCommand3.class, commandModule),
-                this.createCommand(TestCommand4.class, commandModule),
-                this.createCommand(TestCommand5.class, commandModule),
-                this.createCommand(TestCommand6.class, commandModule)
-        );
-
-        commandModule.registerCommands(
-                testModule,
-                addedCommands.toArray(new AbstractCommand[0])
-        );
-
-        assertThat(commandModule.getCommands()).containsExactlyInAnyOrderElementsOf(addedCommands);
-    }
-
-    @Test
-    void registerDupClassCommand() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-        final TestCommand testCommand = this.createCommand(TestCommand.class, commandModule);
-
-        final boolean registered = commandModule.registerCommand(testModule, testCommand);
-        assertThat(registered).isTrue();
-
-        final boolean registered1 = commandModule.registerCommand(testModule, testCommand);
-        assertThat(registered1).isFalse();
-
-        assertThat(commandModule.getCommands()).containsExactly(testCommand);
-    }
-
-    @Test
-    void registerDupNameCommand() {
-        final CommandModule commandModule = this.getCommandModule();
-        final TestModule testModule = new TestModule();
-        final TestCommand6 testCommand = this.createCommand(TestCommand6.class, commandModule);
-        final TestCommand6Dub testCommand6Dub = this.createCommand(TestCommand6Dub.class, commandModule);
-
-        final boolean registered = commandModule.registerCommand(testModule, testCommand);
-        assertThat(registered).isTrue();
-
-        final boolean registered1 = commandModule.registerCommand(testModule, testCommand6Dub);
-        assertThat(registered1).isFalse();
-
-        assertThat(commandModule.getCommands()).containsExactly(testCommand);
-    }
-
-    public static class TestModule extends AbstractModule {
-        public TestModule() {
-            super("TestModule");
+        final CommandModule commandModule = new CommandModule();
+        final Set<Command> registeredCommands = Sets.newHashSetWithExpectedSize(10);
+        for (int count = 0; 10 > count; count++) {
+            final Command command = this.createCommand(String.valueOf(count));
+            registeredCommands.add(command);
         }
+        commandModule.registerCommands(commandModule, registeredCommands.toArray(new Command[0]));
+
+
+        final Set<Command> foundCommands = commandModule.getCommands();
+        assertThat(foundCommands).containsExactlyInAnyOrderElementsOf(registeredCommands);
     }
 
-    private static class TestCommand extends AbstractCommand {
-        public TestCommand(final String name) {
-            super(name, "", "", "");
+    @Test
+    void registerCommand() {
+        final CommandModule commandModule = new CommandModule();
+        final Command command = this.createCommand("test");
 
-            this.setPermissionId(1);
-        }
+        final boolean success = commandModule.registerCommand(commandModule, command);
+        assertThat(success).isTrue();
+    }
 
-        public TestCommand() {
-            this("test");
+    @Test
+    void registerCommand_duplicate() {
+        final CommandModule commandModule = new CommandModule();
+        final Command command = this.createCommand("test");
+
+        final boolean success = commandModule.registerCommand(commandModule, command);
+        assertThat(success).isTrue();
+
+        final boolean duplicate = commandModule.registerCommand(commandModule, command);
+        assertThat(duplicate).isFalse();
+    }
+
+    @Test
+    void registerCommand_changed_permission_id() {
+        final int requiredPermissionId = 900;
+
+        final PermissionsModule permissionModule = mock(PermissionsModule.class);
+        when(permissionModule.addPermission(any())).thenReturn(requiredPermissionId);
+
+        final CommandModule commandModule = spy(new CommandModule());
+        when(commandModule.getPermissionsModule()).thenReturn(permissionModule);
+
+        final Command command = this.createCommand("test");
+        when(command.hasDefaultPermission()).thenReturn(true);
+
+        final boolean success = commandModule.registerCommand(commandModule, command);
+        assertThat(success).isTrue();
+
+        verify(command).setPermissionId(requiredPermissionId);
+    }
+
+    @Test
+    void registerCommand_alias_names() {
+        final String aliasNameOne = "test1";
+        final String aliasNameTwo = "test2";
+
+        final CommandModule commandModule = new CommandModule();
+        final Command command = this.createCommand("test", aliasNameOne, aliasNameTwo);
+
+        commandModule.registerCommand(commandModule, command);
+
+        final Optional<Command> foundAliasNameOne = commandModule.getCommand(aliasNameOne);
+        assertThat(foundAliasNameOne).isPresent();
+
+        final Optional<Command> foundAliasNameTwo = commandModule.getCommand(aliasNameTwo);
+        assertThat(foundAliasNameTwo).isPresent();
+    }
+
+    @Test
+    void registerCommand_alias_names_duplicate() {
+        final String aliasName = "testAlias";
+
+        final CommandModule commandModule = new CommandModule();
+
+        final Command commandOne = this.createCommand("test", aliasName);
+        final Command commandTwo = this.createCommand("test2", aliasName);
+
+        commandModule.registerCommand(commandModule, commandOne);
+        commandModule.registerCommand(commandModule, commandTwo);
+
+        final Optional<Command> found = commandModule.getCommand(aliasName);
+        assertThat(found)
+                .isPresent()
+                .contains(commandOne);
+    }
+
+    private static class TestCommand extends Command {
+        protected TestCommand(final CommandModule commandModule) {
+            super("test", commandModule);
         }
 
         @Override
         protected CommandResult onCommand(final CommandParameters commandParameters) {
-            return null;
-        }
-    }
-
-    private static class TestCommand2 extends TestCommand {
-        public TestCommand2() {
-            super("test2");
-        }
-    }
-
-    private static class TestCommand3 extends TestCommand {
-        public TestCommand3() {
-            super("test3");
-        }
-    }
-
-    private static class TestCommand4 extends TestCommand {
-        public TestCommand4() {
-            super("ReallyLongName");
-        }
-    }
-
-    private static class TestCommand5 extends TestCommand {
-        public TestCommand5() {
-            super("ReallyLongName1111111");
-        }
-    }
-
-    private static class TestCommand6 extends TestCommand {
-        public TestCommand6() {
-            super("ReallyLongName1111111222222");
-        }
-    }
-
-    private static class TestCommand6Dub extends TestCommand {
-        public TestCommand6Dub() {
-            super("ReallyLongName1111111222222");
+            return BaseCommandResult.SUCCESSFUL;
         }
     }
 }

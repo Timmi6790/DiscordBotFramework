@@ -41,10 +41,17 @@ public class DsgvoModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.getModuleOrThrow(CommandModule.class).registerCommands(
+        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        commandModule.registerCommands(
                 this,
-                new AccountDeletionCommand(this),
-                new DataRequestCommand(this)
+                new AccountDeletionCommand(
+                        this,
+                        commandModule
+                ),
+                new DataRequestCommand(
+                        this,
+                        commandModule
+                )
         );
         return true;
     }

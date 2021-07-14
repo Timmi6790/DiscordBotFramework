@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.setting.settings;
 
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 
 import java.util.Arrays;

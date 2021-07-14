@@ -1,43 +1,24 @@
 package de.timmi6790.discord_framework.module.modules.command.events;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.Event;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class CommandExecutionEvent extends Event {
-    private final AbstractCommand command;
+    private final Command command;
     private final CommandParameters parameters;
 
-    public CommandExecutionEvent(@NonNull final AbstractCommand command, @NonNull final CommandParameters parameters) {
-        super(parameters.getJda());
+    protected CommandExecutionEvent(final JDA api,
+                                    final Command command,
+                                    final CommandParameters commandParameters) {
+        super(api);
 
         this.command = command;
-        this.parameters = parameters;
-    }
-
-    public static class Pre extends CommandExecutionEvent {
-        public Pre(final AbstractCommand command, final CommandParameters parameters) {
-            super(command, parameters);
-        }
-    }
-
-    @EqualsAndHashCode(callSuper = true)
-    @Getter
-    public static class Post extends CommandExecutionEvent {
-        private final CommandResult commandResult;
-
-        public Post(final AbstractCommand command,
-                    final CommandParameters parameters,
-                    @NonNull final CommandResult commandResult) {
-            super(command, parameters);
-
-            this.commandResult = commandResult;
-        }
+        this.parameters = commandParameters;
     }
 }

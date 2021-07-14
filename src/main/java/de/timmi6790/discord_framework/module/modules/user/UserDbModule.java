@@ -77,20 +77,27 @@ public class UserDbModule extends AbstractModule {
     @Override
     public boolean onInitialize() {
         this.discord = super.getDiscord();
+        final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
         this.userDbRepository = new UserDbPostgresRepository(
                 this,
                 this.getModuleOrThrow(DatabaseModule.class),
-                this.getModuleOrThrow(EventModule.class),
+                eventModule,
                 this.getModuleOrThrow(RankModule.class),
                 this.getModule(AchievementModule.class).orElse(null),
                 this.getModule(SettingModule.class).orElse(null),
                 this.getModule(StatModule.class).orElse(null)
         );
 
-        this.getModuleOrThrow(CommandModule.class)
+        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        commandModule
                 .registerCommands(
                         this,
-                        new UserCommand()
+                        new UserCommand(
+                                this,
+                                this.getModuleOrThrow(RankModule.class),
+                                this.getModule(SettingModule.class).orElse(null),
+                                commandModule
+                        )
                 );
 
         this.getModuleOrThrow(EventModule.class)
@@ -98,13 +105,16 @@ public class UserDbModule extends AbstractModule {
                         new DsgvoListener(this)
                 );
 
-        if (this.getModule(SettingModule.class).isPresent()) {
-            this.getModuleOrThrow(CommandModule.class)
-                    .registerCommands(
-                            this,
-                            new SettingsCommand()
-                    );
-        }
+        this.getModule(SettingModule.class).ifPresent(settingModule ->
+                commandModule
+                        .registerCommands(
+                                this,
+                                new SettingsCommand(
+                                        settingModule,
+                                        commandModule
+                                )
+                        )
+        );
 
         // Register metrics
         this.getModule(MetricModule.class).ifPresent(metric ->

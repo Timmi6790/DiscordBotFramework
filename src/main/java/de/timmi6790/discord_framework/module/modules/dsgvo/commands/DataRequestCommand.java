@@ -1,14 +1,19 @@
 package de.timmi6790.discord_framework.module.modules.dsgvo.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.CooldownCommandProperty;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.controll.CooldownProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.dsgvo.DsgvoModule;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -18,20 +23,25 @@ import java.util.concurrent.TimeUnit;
  */
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public class DataRequestCommand extends AbstractCommand {
+public class DataRequestCommand extends Command {
     /**
      * The Dsgvo module.
      */
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private final DsgvoModule dsgvoModule;
 
     /**
      * Instantiates a new Data request command.
      */
-    public DataRequestCommand(final DsgvoModule dsgvoModule) {
-        super("giveMeMyData", "Info", "Get all my data!", "");
+    public DataRequestCommand(final DsgvoModule dsgvoModule,
+                              final CommandModule commandModule) {
+        super("giveMeMyData", commandModule);
 
         this.addProperties(
-                new CooldownCommandProperty(1, TimeUnit.DAYS)
+                new CategoryProperty("Info"),
+                new DescriptionProperty("Get all my data!"),
+                new CooldownProperty(1, TimeUnit.DAYS)
         );
 
         this.dsgvoModule = dsgvoModule;
@@ -56,6 +66,6 @@ public class DataRequestCommand extends AbstractCommand {
             );
         }
 
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 }

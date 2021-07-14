@@ -7,6 +7,7 @@ import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModu
 import de.timmi6790.discord_framework.module.modules.rank.commands.RankCommand;
 import de.timmi6790.discord_framework.module.modules.rank.repository.RankRepository;
 import de.timmi6790.discord_framework.module.modules.rank.repository.postgres.RankPostgresRepository;
+import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import lombok.*;
 
 import java.util.*;
@@ -68,10 +69,15 @@ public class RankModule extends AbstractModule {
         );
         this.loadRanksFromRepository();
 
-        this.getModuleOrThrow(CommandModule.class)
+        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        commandModule
                 .registerCommands(
                         this,
-                        new RankCommand()
+                        new RankCommand(
+                                this,
+                                this.getModule(SettingModule.class).orElse(null),
+                                commandModule
+                        )
                 );
 
         return true;

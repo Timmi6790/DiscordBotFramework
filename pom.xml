@@ -167,11 +167,6 @@
             <artifactId>guava</artifactId>
             <version>30.1.1-jre</version>
         </dependency>
-        <dependency>
-            <groupId>com.github.vladimir-bukhtoyarov</groupId>
-            <artifactId>bucket4j-core</artifactId>
-            <version>6.2.0</version>
-        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>

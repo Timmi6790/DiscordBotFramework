@@ -3,20 +3,20 @@ package de.timmi6790.discord_framework.module.modules.reactions.emote.actions;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandCause;
+import de.timmi6790.discord_framework.module.modules.command.Command;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandCause;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.Data;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 
 @Data
 public class CommandEmoteAction implements EmoteAction {
-    private final Class<? extends AbstractCommand> commandClass;
+    private final Class<? extends Command> commandClass;
     private final Values values;
 
-    public CommandEmoteAction(final Class<? extends AbstractCommand> commandClass, final CommandParameters commandParameters) {
+    public CommandEmoteAction(final Class<? extends Command> commandClass, final CommandParameters commandParameters) {
         this.commandClass = commandClass;
         this.values = new Values(
                 commandParameters.getArgs(),
@@ -31,7 +31,7 @@ public class CommandEmoteAction implements EmoteAction {
     public void onEmote(final MessageReactionAddEvent reactionAddEvent) {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.commandClass)
-                .ifPresent(command -> command.runCommand(this.values.getCommandParameters()));
+                .ifPresent(command -> command.executeCommand(this.values.getCommandParameters()));
     }
 
     @Data
@@ -44,11 +44,11 @@ public class CommandEmoteAction implements EmoteAction {
 
         public CommandParameters getCommandParameters() {
             final ModuleManager moduleManager = DiscordBot.getInstance().getModuleManager();
-            return new CommandParameters(
-                    String.join(" ", this.args),
+            return CommandParameters.of(
                     this.args,
                     this.guildCommand,
-                    CommandCause.EMOTES,
+                    BaseCommandCause.EMOTES,
+                    moduleManager.getModuleOrThrow(CommandModule.class),
                     moduleManager.getModuleOrThrow(ChannelDbModule.class).getOrCreate(this.channelDiscordId, this.guildDiscordId),
                     moduleManager.getModuleOrThrow(UserDbModule.class).getOrCreate(this.userDiscordId)
             );

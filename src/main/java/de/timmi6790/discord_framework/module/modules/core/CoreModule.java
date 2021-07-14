@@ -5,7 +5,6 @@ import de.timmi6790.discord_framework.module.modules.achievement.AchievementModu
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.core.achievements.CommandAutoCorrectAchievement;
-import de.timmi6790.discord_framework.module.modules.core.commands.info.BotInfoCommand;
 import de.timmi6790.discord_framework.module.modules.core.commands.info.InviteCommand;
 import de.timmi6790.discord_framework.module.modules.core.stats.FailedCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.IncorrectArgCommandResultStat;
@@ -40,18 +39,17 @@ public class CoreModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        this.getModuleOrThrow(CommandModule.class).registerCommands(
-                this,
-                new BotInfoCommand()
-        );
-
         final String inviteUrl = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config())
                 .getInviteUrl();
         if (inviteUrl != null && !inviteUrl.isEmpty()) {
-            this.getModuleOrThrow(CommandModule.class).registerCommands(
+            final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+            commandModule.registerCommands(
                     this,
-                    new InviteCommand(inviteUrl)
+                    new InviteCommand(
+                            inviteUrl,
+                            commandModule
+                    )
             );
         }
 

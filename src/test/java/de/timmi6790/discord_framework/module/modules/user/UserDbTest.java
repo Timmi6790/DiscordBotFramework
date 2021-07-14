@@ -6,7 +6,7 @@ import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
@@ -17,7 +17,6 @@ import de.timmi6790.discord_framework.module.modules.setting.settings.CommandAut
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
-import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.junit.jupiter.api.BeforeAll;
@@ -131,14 +130,11 @@ class UserDbTest {
 
         assertThat(userDb.isBanned()).isFalse();
 
-        try (final MockedStatic<DiscordMessagesUtilities> discordMessageMock = mockStatic(DiscordMessagesUtilities.class)) {
-            final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
-            discordMessageMock.when(() -> DiscordMessagesUtilities.getEmbedBuilder(any())).thenReturn(embedBuilder);
-
-            final CommandParameters commandParameters = mock(CommandParameters.class);
-            userDb.ban(commandParameters, "");
-        }
-
+        final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
+        final CommandParameters commandParameters = mock(CommandParameters.class);
+        when(commandParameters.getEmbedBuilder()).thenReturn(embedBuilder);
+        userDb.ban(commandParameters, "");
+        
         assertThat(userDb.isBanned()).isTrue();
 
         this.validateRepository(userDb);

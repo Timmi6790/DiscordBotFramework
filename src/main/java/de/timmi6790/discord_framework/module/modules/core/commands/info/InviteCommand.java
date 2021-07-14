@@ -1,15 +1,20 @@
 package de.timmi6790.discord_framework.module.modules.core.commands.info;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.CommandModule;
+import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import lombok.EqualsAndHashCode;
 
 /**
  * Invite command.
  */
 @EqualsAndHashCode(callSuper = true)
-public class InviteCommand extends AbstractCommand {
+public class InviteCommand extends Command {
     /**
      * The Invite url.
      */
@@ -20,19 +25,26 @@ public class InviteCommand extends AbstractCommand {
      *
      * @param inviteUrl the invite url
      */
-    public InviteCommand(final String inviteUrl) {
-        super("invite", "Info", "Invite me.", "", "iv");
+    public InviteCommand(final String inviteUrl,
+                         final CommandModule commandModule) {
+        super("invite", commandModule);
 
         this.inviteUrl = inviteUrl;
+
+        this.addProperties(
+                new CategoryProperty("Info"),
+                new DescriptionProperty("Invite me"),
+                new AliasNamesProperty("iv")
+        );
     }
 
     @Override
     protected CommandResult onCommand(final CommandParameters commandParameters) {
-        this.sendTimedMessage(
-                commandParameters,
-                "Invite Link",
-                "[Click Me!](" + this.inviteUrl + ")"
+        commandParameters.sendMessage(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Invite Link")
+                        .setDescription("[Click Me!](" + this.inviteUrl + ")")
         );
-        return CommandResult.SUCCESS;
+        return BaseCommandResult.SUCCESSFUL;
     }
 }

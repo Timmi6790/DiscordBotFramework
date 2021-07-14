@@ -1,7 +1,6 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
@@ -35,37 +34,11 @@ class DiscordMessagesUtilitiesTest {
         return member;
     }
 
-    private CommandParameters getCommandParameters(final boolean fromGuild) {
-        final CommandParameters commandParameters = mock(CommandParameters.class);
-        when(commandParameters.isGuildCommand()).thenReturn(fromGuild);
-
-        final Member member = this.getEmbedBuilderMember();
-        when(commandParameters.getGuildMember()).thenReturn(member);
-
-        final User user = this.getEmbedBuilderUser();
-        when(commandParameters.getUser()).thenReturn(user);
-
-        return commandParameters;
-    }
 
     private void checkEmbedBuilder(final MultiEmbedBuilder multiEmbedBuilder, final boolean fromGuild) {
         assertThat(multiEmbedBuilder.getAuthor().getName()).isEqualTo(EMBEDDED_USER_NAME);
         assertThat(multiEmbedBuilder.getAuthor().getIconUrl()).isEqualTo(EMBEDDED_USER_URL);
         assertThat(multiEmbedBuilder.getColor()).isEqualTo(fromGuild ? EMBEDDED_MEMBER_COLOUR.getRGB() : DiscordMessagesUtilities.DEFAULT_EMBED_COLOUR.getRGB());
-    }
-
-    @Test
-    void getEmbedBuilderCommandParametersGuildMessage() {
-        final CommandParameters commandParameters = this.getCommandParameters(true);
-        final MultiEmbedBuilder embedBuilder = DiscordMessagesUtilities.getEmbedBuilder(commandParameters);
-        this.checkEmbedBuilder(embedBuilder, true);
-    }
-
-    @Test
-    void getEmbedBuilderCommandParametersPrivateMessage() {
-        final CommandParameters commandParameters = this.getCommandParameters(false);
-        final MultiEmbedBuilder embedBuilder = DiscordMessagesUtilities.getEmbedBuilder(commandParameters);
-        this.checkEmbedBuilder(embedBuilder, false);
     }
 
     @Test

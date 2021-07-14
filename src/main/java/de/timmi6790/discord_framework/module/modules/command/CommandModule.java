@@ -3,46 +3,56 @@ package de.timmi6790.discord_framework.module.modules.command;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
 import de.timmi6790.discord_framework.module.modules.command.commands.HelpCommand;
-import de.timmi6790.discord_framework.module.modules.command.listeners.CommandLoggingListener;
 import de.timmi6790.discord_framework.module.modules.command.listeners.MessageListener;
+import de.timmi6790.discord_framework.module.modules.command.listeners.MetricListener;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.command.utilities.ArrayUtilities;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
-import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
-import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
-import de.timmi6790.discord_framework.module.modules.rank.RankModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReaction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReactionModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
+import de.timmi6790.discord_framework.module.modules.reactions.button.actions.CommandButtonAction;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
-import io.github.bucket4j.Bucket;
+import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
+import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Emoji;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @EqualsAndHashCode(callSuper = true)
-@Getter
 @Log4j2
 public class CommandModule extends AbstractModule {
-    private static final String MAIN_COMMAND_PATTERN = "^(?:(?:%s)|(?:<@[!&]%s>))([\\S\\s]*)$";
-
-    private final RateLimitService commandRateLimitService = new RateLimitService();
-
-    private final Map<String, AbstractCommand> commands = new CaseInsensitiveMap<>();
+    private final Map<String, Command> commands = new CaseInsensitiveMap<>();
     private final Map<String, String> commandAliases = new CaseInsensitiveMap<>();
 
-    private Pattern mainCommandPattern;
-    private String mainCommand;
-    private long botId;
+    private Config config;
 
-    private Config commandConfig;
+    @Getter(AccessLevel.PUBLIC)
+    private PermissionsModule permissionsModule;
+    @Getter(AccessLevel.PUBLIC)
+    private EventModule eventModule;
+    private MetricModule metricModule;
+    @Getter(AccessLevel.PUBLIC)
+    private ButtonReactionModule buttonReactionModule;
 
     public CommandModule() {
         super("Command");
@@ -55,130 +65,302 @@ public class CommandModule extends AbstractModule {
         );
 
         this.addDependenciesAndLoadAfter(
-                ConfigModule.class,
                 EventModule.class,
+                ConfigModule.class,
                 PermissionsModule.class,
-                DatabaseModule.class
+                ButtonReactionModule.class
+        );
+
+        this.addLoadAfterDependencies(
+                MetricModule.class
         );
 
         this.addDependencies(
                 UserDbModule.class,
-                GuildDbModule.class,
-                ChannelDbModule.class,
-                RankModule.class
-        );
-    }
-
-    public static Pattern compileMainCommandPattern(@NonNull final String mainCommand, final long botId) {
-        return Pattern.compile(
-                String.format(MAIN_COMMAND_PATTERN, mainCommand.replace(" ", ""), botId),
-                Pattern.CASE_INSENSITIVE
+                ChannelDbModule.class
         );
     }
 
     @Override
     public boolean onInitialize() {
-        this.commandConfig = this.getModuleOrThrow(ConfigModule.class)
+        this.permissionsModule = this.getModuleOrThrow(PermissionsModule.class);
+        this.eventModule = this.getModuleOrThrow(EventModule.class);
+        this.metricModule = this.getModule(MetricModule.class).orElse(null);
+        this.buttonReactionModule = this.getModuleOrThrow(ButtonReactionModule.class);
+
+        this.config = this.getModuleOrThrow(ConfigModule.class)
                 .registerAndGetConfig(this, new Config());
 
-        this.botId = this.getDiscordBot().getBaseShard().getSelfUser().getIdLong();
-        this.mainCommand = this.commandConfig.getMainCommand();
-        this.mainCommandPattern = compileMainCommandPattern(this.mainCommand, this.botId);
-
-        final HelpCommand helpCommand = new HelpCommand();
-        this.registerCommands(
+        this.registerCommand(
                 this,
-                helpCommand
+                new HelpCommand(
+                        this
+                )
         );
 
-        this.getModuleOrThrow(EventModule.class)
-                .addEventListeners(
-                        new MessageListener(
-                                this,
-                                this.getModuleOrThrow(GuildDbModule.class),
-                                helpCommand
-                        ),
-                        new CommandLoggingListener()
-                );
+        if (this.metricModule != null) {
+            this.eventModule.addEventListener(
+                    new MetricListener(
+                            this.metricModule
+                    )
+            );
+        }
+
         return true;
     }
 
     @Override
     public boolean onEnable() {
-        if (this.commandConfig.isSetDiscordActivity()) {
-            this.getDiscord().setActivity(Activity.playing(this.mainCommand + "help"));
+        if (this.config.isSetDiscordActivity()) {
+            this.getDiscord().setActivity(Activity.playing(this.getMainCommand() + "help"));
         }
+
+        // We currently need to register this during on enable, because otherwise we  have topical sort cycle.
+        // This should be resolved with the dpi system
+        this.getModuleOrThrow(EventModule.class).addEventListeners(
+                new MessageListener(
+                        this,
+                        this.getModuleOrThrow(UserDbModule.class),
+                        this.getModuleOrThrow(ChannelDbModule.class),
+                        this.buttonReactionModule,
+                        this.getCommand(HelpCommand.class).orElseThrow(RuntimeException::new)
+                )
+        );
+
         return true;
     }
 
-    public void registerCommands(@NonNull final AbstractModule module, final AbstractCommand... commands) {
-        for (final AbstractCommand command : commands) {
+    protected String getCommandPermissionNode(final AbstractModule module, final Command command) {
+        return String.format(
+                "%s.command.%s",
+                module.getModuleName(),
+                command.getName()
+        )
+                .replace(' ', '_')
+                .toLowerCase();
+    }
+
+    public Optional<MetricModule> getMetricModule() {
+        return Optional.ofNullable(this.metricModule);
+    }
+
+    public String getMainCommand() {
+        return this.config.getMainCommand();
+    }
+
+    public long getBotId() {
+        return this.getDiscordBot().getBaseShard().getSelfUser().getIdLong();
+    }
+
+    public Optional<Command> getCommand(final Class<? extends Command> commandClass) {
+        for (final Command command : this.commands.values()) {
+            if (command.getClass() == commandClass) {
+                return Optional.of(command);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Command> getCommand(String commandName) {
+        commandName = this.commandAliases.getOrDefault(commandName, commandName);
+        return Optional.ofNullable(this.commands.get(commandName));
+    }
+
+    public Set<Command> getCommands() {
+        return new HashSet<>(this.commands.values());
+    }
+
+    public Set<Command> getCommands(final Predicate<Command> commandPredicate) {
+        final Set<Command> filteredCommands = new HashSet<>();
+
+        for (final Command command : this.commands.values()) {
+            if (commandPredicate.test(command)) {
+                filteredCommands.add(command);
+            }
+        }
+
+        return filteredCommands;
+    }
+
+    public void registerCommands(final AbstractModule module, final Command... commands) {
+        for (final Command command : commands) {
             this.registerCommand(module, command);
         }
     }
 
-    public boolean registerCommand(@NonNull final AbstractModule module, @NonNull final AbstractCommand command) {
+    public boolean registerCommand(final AbstractModule module, final Command command) {
         if (this.commands.containsKey(command.getName())) {
-            log.error("{} is already registered.", command.getName());
+            log.warn(
+                    "The module {} tried to register the {} command that already exists.",
+                    module.getModuleName(),
+                    command.getName()
+            );
             return false;
         }
 
-        log.info("Registered {} command.", command.getName());
+        // Only set the permission id when it is the default one
+        if (command.hasDefaultPermission()) {
+            final String permissionNode = this.getCommandPermissionNode(module, command);
+            final int permissionId = this.getPermissionsModule().addPermission(permissionNode);
+            command.setPermissionId(permissionId);
+        }
+
+        log.info(
+                "[{}] Registered {} command",
+                module.getModuleName(),
+                command.getName()
+        );
         this.commands.put(command.getName(), command);
-        for (final String aliasName : command.getAliasNames()) {
-            if (this.commandAliases.containsKey(aliasName)) {
+        for (final String aliasName : command.getPropertyValueOrDefault(AliasNamesProperty.class, () -> new String[0])) {
+            final String existingAliasName = this.commandAliases.get(aliasName);
+            if (existingAliasName == null) {
+                this.commandAliases.put(aliasName, command.getName());
+            } else {
                 log.warn(
-                        "Can't register alias name {} for {}, it already exists.",
+                        "[{}] Tried to register an already existing alias name {} for {} that is already used for the {} command",
+                        module.getModuleName(),
                         aliasName,
-                        command.getName()
+                        command.getName(),
+                        existingAliasName
                 );
-                continue;
             }
-
-            this.commandAliases.put(aliasName, command.getName());
         }
 
-        if (command.getPermissionId() == -1) {
-            final String defaultPermissionName = String.format("%s.command.%s", module.getModuleName(), command.getName())
-                    .replace(' ', '_')
-                    .toLowerCase();
-            command.setPermission(defaultPermissionName);
-        }
-        command.setRegisteredModule(module.getClass());
         return true;
     }
 
-    public Optional<AbstractCommand> getCommand(@NonNull final Class<? extends AbstractCommand> clazz) {
-        for (final AbstractCommand command : this.commands.values()) {
-            if (command.getClass().equals(clazz)) {
-                return Optional.of(command);
+    // TODO: Rewrite this at one point
+    public <T> void sendArgumentCorrectionMessage(final CommandParameters commandParameters,
+                                                  final String userArg,
+                                                  final int argPos,
+                                                  final String argName,
+                                                  @Nullable final Class<? extends Command> mainCommandClass,
+                                                  final String[] mainNewArgs,
+                                                  final Class<? extends Command> valueCommandClass,
+                                                  final List<T> similarValues,
+                                                  final Function<T, String> valueToString) {
+        final Command mainCommand;
+        if (mainCommandClass == null) {
+            mainCommand = null;
+        } else {
+            mainCommand = this.getCommand(mainCommandClass).orElse(null);
+        }
+
+        final Map<Button, ButtonAction> buttons = new LinkedHashMap<>();
+        final StringBuilder description = new StringBuilder(
+                String.format(
+                        "%s is not a valid %s.%n",
+                        MarkdownUtil.monospace(userArg),
+                        argName
+                )
+        );
+
+        // Only main command
+        if (similarValues.isEmpty() && mainCommand != null) {
+            description.append(String.format(
+                    "Use the %s command or click the %s emote to see all %ss.",
+                    MarkdownUtil.bold(
+                            String.join(" ",
+                                    this.getMainCommand(),
+                                    mainCommand.getName(),
+                                    String.join(" ", mainNewArgs)
+                            )
+                    ),
+                    DiscordEmotes.FOLDER.getEmote(),
+                    argName
+            ));
+        } else {
+            // Contains help values
+            description.append("Is it possible that you wanted to write?\n\n");
+
+            // We can only have 5 buttons per message
+            final int allowedButtons = mainCommand != null ? 4 : 5;
+            for (int index = 0; Math.min(allowedButtons, similarValues.size()) > index; index++) {
+                final String similarValue = valueToString.apply(similarValues.get(index));
+                final String emote = DiscordEmotes.getNumberEmote(index + 1).getEmote();
+
+                description.append(String.format(
+                        "%s %s%n",
+                        emote,
+                        similarValue
+                ));
+
+                buttons.put(
+                        Button.of(ButtonStyle.SECONDARY, emote, "").withEmoji(Emoji.fromUnicode(emote)),
+                        new CommandButtonAction(
+                                valueCommandClass,
+                                CommandParameters.of(
+                                        ArrayUtilities.modifyArrayAtPosition(
+                                                commandParameters.getArgs(),
+                                                similarValue,
+                                                argPos
+                                        ),
+                                        commandParameters.isGuildCommand(),
+                                        commandParameters.getCommandCause(),
+                                        this,
+                                        commandParameters.getChannelDb(),
+                                        commandParameters.getUserDb()
+                                )
+                        )
+                );
+            }
+
+            if (mainCommand != null) {
+                description.append(String.format(
+                        "%n%s %s",
+                        DiscordEmotes.FOLDER.getEmote(),
+                        MarkdownUtil.bold("All " + argName + "s")
+                ));
             }
         }
 
-        return Optional.empty();
-    }
 
-
-    public Optional<AbstractCommand> getCommand(@NonNull String name) {
-        name = this.commandAliases.getOrDefault(name, name);
-        return Optional.ofNullable(this.commands.get(name));
-    }
-
-    public List<AbstractCommand> getCommandsWithPerms(@NonNull final CommandParameters commandParameters) {
-        final List<AbstractCommand> foundCommands = new ArrayList<>();
-        for (final AbstractCommand command : this.getCommands()) {
-            if (command.hasPermission(commandParameters)) {
-                foundCommands.add(command);
-            }
+        if (mainCommand != null) {
+            final CommandParameters newCommandParameters = CommandParameters.of(
+                    mainNewArgs,
+                    commandParameters.isGuildCommand(),
+                    commandParameters.getCommandCause(),
+                    this,
+                    commandParameters.getChannelDb(),
+                    commandParameters.getUserDb()
+            );
+            final String everythingEmote = DiscordEmotes.FOLDER.getEmote();
+            buttons.put(
+                    Button.of(ButtonStyle.SECONDARY, everythingEmote, "")
+                            .withEmoji(Emoji.fromUnicode(everythingEmote)),
+                    new CommandButtonAction(
+                            mainCommand.getClass(),
+                            newCommandParameters
+                    )
+            );
         }
-        return foundCommands;
-    }
 
-    public List<AbstractCommand> getCommands() {
-        return new ArrayList<>(this.commands.values());
-    }
+        // Send message
+        final MessageEmbed messageEmbed = commandParameters.getEmbedBuilder()
+                .setTitle("Invalid " + StringUtilities.capitalize(argName))
+                .setDescription(description.toString())
+                .setFooter("↓ Click Me!")
+                .buildSingle();
 
-    public Bucket resolveRateBucket(final long userId) {
-        return this.commandRateLimitService.resolveBucket(userId);
+        // Handle empty actions
+        // We need to handle them because jda will throw an exception otherwise
+        if (buttons.isEmpty()) {
+            commandParameters.getLowestMessageChannel()
+                    .sendMessageEmbeds(messageEmbed)
+                    .queue();
+        } else {
+            commandParameters.getLowestMessageChannel()
+                    .sendMessageEmbeds(messageEmbed)
+                    .setActionRows(ActionRow.of(buttons.keySet()))
+                    .queue(message ->
+                            this.buttonReactionModule.addButtonReactionMessage(
+                                    message,
+                                    new ButtonReaction(
+                                            buttons,
+                                            commandParameters.getUserDb().getDiscordId()
+                                    )
+                            )
+                    );
+        }
     }
 }

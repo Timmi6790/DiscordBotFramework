@@ -1,135 +1,212 @@
 package de.timmi6790.discord_framework.module.modules.command.listeners;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
+import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
+import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
+import de.timmi6790.discord_framework.module.modules.command.Command;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.guild.GuildDb;
-import de.timmi6790.discord_framework.module.modules.guild.GuildDbModule;
+import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReactionModule;
+import de.timmi6790.discord_framework.module.modules.user.UserDb;
+import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.verification.VerificationMode;
 
 import java.util.Optional;
-import java.util.regex.Pattern;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class MessageListenerTest {
-    private static final long TEST_BOT_ID = 300000;
-    private static final String[] testArgs = new String[]{"sadsdasdasadsads sad as das asda sad dsa", "\n\nHey"};
-
-    private void runParsedStartTest(final Pattern mainPattern, final String mainMessage) {
-        for (final String testArg : testArgs) {
-            final String expectedArg = testArg.replace("\n", "");
-            final Optional<String> resultNoSpace = MessageListener.getParsedStart(
-                    mainMessage + testArg,
-                    mainPattern
-            );
-            assertThat(resultNoSpace)
-                    .isPresent()
-                    .hasValue(expectedArg);
-
-            final Optional<String> resultSpace = MessageListener.getParsedStart(
-                    mainMessage + " " + testArg,
-                    mainPattern
-            );
-            assertThat(resultSpace)
-                    .isPresent()
-                    .hasValue(expectedArg);
-        }
+    private MessageListener createMessageListener(final String mainCommand, final long botId) {
+        final Command helpCommand = mock(Command.class);
+        return this.createMessageListener(mainCommand, botId, helpCommand);
     }
 
-    private MessageListener createMessageListener(final long botId,
-                                                  final String mainCommand,
-                                                  final AbstractCommand helpCommand) {
+    private MessageListener createMessageListener(final String mainCommand, final long botId, final Command helpCommand) {
         final CommandModule commandModule = mock(CommandModule.class);
+        when(commandModule.getMainCommand()).thenReturn(mainCommand);
         when(commandModule.getBotId()).thenReturn(botId);
-        when(commandModule.getMainCommandPattern()).thenReturn(CommandModule.compileMainCommandPattern(mainCommand, botId));
 
-        final GuildDb guildDb = mock(GuildDb.class);
+        final ChannelDbModule channelDbModule = mock(ChannelDbModule.class);
+        final ChannelDb channelDb = mock(ChannelDb.class);
+        when(channelDbModule.getOrCreate(anyLong(), anyLong())).thenReturn(channelDb);
 
-        final GuildDbModule guildDbModule = mock(GuildDbModule.class);
-        when(guildDbModule.getOrCreate(0)).thenReturn(guildDb);
+        final UserDbModule userDbModule = mock(UserDbModule.class);
+        final UserDb userDb = mock(UserDb.class);
+        when(userDbModule.getOrCreate(anyLong())).thenReturn(userDb);
 
-        return new MessageListener(commandModule, guildDbModule, helpCommand);
+        final ButtonReactionModule buttonReactionModule = mock(ButtonReactionModule.class);
+
+        return new MessageListener(
+                commandModule,
+                userDbModule,
+                channelDbModule,
+                buttonReactionModule,
+                helpCommand
+        );
     }
 
-    private MessageReceivedEvent createMessageReceivedEvent(final long userId,
-                                                            final String messageRaw,
-                                                            final boolean fromGuild) {
-        final MessageReceivedEvent messageReceivedEvent = mock(MessageReceivedEvent.class);
+    private MessageListener createMessageListener(final String mainCommand,
+                                                  final long botId,
+                                                  final Command helpCommand,
+                                                  final String commandName,
+                                                  final Command returnCommand) {
+        final CommandModule commandModule = mock(CommandModule.class);
+        when(commandModule.getMainCommand()).thenReturn(mainCommand);
+        when(commandModule.getBotId()).thenReturn(botId);
+        when(commandModule.getCommand(commandName)).thenReturn(Optional.of(returnCommand));
+
+        final ChannelDbModule channelDbModule = mock(ChannelDbModule.class);
+        final ChannelDb channelDb = mock(ChannelDb.class);
+        when(channelDbModule.getOrCreate(anyLong(), anyLong())).thenReturn(channelDb);
+
+        final UserDbModule userDbModule = mock(UserDbModule.class);
+        final UserDb userDb = mock(UserDb.class);
+        when(userDbModule.getOrCreate(anyLong())).thenReturn(userDb);
+
+        final ButtonReactionModule buttonReactionModule = mock(ButtonReactionModule.class);
+
+        return new MessageListener(
+                commandModule,
+                userDbModule,
+                channelDbModule,
+                buttonReactionModule,
+                helpCommand
+        );
+    }
+
+    private MessageReceivedEvent createMessageEvent(final long userId, final String message) {
+        final Message messageMock = mock(Message.class);
+        when(messageMock.getContentRaw()).thenReturn(message);
+
         final User user = mock(User.class);
         when(user.getIdLong()).thenReturn(userId);
-        when(messageReceivedEvent.getAuthor()).thenReturn(user);
 
-        final Message message = mock(Message.class);
-        when(message.isFromGuild()).thenReturn(false);
-        when(message.getContentRaw()).thenReturn(messageRaw);
-        when(messageReceivedEvent.getMessage()).thenReturn(message);
+        final MessageChannel channel = mock(MessageChannel.class);
+        when(channel.getIdLong()).thenReturn(1L);
 
-        return messageReceivedEvent;
+        final Guild guild = mock(Guild.class);
+        when(guild.getIdLong()).thenReturn(1L);
+
+        final MessageReceivedEvent event = mock(MessageReceivedEvent.class);
+        when(event.getAuthor()).thenReturn(user);
+        when(event.getMessage()).thenReturn(messageMock);
+        when(event.getChannel()).thenReturn(channel);
+        when(event.getGuild()).thenReturn(guild);
+
+        return event;
     }
 
-    private void runOnTextMessageTest(final String mainCommand,
-                                      final String rawMessage,
-                                      final boolean fromGuild,
-                                      final VerificationMode verificationMode) {
-        final AbstractCommand helpCommand = mock(AbstractCommand.class);
-        try (final MockedStatic<CommandParameters> commandParametersMockedStatic = mockStatic(CommandParameters.class)) {
-            final CommandParameters commandParameters = mock(CommandParameters.class);
-            commandParametersMockedStatic.when(() -> CommandParameters.of(any(), anyString())).thenReturn(commandParameters);
-
-            this.createMessageListener(1, mainCommand, helpCommand)
-                    .onTextMessage(this.createMessageReceivedEvent(2, rawMessage, fromGuild));
-            Mockito.verify(helpCommand, verificationMode).runCommand(any());
+    private String getBotTag(final long botId, final boolean nicked) {
+        if (nicked) {
+            return "<@!" + botId + ">";
         }
+        return "<@&" + botId + ">";
+    }
+
+    private void onTextMessage_only_bot_tag(final long botId, final boolean nicked) {
+        final Command helpCommand = mock(Command.class);
+
+        // The listener itself will remove any space from the main command
+        final MessageListener messageListener = this.createMessageListener(
+                "command",
+                botId,
+                helpCommand
+        );
+
+        final String message = this.getBotTag(botId, nicked);
+        final MessageReceivedEvent event = this.createMessageEvent(botId + 1, message);
+
+        messageListener.onTextMessage(event);
+        verify(helpCommand).executeCommand(any());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"stat", "!", "<@!" + TEST_BOT_ID + ">"})
-    void getParsedStartMainCommands(final String mainCommand) {
-        final Pattern mainPattern = CommandModule.compileMainCommandPattern(mainCommand, TEST_BOT_ID);
-        this.runParsedStartTest(mainPattern, mainCommand);
+    @ValueSource(longs = {9000L, 90000, 212132123132L})
+    void onTextMessage_only_bot_tag(final long botId) {
+        this.onTextMessage_only_bot_tag(botId, false);
+        this.onTextMessage_only_bot_tag(botId, true);
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {"test", "test ", "test\n", "test \n \n \n", "test                     \n\t"})
+    void onTextMessage_only_main_command(final String mainCommand) {
+        final long botId = 1L;
+        final Command helpCommand = mock(Command.class);
+
+        // The listener itself will remove any space from the main command
+        final MessageListener messageListener = this.createMessageListener(
+                mainCommand.replace("\n", ""),
+                botId,
+                helpCommand
+        );
+        final MessageReceivedEvent event = this.createMessageEvent(botId + 1, mainCommand);
+
+        messageListener.onTextMessage(event);
+        verify(helpCommand).executeCommand(any());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"<@!" + TEST_BOT_ID + ">", "<@&" + TEST_BOT_ID + ">"})
-    void getParsedStartBotTag(final String botTag) {
-        final Pattern mainPattern = CommandModule.compileMainCommandPattern("!", TEST_BOT_ID);
-        this.runParsedStartTest(mainPattern, botTag);
+    @ValueSource(strings = {"test", "test ", "test\n", "1", "1 ", "1\n"})
+    void onTextMessage_invalid_only_main_command(final String mainCommand) {
+        final long botId = 1L;
+        final Command helpCommand = mock(Command.class);
+
+        // The listener itself will remove any space from the main command
+        final MessageListener messageListener = this.createMessageListener(
+                "command",
+                botId,
+                helpCommand
+        );
+        final MessageReceivedEvent event = this.createMessageEvent(botId + 1, mainCommand);
+
+        messageListener.onTextMessage(event);
+        verify(helpCommand, never()).executeCommand(any());
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void onTextMessage_ignore_self(final boolean fromGuild) {
-        final long userId = 1L;
+    @ValueSource(strings = {"test", "test ", "test\n", "test \n \n \n", "test                     \n\t"})
+    void onTextMessage_existing_command(final String mainCommand) {
+        final long botId = 1L;
+        final Command helpCommand = mock(Command.class);
+        final Command returnCommand = mock(Command.class);
 
-        assertThatCode(() ->
-                this.createMessageListener(userId, "!", mock(AbstractCommand.class))
-                        .onTextMessage(this.createMessageReceivedEvent(userId, "", fromGuild))
-        ).doesNotThrowAnyException();
+        // The listener itself will remove any space from the main command
+        final String commandName = "command";
+        final MessageListener messageListener = this.createMessageListener(
+                mainCommand.replace("\n", ""),
+                botId,
+                helpCommand,
+                commandName,
+                returnCommand
+        );
+        final MessageReceivedEvent event = this.createMessageEvent(botId + 1, mainCommand + commandName);
+
+        messageListener.onTextMessage(event);
+        verify(returnCommand).executeCommand(any());
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"!", "stat "})
-    void onTextMessage_help_message(final String mainCommand) {
-        for (final boolean isGuild : new boolean[]{true, false}) {
-            this.runOnTextMessageTest(mainCommand, mainCommand, isGuild, atLeastOnce());
-        }
-    }
+    // TODO: Add the test for the help section after the help section is done
 
-    @ParameterizedTest
-    @ValueSource(strings = {"!", "stat "})
-    void onTextMessage_incorrect_input(final String mainCommand) {
-        for (final boolean isGuild : new boolean[]{true, false}) {
-            this.runOnTextMessageTest(mainCommand, "", isGuild, never());
-        }
+    @Test
+    void onTextMessage_self_bot() {
+        final long botId = 1L;
+        final MessageListener messageListener = this.createMessageListener("", botId);
+
+        final User user = mock(User.class);
+        when(user.getIdLong()).thenReturn(botId);
+
+        final MessageReceivedEvent event = mock(MessageReceivedEvent.class);
+        when(event.getAuthor()).thenReturn(user);
+
+        // It would throw an exception when it gets past the self check, because the event contains no message
+        assertDoesNotThrow(() -> messageListener.onTextMessage(event));
     }
 }

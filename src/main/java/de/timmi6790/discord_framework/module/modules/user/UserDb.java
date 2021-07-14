@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.user;
 
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
@@ -55,9 +55,8 @@ public class UserDb {
     public void ban(final CommandParameters commandParameters, final String reason) {
         this.setBanned(true);
 
-        DiscordMessagesUtilities.sendPrivateMessage(
-                commandParameters.getUser(),
-                DiscordMessagesUtilities.getEmbedBuilder(commandParameters)
+        commandParameters.sendPrivateMessage(
+                commandParameters.getEmbedBuilder()
                         .setTitle("You are banned")
                         .setDescription(
                                 "Congratulations!!! You did it. You are now banned from using this bot for "

@@ -1,35 +1,35 @@
 package de.timmi6790.discord_framework.module.modules.command.property;
 
-import de.timmi6790.discord_framework.module.modules.command.AbstractCommand;
-import de.timmi6790.discord_framework.module.modules.command.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.command.Command;
+import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CommandPropertyTest {
     @Test
-    void onPermissionCheckDefaultResponse() {
-        final AbstractCommand command = mock(AbstractCommand.class);
+    void onPermissionCheck() {
+        final Command command = mock(Command.class);
         final CommandParameters commandParameters = mock(CommandParameters.class);
 
-        final TestCommandProperty property = new TestCommandProperty();
-        assertThat(property.onPermissionCheck(command, commandParameters)).isTrue();
+        final CommandProperty<?> property = mock(CommandProperty.class);
+        when(property.onPermissionCheck(command, commandParameters)).thenCallRealMethod();
+
+        final boolean returnValue = property.onPermissionCheck(command, commandParameters);
+        assertThat(returnValue).isTrue();
     }
 
     @Test
-    void onCommandExecutionDefaultResponse() {
-        final AbstractCommand command = mock(AbstractCommand.class);
+    void onCommandExecution() {
+        final Command command = mock(Command.class);
         final CommandParameters commandParameters = mock(CommandParameters.class);
 
-        final TestCommandProperty property = new TestCommandProperty();
-        assertThat(property.onCommandExecution(command, commandParameters)).isTrue();
-    }
+        final CommandProperty<?> property = mock(CommandProperty.class);
+        when(property.onCommandExecution(command, commandParameters)).thenCallRealMethod();
 
-    private static class TestCommandProperty implements CommandProperty<Boolean> {
-        @Override
-        public Boolean getValue() {
-            return false;
-        }
+        final boolean returnValue = property.onCommandExecution(command, commandParameters);
+        assertThat(returnValue).isTrue();
     }
 }

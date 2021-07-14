@@ -4,8 +4,8 @@ import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
+import lombok.SneakyThrows;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -13,15 +13,20 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 class GuildDbModuleTest {
-    private static final AtomicLong DISCORD_IDS = new AtomicLong(0);
     @Spy
     private static final GuildDbModule guildDbModule = Mockito.spy(new GuildDbModule());
+
+    private static long createRandomId() {
+        return ThreadLocalRandom.current().nextLong();
+    }
 
     @BeforeAll
     static void setUp() {
@@ -44,7 +49,7 @@ class GuildDbModuleTest {
 
     @Test
     void get() {
-        final long discordId = DISCORD_IDS.getAndIncrement();
+        final long discordId = createRandomId();
 
         final Optional<GuildDb> guildNotFound = guildDbModule.get(discordId);
         assertThat(guildNotFound).isNotPresent();
@@ -61,7 +66,7 @@ class GuildDbModuleTest {
 
     @Test
     void getCacheCheck() {
-        final long discordId = DISCORD_IDS.getAndIncrement();
+        final long discordId = createRandomId();
 
         final GuildDb guildDbCreate = guildDbModule.getOrCreate(discordId);
 
@@ -72,8 +77,33 @@ class GuildDbModuleTest {
         final Optional<GuildDb> guildldDatabase = guildDbModule.get(discordId);
         assertThat(guildldDatabase).isPresent();
 
-        AssertionsForClassTypes.assertThat(guildDbCreate.getDiscordId())
+        assertThat(guildDbCreate.getDiscordId())
                 .isEqualTo(guildDbCache.get().getDiscordId())
                 .isEqualTo(guildldDatabase.get().getDiscordId());
+    }
+
+    @Test
+    void getOrCreate() {
+        final long guildId = createRandomId();
+
+        final GuildDb guildDbCreate = guildDbModule.getOrCreate(guildId);
+        final GuildDb guildDbCreate2 = guildDbModule.getOrCreate(guildId);
+
+        assertThat(guildDbCreate.getDiscordId()).isEqualTo(guildDbCreate2.getDiscordId());
+    }
+
+    @SneakyThrows
+    @Test
+    void getOrCreate_multiple_threads() {
+        final long guildId = createRandomId();
+
+        final Supplier<GuildDb> guildCreateTask = () -> guildDbModule.getOrCreate(guildId);
+        final CompletableFuture<GuildDb> guildDbFuture = CompletableFuture.supplyAsync(guildCreateTask);
+        final CompletableFuture<GuildDb> guildDbTwoFuture = CompletableFuture.supplyAsync(guildCreateTask);
+
+        final GuildDb guildDb = guildDbFuture.get();
+        final GuildDb guildDbTwo = guildDbTwoFuture.get();
+
+        assertThat(guildDb).isEqualTo(guildDbTwo);
     }
 }
