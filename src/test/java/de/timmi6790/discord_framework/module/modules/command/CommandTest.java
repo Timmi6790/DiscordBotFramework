@@ -82,7 +82,7 @@ class CommandTest {
     private Command createCommand() {
         final CommandModule commandModule = mock(CommandModule.class);
         when(commandModule.getEventModule()).thenReturn(mock(EventModule.class));
-        
+
         return spy(new TestCommand(commandModule));
     }
 
@@ -92,18 +92,11 @@ class CommandTest {
         final BooleanProperty booleanProperty = new BooleanProperty();
 
         final Command command = this.createCommand();
-        assertThat(command.addProperty(stringProperty)).isTrue();
-        assertThat(command.addProperty(booleanProperty)).isTrue();
-    }
-
-    @Test
-    void addProperty_duplicate() {
-        final StringProperty stringProperty = new StringProperty();
-        final StringProperty stringProperty2 = new StringProperty();
-
-        final Command command = this.createCommand();
-        assertThat(command.addProperty(stringProperty)).isTrue();
-        assertThat(command.addProperty(stringProperty2)).isFalse();
+        command.addProperty(stringProperty);
+        command.addProperty(booleanProperty);
+        
+        assertThat(command.getProperty(stringProperty.getClass())).isPresent();
+        assertThat(command.getProperty(booleanProperty.getClass())).isPresent();
     }
 
     @Test
