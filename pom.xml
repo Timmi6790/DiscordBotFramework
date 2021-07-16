@@ -6,7 +6,7 @@
 
     <groupId>de.timmi6790.discord_framework</groupId>
     <artifactId>DiscordBotFramework</artifactId>
-    <version>3.2.1</version>
+    <version>3.2.2</version>
 
     <packaging>jar</packaging>
     <properties>

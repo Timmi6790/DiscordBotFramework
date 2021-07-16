@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Log4j2
 public class DiscordBot {
-    public static final String BOT_VERSION = "3.2.1";
+    public static final String BOT_VERSION = "3.2.2";
 
     private static final DiscordBot INSTANCE = new DiscordBot();
 
