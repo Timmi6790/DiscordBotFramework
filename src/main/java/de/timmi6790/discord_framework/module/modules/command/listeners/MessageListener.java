@@ -61,7 +61,7 @@ public class MessageListener {
                 commandModule.getMainCommand().trim(),
                 this.botId
         );
-        this.commandPattern = Pattern.compile(constructedCommandPattern);
+        this.commandPattern = Pattern.compile(constructedCommandPattern, Pattern.CASE_INSENSITIVE);
     }
 
     private void sendHelpMessage(final CommandParameters commandParameters,
@@ -158,6 +158,8 @@ public class MessageListener {
                 0.6,
                 5
         );
+
+        // TODO: We need to check for the required discord permissions here
         if (similarCommands.isEmpty()) {
             commandParameters.sendMessage(
                     commandParameters.getEmbedBuilder()
