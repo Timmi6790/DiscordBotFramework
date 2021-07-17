@@ -14,18 +14,20 @@ import org.mockito.Spy;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 class GuildDbModuleTest {
+    private static final AtomicLong ID = new AtomicLong(0);
+
     @Spy
     private static final GuildDbModule guildDbModule = Mockito.spy(new GuildDbModule());
 
-    private static long createRandomId() {
-        return ThreadLocalRandom.current().nextLong();
+    private long createRandomId() {
+        return ID.incrementAndGet();
     }
 
     @BeforeAll
@@ -49,7 +51,7 @@ class GuildDbModuleTest {
 
     @Test
     void get() {
-        final long discordId = createRandomId();
+        final long discordId = this.createRandomId();
 
         final Optional<GuildDb> guildNotFound = guildDbModule.get(discordId);
         assertThat(guildNotFound).isNotPresent();
@@ -66,7 +68,7 @@ class GuildDbModuleTest {
 
     @Test
     void getCacheCheck() {
-        final long discordId = createRandomId();
+        final long discordId = this.createRandomId();
 
         final GuildDb guildDbCreate = guildDbModule.getOrCreate(discordId);
 
@@ -84,7 +86,7 @@ class GuildDbModuleTest {
 
     @Test
     void getOrCreate() {
-        final long guildId = createRandomId();
+        final long guildId = this.createRandomId();
 
         final GuildDb guildDbCreate = guildDbModule.getOrCreate(guildId);
         final GuildDb guildDbCreate2 = guildDbModule.getOrCreate(guildId);
@@ -95,7 +97,7 @@ class GuildDbModuleTest {
     @SneakyThrows
     @Test
     void getOrCreate_multiple_threads() {
-        final long guildId = createRandomId();
+        final long guildId = this.createRandomId();
 
         final Supplier<GuildDb> guildCreateTask = () -> guildDbModule.getOrCreate(guildId);
         final CompletableFuture<GuildDb> guildDbFuture = CompletableFuture.supplyAsync(guildCreateTask);
@@ -105,5 +107,11 @@ class GuildDbModuleTest {
         final GuildDb guildDbTwo = guildDbTwoFuture.get();
 
         assertThat(guildDb).isEqualTo(guildDbTwo);
+    }
+
+    @Test
+    void getPrivateMessageGuild() {
+        final GuildDb privateMessageGuild = guildDbModule.getPrivateMessageGuild();
+        assertThat(privateMessageGuild.getDiscordId()).isEqualTo(GuildDbModule.getPrivateMessageGuildId());
     }
 }
