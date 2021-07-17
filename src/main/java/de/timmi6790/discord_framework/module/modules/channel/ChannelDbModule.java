@@ -23,7 +23,7 @@ import java.util.concurrent.locks.Lock;
  */
 @EqualsAndHashCode(callSuper = true)
 public class ChannelDbModule extends AbstractModule {
-    private final Striped<Lock> channelCreateLock = Striped.lock(64);
+    private final Striped<Lock> channelGetLock = Striped.lock(64);
     private final Striped<Lock> channelGetOrCreateLock = Striped.lock(64);
 
     @Getter
@@ -81,19 +81,12 @@ public class ChannelDbModule extends AbstractModule {
      * @return the channel db instance
      */
     protected ChannelDb create(final long discordChannelId, final long discordGuildId) {
-        // Lock the current discord id to prevent multiple creates
-        final Lock lock = this.channelCreateLock.get(discordChannelId);
-        lock.lock();
-        try {
-            // Assure that the guild exist
-            this.guildDbModule.getOrCreate(discordGuildId);
+        // Assure that the guild exist
+        this.guildDbModule.getOrCreate(discordGuildId);
 
-            final ChannelDb channelDb = this.channelRepository.create(discordChannelId, discordGuildId);
-            this.getCache().put(discordChannelId, channelDb);
-            return channelDb;
-        } finally {
-            lock.unlock();
-        }
+        final ChannelDb channelDb = this.channelRepository.create(discordChannelId, discordGuildId);
+        this.getCache().put(discordChannelId, channelDb);
+        return channelDb;
     }
 
     /**
@@ -103,14 +96,14 @@ public class ChannelDbModule extends AbstractModule {
      * @return the channel db instance
      */
     public Optional<ChannelDb> get(final long discordChannelId) {
-        final ChannelDb channelDbCache = this.cache.getIfPresent(discordChannelId);
-        if (channelDbCache != null) {
-            return Optional.of(channelDbCache);
-        }
-
-        final Lock lock = this.channelCreateLock.get(discordChannelId);
+        final Lock lock = this.channelGetLock.get(discordChannelId);
         lock.lock();
         try {
+            final ChannelDb channelDbCache = this.cache.getIfPresent(discordChannelId);
+            if (channelDbCache != null) {
+                return Optional.of(channelDbCache);
+            }
+
             final Optional<ChannelDb> channelDbOpt = this.channelRepository.get(discordChannelId);
             channelDbOpt.ifPresent(userDb -> this.cache.put(discordChannelId, userDb));
             return channelDbOpt;
@@ -130,9 +123,20 @@ public class ChannelDbModule extends AbstractModule {
         final Lock lock = this.channelGetOrCreateLock.get(discordChannelId);
         lock.lock();
         try {
-            return this.get(discordChannelId).orElseGet(() -> this.create(discordChannelId, discordGuildId));
+            return this.get(discordChannelId)
+                    .orElseGet(() -> this.create(discordChannelId, discordGuildId));
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Retrieves or create a discord channel instance
+     *
+     * @param discordChannelId the discord channel id
+     * @return the channel db instance
+     */
+    public ChannelDb getOrCreatePrivateMessage(final long discordChannelId) {
+        return this.getOrCreate(discordChannelId, GuildDbModule.getPrivateMessageGuildId());
     }
 }

@@ -15,20 +15,22 @@ import org.mockito.Spy;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 class ChannelDbModuleTest {
+    private static final AtomicLong ID = new AtomicLong(0);
+
     @Spy
     private static final GuildDbModule guildDbModule = spy(new GuildDbModule());
     @Spy
     private static final ChannelDbModule channelDbModule = spy(new ChannelDbModule());
 
-    private static long createRandomId() {
-        return ThreadLocalRandom.current().nextLong();
+    private long createRandomId() {
+        return ID.incrementAndGet();
     }
 
     @BeforeAll
@@ -55,8 +57,8 @@ class ChannelDbModuleTest {
 
     @Test
     void get() {
-        final long guildId = createRandomId();
-        final long channelId = createRandomId();
+        final long guildId = this.createRandomId();
+        final long channelId = this.createRandomId();
 
         final Optional<ChannelDb> channelNotFound = channelDbModule.get(channelId);
         assertThat(channelNotFound).isEmpty();
@@ -70,8 +72,8 @@ class ChannelDbModuleTest {
 
     @Test
     void getOrCreate() {
-        final long guildId = createRandomId();
-        final long channelId = createRandomId();
+        final long guildId = this.createRandomId();
+        final long channelId = this.createRandomId();
 
         final ChannelDb channelDbCreate = channelDbModule.getOrCreate(channelId, guildId);
         final ChannelDb channelDbCreate2 = channelDbModule.getOrCreate(channelId, guildId);
@@ -82,8 +84,8 @@ class ChannelDbModuleTest {
     @SneakyThrows
     @Test
     void getOrCreate_multiple_threads() {
-        final long guildId = createRandomId();
-        final long channelId = createRandomId();
+        final long guildId = this.createRandomId();
+        final long channelId = this.createRandomId();
 
         final Supplier<ChannelDb> channelCreateTask = () -> channelDbModule.getOrCreate(channelId, guildId);
         final CompletableFuture<ChannelDb> channelDbFuture = CompletableFuture.supplyAsync(channelCreateTask);
@@ -97,8 +99,8 @@ class ChannelDbModuleTest {
 
     @Test
     void get_cache_check() {
-        final long guildId = createRandomId();
-        final long channelId = createRandomId();
+        final long guildId = this.createRandomId();
+        final long channelId = this.createRandomId();
 
         final ChannelDb channelDbCreate = channelDbModule.getOrCreate(channelId, guildId);
 
@@ -113,5 +115,12 @@ class ChannelDbModuleTest {
         assertThat(channelDbDatabase).isPresent();
 
         assertThat(channelDbCreate).isEqualTo(noneCache.get()).isEqualTo(channelDbDatabase.get());
+    }
+
+    @Test
+    void getOrCreatePrivateMessage() {
+        final long channelId = this.createRandomId();
+        final ChannelDb channelDb = channelDbModule.getOrCreatePrivateMessage(channelId);
+        assertThat(channelDb.getDiscordId()).isEqualTo(channelId);
     }
 }
