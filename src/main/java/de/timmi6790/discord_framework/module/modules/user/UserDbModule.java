@@ -20,6 +20,7 @@ import de.timmi6790.discord_framework.module.modules.user.listeners.DsgvoListene
 import de.timmi6790.discord_framework.module.modules.user.repository.UserDbRepository;
 import de.timmi6790.discord_framework.module.modules.user.repository.postgres.UserDbPostgresRepository;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -32,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 @EqualsAndHashCode(callSuper = true)
-@Getter
 public class UserDbModule extends AbstractModule {
     private final LoadingCache<Long, User> discordUserCache = Caffeine.newBuilder()
             .recordStats()
@@ -44,13 +44,15 @@ public class UserDbModule extends AbstractModule {
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 
-    private final Striped<Lock> userCreateLock = Striped.lock(64);
+    private final Striped<Lock> userGetLock = Striped.lock(64);
+    private final Striped<Lock> userGetOrCreateLock = Striped.lock(64);
     private final Cache<Long, UserDb> cache = Caffeine.newBuilder()
             .maximumSize(10_000)
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
-    private UserDbRepository userDbRepository;
+    @Getter(AccessLevel.PROTECTED)
+    private UserDbRepository repository;
     private ShardManager discord;
 
     public UserDbModule() {
@@ -78,7 +80,7 @@ public class UserDbModule extends AbstractModule {
     public boolean onInitialize() {
         this.discord = super.getDiscord();
         final EventModule eventModule = this.getModuleOrThrow(EventModule.class);
-        this.userDbRepository = new UserDbPostgresRepository(
+        this.repository = new UserDbPostgresRepository(
                 this,
                 this.getModuleOrThrow(DatabaseModule.class),
                 eventModule,
@@ -129,38 +131,46 @@ public class UserDbModule extends AbstractModule {
     }
 
     protected UserDb create(final long discordId) {
-        // Lock the current discord id to prevent multiple creates
-        final Lock lock = this.userCreateLock.get(discordId);
+        final UserDb userDb = this.repository.create(discordId);
+        this.cache.put(discordId, userDb);
+        return userDb;
+    }
+
+    public Optional<UserDb> getFromCache(final long discordId) {
+        return Optional.ofNullable(this.cache.getIfPresent(discordId));
+    }
+
+    public void invalidateCache(final long discordId) {
+        this.cache.invalidate(discordId);
+    }
+
+    public Optional<UserDb> get(final long discordId) {
+        final Lock lock = this.userGetLock.get(discordId);
         lock.lock();
         try {
-            // Make sure that the user is not present
-            final Optional<UserDb> userDbOpt = this.get(discordId);
-            if (userDbOpt.isPresent()) {
-                return userDbOpt.get();
+            final Optional<UserDb> userDbCache = this.getFromCache(discordId);
+            if (userDbCache.isPresent()) {
+                return userDbCache;
             }
 
-            final UserDb userDb = this.getUserDbRepository().create(discordId);
-            this.getCache().put(discordId, userDb);
-            return userDb;
+            final Optional<UserDb> userDbOpt = this.repository.get(discordId);
+            userDbOpt.ifPresent(userDb -> this.cache.put(discordId, userDb));
+
+            return userDbOpt;
         } finally {
             lock.unlock();
         }
     }
 
-    public Optional<UserDb> get(final long discordId) {
-        final UserDb userDbCache = this.getCache().getIfPresent(discordId);
-        if (userDbCache != null) {
-            return Optional.of(userDbCache);
-        }
-
-        final Optional<UserDb> userDbOpt = this.getUserDbRepository().get(discordId);
-        userDbOpt.ifPresent(userDb -> this.getCache().put(discordId, userDb));
-
-        return userDbOpt;
-    }
-
     public UserDb getOrCreate(final long discordId) {
-        return this.get(discordId).orElseGet(() -> this.create(discordId));
+        final Lock lock = this.userGetOrCreateLock.get(discordId);
+        lock.lock();
+        try {
+            return this.get(discordId)
+                    .orElseGet(() -> this.create(discordId));
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void delete(final long discordId) {
@@ -168,7 +178,16 @@ public class UserDbModule extends AbstractModule {
     }
 
     public void delete(@NonNull final UserDb userDb) {
-        this.getUserDbRepository().delete(userDb.getDiscordId());
-        this.getCache().invalidate(userDb.getDiscordId());
+        this.repository.delete(userDb.getDiscordId());
+        this.cache.invalidate(userDb.getDiscordId());
+    }
+
+    // User cache
+    public User getUser(final long discordId) {
+        return this.discordUserCache.get(discordId);
+    }
+
+    public void addUserToCache(final User user) {
+        this.discordUserCache.put(user.getIdLong(), user);
     }
 }

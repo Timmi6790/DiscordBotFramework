@@ -45,11 +45,11 @@ public class UserDb {
     private final SettingModule settingModule;
 
     protected UserDbRepository getUserDbRepository() {
-        return this.userDbModule.getUserDbRepository();
+        return this.userDbModule.getRepository();
     }
 
     public User getUser() {
-        return this.userDbModule.getDiscordUserCache().get(this.getDiscordId());
+        return this.userDbModule.getUser(this.getDiscordId());
     }
 
     public void ban(final CommandParameters commandParameters, final String reason) {

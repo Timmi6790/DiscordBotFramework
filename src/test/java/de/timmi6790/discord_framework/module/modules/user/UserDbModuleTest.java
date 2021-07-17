@@ -7,23 +7,31 @@ import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
+import lombok.SneakyThrows;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.*;
 
 class UserDbModuleTest {
-    private static final long TEST_DISCORD_ID = 305911488697204736L;
-    private static final long TEST_DISCORD_ID2 = 168049519831810048L;
+    private static final AtomicLong ID = new AtomicLong(0);
 
     private static final UserDbModule USER_DB_MODULE = spy(new UserDbModule());
     private static final EventModule EVENT_MODULE = new EventModule();
     private static final RankModule RANK_MODULE = spy(new RankModule());
+
+    private long createRandomId() {
+        return ID.incrementAndGet();
+    }
 
     @BeforeAll
     static void setUp() {
@@ -54,54 +62,76 @@ class UserDbModuleTest {
 
     @Test
     void get() {
-        final Optional<UserDb> userDbNotFound = USER_DB_MODULE.get(TEST_DISCORD_ID);
+        final long userId = this.createRandomId();
+        final Optional<UserDb> userDbNotFound = USER_DB_MODULE.get(userId);
         assertThat(userDbNotFound).isNotPresent();
 
-        USER_DB_MODULE.create(TEST_DISCORD_ID);
-        final Optional<UserDb> userDbFound = USER_DB_MODULE.get(TEST_DISCORD_ID);
+        USER_DB_MODULE.create(userId);
+        final Optional<UserDb> userDbFound = USER_DB_MODULE.get(userId);
         assertThat(userDbFound).isPresent();
-        assertThat(userDbFound.get().getDiscordId()).isEqualTo(TEST_DISCORD_ID);
+        assertThat(userDbFound.get().getDiscordId()).isEqualTo(userId);
     }
 
     @Test
     void getOrCreate() {
+        final long userId = this.createRandomId();
         // Should create them
-        final UserDb userDb = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID2);
+        final UserDb userDb = USER_DB_MODULE.getOrCreate(userId);
         assertThat(userDb).isNotNull();
-        assertThat(userDb.getDiscordId()).isEqualTo(TEST_DISCORD_ID2);
+        assertThat(userDb.getDiscordId()).isEqualTo(userId);
 
         // Should get it without creation
-        final UserDb userDb2 = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID2);
+        final UserDb userDb2 = USER_DB_MODULE.getOrCreate(userId);
         assertThat(userDb2).isNotNull();
-        assertThat(userDb2.getDiscordId()).isEqualTo(TEST_DISCORD_ID2);
+        assertThat(userDb2.getDiscordId()).isEqualTo(userId);
     }
 
     @Test
     void deleteUser() {
-        final UserDb userDb = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID);
+        final long userId = this.createRandomId();
+        final UserDb userDb = USER_DB_MODULE.getOrCreate(userId);
         USER_DB_MODULE.delete(userDb);
 
-        final Optional<UserDb> deletedUser = USER_DB_MODULE.get(TEST_DISCORD_ID);
+        final Optional<UserDb> deletedUser = USER_DB_MODULE.get(userId);
         assertThat(deletedUser).isNotPresent();
     }
 
     @Test
     void deleteId() {
-        final UserDb userDb = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID);
+        final long userId = this.createRandomId();
+        final UserDb userDb = USER_DB_MODULE.getOrCreate(userId);
         USER_DB_MODULE.delete(userDb.getDiscordId());
 
-        final Optional<UserDb> deletedUser = USER_DB_MODULE.get(TEST_DISCORD_ID);
+        final Optional<UserDb> deletedUser = USER_DB_MODULE.get(userId);
         assertThat(deletedUser).isNotPresent();
     }
 
     @Test
     void checkIncorrectCache() {
-        USER_DB_MODULE.create(TEST_DISCORD_ID);
-        final UserDb cachedUser = USER_DB_MODULE.getCache().getIfPresent(TEST_DISCORD_ID);
+        final long userId = this.createRandomId();
+        USER_DB_MODULE.create(userId);
+        final Optional<UserDb> cachedUser = USER_DB_MODULE.getFromCache(userId);
 
-        USER_DB_MODULE.getCache().invalidate(TEST_DISCORD_ID);
-        final UserDb dbUser = USER_DB_MODULE.getOrCreate(TEST_DISCORD_ID);
+        USER_DB_MODULE.invalidateCache(userId);
+        final UserDb dbUser = USER_DB_MODULE.getOrCreate(userId);
 
-        assertThat(cachedUser).isEqualTo(dbUser);
+        assertThat(cachedUser)
+                .isPresent()
+                .contains(dbUser);
+    }
+
+    @SneakyThrows
+    @Test
+    void getOrCreate_multiple_threads() {
+        final long guildId = this.createRandomId();
+
+        final Supplier<UserDb> guildCreateTask = () -> USER_DB_MODULE.getOrCreate(guildId);
+        final CompletableFuture<UserDb> guildDbFuture = CompletableFuture.supplyAsync(guildCreateTask);
+        final CompletableFuture<UserDb> guildDbTwoFuture = CompletableFuture.supplyAsync(guildCreateTask);
+
+        final UserDb guildDb = guildDbFuture.get();
+        final UserDb guildDbTwo = guildDbTwoFuture.get();
+
+        Assertions.assertThat(guildDb).isEqualTo(guildDbTwo);
     }
 }

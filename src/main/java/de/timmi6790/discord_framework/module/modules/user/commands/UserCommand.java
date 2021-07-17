@@ -97,7 +97,7 @@ public class UserCommand extends Command {
     }
 
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        this.userDbModule.getCache().invalidate(userDb.getDiscordId());
+        this.userDbModule.invalidateCache(userDb.getDiscordId());
 
         commandParameters.sendMessage(
                 commandParameters.getEmbedBuilder()
