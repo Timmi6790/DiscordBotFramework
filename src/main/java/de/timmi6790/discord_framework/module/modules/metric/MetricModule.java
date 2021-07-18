@@ -34,7 +34,7 @@ public class MetricModule extends AbstractModule {
 
     private void startMetricsServer() {
         this.metricsServer = Undertow.builder()
-                .addHttpListener(8001, "127.0.0.1")
+                .addHttpListener(8001, "0.0.0.0")
                 .setHandler(exchange -> {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send(this.meterRegistry.scrape());

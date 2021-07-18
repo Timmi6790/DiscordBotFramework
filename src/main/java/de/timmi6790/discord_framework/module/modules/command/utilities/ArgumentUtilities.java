@@ -118,8 +118,7 @@ public class ArgumentUtilities {
             final long userId = Long.parseLong(userIdMatcher.group(2));
             final User user = commandParameters.getUserDb()
                     .getUserDbModule()
-                    .getDiscordUserCache()
-                    .get(userId);
+                    .getUser(userId);
             if (user != null) {
                 return user;
             }

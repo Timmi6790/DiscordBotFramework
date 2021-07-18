@@ -53,19 +53,9 @@ public abstract class Command {
 
     protected abstract CommandResult onCommand(CommandParameters commandParameters);
 
-    protected boolean addProperty(final CommandProperty<?> property) {
+    protected void addProperty(final CommandProperty<?> property) {
         final Class<? extends CommandProperty<?>> propertyClass = (Class<? extends CommandProperty<?>>) property.getClass();
-        if (this.properties.containsKey(propertyClass)) {
-            log.warn(
-                    "[{}] The property {} is already registered",
-                    this.name,
-                    propertyClass
-            );
-            return false;
-        }
-
         this.properties.put(propertyClass, property);
-        return true;
     }
 
     protected void addProperties(final CommandProperty<?>... properties) {

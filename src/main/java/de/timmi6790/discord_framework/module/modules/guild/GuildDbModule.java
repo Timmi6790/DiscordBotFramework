@@ -22,7 +22,13 @@ import java.util.concurrent.locks.Lock;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class GuildDbModule extends AbstractModule {
-    private final Striped<Lock> guildCreateLock = Striped.lock(64);
+    private static final int PRIVATE_MESSAGE_ID = 0;
+
+    public static int getPrivateMessageGuildId() {
+        return PRIVATE_MESSAGE_ID;
+    }
+
+    private final Striped<Lock> guildGetLock = Striped.lock(64);
     private final Striped<Lock> guildGetOrCreateLock = Striped.lock(64);
     private final Cache<Long, GuildDb> cache = Caffeine.newBuilder()
             .recordStats()
@@ -71,26 +77,20 @@ public class GuildDbModule extends AbstractModule {
 
     protected GuildDb create(final long discordId) {
         // Lock the current discord id to prevent multiple creates
-        final Lock lock = this.guildCreateLock.get(discordId);
-        lock.lock();
-        try {
-            final GuildDb guildDb = this.getGuildDbRepository().createGuild(discordId);
-            this.getCache().put(discordId, guildDb);
-            return guildDb;
-        } finally {
-            lock.unlock();
-        }
+        final GuildDb guildDb = this.getGuildDbRepository().createGuild(discordId);
+        this.getCache().put(discordId, guildDb);
+        return guildDb;
     }
 
     public Optional<GuildDb> get(final long discordId) {
-        final GuildDb guildDbCache = this.getCache().getIfPresent(discordId);
-        if (guildDbCache != null) {
-            return Optional.of(guildDbCache);
-        }
-
-        final Lock lock = this.guildCreateLock.get(discordId);
+        final Lock lock = this.guildGetLock.get(discordId);
         lock.lock();
         try {
+            final GuildDb guildDbCache = this.getCache().getIfPresent(discordId);
+            if (guildDbCache != null) {
+                return Optional.of(guildDbCache);
+            }
+
             final Optional<GuildDb> guildDbOpt = this.getGuildDbRepository().getGuild(discordId);
             guildDbOpt.ifPresent(userDb -> this.getCache().put(discordId, userDb));
 
@@ -100,11 +100,17 @@ public class GuildDbModule extends AbstractModule {
         }
     }
 
+    public GuildDb getPrivateMessageGuild() {
+        final long privateMessageId = getPrivateMessageGuildId();
+        return this.getOrCreate(privateMessageId);
+    }
+
     public GuildDb getOrCreate(final long discordId) {
         final Lock lock = this.guildGetOrCreateLock.get(discordId);
         lock.lock();
         try {
-            return this.get(discordId).orElseGet(() -> this.create(discordId));
+            return this.get(discordId)
+                    .orElseGet(() -> this.create(discordId));
         } finally {
             lock.unlock();
         }

@@ -102,7 +102,7 @@ class UserDbTest {
     }
 
     private void validateRepository(final UserDb userDb) {
-        final UserDb repositoryUser = userDbModule.getUserDbRepository().get(userDb.getDiscordId()).orElseThrow(RuntimeException::new);
+        final UserDb repositoryUser = userDbModule.getRepository().get(userDb.getDiscordId()).orElseThrow(RuntimeException::new);
         assertThat(userDb).isEqualTo(repositoryUser);
     }
 
@@ -134,7 +134,7 @@ class UserDbTest {
         final CommandParameters commandParameters = mock(CommandParameters.class);
         when(commandParameters.getEmbedBuilder()).thenReturn(embedBuilder);
         userDb.ban(commandParameters, "");
-        
+
         assertThat(userDb.isBanned()).isTrue();
 
         this.validateRepository(userDb);

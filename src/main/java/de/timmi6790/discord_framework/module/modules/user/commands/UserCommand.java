@@ -47,7 +47,7 @@ public class UserCommand extends Command {
                 new DescriptionProperty("User control command"),
                 new SyntaxProperty("<discordUser> <perms|rank|setPrimaryRank|ban|unBan|info|invalidate> " +
                         "<add;remove;list|add;remove|rank|||||> <command;permNode|rank|>"),
-                new AliasNamesProperty("h"),
+                new AliasNamesProperty("u"),
                 new MinArgProperty(2)
         );
 
@@ -97,7 +97,7 @@ public class UserCommand extends Command {
     }
 
     private CommandResult invalidateCommand(final CommandParameters commandParameters, final UserDb userDb) {
-        this.userDbModule.getCache().invalidate(userDb.getDiscordId());
+        this.userDbModule.invalidateCache(userDb.getDiscordId());
 
         commandParameters.sendMessage(
                 commandParameters.getEmbedBuilder()

@@ -14,9 +14,13 @@ import de.timmi6790.discord_framework.module.modules.reactions.button.actions.Co
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
+import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
 import lombok.SneakyThrows;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Emoji;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Button;
@@ -61,7 +65,11 @@ public class MessageListener {
                 commandModule.getMainCommand().trim(),
                 this.botId
         );
-        this.commandPattern = Pattern.compile(constructedCommandPattern);
+        this.commandPattern = Pattern.compile(constructedCommandPattern, Pattern.CASE_INSENSITIVE);
+    }
+
+    private boolean hasMessageWritePermission(final CommandParameters commandParameters) {
+        return commandParameters.getDiscordPermissions().contains(Permission.MESSAGE_WRITE);
     }
 
     private void sendHelpMessage(final CommandParameters commandParameters,
@@ -121,14 +129,19 @@ public class MessageListener {
         );
 
         // Send message
-        commandParameters.getLowestMessageChannel()
-                .sendMessageEmbeds(
-                        commandParameters.getEmbedBuilder()
-                                .setTitle("Invalid Command")
-                                .setDescription(description.toString())
-                                .setFooter("↓ Click Me!")
-                                .buildSingle()
-                )
+        final MessageChannel channel;
+        if (this.hasMessageWritePermission(commandParameters)) {
+            channel = commandParameters.getLowestMessageChannel();
+        } else {
+            channel = commandParameters.getUserTextChannel();
+        }
+        channel.sendMessageEmbeds(
+                commandParameters.getEmbedBuilder()
+                        .setTitle("Invalid Command")
+                        .setDescription(description.toString())
+                        .setFooter("↓ Click Me!")
+                        .build()
+        )
                 .setActionRows(ActionRow.of(buttons.keySet()))
                 .queue(message ->
                         this.buttonReactionModule.addButtonReactionMessage(
@@ -158,17 +171,21 @@ public class MessageListener {
                 0.6,
                 5
         );
+
         if (similarCommands.isEmpty()) {
-            commandParameters.sendMessage(
-                    commandParameters.getEmbedBuilder()
-                            .setTitle("Can't find a valid command")
-                            .setDescription(
-                                    "Your input %s is not similar with one of the valid commands." +
-                                            "Use the %s command to see all valid commands.",
-                                    MarkdownUtil.monospace(commandName),
-                                    MarkdownUtil.monospace(this.commandModule.getMainCommand() + this.helpCommand.getName())
-                            )
-            );
+            final MultiEmbedBuilder embedBuilder = commandParameters.getEmbedBuilder()
+                    .setTitle("Can't find a valid command")
+                    .setDescription(
+                            "Your input %s is not similar with one of the valid commands." +
+                                    "Use the %s command to see all valid commands.",
+                            MarkdownUtil.monospace(commandName),
+                            MarkdownUtil.monospace(this.commandModule.getMainCommand() + this.helpCommand.getName())
+                    );
+            if (this.hasMessageWritePermission(commandParameters)) {
+                commandParameters.sendMessage(embedBuilder);
+            } else {
+                commandParameters.sendPrivateMessage(embedBuilder);
+            }
 
             return Optional.empty();
         }
@@ -198,21 +215,31 @@ public class MessageListener {
             return;
         }
 
+        // Add user to cache
+        final User author = event.getAuthor();
+        this.userDbModule.addUserToCache(author);
+
         // Get repository objects async
         final CompletableFuture<UserDb> userDbFuture = CompletableFuture.supplyAsync(() ->
-                this.userDbModule.getOrCreate(event.getAuthor().getIdLong())
+                this.userDbModule.getOrCreate(author.getIdLong())
         );
-        final CompletableFuture<ChannelDb> channelDbFuture = CompletableFuture.supplyAsync(() ->
-                this.channelDbModule.getOrCreate(
-                        event.getChannel().getIdLong(),
-                        event.getGuild().getIdLong()
-                )
+
+        final CompletableFuture<ChannelDb> channelDbFuture = CompletableFuture.supplyAsync(() -> {
+                    if (event.isFromGuild()) {
+                        return this.channelDbModule.getOrCreate(
+                                event.getChannel().getIdLong(),
+                                event.getGuild().getIdLong()
+                        );
+                    } else {
+                        return this.channelDbModule.getOrCreatePrivateMessage(
+                                event.getChannel().getIdLong()
+                        );
+                    }
+                }
         );
 
         final String commandName = commandMatcher.group(1);
         final String rawArguments = commandMatcher.group(2);
-
-        // TODO: Don't forget to add the user and channel to the cache objects to prevent a further rest request
         final CommandParameters commandParameters = CommandParameters.of(
                 rawArguments,
                 event.isFromGuild(),

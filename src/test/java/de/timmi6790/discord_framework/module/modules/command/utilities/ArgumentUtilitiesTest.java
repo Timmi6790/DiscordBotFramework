@@ -1,6 +1,5 @@
 package de.timmi6790.discord_framework.module.modules.command.utilities;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.timmi6790.discord_framework.module.modules.command.Command;
 import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
@@ -38,11 +37,8 @@ class ArgumentUtilitiesTest {
 
         final User expected = mock(User.class);
 
-        final LoadingCache<Long, User> userCache = mock(LoadingCache.class);
-        when(userCache.get(userId)).thenReturn(expected);
-
         final UserDbModule userDbModule = mock(UserDbModule.class);
-        when(userDbModule.getDiscordUserCache()).thenReturn(userCache);
+        when(userDbModule.getUser(userId)).thenReturn(expected);
 
         final UserDb userDb = mock(UserDb.class);
         when(userDb.getUserDbModule()).thenReturn(userDbModule);
@@ -226,9 +222,7 @@ class ArgumentUtilitiesTest {
     void getDiscordUserOrThrow_exception_user_not_found() {
         final int argPosition = 0;
 
-        final LoadingCache<Long, User> userCache = mock(LoadingCache.class);
         final UserDbModule userDbModule = mock(UserDbModule.class);
-        when(userDbModule.getDiscordUserCache()).thenReturn(userCache);
 
         final UserDb userDb = mock(UserDb.class);
         when(userDb.getUserDbModule()).thenReturn(userDbModule);

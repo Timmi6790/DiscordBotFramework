@@ -51,4 +51,8 @@ public class GuildDb {
     public Member getMember(final long userId) {
         return this.memberCache.get(userId);
     }
+
+    public boolean isPrivateMessage() {
+        return this.discordId == GuildDbModule.getPrivateMessageGuildId();
+    }
 }
