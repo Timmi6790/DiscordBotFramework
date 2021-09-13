@@ -22,7 +22,7 @@
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco</sonar.coverage.jacoco.xmlReportPaths>
 
-        <junit.version>5.7.2</junit.version>
+        <junit.version>5.8.0</junit.version>
         <testcontainers.version>1.15.3</testcontainers.version>
         <mockito.version>3.11.2</mockito.version>
         <prometheus.version>0.11.0</prometheus.version>
