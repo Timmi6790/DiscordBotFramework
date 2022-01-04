@@ -26,7 +26,7 @@
         <testcontainers.version>1.16.2</testcontainers.version>
         <mockito.version>4.1.0</mockito.version>
         <prometheus.version>0.11.0</prometheus.version>
-        <log4j.version>2.15.0</log4j.version>
+        <log4j.version>2.17.1</log4j.version>
         <undertow.version>2.2.13.Final</undertow.version>
     </properties>
 
