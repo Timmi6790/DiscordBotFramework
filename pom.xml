@@ -23,11 +23,11 @@
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco</sonar.coverage.jacoco.xmlReportPaths>
 
         <junit.version>5.8.2</junit.version>
-        <testcontainers.version>1.16.2</testcontainers.version>
-        <mockito.version>4.1.0</mockito.version>
+        <testcontainers.version>1.16.3</testcontainers.version>
+        <mockito.version>4.3.1</mockito.version>
         <prometheus.version>0.11.0</prometheus.version>
-        <log4j.version>2.15.0</log4j.version>
-        <undertow.version>2.2.13.Final</undertow.version>
+        <log4j.version>2.17.0</log4j.version>
+        <undertow.version>2.2.14.Final</undertow.version>
     </properties>
 
     <repositories>
@@ -69,7 +69,7 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.8.0</version>
+            <version>1.8.2</version>
         </dependency>
         <dependency>
             <groupId>io.undertow</groupId>
@@ -91,7 +91,7 @@
         <dependency>
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3-core</artifactId>
-            <version>3.24.1</version>
+            <version>3.27.1</version>
             <exclusions>
                 <exclusion>
                     <artifactId>caffeine</artifactId>
@@ -107,12 +107,12 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>5.0.0</version>
+            <version>5.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>8.1.0</version>
+            <version>8.4.3</version>
         </dependency>
 
         <!-- Dependencies -->
@@ -129,7 +129,7 @@
         <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry</artifactId>
-            <version>5.4.3</version>
+            <version>5.6.0</version>
         </dependency>
         <dependency>
             <groupId>net.dv8tion</groupId>
@@ -145,7 +145,7 @@
         <dependency>
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
-            <version>3.13.4</version>
+            <version>3.13.6</version>
         </dependency>
         <dependency>
             <groupId>net.ricecode</groupId>
@@ -155,7 +155,7 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>3.0.4</version>
+            <version>3.0.5</version>
         </dependency>
         <dependency>
             <groupId>org.discordbots</groupId>
@@ -190,7 +190,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.21.0</version>
+            <version>3.22.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -250,7 +250,7 @@
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <version>4.5.0</version>
+            <version>4.5.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -264,7 +264,7 @@
         <dependency>
             <groupId>com.google.cloud.tools</groupId>
             <artifactId>jib-maven-plugin</artifactId>
-            <version>3.1.4</version>
+            <version>3.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -276,7 +276,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.13.0</version>
+            <version>2.13.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
