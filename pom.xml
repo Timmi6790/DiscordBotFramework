@@ -11,11 +11,11 @@
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-        <maven.compiler.release>16</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
 
-        <java.version>16</java.version>
+        <java.version>17</java.version>
 
         <sonar.projectKey>Timmi6790_DiscordBotFramework</sonar.projectKey>
         <sonar.java.checkstyle.reportPaths>target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
@@ -300,7 +300,7 @@
                 <version>3.1.2</version>
                 <configuration>
                     <from>
-                        <image>timmi6790/java16-font</image>
+                        <image>timmi6790/java17-font</image>
                     </from>
                     <to>
                         <image>timmi6790/discordbotframework</image>
