@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 @Log4j2
 public abstract class Command {
     private static final EnumSet<Permission> MINIMUM_DISCORD_PERMISSIONS = EnumSet.of(
-            Permission.MESSAGE_WRITE,
+            Permission.MESSAGE_SEND,
             Permission.MESSAGE_EMBED_LINKS
     );
 

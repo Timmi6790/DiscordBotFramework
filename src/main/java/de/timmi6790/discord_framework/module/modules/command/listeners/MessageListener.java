@@ -23,8 +23,8 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Button;
-import net.dv8tion.jda.api.interactions.components.ButtonStyle;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.LinkedHashMap;
@@ -69,7 +69,7 @@ public class MessageListener {
     }
 
     private boolean hasMessageWritePermission(final CommandParameters commandParameters) {
-        return commandParameters.getDiscordPermissions().contains(Permission.MESSAGE_WRITE);
+        return commandParameters.getDiscordPermissions().contains(Permission.MESSAGE_SEND);
     }
 
     private void sendHelpMessage(final CommandParameters commandParameters,
@@ -136,12 +136,12 @@ public class MessageListener {
             channel = commandParameters.getUserTextChannel();
         }
         channel.sendMessageEmbeds(
-                commandParameters.getEmbedBuilder()
-                        .setTitle("Invalid Command")
-                        .setDescription(description.toString())
-                        .setFooter("↓ Click Me!")
-                        .build()
-        )
+                        commandParameters.getEmbedBuilder()
+                                .setTitle("Invalid Command")
+                                .setDescription(description.toString())
+                                .setFooter("↓ Click Me!")
+                                .build()
+                )
                 .setActionRows(ActionRow.of(buttons.keySet()))
                 .queue(message ->
                         this.buttonReactionModule.addButtonReactionMessage(

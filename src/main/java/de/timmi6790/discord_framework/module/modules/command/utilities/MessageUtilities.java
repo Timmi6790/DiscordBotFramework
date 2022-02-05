@@ -49,7 +49,7 @@ public class MessageUtilities {
                 );
 
         // Only send it in the guild when we know that we have perms to do it
-        if (missingPermissions.contains(Permission.MESSAGE_WRITE)) {
+        if (missingPermissions.contains(Permission.MESSAGE_SEND)) {
             commandParameters.sendPrivateMessage(embedBuilder);
         } else {
             commandParameters.sendMessage(embedBuilder);

@@ -9,7 +9,7 @@ import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandC
 import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.Data;
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 
 public class CommandButtonAction implements ButtonAction {
     private final Class<? extends Command> commandClass;
@@ -27,7 +27,7 @@ public class CommandButtonAction implements ButtonAction {
     }
 
     @Override
-    public void onButtonClick(final ButtonClickEvent buttonClickEvent) {
+    public void onButtonClick(final ButtonInteractionEvent buttonClickEvent) {
         DiscordBot.getInstance().getModuleManager().getModuleOrThrow(CommandModule.class)
                 .getCommand(this.commandClass)
                 .ifPresent(command -> command.executeCommand(this.values.getCommandParameters()));

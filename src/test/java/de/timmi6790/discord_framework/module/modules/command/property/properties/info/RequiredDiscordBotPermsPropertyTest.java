@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RequiredDiscordBotPermsPropertyTest {
     @Test
     void getValue() {
-        final Permission[] permissions = new Permission[]{Permission.MESSAGE_WRITE, Permission.ADMINISTRATOR};
+        final Permission[] permissions = new Permission[]{Permission.MESSAGE_SEND, Permission.ADMINISTRATOR};
         final RequiredDiscordBotPermsProperty property = new RequiredDiscordBotPermsProperty(permissions);
         assertThat(property.getValue()).containsExactlyInAnyOrder(permissions);
     }

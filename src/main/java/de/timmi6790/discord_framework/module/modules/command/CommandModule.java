@@ -27,8 +27,8 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Emoji;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Button;
-import net.dv8tion.jda.api.interactions.components.ButtonStyle;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
@@ -132,10 +132,10 @@ public class CommandModule extends AbstractModule {
 
     protected String getCommandPermissionNode(final AbstractModule module, final Command command) {
         return String.format(
-                "%s.command.%s",
-                module.getModuleName(),
-                command.getName()
-        )
+                        "%s.command.%s",
+                        module.getModuleName(),
+                        command.getName()
+                )
                 .replace(' ', '_')
                 .toLowerCase();
     }

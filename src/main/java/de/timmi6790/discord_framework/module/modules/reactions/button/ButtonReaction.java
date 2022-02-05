@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.module.modules.reactions.button;
 import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
 import de.timmi6790.discord_framework.module.modules.reactions.common.BaseReaction;
 import lombok.*;
-import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.util.HashMap;
 import java.util.Map;

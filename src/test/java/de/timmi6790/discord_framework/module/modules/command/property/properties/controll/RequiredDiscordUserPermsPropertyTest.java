@@ -33,7 +33,7 @@ class RequiredDiscordUserPermsPropertyTest {
 
     @Test
     void getValue() {
-        final Permission[] permissions = new Permission[]{Permission.MESSAGE_WRITE, Permission.ADMINISTRATOR};
+        final Permission[] permissions = new Permission[]{Permission.MESSAGE_SEND, Permission.ADMINISTRATOR};
         final RequiredDiscordUserPermsProperty property = new RequiredDiscordUserPermsProperty(permissions);
         assertThat(property.getValue()).containsExactlyInAnyOrder(permissions);
     }

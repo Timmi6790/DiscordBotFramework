@@ -110,7 +110,7 @@ public class DiscordMessagesUtilities {
 
     public void sendButtonMessage(final CommandParameters commandParameters,
                                   final MultiEmbedBuilder embedBuilder,
-                                  final Map<net.dv8tion.jda.api.interactions.components.Button, ButtonAction> buttons) {
+                                  final Map<net.dv8tion.jda.api.interactions.components.buttons.Button, ButtonAction> buttons) {
         // TODO: Enforce the 5 button limit silently
         commandParameters.getLowestMessageChannel()
                 .sendMessageEmbeds(
