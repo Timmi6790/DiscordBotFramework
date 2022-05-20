@@ -23,7 +23,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco</sonar.coverage.jacoco.xmlReportPaths>
 
         <junit.version>5.8.2</junit.version>
-        <testcontainers.version>1.16.2</testcontainers.version>
+        <testcontainers.version>1.17.2</testcontainers.version>
         <mockito.version>4.1.0</mockito.version>
         <prometheus.version>0.11.0</prometheus.version>
         <log4j.version>2.15.0</log4j.version>
