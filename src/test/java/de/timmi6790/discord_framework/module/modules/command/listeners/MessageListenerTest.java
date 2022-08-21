@@ -9,8 +9,8 @@ import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -88,7 +88,7 @@ class MessageListenerTest {
         final User user = mock(User.class);
         when(user.getIdLong()).thenReturn(userId);
 
-        final MessageChannel channel = mock(MessageChannel.class);
+        final MessageChannelUnion channel = mock(MessageChannelUnion.class);
         when(channel.getIdLong()).thenReturn(1L);
 
         final Guild guild = mock(Guild.class);

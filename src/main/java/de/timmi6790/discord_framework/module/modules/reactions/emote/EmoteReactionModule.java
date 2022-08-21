@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 
@@ -67,7 +68,7 @@ public class EmoteReactionModule extends AbstractModule {
                                         @NonNull final EmoteReaction emoteReaction) {
         this.messageCache.put(message.getIdLong(), emoteReaction);
         for (final String emote : emoteReaction.getEmotes().keySet()) {
-            message.addReaction(emote).queue(
+            message.addReaction(Emoji.fromUnicode(emote)).queue(
                     null,
                     new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE, ErrorResponse.MISSING_PERMISSIONS)
             );

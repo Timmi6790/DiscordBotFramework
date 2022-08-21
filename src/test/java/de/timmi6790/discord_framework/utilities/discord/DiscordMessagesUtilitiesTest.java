@@ -4,7 +4,7 @@ import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.requests.restaction.CacheRestAction;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
@@ -69,7 +69,7 @@ class DiscordMessagesUtilitiesTest {
         final User user = mock(User.class);
         when(user.isBot()).thenReturn(false);
 
-        final RestAction<PrivateChannel> privateChannel = mock(RestAction.class);
+        final CacheRestAction<PrivateChannel> privateChannel = mock(CacheRestAction.class);
         when(user.openPrivateChannel()).thenReturn(privateChannel);
 
         assertThat(DiscordMessagesUtilities.sendPrivateMessage(user, new MultiEmbedBuilder().setDescription("A"))).isTrue();

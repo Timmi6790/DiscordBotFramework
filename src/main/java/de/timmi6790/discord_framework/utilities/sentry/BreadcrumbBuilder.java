@@ -88,14 +88,4 @@ public class BreadcrumbBuilder {
         this.breadcrumb.setLevel(level);
         return this;
     }
-
-    /**
-     * Sets the unknown fields, internal usage only
-     *
-     * @param unknown the unknown's map
-     */
-    public BreadcrumbBuilder acceptUnknownProperties(@Nullable final Map<String, Object> unknown) {
-        this.breadcrumb.acceptUnknownProperties(unknown);
-        return this;
-    }
 }

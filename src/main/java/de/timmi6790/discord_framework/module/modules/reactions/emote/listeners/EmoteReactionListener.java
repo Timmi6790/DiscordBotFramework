@@ -27,7 +27,7 @@ public class EmoteReactionListener {
             return;
         }
 
-        final EmoteAction emoteAction = emoteReaction.getEmotes().get(event.getReaction().getReactionEmote().getName());
+        final EmoteAction emoteAction = emoteReaction.getEmotes().get(event.getReaction().getEmoji().getName());
         if (emoteAction == null) {
             return;
         }
