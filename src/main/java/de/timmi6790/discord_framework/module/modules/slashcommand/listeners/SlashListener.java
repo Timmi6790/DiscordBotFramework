@@ -62,6 +62,9 @@ public class SlashListener {
         );
 
         this.commandModule.getCommand(event.getName())
-                .ifPresent(slashCommand -> slashCommand.executeCommand(commandParameters));
+                .ifPresent(slashCommand -> {
+                    event.deferReply().queue();
+                    slashCommand.executeCommand(commandParameters);
+                });
     }
 }

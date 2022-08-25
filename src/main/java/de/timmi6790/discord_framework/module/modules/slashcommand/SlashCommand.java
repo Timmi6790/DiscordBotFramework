@@ -3,8 +3,9 @@ package de.timmi6790.discord_framework.module.modules.slashcommand;
 import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
 import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.CommandProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.SlashCommandProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.utilities.SlashMessageUtilities;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
 import io.sentry.Sentry;
@@ -15,10 +16,8 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 @Log4j2
 public abstract class SlashCommand {
     private final String name;
-    private String[] aliases = new String[0];
     private final String description;
 
     private boolean requiresPermission = false;
@@ -34,58 +32,96 @@ public abstract class SlashCommand {
     private final List<Option<?>> options = new ArrayList<>();
 
     @Getter(AccessLevel.NONE)
-    private final Map<Class<? extends CommandProperty<?>>, CommandProperty<?>> properties = new HashMap<>();
+    private final Map<Class<? extends SlashCommandProperty<?>>, SlashCommandProperty<?>> properties = new HashMap<>();
+    private int permissionId = -1;
 
     public SlashCommand(final String name, final String description) {
         this.name = name;
         this.description = description;
     }
 
-    protected void setAliases(final String... aliases) {
-        this.aliases = aliases;
+    protected void addProperty(final SlashCommandProperty<?> property) {
+        final Class<? extends SlashCommandProperty<?>> propertyClass = (Class<? extends SlashCommandProperty<?>>) property.getClass();
+        this.properties.put(propertyClass, property);
+    }
+
+    protected void addProperties(final SlashCommandProperty<?>... properties) {
+        for (final SlashCommandProperty<?> property : properties) {
+            this.addProperty(property);
+        }
+    }
+
+    public <V extends SlashCommandProperty<?>> Optional<V> getProperty(final Class<V> propertyClass) {
+        final V property = (V) this.properties.get(propertyClass);
+        return Optional.ofNullable(property);
+    }
+
+    public Set<SlashCommandProperty<?>> getProperties() {
+        return new HashSet<>(this.properties.values());
+    }
+
+    public <V> V getPropertyValueOrDefault(final Class<? extends SlashCommandProperty<V>> propertyClass,
+                                           final Supplier<V> defaultSupplier) {
+        return this.getProperty(propertyClass)
+                .map(SlashCommandProperty::getValue)
+                .orElseGet(defaultSupplier);
     }
 
     protected void addOptions(final Option<?>... options) {
         this.options.addAll(List.of(options));
     }
 
+    public boolean hasDefaultPermission() {
+        return this.permissionId == -1;
+    }
+
+    public boolean canExecute(final SlashCommandParameters commandParameters) {
+        // Permission check
+        if (!commandParameters.getUserDb()
+                .getAllPermissionIds()
+                .contains(this.getPermissionId())) {
+            return false;
+        }
+
+        // Properties Check
+        for (final SlashCommandProperty<?> commandProperty : this.properties.values()) {
+            if (!commandProperty.onPermissionCheck(this, commandParameters)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     protected abstract CommandResult onCommand(SlashCommandParameters parameters);
 
     public void executeCommand(final SlashCommandParameters commandParameters) {
         // User ban check
-        /*
         if (commandParameters.getUserDb().isBanned()) {
-            MessageUtilities.sendUserBanMessage(commandParameters);
+            SlashMessageUtilities.sendUserBanMessage(commandParameters);
             return;
         }
 
         // Guild ban check
         if (commandParameters.getGuildDb().isBanned()) {
-            MessageUtilities.sendGuildBanMessage(commandParameters);
+            SlashMessageUtilities.sendGuildBanMessage(commandParameters);
             return;
         }
 
         // Command perms check
         if (!this.canExecute(commandParameters)) {
-            MessageUtilities.sendMissingPermissionsMessage(commandParameters);
+            SlashMessageUtilities.sendMissingPermissionsMessage(commandParameters);
             return;
         }
 
-         */
-
-        /*
         // Property checks
-        for (final CommandProperty<?> commandProperty : this.properties.values()) {
+        for (final SlashCommandProperty<?> commandProperty : this.properties.values()) {
             if (!commandProperty.onCommandExecution(this, commandParameters)) {
                 return;
             }
         }
-         */
 
         // Command pre event
         // this.getEventModule().executeEvent(new PreCommandExecutionEvent(this, commandParameters));
-
-        commandParameters.getEvent().deferReply().queue();
 
         CommandResult commandResult;
         final long startTime = System.nanoTime();

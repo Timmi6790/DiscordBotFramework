@@ -10,7 +10,9 @@ import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -28,6 +30,14 @@ public class SlashCommandParameters {
 
     public GuildDb getGuildDb() {
         return this.channelDb.getGuildDb();
+    }
+
+    public Member getGuildMember() {
+        return this.getGuildDb().getMember(this.getUser());
+    }
+
+    public boolean isGuildCommand() {
+        return this.event.isGuildCommand();
     }
 
     public boolean isFromGuild() {
@@ -80,10 +90,14 @@ public class SlashCommandParameters {
         return this.event.getJDA();
     }
 
+    public User getUser() {
+        return this.userDb.getUser();
+    }
+
     // Messages
     public MultiEmbedBuilder getEmbedBuilder() {
         return DiscordMessagesUtilities.getEmbedBuilder(
-                this.userDb.getUser(),
+                this.getUser(),
                 this.isFromGuild() ? this.event.getMember() : null
         );
     }
