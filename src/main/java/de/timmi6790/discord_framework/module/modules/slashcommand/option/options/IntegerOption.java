@@ -40,11 +40,15 @@ public class IntegerOption extends Option<Integer> {
         return optionData;
     }
 
-    public void setMax(final int max) {
+    public IntegerOption setMax(final int max) {
         this.max = max;
+
+        return this;
     }
 
-    public void setMin(final int min) {
+    public IntegerOption setMin(final int min) {
         this.min = min;
+
+        return this;
     }
 }
