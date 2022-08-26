@@ -9,7 +9,6 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.CommandOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
-import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
@@ -24,10 +23,9 @@ public class HelpSlashCommand extends SlashCommand {
     private final SlashCommandModule commandModule;
 
     public HelpSlashCommand(final SlashCommandModule commandModule) {
-        super("help", "Help in all needs");
+        super("help", "In need of help");
 
         this.commandModule = commandModule;
-
 
         final List<SlashCommand> commands = new ArrayList<>(commandModule.getCommands().values());
         commands.add(this);
@@ -41,7 +39,6 @@ public class HelpSlashCommand extends SlashCommand {
 
         this.addProperties(
                 new CategoryProperty("Info"),
-                new DescriptionProperty("In need of help"),
                 new SyntaxProperty("[command]"),
                 new AliasNamesProperty("h")
         );
@@ -91,7 +88,7 @@ public class HelpSlashCommand extends SlashCommand {
                             lines.add(String.format(
                                     "/%s %s",
                                     MarkdownUtil.monospace(command.getName() + syntax),
-                                    this.getDescription(command)
+                                    command.getDescription()
                             ));
                         }
 
@@ -106,10 +103,6 @@ public class HelpSlashCommand extends SlashCommand {
         );
 
         return BaseCommandResult.SUCCESSFUL;
-    }
-
-    private String getDescription(final SlashCommand command) {
-        return command.getPropertyValueOrDefault(DescriptionProperty.class, () -> "");
     }
 
     private String getSyntax(final SlashCommand command) {

@@ -19,7 +19,6 @@ public class CommandOption extends Option<SlashCommand> {
 
     @Override
     public String convertToOption(final SlashCommand option) {
-        System.out.println("Map: " + option.getName());
         return option.getName();
     }
 

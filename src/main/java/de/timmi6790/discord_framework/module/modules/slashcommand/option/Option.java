@@ -1,9 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.option;
 
 import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -14,12 +12,14 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 @Getter
 @Setter
+@ToString
+@EqualsAndHashCode
 public abstract class Option<T> implements TypeConverter<T> {
     private final String name;
     private final String description;
     private final OptionType discordType;
     private final List<String> options = new ArrayList<>();
-    private boolean required = true;
+    private boolean required = false;
 
     public abstract String convertToOption(T option);
 
@@ -27,7 +27,6 @@ public abstract class Option<T> implements TypeConverter<T> {
     public abstract Optional<T> convertValue(OptionMapping mapping);
 
     public Option<T> addOptions(final String... options) {
-        System.out.println("Add: " + Arrays.toString(options));
         this.options.addAll(List.of(options));
         return this;
     }
@@ -37,7 +36,6 @@ public abstract class Option<T> implements TypeConverter<T> {
     }
 
     public Option<T> addTypeOptions(final Collection<T> options) {
-        System.out.println("Add types: " + options.size());
         for (final T option : options) {
             final String convertedOption = this.convertToOption(option);
             this.addOptions(convertedOption);
@@ -72,10 +70,9 @@ public abstract class Option<T> implements TypeConverter<T> {
 
     public OptionData build() {
         final OptionData optionData = new OptionData(this.discordType, this.name, this.description, this.required);
-        // TODO: Does not work with other natives types than string
-        System.out.println("Options: " + this.options);
-        for (final String option : this.options) {
-            System.out.println("Adddddddddddddddddddddddddddddddddddddddd: " + this.name + " " + option);
+
+        for (int index = 0; Math.min(this.options.size(), 25) > index; index++) {
+            final String option = this.options.get(index);
             optionData.addChoice(option, option);
         }
 

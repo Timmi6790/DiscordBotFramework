@@ -10,13 +10,17 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.commands.HelpS
 import de.timmi6790.discord_framework.module.modules.slashcommand.listeners.MetricListener;
 import de.timmi6790.discord_framework.module.modules.slashcommand.listeners.SlashListener;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.AllowPrivateMessageProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.RequiredDiscordUserPermsProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -117,15 +121,33 @@ public class SlashCommandModule extends AbstractModule {
                 continue;
             }
 
-            final SlashCommandData slashCommandData = Commands.slash(slashCommand.getName(), slashCommand.getDescription());
+            final SlashCommandData slashCommandData = Commands.slash(slashCommand.getName().toLowerCase(Locale.ENGLISH), slashCommand.getDescription().isEmpty() ? "TEST COMMAND" : slashCommand.getDescription());
 
-            final List<OptionData> options = new ArrayList<>(slashCommand.getOptions().size());
-            System.out.println("Build options: " + slashCommand.getOptions().size());
-            for (final Option<?> option : slashCommand.getOptions()) {
-                System.out.println("Add: " + option.build());
+            final List<Option<?>> slashOptions = new ArrayList<>(slashCommand.getOptions());
+            slashOptions.sort(Comparator.comparingInt(slashOption -> {
+                final int index = slashOptions.indexOf(slashOption);
+                // Required options always need to be in front of none required ones
+                if (slashOption.isRequired()) {
+                    return index;
+                }
+                return index + 1000;
+            }));
+
+            final List<OptionData> options = new ArrayList<>(slashOptions.size());
+            for (final Option<?> option : slashOptions) {
                 options.add(option.build());
             }
             slashCommandData.addOptions(options);
+
+            final boolean allowPrivateOpt = slashCommand.getPropertyValueOrDefault(AllowPrivateMessageProperty.class, () -> true);
+            if (!allowPrivateOpt) {
+                slashCommandData.setGuildOnly(true);
+            }
+
+            final EnumSet<Permission> requiredPermissions = slashCommand.getPropertyValueOrDefault(RequiredDiscordUserPermsProperty.class, () -> EnumSet.noneOf(Permission.class));
+            if (!requiredPermissions.isEmpty()) {
+                slashCommandData.setDefaultPermissions(DefaultMemberPermissions.enabledFor(requiredPermissions));
+            }
 
             updateAction.addCommands(slashCommandData);
         }
@@ -162,11 +184,11 @@ public class SlashCommandModule extends AbstractModule {
                 command.getName()
         );
 
-        this.commands.put(command.getName(), command);
+        this.commands.put(command.getName().toLowerCase(Locale.ENGLISH), command);
         for (final String aliasName : command.getPropertyValueOrDefault(AliasNamesProperty.class, () -> new String[0])) {
-            final SlashCommand existingAliasName = this.commands.get(aliasName);
+            final SlashCommand existingAliasName = this.commands.get(aliasName.toLowerCase(Locale.ENGLISH));
             if (existingAliasName == null) {
-                this.commands.put(aliasName, command);
+                this.commands.put(aliasName.toLowerCase(Locale.ENGLISH), command);
             } else {
                 log.warn(
                         "[{}] Tried to register an already existing alias name {} for {} that is already used for the {} command",
@@ -180,7 +202,7 @@ public class SlashCommandModule extends AbstractModule {
     }
 
     public Optional<SlashCommand> getCommand(final String commandName) {
-        return Optional.ofNullable(this.commands.get(commandName));
+        return Optional.ofNullable(this.commands.get(commandName.toLowerCase(Locale.ENGLISH)));
     }
 
     public Map<String, SlashCommand> getCommands() {
