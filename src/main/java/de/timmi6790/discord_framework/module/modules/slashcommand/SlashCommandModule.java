@@ -17,6 +17,7 @@ import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Activity;
@@ -24,10 +25,12 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 @EqualsAndHashCode(callSuper = true)
 @Log4j2
@@ -124,14 +127,7 @@ public class SlashCommandModule extends AbstractModule {
             final SlashCommandData slashCommandData = Commands.slash(slashCommand.getName().toLowerCase(Locale.ENGLISH), slashCommand.getDescription().isEmpty() ? "TEST COMMAND" : slashCommand.getDescription());
 
             final List<Option<?>> slashOptions = new ArrayList<>(slashCommand.getOptions());
-            slashOptions.sort(Comparator.comparingInt(slashOption -> {
-                final int index = slashOptions.indexOf(slashOption);
-                // Required options always need to be in front of none required ones
-                if (slashOption.isRequired()) {
-                    return index;
-                }
-                return index + 1000;
-            }));
+            slashOptions.sort(new OptionComparator(slashOptions));
 
             final List<OptionData> options = new ArrayList<>(slashOptions.size());
             for (final Option<?> option : slashOptions) {
@@ -147,6 +143,29 @@ public class SlashCommandModule extends AbstractModule {
             final EnumSet<Permission> requiredPermissions = slashCommand.getPropertyValueOrDefault(RequiredDiscordUserPermsProperty.class, () -> EnumSet.noneOf(Permission.class));
             if (!requiredPermissions.isEmpty()) {
                 slashCommandData.setDefaultPermissions(DefaultMemberPermissions.enabledFor(requiredPermissions));
+            }
+
+            // Sub commands
+            if (slashCommand instanceof final SlashCommandGroup slashCommandGroup) {
+                final List<SubcommandData> subcommands = new ArrayList<>(slashCommandGroup.getCommands().size());
+                for (final SlashCommand subCommand : slashCommandGroup.getCommands().values()) {
+                    final SubcommandData subcommandData = new SubcommandData(subCommand.getName(), subCommand.getDescription());
+
+                    final List<Option<?>> subSlashOptions = new ArrayList<>(subCommand.getOptions());
+                    subSlashOptions.sort(new OptionComparator(subSlashOptions));
+
+                    final List<OptionData> subOptions = new ArrayList<>(subSlashOptions.size());
+                    for (final Option<?> option : subSlashOptions) {
+                        subOptions.add(option.build());
+                    }
+                    subcommandData.addOptions(subOptions);
+
+                    subcommands.add(subcommandData);
+                }
+
+                if (!subcommands.isEmpty()) {
+                    slashCommandData.addSubcommands(subcommands);
+                }
             }
 
             updateAction.addCommands(slashCommandData);
@@ -219,5 +238,24 @@ public class SlashCommandModule extends AbstractModule {
         }
 
         return filteredCommands;
+    }
+
+    @RequiredArgsConstructor
+    private static class OptionComparator implements Comparator<Option<?>> {
+        private final List<Option<?>> list;
+
+        private final ToIntFunction<Option<?>> toIntFunction = value -> {
+            final int index = OptionComparator.this.list.indexOf(value);
+            // Required options always need to be in front of none required ones
+            if (value.isRequired()) {
+                return index;
+            }
+            return index + 1000;
+        };
+
+        @Override
+        public int compare(final Option<?> o1, final Option<?> o2) {
+            return Integer.compare(this.toIntFunction.applyAsInt(o1), this.toIntFunction.applyAsInt(o2));
+        }
     }
 }

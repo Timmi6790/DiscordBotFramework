@@ -63,15 +63,13 @@ public class SlashCommandParameters {
     }
 
     public <T> T getOptionOrThrow(final Option<T> option) {
-        final Optional<OptionMapping> mappingOpt = this.getOptionalMapping(option.getName());
-        if (mappingOpt.isPresent()) {
-            return mappingOpt
-                    .map(option::convertValueThrow)
-                    .orElseThrow(CommandReturnException::new);
-        }
+        return this.getOption(option)
+                .orElseThrow(CommandReturnException::new);
+    }
 
-        // Send message
-        throw new CommandReturnException();
+    public Optional<String> getOptionAsString(final Option<?> option) {
+        return this.getOptionalMapping(option.getName())
+                .map(OptionMapping::getAsString);
     }
 
     public InteractionHook getHook() {
