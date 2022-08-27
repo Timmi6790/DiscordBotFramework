@@ -59,15 +59,15 @@ public class SettingModule extends AbstractModule {
     }
 
     public void registerSetting(final AbstractModule module, final AbstractSetting<?> setting) {
-        setting.setInternalName(this.generateInternalName(module, "setting", setting.getStatName()))
+        setting.setInternalName(this.generateInternalName(module, "setting", setting.getName()))
                 .setDatabaseId(this.getSettingIdOrCreate(setting.getInternalName()))
                 .setPermissionId(this.permissionsModule.addPermission(setting.getInternalName()));
 
         this.settings.put(setting.getDatabaseId(), setting);
-        this.nameIdMatching.put(setting.getStatName(), setting.getDatabaseId());
+        this.nameIdMatching.put(setting.getName(), setting.getDatabaseId());
 
         for (final String aliasName : setting.getAliasNames()) {
-            this.aliasNameMatcher.put(aliasName, setting.getStatName());
+            this.aliasNameMatcher.put(aliasName, setting.getName());
         }
     }
 

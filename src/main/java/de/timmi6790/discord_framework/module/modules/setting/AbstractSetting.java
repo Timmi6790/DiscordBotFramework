@@ -1,8 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.setting;
 
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
-import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
 import lombok.Data;
 import lombok.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -14,7 +13,7 @@ import java.util.StringJoiner;
 
 @Data
 public abstract class AbstractSetting<T> {
-    private final String statName;
+    private final String name;
     private final String description;
     private final T defaultValue;
     private final String[] aliasNames;
@@ -22,11 +21,11 @@ public abstract class AbstractSetting<T> {
     private int databaseId;
     private int permissionId;
 
-    protected AbstractSetting(@NonNull final String statName,
+    protected AbstractSetting(@NonNull final String name,
                               @NonNull final String description,
                               @NonNull final T defaultValue,
                               @NonNull final String... aliasNames) {
-        this.statName = statName;
+        this.name = name;
         this.description = description;
         this.defaultValue = defaultValue;
         this.aliasNames = aliasNames;
@@ -36,15 +35,15 @@ public abstract class AbstractSetting<T> {
 
     public abstract T fromDatabaseValue(String value);
 
-    protected abstract Optional<T> parseNewValue(CommandParameters commandParameters, String userInput);
+    protected abstract Optional<T> parseNewValue(SlashCommandParameters commandParameters, String userInput);
 
-    protected abstract List<T> possibleValues(CommandParameters commandParameters, String userInput);
+    protected abstract List<T> possibleValues(SlashCommandParameters commandParameters, String userInput);
 
     public String getDatabaseDefaultValue() {
         return this.toDatabaseValue(this.getDefaultValue());
     }
 
-    public void handleCommand(final CommandParameters commandParameters, final String userInput) {
+    public void handleCommand(final SlashCommandParameters commandParameters, final String userInput) {
         final Optional<T> parsedValue = this.parseNewValue(commandParameters, userInput);
         if (parsedValue.isPresent()) {
             final T oldValue = commandParameters.getUserDb().getSettingOrDefault(this, this.getDefaultValue());
@@ -68,7 +67,7 @@ public abstract class AbstractSetting<T> {
         userDb.setSetting(this, newValue);
     }
 
-    protected void sendInvalidInputMessage(final CommandParameters commandParameters,
+    protected void sendInvalidInputMessage(final SlashCommandParameters commandParameters,
                                            final String userInput,
                                            final Iterable<T> possibleValues) {
         final StringJoiner possibleValueFormatted = new StringJoiner("\n");
@@ -76,34 +75,31 @@ public abstract class AbstractSetting<T> {
             possibleValueFormatted.add(MarkdownUtil.monospace(String.valueOf(possibleValue)));
         }
 
-        DiscordMessagesUtilities.sendMessageTimed(
-                commandParameters.getLowestMessageChannel(),
+        commandParameters.sendMessage(
                 commandParameters.getEmbedBuilder()
                         .setTitle("Can't change setting")
                         .setDescription(
                                 "%s it not a valid value.\nPlease use one of the following values:\n%s",
                                 MarkdownUtil.monospace(userInput),
                                 possibleValueFormatted.toString()
-                        ),
-                300
+                        )
         );
+
     }
 
-    protected void sendChangedValueMessage(final CommandParameters commandParameters,
+    protected void sendChangedValueMessage(final SlashCommandParameters commandParameters,
                                            final T oldValue,
                                            final T newValue) {
         final String oldValueString = String.valueOf(oldValue);
         final String oldValueFormatted = oldValueString.isEmpty() ? EmbedBuilder.ZERO_WIDTH_SPACE : oldValueString;
-        DiscordMessagesUtilities.sendMessageTimed(
-                commandParameters.getLowestMessageChannel(),
+        commandParameters.sendMessage(
                 commandParameters.getEmbedBuilder()
                         .setTitle("Changed Setting")
                         .setDescription(
                                 "Changed value from %s to %s.",
                                 MarkdownUtil.monospace(oldValueFormatted),
                                 MarkdownUtil.monospace(String.valueOf(newValue))
-                        ),
-                300
+                        )
         );
     }
 }
