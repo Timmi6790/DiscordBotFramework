@@ -1,22 +1,25 @@
 package de.timmi6790.discord_framework.module.modules.user.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.Command;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.AliasNamesProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
+import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.StringOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
 import java.util.List;
@@ -25,42 +28,56 @@ import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public class SettingsCommand extends Command {
+public class SettingsCommand extends SlashCommand {
+    private static final Option<String> NEW_VALUE_OPTION = new StringOption("new_value", "New Value");
+
     private final SettingModule settingModule;
 
+    private final Option<AbstractSetting<?>> settingOption;
+
     public SettingsCommand(final SettingModule settingModule,
-                           final CommandModule commandModule) {
-        super("settings", commandModule);
+                           final SlashCommandModule commandModule) {
+        super("settings", "Change your settings");
 
         this.addProperties(
                 new CategoryProperty("Info"),
-                new DescriptionProperty("Settings"),
                 new SyntaxProperty("[setting] [newValue]"),
                 new AliasNamesProperty("st", "setting")
         );
 
         this.settingModule = settingModule;
+
+        this.settingOption = new SettingOption(settingModule);
+
+        this.addOptions(
+                this.settingOption,
+                NEW_VALUE_OPTION
+        );
     }
 
-    private AbstractSetting<?> getSettingThrow(final CommandParameters commandParameters, final int argPos) {
-        final String settingName = commandParameters.getArgs()[argPos];
-
-        final Optional<AbstractSetting<?>> settingOpt = this.getSettingModule().getSetting(settingName);
+    private Optional<AbstractSetting<?>> getSettingThrow(final SlashCommandParameters commandParameters) {
+        final Optional<AbstractSetting<?>> settingOpt = commandParameters.getOption(this.settingOption);
         if (settingOpt.isPresent()) {
-            return settingOpt.get();
+            return settingOpt;
+        }
+
+        final Optional<String> settingNameOpt = commandParameters.getOptionAsString(this.settingOption);
+        if (settingNameOpt.isEmpty()) {
+            return Optional.empty();
         }
 
         final List<AbstractSetting<?>> similarSettings = DataUtilities.getSimilarityList(
-                settingName,
+                settingNameOpt.get(),
                 commandParameters.getUserDb().getSettings().keySet(),
-                AbstractSetting::getStatName,
+                AbstractSetting::getName,
                 0.6,
                 3
         );
         if (!similarSettings.isEmpty() && commandParameters.getUserDb().hasAutoCorrection()) {
-            return similarSettings.get(0);
+            return Optional.ofNullable(similarSettings.get(0));
         }
 
+        /*
         this.sendArgumentCorrectionMessage(
                 commandParameters,
                 settingName,
@@ -69,34 +86,34 @@ public class SettingsCommand extends Command {
                 this.getClass(),
                 new String[0],
                 similarSettings,
-                AbstractSetting::getStatName
+                AbstractSetting::getName
         );
+         */
         throw new CommandReturnException();
     }
 
     @Override
-    protected CommandResult onCommand(final CommandParameters commandParameters) {
-        final int argsLength = commandParameters.getArgs().length;
+    protected CommandResult onCommand(final SlashCommandParameters commandParameters) {
+        final Optional<AbstractSetting<?>> settingOpt = this.getSettingThrow(commandParameters);
 
         // All current settings
-        if (argsLength == 0) {
+        if (settingOpt.isEmpty()) {
             return this.showCurrentSettings(commandParameters);
         }
 
-        final AbstractSetting<?> setting = this.getSettingThrow(commandParameters, 0);
+        final AbstractSetting<?> setting = settingOpt.get();
+        final Optional<String> newValueOpt = commandParameters.getOption(NEW_VALUE_OPTION);
 
         // setting info
-        if (argsLength == 1) {
+        if (newValueOpt.isEmpty()) {
             return this.showSettingInfo(commandParameters, setting);
         }
 
         // Change value
-        final String raw = commandParameters.getRawArgs();
-        final int firstSpace = raw.indexOf(' ');
-        return this.changeSetting(commandParameters, setting, raw.substring(Math.min(firstSpace + 1, raw.length())));
+        return this.changeSetting(commandParameters, setting, newValueOpt.get());
     }
 
-    private CommandResult showCurrentSettings(final CommandParameters commandParameters) {
+    private CommandResult showCurrentSettings(final SlashCommandParameters commandParameters) {
         final MultiEmbedBuilder embedBuilder = commandParameters.getEmbedBuilder()
                 .setTitle("Settings");
 
@@ -108,7 +125,7 @@ public class SettingsCommand extends Command {
                 final String value = String.valueOf(entry.getValue());
 
                 embedBuilder.addField(
-                        entry.getKey().getStatName(),
+                        entry.getKey().getName(),
                         String.format(
                                 "%s%nValue: %s",
                                 entry.getKey().getDescription(),
@@ -118,8 +135,7 @@ public class SettingsCommand extends Command {
                 );
             }
             embedBuilder.setFooterFormat(
-                    "Tip: You can change the setting with %s%s <statName> <newValue>",
-                    this.getCommandModule().getMainCommand(),
+                    "Tip: You can change the setting with /%s <statName> <newValue>",
                     this.getName()
             );
         }
@@ -128,28 +144,49 @@ public class SettingsCommand extends Command {
         return BaseCommandResult.SUCCESSFUL;
     }
 
-    private CommandResult showSettingInfo(final CommandParameters commandParameters, final AbstractSetting<?> setting) {
+    private CommandResult showSettingInfo(final SlashCommandParameters commandParameters, final AbstractSetting<?> setting) {
         commandParameters.sendMessage(
                 commandParameters.getEmbedBuilder()
-                        .setTitle("Setting - " + setting.getStatName())
+                        .setTitle("Setting - " + setting.getName())
                         .addField("Description", setting.getDescription())
                         .addField("Alias names", String.join(", ", setting.getAliasNames()))
                         .addField("Default value", String.valueOf(setting.getDefaultValue()))
                         .setFooterFormat(
-                                "Tip: You can change the setting with %s%s %s <newValue>",
-                                this.getCommandModule().getMainCommand(),
+                                "Tip: You can change the setting with /%s %s <newValue>",
                                 this.getName(),
-                                setting.getStatName()
+                                setting.getName()
                         )
         );
 
         return BaseCommandResult.SUCCESSFUL;
     }
 
-    private CommandResult changeSetting(final CommandParameters commandParameters,
+    private CommandResult changeSetting(final SlashCommandParameters commandParameters,
                                         final AbstractSetting<?> setting,
                                         final String newValue) {
         setting.handleCommand(commandParameters, newValue);
         return BaseCommandResult.SUCCESSFUL;
+    }
+
+    private static class SettingOption extends Option<AbstractSetting<?>> {
+        private final SettingModule module;
+
+        private SettingOption(final SettingModule module) {
+            super("setting", "Setting", OptionType.STRING);
+
+            this.module = module;
+
+            this.addTypeOptions(module.getSettings().values());
+        }
+
+        @Override
+        public String convertToOption(final AbstractSetting<?> option) {
+            return option.getName();
+        }
+
+        @Override
+        public Optional<AbstractSetting<?>> convertValue(final OptionMapping mapping) {
+            return this.module.getSetting(mapping.getAsString());
+        }
     }
 }

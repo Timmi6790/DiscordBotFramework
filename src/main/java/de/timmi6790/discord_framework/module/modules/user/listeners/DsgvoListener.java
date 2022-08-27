@@ -82,7 +82,7 @@ public class DsgvoListener {
             final Map<String, Object> parsedSettings = Maps.newHashMapWithExpectedSize(settingsMap.size());
             for (final Map.Entry<AbstractSetting<?>, String> entry : settingsMap.entrySet()) {
                 parsedSettings.put(
-                        entry.getKey().getStatName(),
+                        entry.getKey().getName(),
                         entry.getKey().fromDatabaseValue(entry.getValue())
                 );
             }

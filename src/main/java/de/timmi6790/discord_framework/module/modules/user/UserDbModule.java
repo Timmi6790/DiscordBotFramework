@@ -13,6 +13,7 @@ import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import de.timmi6790.discord_framework.module.modules.user.commands.SettingsCommand;
 import de.timmi6790.discord_framework.module.modules.user.commands.UserCommand;
@@ -90,15 +91,15 @@ public class UserDbModule extends AbstractModule {
                 this.getModule(StatModule.class).orElse(null)
         );
 
-        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        final SlashCommandModule commandModule = this.getModuleOrThrow(SlashCommandModule.class);
+
         commandModule
                 .registerCommands(
                         this,
                         new UserCommand(
                                 this,
-                                this.getModuleOrThrow(RankModule.class),
-                                this.getModule(SettingModule.class).orElse(null),
-                                commandModule
+                                this.getModuleOrThrow(PermissionsModule.class),
+                                this.getModuleOrThrow(RankModule.class)
                         )
                 );
 
