@@ -1,15 +1,15 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.CommandOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -20,17 +20,13 @@ public class HelpSlashCommand extends SlashCommand {
 
     private final Option<SlashCommand> commandOption;
 
-    private final SlashCommandModule commandModule;
+    public HelpSlashCommand(final SlashCommandModule module) {
+        super(module, "help", "In need of help");
 
-    public HelpSlashCommand(final SlashCommandModule commandModule) {
-        super("help", "In need of help");
-
-        this.commandModule = commandModule;
-
-        final List<SlashCommand> commands = new ArrayList<>(commandModule.getCommands().values());
+        final List<SlashCommand> commands = new ArrayList<>(this.getModule().getCommands().values());
         commands.add(this);
 
-        this.commandOption = new CommandOption(commandModule, "command", "Command name")
+        this.commandOption = new CommandOption(this.getModule(), "command", "Command name")
                 .addTypeOptions(commands)
                 .setRequired(false);
         this.addOptions(
@@ -70,7 +66,7 @@ public class HelpSlashCommand extends SlashCommand {
 
                     // Group all commands via their category
                     final Map<String, List<SlashCommand>> sortedCommands = new HashMap<>();
-                    for (final SlashCommand command : this.commandModule.getCommands(command -> command.canExecute(parameters))) {
+                    for (final SlashCommand command : this.getModule().getCommands(command -> command.canExecute(parameters))) {
                         sortedCommands.computeIfAbsent(
                                 command.getPropertyValueOrDefault(CategoryProperty.class, () -> DEFAULT_CATEGORY),
                                 k -> new ArrayList<>()

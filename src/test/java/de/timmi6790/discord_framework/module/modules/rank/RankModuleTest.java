@@ -4,10 +4,10 @@ import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,7 +38,7 @@ class RankModuleTest {
     static void setup() {
         final ModuleManager moduleManager = mock(ModuleManager.class);
 
-        final CommandModule commandModule = spy(new CommandModule());
+        final SlashCommandModule commandModule = spy(new SlashCommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
 
         final EventModule eventModule = mock(EventModule.class);
@@ -48,7 +48,7 @@ class RankModuleTest {
 
         when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionsModule);
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(SlashCommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
         doReturn(achievementModule).when(moduleManager).getModuleOrThrow(AchievementModule.class);
 

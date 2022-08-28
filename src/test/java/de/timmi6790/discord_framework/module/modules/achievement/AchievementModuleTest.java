@@ -2,10 +2,10 @@ package de.timmi6790.discord_framework.module.modules.achievement;
 
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.module.ModuleManager;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,9 +32,9 @@ class AchievementModuleTest {
         doReturn(permissionsModule).when(moduleManager).getModuleOrThrow(PermissionsModule.class);
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
 
-        final CommandModule commandModule = mock(CommandModule.class);
+        final SlashCommandModule commandModule = mock(SlashCommandModule.class);
         when(commandModule.getModuleManager()).thenReturn(moduleManager);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(SlashCommandModule.class)).thenReturn(commandModule);
 
         final EventModule eventModule = mock(EventModule.class);
         when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);

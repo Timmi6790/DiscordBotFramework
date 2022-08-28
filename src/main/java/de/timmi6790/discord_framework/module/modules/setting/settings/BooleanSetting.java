@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.setting.settings;
 
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 
 import java.util.Arrays;
 import java.util.List;

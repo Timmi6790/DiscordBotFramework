@@ -2,10 +2,11 @@ package de.timmi6790.discord_framework.module.modules.slashcommand.listeners;
 
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDb;
 import de.timmi6790.discord_framework.module.modules.channel.ChannelDbModule;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandCause;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.cause.BaseCommandCause;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.EventSlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.SneakyThrows;
@@ -53,7 +54,7 @@ public class SlashListener {
                 }
         );
 
-        final SlashCommandParameters commandParameters = new SlashCommandParameters(
+        final SlashCommandParameters commandParameters = new EventSlashCommandParameters(
                 event,
                 BaseCommandCause.MESSAGE,
                 this.commandModule,

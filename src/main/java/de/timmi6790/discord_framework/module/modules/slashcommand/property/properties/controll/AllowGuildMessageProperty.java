@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll;
 
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.SlashCommandProperty;
 import lombok.Data;
 

@@ -1,8 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.user.commands;
 
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
@@ -10,11 +8,14 @@ import de.timmi6790.discord_framework.module.modules.rank.options.RankOption;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandGroup;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.DiscordUserOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.EnumOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.StringOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
@@ -24,7 +25,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil;
 import java.util.Map;
 import java.util.StringJoiner;
 
-import static de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult.FAIL;
+import static de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult.FAIL;
 
 public class UserCommand extends SlashCommandGroup {
     private static final String ERROR_TITLE = "Error";
@@ -33,19 +34,19 @@ public class UserCommand extends SlashCommandGroup {
 
     private final UserDbModule userDbModule;
 
-    public UserCommand(final UserDbModule userDbModule, final PermissionsModule permissionsModule, final RankModule rankModule) {
-        super("user", "User control command");
+    public UserCommand(final SlashCommandModule slashCommandModule, final UserDbModule userDbModule, final PermissionsModule permissionsModule, final RankModule rankModule) {
+        super(slashCommandModule, "user", "User control command");
 
         this.userDbModule = userDbModule;
 
         this.addSubcommands(
-                new InfoCommand(permissionsModule),
-                new InvalidateCommand(),
-                new SetPrimaryRankCommand(rankModule),
-                new UnBanCommand(),
-                new BanCommand(),
-                new RankCommand(rankModule),
-                new PermsCommand(permissionsModule)
+                new InfoCommand(slashCommandModule, permissionsModule),
+                new InvalidateCommand(slashCommandModule),
+                new SetPrimaryRankCommand(slashCommandModule, rankModule),
+                new UnBanCommand(slashCommandModule),
+                new BanCommand(slashCommandModule),
+                new RankCommand(slashCommandModule, rankModule),
+                new PermsCommand(slashCommandModule, permissionsModule)
         );
     }
 
@@ -57,8 +58,8 @@ public class UserCommand extends SlashCommandGroup {
     private class InfoCommand extends SlashCommand {
         private final PermissionsModule permissionsModule;
 
-        public InfoCommand(final PermissionsModule permissionsModule) {
-            super("info", "Info");
+        public InfoCommand(final SlashCommandModule slashCommandModule, final PermissionsModule permissionsModule) {
+            super(slashCommandModule, "info", "Info");
 
             this.permissionsModule = permissionsModule;
 
@@ -118,8 +119,8 @@ public class UserCommand extends SlashCommandGroup {
     }
 
     private class InvalidateCommand extends SlashCommand {
-        public InvalidateCommand() {
-            super("invalidate", "Invalidate cache");
+        public InvalidateCommand(final SlashCommandModule slashCommandModule) {
+            super(slashCommandModule, "invalidate", "Invalidate cache");
 
             this.addOptions(
                     DISCORD_USER_OPTION_REQUIRED
@@ -144,8 +145,8 @@ public class UserCommand extends SlashCommandGroup {
     private class SetPrimaryRankCommand extends SlashCommand {
         private final Option<Rank> primaryRankOption;
 
-        public SetPrimaryRankCommand(final RankModule rankModule) {
-            super("primary_rank", "Set Primary Rank");
+        public SetPrimaryRankCommand(final SlashCommandModule slashCommandModule, final RankModule rankModule) {
+            super(slashCommandModule, "primary_rank", "Set Primary Rank");
 
             this.primaryRankOption = new RankOption("rank", "New Primary Rank", rankModule).setRequired(true);
 
@@ -181,8 +182,8 @@ public class UserCommand extends SlashCommandGroup {
     }
 
     private class UnBanCommand extends SlashCommand {
-        public UnBanCommand() {
-            super("unban", "Unban a player");
+        public UnBanCommand(final SlashCommandModule slashCommandModule) {
+            super(slashCommandModule, "unban", "Unban a player");
 
             this.addOptions(
                     DISCORD_USER_OPTION_REQUIRED
@@ -213,8 +214,8 @@ public class UserCommand extends SlashCommandGroup {
     }
 
     private class BanCommand extends SlashCommand {
-        public BanCommand() {
-            super("ban", "Bans a player");
+        public BanCommand(final SlashCommandModule slashCommandModule) {
+            super(slashCommandModule, "ban", "Bans a player");
 
             this.addOptions(
                     DISCORD_USER_OPTION_REQUIRED
@@ -249,8 +250,8 @@ public class UserCommand extends SlashCommandGroup {
         private final Option<Rank> rankOption;
         private final Option<Arguments> argumentsOption;
 
-        public RankCommand(final RankModule rankModule) {
-            super("rank", "Rank Control");
+        public RankCommand(final SlashCommandModule slashCommandModule, final RankModule rankModule) {
+            super(slashCommandModule, "rank", "Rank Control");
 
             this.rankOption = new RankOption("rank", "Rank", rankModule).setRequired(true);
             this.argumentsOption = new EnumOption<>(Arguments.class, "mode", "Control mode").setRequired(true);
@@ -325,8 +326,8 @@ public class UserCommand extends SlashCommandGroup {
         private final Option<Arguments> argumentsOption;
         private final Option<String> permissionIdOption;
 
-        public PermsCommand(final PermissionsModule permissionsModule) {
-            super("perms", "Permission Control");
+        public PermsCommand(final SlashCommandModule slashCommandModule, final PermissionsModule permissionsModule) {
+            super(slashCommandModule, "perms", "Permission Control");
 
             this.permissionsModule = permissionsModule;
 

@@ -1,18 +1,18 @@
 package de.timmi6790.discord_framework.module.modules.user.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.StringOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import de.timmi6790.discord_framework.utilities.DataUtilities;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.EqualsAndHashCode;
@@ -36,8 +36,8 @@ public class SettingsCommand extends SlashCommand {
     private final Option<AbstractSetting<?>> settingOption;
 
     public SettingsCommand(final SettingModule settingModule,
-                           final SlashCommandModule commandModule) {
-        super("settings", "Change your settings");
+                           final SlashCommandModule module) {
+        super(module, "settings", "Change your settings");
 
         this.addProperties(
                 new CategoryProperty("Info"),

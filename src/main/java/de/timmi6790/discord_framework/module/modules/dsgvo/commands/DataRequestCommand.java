@@ -1,16 +1,13 @@
 package de.timmi6790.discord_framework.module.modules.dsgvo.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.Command;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.controll.CooldownProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.dsgvo.DsgvoModule;
-import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
-import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.CooldownProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -23,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  */
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public class DataRequestCommand extends Command {
+public class DataRequestCommand extends SlashCommand {
     /**
      * The Dsgvo module.
      */
@@ -35,12 +32,11 @@ public class DataRequestCommand extends Command {
      * Instantiates a new Data request command.
      */
     public DataRequestCommand(final DsgvoModule dsgvoModule,
-                              final CommandModule commandModule) {
-        super("giveMeMyData", commandModule);
+                              final SlashCommandModule module) {
+        super(module, "giveMeMyData", "Get all my data!");
 
         this.addProperties(
                 new CategoryProperty("Info"),
-                new DescriptionProperty("Get all my data!"),
                 new CooldownProperty(1, TimeUnit.DAYS)
         );
 
@@ -48,7 +44,7 @@ public class DataRequestCommand extends Command {
     }
 
     @Override
-    protected CommandResult onCommand(final CommandParameters commandParameters) {
+    protected CommandResult onCommand(final SlashCommandParameters commandParameters) {
         final String userData = this.dsgvoModule.getUserData(commandParameters.getUserDb());
         commandParameters.getUserTextChannel().sendFile(
                 userData.getBytes(StandardCharsets.UTF_8),
@@ -57,12 +53,10 @@ public class DataRequestCommand extends Command {
 
         // Inform the user that his data is in his dms
         if (commandParameters.isGuildCommand()) {
-            DiscordMessagesUtilities.sendMessageTimed(
-                    commandParameters.getGuildTextChannel(),
-                    new MultiEmbedBuilder()
+            commandParameters.sendMessage(
+                    commandParameters.getEmbedBuilder()
                             .setTitle("Your Personal Data")
-                            .setDescription("Check your private messages with the bot to access your personal data."),
-                    90
+                            .setDescription("Check your private messages with the bot to access your personal data.")
             );
         }
 

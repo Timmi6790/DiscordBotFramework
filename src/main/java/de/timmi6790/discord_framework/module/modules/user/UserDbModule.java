@@ -6,7 +6,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
@@ -62,7 +61,6 @@ public class UserDbModule extends AbstractModule {
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
                 PermissionsModule.class,
-                CommandModule.class,
                 EventModule.class,
                 RankModule.class
         );
@@ -73,7 +71,7 @@ public class UserDbModule extends AbstractModule {
         );
 
         this.addDependencies(
-                CommandModule.class
+                SlashCommandModule.class
         );
     }
 
@@ -97,6 +95,7 @@ public class UserDbModule extends AbstractModule {
                 .registerCommands(
                         this,
                         new UserCommand(
+                                commandModule,
                                 this,
                                 this.getModuleOrThrow(PermissionsModule.class),
                                 this.getModuleOrThrow(RankModule.class)

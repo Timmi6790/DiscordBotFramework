@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.option;
 
-import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.CommandReturnException;
 import lombok.*;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;

@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.utilities;
 
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.experimental.UtilityClass;
 import net.dv8tion.jda.api.Permission;

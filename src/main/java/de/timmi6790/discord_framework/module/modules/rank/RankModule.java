@@ -1,13 +1,13 @@
 package de.timmi6790.discord_framework.module.modules.rank;
 
 import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.commands.RankCommand;
 import de.timmi6790.discord_framework.module.modules.rank.repository.RankRepository;
 import de.timmi6790.discord_framework.module.modules.rank.repository.postgres.RankPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import lombok.*;
 
 import java.util.*;
@@ -37,7 +37,7 @@ public class RankModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
-                CommandModule.class
+                SlashCommandModule.class
         );
     }
 
@@ -69,7 +69,7 @@ public class RankModule extends AbstractModule {
         );
         this.loadRanksFromRepository();
 
-        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        final SlashCommandModule commandModule = this.getModuleOrThrow(SlashCommandModule.class);
         commandModule
                 .registerCommands(
                         this,

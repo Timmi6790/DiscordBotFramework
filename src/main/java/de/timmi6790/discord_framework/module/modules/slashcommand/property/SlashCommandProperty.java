@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.property;
 
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 
 /**
  * CommandProperty interface. Used to control settings for permission and execution checks

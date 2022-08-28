@@ -1,7 +1,8 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand;
 
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -11,8 +12,8 @@ import java.util.Optional;
 public abstract class SlashCommandGroup extends SlashCommand {
     private final Map<String, SlashCommand> commands = new HashMap<>();
 
-    public SlashCommandGroup(final String name, final String description) {
-        super(name, description);
+    public SlashCommandGroup(final SlashCommandModule module, final String name, final String description) {
+        super(module, name, description);
     }
 
     protected void addSubcommands(final SlashCommand... subcommands) {
@@ -23,7 +24,7 @@ public abstract class SlashCommandGroup extends SlashCommand {
 
     @Override
     protected CommandResult onCommand(final SlashCommandParameters parameters) {
-        return this.getSubcommand(parameters.getEvent().getSubcommandName())
+        return this.getSubcommand(parameters.getSubCommandName().orElse(null))
                 .map(command -> command.onCommand(parameters))
                 .orElse(BaseCommandResult.INVALID_ARGS);
     }

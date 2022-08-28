@@ -1,27 +1,17 @@
 package de.timmi6790.discord_framework.module.modules.rank.commands;
 
-import de.timmi6790.discord_framework.module.modules.command.Command;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.controll.MinArgProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.SyntaxProperty;
-import de.timmi6790.discord_framework.module.modules.command.utilities.ArgumentUtilities;
-import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
-import de.timmi6790.discord_framework.utilities.DataUtilities;
-import net.dv8tion.jda.api.utils.MarkdownUtil;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
-public class RankCommand extends Command {
+public class RankCommand extends SlashCommand {
     private static final String ERROR_TITLE = "Error";
 
     private final RankModule rankModule;
@@ -30,23 +20,22 @@ public class RankCommand extends Command {
 
     public RankCommand(final RankModule rankModule,
                        @Nullable final SettingModule settingsModule,
-                       final CommandModule commandModule) {
+                       final SlashCommandModule module) {
         // TODO: Add a better command system, to support more complex commands
-        super("rank", commandModule);
+        super(module, "rank", "Rank control");
 
         this.addProperties(
                 new CategoryProperty("Management"),
-                new DescriptionProperty("Rank control command"),
-                new SyntaxProperty("<rankName|list> <perms;extend;rename;rename;create;delete;info|> <add,remove;add,remove;newName|> <command,permNode;rankName|>"),
-                new MinArgProperty(1)
+                new SyntaxProperty("<rankName|list> <perms;extend;rename;rename;create;delete;info|> <add,remove;add,remove;newName|> <command,permNode;rankName|>")
         );
 
         this.rankModule = rankModule;
         this.settingsModule = settingsModule;
     }
 
+    /*
     private int getPermissionIdOrThrow(final CommandParameters commandParameters, final int argPosition) {
-        return ArgumentUtilities.getPermissionIdOrThrow(
+        return SlashArgumentUtilities.getPermissionIdOrThrow(
                 commandParameters,
                 argPosition,
                 this.getCommandModule(),
@@ -55,8 +44,10 @@ public class RankCommand extends Command {
         );
     }
 
+     */
+
     @Override
-    protected CommandResult onCommand(final CommandParameters commandParameters) {
+    protected CommandResult onCommand(final SlashCommandParameters commandParameters) {
         // <list>
         // <rankName> <perms> <add|remove> <command|permNode>
         // <rankName> <extend> <add|remove> <rankName>
@@ -66,6 +57,9 @@ public class RankCommand extends Command {
         // <rankName> <info>
 
         // List command
+        return BaseCommandResult.SUCCESSFUL;
+    }
+        /*
         final String arg0 = commandParameters.getArg(0);
         if ("list".equalsIgnoreCase(arg0)) {
             return this.listCommand(commandParameters);
@@ -75,7 +69,7 @@ public class RankCommand extends Command {
         this.checkArgLength(commandParameters, 2);
 
         // Special handling for create
-        final ValidArgs1 args1 = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+        final ValidArgs1 args1 = SlashArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
                 commandParameters,
                 this.getClass(),
                 1,
@@ -86,7 +80,7 @@ public class RankCommand extends Command {
         }
 
         // All other commands
-        final Rank rank = ArgumentUtilities.getRankOrThrow(commandParameters, 0, this.rankModule);
+        final Rank rank = SlashArgumentUtilities.getRankOrThrow(commandParameters, 0, this.rankModule);
         return switch (args1) {
             case INFO -> this.infoCommand(commandParameters, rank);
             case DELETE -> this.deleteRankCommand(commandParameters, rank);
@@ -101,7 +95,7 @@ public class RankCommand extends Command {
     private CommandResult permsCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+        final AddRemoveArgs mode = SlashArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
                 commandParameters,
                 this.getClass(),
                 2,
@@ -174,13 +168,13 @@ public class RankCommand extends Command {
     private CommandResult extendCommand(final CommandParameters commandParameters, final Rank rank) {
         this.checkArgLength(commandParameters, 4);
 
-        final AddRemoveArgs mode = ArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
+        final AddRemoveArgs mode = SlashArgumentUtilities.getFromEnumIgnoreCaseOrThrow(
                 commandParameters,
                 this.getClass(),
                 2,
                 AddRemoveArgs.class
         );
-        final Rank extendedRank = ArgumentUtilities.getRankOrThrow(commandParameters, 3, this.rankModule);
+        final Rank extendedRank = SlashArgumentUtilities.getRankOrThrow(commandParameters, 3, this.rankModule);
 
         // Can't target the same rank
         if (rank.getRepositoryId() == extendedRank.getRepositoryId()) {
@@ -369,4 +363,6 @@ public class RankCommand extends Command {
         ADD,
         REMOVE
     }
+
+         */
 }

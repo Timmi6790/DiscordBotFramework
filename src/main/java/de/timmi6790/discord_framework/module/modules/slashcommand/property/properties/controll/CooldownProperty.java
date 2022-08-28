@@ -3,10 +3,11 @@ package de.timmi6790.discord_framework.module.modules.slashcommand.property.prop
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.SlashCommandProperty;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 public class CooldownProperty implements SlashCommandProperty<Boolean> {
@@ -30,10 +31,10 @@ public class CooldownProperty implements SlashCommandProperty<Boolean> {
     }
 
     protected String getFormattedTime(final long timeLeft) {
-        final StringBuilder stringBuilder = new StringBuilder();
+        final StringJoiner stringBuilder = new StringJoiner(" ");
         final long hours = timeLeft / 3600;
         if (hours != 0) {
-            stringBuilder.append(
+            stringBuilder.add(
                     String.format(
                             "%2d hours",
                             hours
@@ -43,7 +44,7 @@ public class CooldownProperty implements SlashCommandProperty<Boolean> {
 
         final long minutes = (timeLeft % 3600) / 60;
         if (minutes != 0) {
-            stringBuilder.append(
+            stringBuilder.add(
                     String.format(
                             "%2d minutes",
                             minutes
@@ -53,7 +54,7 @@ public class CooldownProperty implements SlashCommandProperty<Boolean> {
 
         final long seconds = timeLeft % 60;
         if (seconds != 0) {
-            stringBuilder.append(
+            stringBuilder.add(
                     String.format(
                             "%2d seconds",
                             seconds

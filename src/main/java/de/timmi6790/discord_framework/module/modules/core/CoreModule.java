@@ -2,15 +2,14 @@ package de.timmi6790.discord_framework.module.modules.core;
 
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.core.achievements.CommandAutoCorrectAchievement;
-import de.timmi6790.discord_framework.module.modules.core.commands.info.InviteCommand;
 import de.timmi6790.discord_framework.module.modules.core.stats.FailedCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.IncorrectArgCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.MissingArgCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.core.stats.SuccessfulCommandResultStat;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import lombok.EqualsAndHashCode;
 import lombok.extern.log4j.Log4j2;
@@ -30,7 +29,7 @@ public class CoreModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 ConfigModule.class,
-                CommandModule.class,
+                SlashCommandModule.class,
                 AchievementModule.class,
                 StatModule.class,
                 SettingModule.class
@@ -39,24 +38,10 @@ public class CoreModule extends AbstractModule {
 
     @Override
     public boolean onInitialize() {
-        final String inviteUrl = this.getModuleOrThrow(ConfigModule.class)
-                .registerAndGetConfig(this, new Config())
-                .getInviteUrl();
-        if (inviteUrl != null && !inviteUrl.isEmpty()) {
-            final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
-            commandModule.registerCommands(
-                    this,
-                    new InviteCommand(
-                            inviteUrl,
-                            commandModule
-                    )
-            );
-        }
-
         this.getModule(AchievementModule.class)
                 .ifPresent(achievementModule -> achievementModule.registerAchievements(
-                        this,
-                        new CommandAutoCorrectAchievement()
+                                this,
+                                new CommandAutoCorrectAchievement()
                         )
                 );
 

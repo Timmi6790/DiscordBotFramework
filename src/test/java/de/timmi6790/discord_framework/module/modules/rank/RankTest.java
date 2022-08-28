@@ -3,10 +3,10 @@ package de.timmi6790.discord_framework.module.modules.rank;
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,12 +36,12 @@ class RankTest {
     static void setup() {
         final ModuleManager moduleManager = mock(ModuleManager.class);
 
-        final CommandModule commandModule = spy(new CommandModule());
+        final SlashCommandModule commandModule = spy(new SlashCommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
 
         when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionsModule);
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(SlashCommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
         when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(eventModule);
         when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(userDbModule);

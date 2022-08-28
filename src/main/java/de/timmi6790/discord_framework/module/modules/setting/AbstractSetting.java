@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.setting;
 
-import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import lombok.Data;
 import lombok.NonNull;

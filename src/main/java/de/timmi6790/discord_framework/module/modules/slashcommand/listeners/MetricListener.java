@@ -1,9 +1,9 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.listeners;
 
-import de.timmi6790.discord_framework.module.modules.command.events.PostCommandExecutionEvent;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.metric.MultiTaggedTimer;
+import de.timmi6790.discord_framework.module.modules.slashcommand.events.PostCommandExecutionEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 

@@ -1,10 +1,13 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand;
 
-import de.timmi6790.discord_framework.module.modules.command.exceptions.CommandReturnException;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.events.PostCommandExecutionEvent;
+import de.timmi6790.discord_framework.module.modules.slashcommand.events.PreCommandExecutionEvent;
+import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.SlashCommandProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import de.timmi6790.discord_framework.module.modules.slashcommand.utilities.SlashMessageUtilities;
 import de.timmi6790.discord_framework.utilities.sentry.BreadcrumbBuilder;
 import de.timmi6790.discord_framework.utilities.sentry.SentryEventBuilder;
@@ -12,18 +15,23 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @Log4j2
+@RequiredArgsConstructor
 public abstract class SlashCommand {
+    private final SlashCommandModule module;
     private final String name;
     private final String description;
 
@@ -34,11 +42,6 @@ public abstract class SlashCommand {
     @Getter(AccessLevel.NONE)
     private final Map<Class<? extends SlashCommandProperty<?>>, SlashCommandProperty<?>> properties = new HashMap<>();
     private int permissionId = -1;
-
-    public SlashCommand(final String name, final String description) {
-        this.name = name;
-        this.description = description;
-    }
 
     protected void addProperty(final SlashCommandProperty<?> property) {
         final Class<? extends SlashCommandProperty<?>> propertyClass = (Class<? extends SlashCommandProperty<?>>) property.getClass();
@@ -121,7 +124,7 @@ public abstract class SlashCommand {
         }
 
         // Command pre event
-        // this.getEventModule().executeEvent(new PreCommandExecutionEvent(this, commandParameters));
+        this.module.getEventModule().executeEvent(new PreCommandExecutionEvent(this, commandParameters));
 
         CommandResult commandResult;
         final long startTime = System.nanoTime();
@@ -137,7 +140,7 @@ public abstract class SlashCommand {
                             .setCategory("Command")
                             .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDiscordId()))
                             .setData("userId", String.valueOf(commandParameters.getUserDb().getDiscordId()))
-                            .setData("args", commandParameters.getEvent().getOptions().stream().map(OptionMapping::getAsString).collect(Collectors.joining(", ")))
+                            .setData("args", commandParameters.getOptions().values().stream().map(OptionMapping::getAsString).collect(Collectors.joining(", ")))
                             .setData("command", this.name)
                             .build())
                     .setLevel(SentryLevel.ERROR)
@@ -156,9 +159,8 @@ public abstract class SlashCommand {
             commandResult = BaseCommandResult.UNKNOWN;
         }
 
-        /*
         // Command post event
-        this.getEventModule().executeEvent(
+        this.module.getEventModule().executeEvent(
                 new PostCommandExecutionEvent(
                         this,
                         commandParameters,
@@ -166,6 +168,20 @@ public abstract class SlashCommand {
                         executionTime
                 )
         );
-         */
+    }
+
+    public <T> void sendArgumentCorrectionMessage(final SlashCommandParameters commandParameters,
+                                                  final Option<?> option,
+                                                  @Nullable final MainReplaceData mainReplaceData,
+                                                  final List<T> similarValues,
+                                                  final Function<T, String> valueToString) {
+        this.module.sendArgumentCorrectionMessage(
+                commandParameters,
+                option,
+                mainReplaceData,
+                this.getClass(),
+                similarValues,
+                valueToString
+        );
     }
 }

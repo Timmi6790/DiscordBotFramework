@@ -5,8 +5,6 @@ import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
@@ -14,6 +12,8 @@ import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.setting.settings.CommandAutoCorrectSetting;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
@@ -47,7 +47,7 @@ class UserDbTest {
 
     @BeforeAll
     static void setUp() {
-        final CommandModule commandModule = mock(CommandModule.class);
+        final SlashCommandModule commandModule = mock(SlashCommandModule.class);
         when(commandModule.getModuleManager()).thenReturn(moduleManager);
 
         final EventModule eventModule = mock(EventModule.class);
@@ -55,7 +55,7 @@ class UserDbTest {
 
         when(moduleManager.getModuleOrThrow(PermissionsModule.class)).thenReturn(permissionsModule);
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(SlashCommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(rankModule);
         when(moduleManager.getModuleOrThrow(AchievementModule.class)).thenReturn(achievementModule);
         when(moduleManager.getModule(AchievementModule.class)).thenReturn(Optional.of(achievementModule));
@@ -131,7 +131,7 @@ class UserDbTest {
         assertThat(userDb.isBanned()).isFalse();
 
         final MultiEmbedBuilder embedBuilder = new MultiEmbedBuilder();
-        final CommandParameters commandParameters = mock(CommandParameters.class);
+        final SlashCommandParameters commandParameters = mock(SlashCommandParameters.class);
         when(commandParameters.getEmbedBuilder()).thenReturn(embedBuilder);
         userDb.ban(commandParameters, "");
 

@@ -4,13 +4,13 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.guild.repository.GuildDbRepository;
 import de.timmi6790.discord_framework.module.modules.guild.repository.postgres.GuildDbPostgresRepository;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -52,7 +52,7 @@ public class GuildDbModule extends AbstractModule {
         );
 
         this.addDependencies(
-                CommandModule.class
+                SlashCommandModule.class
         );
     }
 

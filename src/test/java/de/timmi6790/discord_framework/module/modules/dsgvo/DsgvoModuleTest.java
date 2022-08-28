@@ -3,10 +3,10 @@ package de.timmi6790.discord_framework.module.modules.dsgvo;
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import net.dv8tion.jda.api.JDA;
@@ -35,11 +35,11 @@ class DsgvoModuleTest {
 
     @BeforeAll
     static void setUp() {
-        final CommandModule commandModule = spy(new CommandModule());
+        final SlashCommandModule commandModule = spy(new SlashCommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
 
         doReturn(AbstractIntegrationTest.databaseModule).when(MODULE_MANAGER).getModuleOrThrow(DatabaseModule.class);
-        when(MODULE_MANAGER.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(MODULE_MANAGER.getModuleOrThrow(SlashCommandModule.class)).thenReturn(commandModule);
         when(MODULE_MANAGER.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
         when(MODULE_MANAGER.getModuleOrThrow(EventModule.class)).thenReturn(EVENT_MODULE);
         when(MODULE_MANAGER.getModuleOrThrow(RankModule.class)).thenReturn(RANK_MODULE);
