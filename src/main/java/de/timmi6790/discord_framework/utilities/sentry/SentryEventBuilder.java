@@ -143,11 +143,6 @@ public class SentryEventBuilder {
         return this;
     }
 
-    public SentryEventBuilder acceptUnknownProperties(final Map<String, Object> unknown) {
-        this.sentryEvent.acceptUnknownProperties(unknown);
-        return this;
-    }
-
     public SentryEventBuilder setModules(final Map<String, String> modules) {
         this.sentryEvent.setModules(modules);
         return this;

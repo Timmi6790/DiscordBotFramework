@@ -3,10 +3,10 @@ package de.timmi6790.discord_framework.module.modules.user;
 import de.timmi6790.discord_framework.AbstractIntegrationTest;
 import de.timmi6790.discord_framework.DiscordBot;
 import de.timmi6790.discord_framework.module.ModuleManager;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.assertj.core.api.Assertions;
@@ -37,11 +37,11 @@ class UserDbModuleTest {
     static void setUp() {
         final ModuleManager moduleManager = mock(ModuleManager.class);
 
-        final CommandModule commandModule = spy(new CommandModule());
+        final SlashCommandModule commandModule = spy(new SlashCommandModule());
         doNothing().when(commandModule).registerCommands(any(), any());
 
         doReturn(AbstractIntegrationTest.databaseModule).when(moduleManager).getModuleOrThrow(DatabaseModule.class);
-        when(moduleManager.getModuleOrThrow(CommandModule.class)).thenReturn(commandModule);
+        when(moduleManager.getModuleOrThrow(SlashCommandModule.class)).thenReturn(commandModule);
         when(moduleManager.getModuleOrThrow(RankModule.class)).thenReturn(RANK_MODULE);
         when(moduleManager.getModuleOrThrow(UserDbModule.class)).thenReturn(USER_DB_MODULE);
         when(moduleManager.getModuleOrThrow(EventModule.class)).thenReturn(EVENT_MODULE);

@@ -1,12 +1,12 @@
 package de.timmi6790.discord_framework.module.modules.user;
 
 import de.timmi6790.discord_framework.module.modules.achievement.AbstractAchievement;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.setting.settings.CommandAutoCorrectSetting;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.module.modules.stat.events.StatsChangeEvent;
 import de.timmi6790.discord_framework.module.modules.user.repository.UserDbRepository;
@@ -52,7 +52,7 @@ public class UserDb {
         return this.userDbModule.getUser(this.getDiscordId());
     }
 
-    public void ban(final CommandParameters commandParameters, final String reason) {
+    public void ban(final SlashCommandParameters commandParameters, final String reason) {
         this.setBanned(true);
 
         commandParameters.sendPrivateMessage(

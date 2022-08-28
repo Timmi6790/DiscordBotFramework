@@ -27,7 +27,7 @@ public class GuildDb {
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(key -> {
                 final CompletableFuture<Member> futureValue = new CompletableFuture<>();
-                this.getGuild().retrieveMemberById(key, false).queue(futureValue::complete);
+                this.getGuild().retrieveMemberById(key).queue(futureValue::complete);
                 return futureValue.get(1, TimeUnit.MINUTES);
             });
 

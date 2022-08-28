@@ -6,7 +6,7 @@ import de.timmi6790.discord_framework.module.modules.reactions.button.ButtonReac
 import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 
 import java.util.Optional;
@@ -16,7 +16,7 @@ public class ButtonReactionListener {
     private final ButtonReactionModule module;
 
     @SubscribeEvent
-    public void onButtonClick(final ButtonClickEvent event) {
+    public void onButtonClick(final ButtonInteractionEvent event) {
         final Optional<ButtonReaction> reactionOpt = this.module.getButtonReaction(event.getMessageIdLong());
         if (reactionOpt.isEmpty()) {
             return;

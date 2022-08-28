@@ -1,11 +1,7 @@
 package de.timmi6790.discord_framework.utilities.discord;
 
-import de.timmi6790.discord_framework.DiscordBot;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.reactions.button.actions.ButtonAction;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReaction;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.EmoteReactionModule;
-import de.timmi6790.discord_framework.module.modules.reactions.emote.actions.EmoteAction;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -108,12 +104,12 @@ public class DiscordMessagesUtilities {
                 .queue(null, new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE));
     }
 
-    public void sendButtonMessage(final CommandParameters commandParameters,
+    public void sendButtonMessage(final SlashCommandParameters commandParameters,
                                   final MultiEmbedBuilder embedBuilder,
-                                  final Map<net.dv8tion.jda.api.interactions.components.Button, ButtonAction> buttons) {
+                                  final Map<net.dv8tion.jda.api.interactions.components.buttons.Button, ButtonAction> buttons) {
         // TODO: Enforce the 5 button limit silently
-        commandParameters.getLowestMessageChannel()
-                .sendMessageEmbeds(
+        commandParameters
+                .createMessageUpdateAction(
                         embedBuilder
                                 .setFooter("↓ Click Me!")
                                 .buildSingle()
@@ -121,39 +117,5 @@ public class DiscordMessagesUtilities {
                 .setActionRow(buttons.keySet())
                 .queue();
 
-    }
-
-    public void sendEmoteMessage(@NonNull final CommandParameters commandParameters,
-                                 @NonNull final MultiEmbedBuilder embedBuilder,
-                                 @NonNull final Map<String, EmoteAction> emotes) {
-        commandParameters.getLowestMessageChannel()
-                .sendMessageEmbeds(
-                        embedBuilder
-                                .setFooter("↓ Click Me!")
-                                .buildSingle()
-                )
-                .queue(message -> {
-                    if (!emotes.isEmpty()) {
-                        DiscordBot.getInstance()
-                                .getModuleManager()
-                                .getModuleOrThrow(EmoteReactionModule.class)
-                                .addEmoteReactionMessage(
-                                        message,
-                                        new EmoteReaction(
-                                                emotes,
-                                                commandParameters.getUser().getIdLong(),
-                                                commandParameters.getLowestMessageChannel().getIdLong()
-                                        )
-                                );
-                    }
-
-                    message.delete()
-                            .queueAfter(
-                                    90,
-                                    TimeUnit.SECONDS,
-                                    null,
-                                    new ErrorHandler().ignore(ErrorResponse.UNKNOWN_MESSAGE)
-                            );
-                });
     }
 }

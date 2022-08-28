@@ -204,20 +204,6 @@ class SentryEventBuilderTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"Test", "Test1", "Long Test Version"})
-    void setSdk(final String sdkVersionName) {
-        final SdkVersion sdkVersion = new SdkVersion();
-        sdkVersion.setName(sdkVersionName);
-
-        final SentryEventBuilder sentryEventBuilder = new SentryEventBuilder();
-        sentryEventBuilder.setSdk(sdkVersion);
-
-        final SdkVersion foundSdkVersion = sentryEventBuilder.build().getSdk();
-        assertThat(foundSdkVersion).isNotNull();
-        assertThat(foundSdkVersion.getName()).isEqualTo(sdkVersionName);
-    }
-
-    @ParameterizedTest
     @ValueSource(strings = {"Test", "Test1", "Long Test FingerSprint"})
     void setFingerprints(final String fingerprint) {
         final SentryEventBuilder sentryEventBuilder = new SentryEventBuilder();
@@ -315,19 +301,6 @@ class SentryEventBuilderTest {
 
         final Object foundValue = sentryEventBuilder.build().getExtra(extraKey);
         assertThat(foundValue).isEqualTo(value);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"Test", "Test1", "Long Test Message"})
-    void acceptUnknownProperties(final String propertyKey) {
-        final Map<String, Object> unknownProperties = new HashMap<>();
-        unknownProperties.put(propertyKey, "1");
-
-        final SentryEventBuilder sentryEventBuilder = new SentryEventBuilder();
-        sentryEventBuilder.acceptUnknownProperties(unknownProperties);
-
-        final Map<String, Object> foundUnknownProperties = sentryEventBuilder.build().getUnknown();
-        assertThat(foundUnknownProperties).containsAllEntriesOf(unknownProperties);
     }
 
     @ParameterizedTest

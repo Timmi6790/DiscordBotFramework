@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.setting.settings;
 
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +16,7 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
     }
 
     @Override
-    protected Optional<Boolean> parseNewValue(final CommandParameters commandParameters, final String userInput) {
+    protected Optional<Boolean> parseNewValue(final SlashCommandParameters commandParameters, final String userInput) {
         if ("true".equalsIgnoreCase(userInput)) {
             return Optional.of(Boolean.TRUE);
         } else if ("false".equalsIgnoreCase(userInput)) {
@@ -27,7 +27,7 @@ public class BooleanSetting extends AbstractSetting<Boolean> {
     }
 
     @Override
-    protected List<Boolean> possibleValues(final CommandParameters commandParameters, final String userInput) {
+    protected List<Boolean> possibleValues(final SlashCommandParameters commandParameters, final String userInput) {
         return Arrays.asList(Boolean.TRUE, Boolean.FALSE);
     }
 

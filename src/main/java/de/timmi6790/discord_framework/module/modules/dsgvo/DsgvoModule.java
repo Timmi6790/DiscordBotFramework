@@ -3,13 +3,13 @@ package de.timmi6790.discord_framework.module.modules.dsgvo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.timmi6790.discord_framework.module.AbstractModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.config.ConfigModule;
 import de.timmi6790.discord_framework.module.modules.dsgvo.commands.AccountDeletionCommand;
 import de.timmi6790.discord_framework.module.modules.dsgvo.commands.DataRequestCommand;
 import de.timmi6790.discord_framework.module.modules.dsgvo.events.UserDataDeleteEvent;
 import de.timmi6790.discord_framework.module.modules.dsgvo.events.UserDataRequestEvent;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import lombok.EqualsAndHashCode;
 
@@ -34,14 +34,14 @@ public class DsgvoModule extends AbstractModule {
 
         this.addDependenciesAndLoadAfter(
                 ConfigModule.class,
-                CommandModule.class,
+                SlashCommandModule.class,
                 EventModule.class
         );
     }
 
     @Override
     public boolean onInitialize() {
-        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        final SlashCommandModule commandModule = this.getModuleOrThrow(SlashCommandModule.class);
         commandModule.registerCommands(
                 this,
                 new AccountDeletionCommand(

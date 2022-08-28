@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.module.modules.core.stats;
 
-import de.timmi6790.discord_framework.module.modules.command.events.PostCommandExecutionEvent;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
 import de.timmi6790.discord_framework.module.modules.event.SubscribeEvent;
+import de.timmi6790.discord_framework.module.modules.slashcommand.events.PostCommandExecutionEvent;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

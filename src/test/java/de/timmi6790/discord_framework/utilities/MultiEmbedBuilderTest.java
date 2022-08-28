@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.utilities;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import org.antlr.v4.runtime.misc.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -153,7 +153,7 @@ class MultiEmbedBuilderTest {
             final String name = getRandomString(MultiEmbedBuilder.EMBED_FIELD_NAME_MAX);
             final String value = getRandomString(MultiEmbedBuilder.EMBED_FIELD_VALUE_MAX);
 
-            values.add(new Pair<>(name, value));
+            values.add(Pair.of(name, value));
             embedBuilder.addField(name, value);
         }
 
@@ -171,7 +171,7 @@ class MultiEmbedBuilderTest {
                     for (final MessageEmbed messageEmbed : messageEmbeds) {
                         for (final MessageEmbed.Field field : messageEmbed.getFields()) {
                             final Pair<String, String> input = values.get(count);
-                            if (!field.getName().equals(input.a) || !field.getValue().equals(input.b)) {
+                            if (!field.getName().equals(input.getLeft()) || !field.getValue().equals(input.getRight())) {
                                 return false;
                             }
                             count++;

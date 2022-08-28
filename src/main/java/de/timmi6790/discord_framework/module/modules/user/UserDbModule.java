@@ -6,13 +6,13 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Striped;
 import de.timmi6790.discord_framework.module.AbstractModule;
 import de.timmi6790.discord_framework.module.modules.achievement.AchievementModule;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
 import de.timmi6790.discord_framework.module.modules.database.DatabaseModule;
 import de.timmi6790.discord_framework.module.modules.event.EventModule;
 import de.timmi6790.discord_framework.module.modules.metric.MetricModule;
 import de.timmi6790.discord_framework.module.modules.permisssion.PermissionsModule;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.stat.StatModule;
 import de.timmi6790.discord_framework.module.modules.user.commands.SettingsCommand;
 import de.timmi6790.discord_framework.module.modules.user.commands.UserCommand;
@@ -61,7 +61,6 @@ public class UserDbModule extends AbstractModule {
         this.addDependenciesAndLoadAfter(
                 DatabaseModule.class,
                 PermissionsModule.class,
-                CommandModule.class,
                 EventModule.class,
                 RankModule.class
         );
@@ -72,7 +71,7 @@ public class UserDbModule extends AbstractModule {
         );
 
         this.addDependencies(
-                CommandModule.class
+                SlashCommandModule.class
         );
     }
 
@@ -90,15 +89,17 @@ public class UserDbModule extends AbstractModule {
                 this.getModule(StatModule.class).orElse(null)
         );
 
-        final CommandModule commandModule = this.getModuleOrThrow(CommandModule.class);
+        final SlashCommandModule commandModule = this.getModuleOrThrow(SlashCommandModule.class);
+
         commandModule
                 .registerCommands(
                         this,
                         new UserCommand(
+                                commandModule,
                                 this,
+                                this.getModuleOrThrow(PermissionsModule.class),
                                 this.getModuleOrThrow(RankModule.class),
-                                this.getModule(SettingModule.class).orElse(null),
-                                commandModule
+                                this.getModule(SettingModule.class).orElse(null)
                         )
                 );
 

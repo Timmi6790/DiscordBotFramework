@@ -3,14 +3,15 @@ package de.timmi6790.discord_framework.module.modules.dsgvo.commands;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.timmi6790.discord_framework.module.modules.command.Command;
-import de.timmi6790.discord_framework.module.modules.command.CommandModule;
-import de.timmi6790.discord_framework.module.modules.command.models.BaseCommandResult;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandParameters;
-import de.timmi6790.discord_framework.module.modules.command.models.CommandResult;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.CategoryProperty;
-import de.timmi6790.discord_framework.module.modules.command.property.properties.info.DescriptionProperty;
 import de.timmi6790.discord_framework.module.modules.dsgvo.DsgvoModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
+import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
+import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
+import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.StringOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
 import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Account deletion command.
  */
 @EqualsAndHashCode(callSuper = true)
-public class AccountDeletionCommand extends Command {
+public class AccountDeletionCommand extends SlashCommand {
     /**
      * Command usage leading to a ban
      */
@@ -64,19 +65,24 @@ public class AccountDeletionCommand extends Command {
      */
     private final DsgvoModule dsgvoModule;
 
+    private final Option<String> confirmPhraseOption = new StringOption("confirm-phase", "Delete confirm phrase");
+
     /**
      * Instantiates a new Account deletion command.
      */
     public AccountDeletionCommand(final DsgvoModule dsgvoModule,
-                                  final CommandModule commandModule) {
-        super("deleteMyAccount", commandModule);
+                                  final SlashCommandModule module) {
+        super(module, "deleteMyAccount", "Wipe all my data!");
 
         this.addProperties(
-                new CategoryProperty("Info"),
-                new DescriptionProperty("Wipe all my data!")
+                new CategoryProperty("Info")
         );
 
         this.dsgvoModule = dsgvoModule;
+
+        this.addOptions(
+                this.confirmPhraseOption
+        );
     }
 
     /**
@@ -85,7 +91,7 @@ public class AccountDeletionCommand extends Command {
      * @param commandParameters the command parameters
      * @return the command result
      */
-    private CommandResult handleEmptyConfirmPhrase(final CommandParameters commandParameters) {
+    private CommandResult handleEmptyConfirmPhrase(final SlashCommandParameters commandParameters) {
         final int phraseId = ThreadLocalRandom.current().nextInt(RANDOM_CONFIRM_PHRASES.length);
         final String phrase = RANDOM_CONFIRM_PHRASES[phraseId];
 
@@ -101,7 +107,7 @@ public class AccountDeletionCommand extends Command {
                         )
                         .addField(
                                 CONFIRM_COMMAND_NAME,
-                                this.getCommandModule().getMainCommand() + " " + this.getName() + " " + phrase,
+                                "/" + this.getName() + " " + phrase,
                                 false
                         )
         );
@@ -116,7 +122,7 @@ public class AccountDeletionCommand extends Command {
      * @param userInput         the user input
      * @param phrase            the phrase
      */
-    private void sendIncorrectConfirmPhraseMessage(final CommandParameters commandParameters,
+    private void sendIncorrectConfirmPhraseMessage(final SlashCommandParameters commandParameters,
                                                    final String userInput,
                                                    final String phrase) {
         commandParameters.sendMessage(
@@ -130,14 +136,14 @@ public class AccountDeletionCommand extends Command {
                         )
                         .addField(
                                 CONFIRM_COMMAND_NAME,
-                                this.getCommandModule().getMainCommand() + " " + this.getName() + " " + phrase,
+                                "/" + this.getName() + " " + phrase,
                                 false
                         )
         );
     }
 
     @Override
-    protected CommandResult onCommand(final CommandParameters commandParameters) {
+    protected CommandResult onCommand(final SlashCommandParameters commandParameters) {
         final long userId = commandParameters.getUserDb().getDiscordId();
         final Integer confirmPhraseId = this.userDeleteConfirmCache.getIfPresent(userId);
         // Check if the user has an existing phrase
@@ -146,7 +152,7 @@ public class AccountDeletionCommand extends Command {
         }
 
         final String requiredPhrase = RANDOM_CONFIRM_PHRASES[confirmPhraseId];
-        final String userInput = commandParameters.getArgOrDefault(0, " ");
+        final String userInput = commandParameters.getOptionOrThrow(this.confirmPhraseOption);
         // Check if the user did input the correct phrase
         if (!userInput.equalsIgnoreCase(requiredPhrase)) {
             this.sendIncorrectConfirmPhraseMessage(commandParameters, userInput, requiredPhrase);

@@ -3,7 +3,9 @@ package de.timmi6790.discord_framework.module.modules.event;
 import com.google.common.collect.SetMultimap;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.utils.data.DataObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -182,6 +184,12 @@ class EventModuleTest {
         public long getResponseNumber() {
             throw new UnsupportedOperationException();
         }
+
+        @Nullable
+        @Override
+        public DataObject getRawData() {
+            return null;
+        }
     }
 
     private static class CancelableEvent implements GenericEvent, Cancelable {
@@ -204,6 +212,12 @@ class EventModuleTest {
         @Override
         public long getResponseNumber() {
             return 0;
+        }
+
+        @Nullable
+        @Override
+        public DataObject getRawData() {
+            return null;
         }
     }
 }
