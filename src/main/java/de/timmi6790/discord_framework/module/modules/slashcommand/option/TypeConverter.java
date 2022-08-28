@@ -1,6 +1,6 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.option;
 
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 
 import java.util.Optional;
@@ -8,9 +8,9 @@ import java.util.Optional;
 public interface TypeConverter<T> {
     OptionType getOptionType();
 
-    Optional<T> convertValue(OptionMapping mapping);
+    Optional<T> convertValue(DiscordOption mapping);
 
-    T convertValueThrow(OptionMapping mapping);
+    T convertValueThrow(DiscordOption mapping);
 
-    T convertValueOrDefault(OptionMapping mapping, T defaultValue);
+    T convertValueOrDefault(DiscordOption mapping, T defaultValue);
 }

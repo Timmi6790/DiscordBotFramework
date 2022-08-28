@@ -16,6 +16,8 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.listeners.Slas
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.StoredSlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.StoredDiscordOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.AllowPrivateMessageProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.RequiredDiscordUserPermsProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
@@ -32,7 +34,6 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -325,7 +326,7 @@ public class SlashCommandModule extends AbstractModule {
         // Only main command
         if (similarValues.isEmpty() && mainCommand != null) {
             final StringJoiner arguments = new StringJoiner(" ");
-            for (final Map.Entry<String, OptionMapping> argument : mainReplaceData.getNewArgs().entrySet()) {
+            for (final Map.Entry<String, DiscordOption> argument : mainReplaceData.getNewArgs().entrySet()) {
                 arguments.add(argument.getKey() + ": " + argument.getValue().getAsString());
             }
 
@@ -351,33 +352,16 @@ public class SlashCommandModule extends AbstractModule {
                         similarValue
                 ));
 
-                final Map<String, OptionMapping> newOptions = new HashMap<>(commandParameters.getOptions());
-                newOptions.remove(option.getName());
+                final Map<String, DiscordOption> newOptions = new HashMap<>(commandParameters.getOptions());
+                newOptions.put(option.getName(), new StoredDiscordOption(option.getName(), similarValue));
 
-                // newOptions.put(option.getName(), new OptionMapping())
-
-                // TODO: Re-add
-                /*
                 buttons.put(
                         Button.of(ButtonStyle.SECONDARY, emote, "").withEmoji(Emoji.fromUnicode(emote)),
                         new CommandButtonAction(
                                 valueCommandClass,
-                                CommandParameters.of(
-                                        ArrayUtilities.modifyArrayAtPosition(
-                                                commandParameters.getArgs(),
-                                                similarValue,
-                                                argPos
-                                        ),
-                                        commandParameters.isGuildCommand(),
-                                        commandParameters.getCommandCause(),
-                                        this,
-                                        commandParameters.getChannelDb(),
-                                        commandParameters.getUserDb()
-                                )
+                                commandParameters.clone(newOptions)
                         )
                 );
-
-                 */
             }
 
             if (mainCommand != null) {
@@ -398,7 +382,7 @@ public class SlashCommandModule extends AbstractModule {
                     commandParameters.getChannelDb(),
                     commandParameters.getUserDb(),
                     mainReplaceData.getNewArgs(),
-                    commandParameters.getSubCommandName().orElse(null),
+                    mainReplaceData.getSubCommand(),
                     commandParameters.isGuildCommand()
             );
             final String everythingEmote = DiscordEmotes.FOLDER.getEmote();

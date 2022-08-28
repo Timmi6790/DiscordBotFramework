@@ -5,6 +5,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.events.PreComm
 import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.SlashCommandProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
 import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
@@ -18,7 +19,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -140,7 +140,7 @@ public abstract class SlashCommand {
                             .setCategory("Command")
                             .setData("channelId", String.valueOf(commandParameters.getChannelDb().getDiscordId()))
                             .setData("userId", String.valueOf(commandParameters.getUserDb().getDiscordId()))
-                            .setData("args", commandParameters.getOptions().values().stream().map(OptionMapping::getAsString).collect(Collectors.joining(", ")))
+                            .setData("args", commandParameters.getOptions().values().stream().map(DiscordOption::getAsString).collect(Collectors.joining(", ")))
                             .setData("command", this.name)
                             .build())
                     .setLevel(SentryLevel.ERROR)

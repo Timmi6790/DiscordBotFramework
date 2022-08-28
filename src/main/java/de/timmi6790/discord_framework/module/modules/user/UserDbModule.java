@@ -98,7 +98,8 @@ public class UserDbModule extends AbstractModule {
                                 commandModule,
                                 this,
                                 this.getModuleOrThrow(PermissionsModule.class),
-                                this.getModuleOrThrow(RankModule.class)
+                                this.getModuleOrThrow(RankModule.class),
+                                this.getModule(SettingModule.class).orElse(null)
                         )
                 );
 

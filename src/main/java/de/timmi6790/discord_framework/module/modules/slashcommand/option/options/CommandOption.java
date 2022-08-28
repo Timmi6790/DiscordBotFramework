@@ -3,7 +3,7 @@ package de.timmi6790.discord_framework.module.modules.slashcommand.option.option
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 
 import java.util.Optional;
@@ -23,7 +23,7 @@ public class CommandOption extends Option<SlashCommand> {
     }
 
     @Override
-    public Optional<SlashCommand> convertValue(final OptionMapping mapping) {
+    public Optional<SlashCommand> convertValue(final DiscordOption mapping) {
         return this.module.getCommand(mapping.getAsString());
     }
 }

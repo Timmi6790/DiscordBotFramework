@@ -1,8 +1,8 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.option;
 
 import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.CommandReturnException;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import lombok.*;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -24,14 +24,15 @@ public abstract class Option<T> implements TypeConverter<T> {
     public abstract String convertToOption(T option);
 
     @Override
-    public abstract Optional<T> convertValue(OptionMapping mapping);
+    public abstract Optional<T> convertValue(DiscordOption mapping);
 
     public Option<T> addOptions(final String... options) {
         this.options.addAll(List.of(options));
         return this;
     }
 
-    public Option<T> addTypeOptions(final T... options) {
+    @SafeVarargs
+    public final Option<T> addTypeOptions(final T... options) {
         return this.addTypeOptions(Arrays.asList(options));
     }
 
@@ -49,7 +50,7 @@ public abstract class Option<T> implements TypeConverter<T> {
     }
 
     @Override
-    public T convertValueThrow(final OptionMapping mapping) {
+    public T convertValueThrow(final DiscordOption mapping) {
         final Optional<T> optionOpt = this.convertValue(mapping);
         if (optionOpt.isPresent()) {
             return optionOpt.get();
@@ -60,11 +61,11 @@ public abstract class Option<T> implements TypeConverter<T> {
     }
 
     @Override
-    public T convertValueOrDefault(final OptionMapping mapping, final T defaultValue) {
+    public T convertValueOrDefault(final DiscordOption mapping, final T defaultValue) {
         return this.convertValue(mapping).orElse(defaultValue);
     }
 
-    public T convertValueOrDefault(final OptionMapping mapping, final Supplier<T> defaultValueSupplier) {
+    public T convertValueOrDefault(final DiscordOption mapping, final Supplier<T> defaultValueSupplier) {
         return this.convertValue(mapping).orElseGet(defaultValueSupplier);
     }
 

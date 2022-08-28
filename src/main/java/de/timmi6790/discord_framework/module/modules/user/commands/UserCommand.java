@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.module.modules.rank.Rank;
 import de.timmi6790.discord_framework.module.modules.rank.RankModule;
 import de.timmi6790.discord_framework.module.modules.rank.options.RankOption;
 import de.timmi6790.discord_framework.module.modules.setting.AbstractSetting;
+import de.timmi6790.discord_framework.module.modules.setting.SettingModule;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommand;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandGroup;
 import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandModule;
@@ -16,6 +17,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.option.options
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
 import de.timmi6790.discord_framework.module.modules.slashcommand.result.CommandResult;
+import de.timmi6790.discord_framework.module.modules.slashcommand.utilities.SlashArgumentUtilities;
 import de.timmi6790.discord_framework.module.modules.stat.AbstractStat;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
@@ -34,7 +36,8 @@ public class UserCommand extends SlashCommandGroup {
 
     private final UserDbModule userDbModule;
 
-    public UserCommand(final SlashCommandModule slashCommandModule, final UserDbModule userDbModule, final PermissionsModule permissionsModule, final RankModule rankModule) {
+    public UserCommand(final SlashCommandModule slashCommandModule, final UserDbModule userDbModule, final PermissionsModule permissionsModule,
+                       final RankModule rankModule, final SettingModule settingModule) {
         super(slashCommandModule, "user", "User control command");
 
         this.userDbModule = userDbModule;
@@ -46,7 +49,7 @@ public class UserCommand extends SlashCommandGroup {
                 new UnBanCommand(slashCommandModule),
                 new BanCommand(slashCommandModule),
                 new RankCommand(slashCommandModule, rankModule),
-                new PermsCommand(slashCommandModule, permissionsModule)
+                new PermsCommand(slashCommandModule, permissionsModule, settingModule)
         );
     }
 
@@ -322,14 +325,16 @@ public class UserCommand extends SlashCommandGroup {
 
     private class PermsCommand extends SlashCommand {
         private final PermissionsModule permissionsModule;
+        public final SettingModule settingModule;
 
         private final Option<Arguments> argumentsOption;
         private final Option<String> permissionIdOption;
 
-        public PermsCommand(final SlashCommandModule slashCommandModule, final PermissionsModule permissionsModule) {
+        public PermsCommand(final SlashCommandModule slashCommandModule, final PermissionsModule permissionsModule, final SettingModule settingModule) {
             super(slashCommandModule, "perms", "Permission Control");
 
             this.permissionsModule = permissionsModule;
+            this.settingModule = settingModule;
 
             this.argumentsOption = new EnumOption<>(Arguments.class, "mode", "Control mode").setRequired(true);
             this.permissionIdOption = new StringOption("permission", "command|permNode").setRequired(true);
@@ -342,18 +347,13 @@ public class UserCommand extends SlashCommandGroup {
         }
 
         private int getPermissionIdOrThrow(final SlashCommandParameters commandParameters) {
-            // TODO: Re-implement
-            return 1;
-            /*
-            return ArgumentUtilities.getPermissionIdOrThrow(
+            return SlashArgumentUtilities.getPermissionIdOrThrow(
                     commandParameters,
-                    argPosition,
-                    this.getCommandModule(),
-                    this.settingsModule,
-                    this.getPermissionsModule()
+                    this.permissionIdOption,
+                    this.getModule(),
+                    this.settingModule,
+                    this.permissionsModule
             );
-
-             */
         }
 
         @Override

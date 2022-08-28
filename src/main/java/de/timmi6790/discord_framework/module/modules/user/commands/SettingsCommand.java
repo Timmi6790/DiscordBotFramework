@@ -8,6 +8,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.Com
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.StringOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
@@ -18,7 +19,6 @@ import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
@@ -185,7 +185,7 @@ public class SettingsCommand extends SlashCommand {
         }
 
         @Override
-        public Optional<AbstractSetting<?>> convertValue(final OptionMapping mapping) {
+        public Optional<AbstractSetting<?>> convertValue(final DiscordOption mapping) {
             return this.module.getSetting(mapping.getAsString());
         }
     }

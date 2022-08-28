@@ -26,7 +26,7 @@ public abstract class SlashCommandGroup extends SlashCommand {
     protected CommandResult onCommand(final SlashCommandParameters parameters) {
         return this.getSubcommand(parameters.getSubCommandName().orElse(null))
                 .map(command -> command.onCommand(parameters))
-                .orElse(BaseCommandResult.INVALID_ARGS);
+                .orElse(BaseCommandResult.INVALID_SUB_COMMAND);
     }
 
     public Map<String, SlashCommand> getCommands() {

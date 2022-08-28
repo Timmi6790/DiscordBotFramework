@@ -25,7 +25,7 @@ public class EventSlashCommandParameters extends SlashCommandParameters {
                 commandModule,
                 channelDb,
                 userDb,
-                formatOptions(event.getOptions()),
+                formatEventOptions(event.getOptions()),
                 event.getSubcommandName()
         );
 

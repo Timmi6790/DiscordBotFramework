@@ -7,6 +7,8 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.cause.CommandC
 import de.timmi6790.discord_framework.module.modules.slashcommand.exceptions.CommandReturnException;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.action.CommandRestAction;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.RawDiscordOption;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
@@ -26,10 +28,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Data
-public abstract class SlashCommandParameters {
-    public static Map<String, OptionMapping> formatOptions(final List<OptionMapping> options) {
-        final Map<String, OptionMapping> formatOptions = new HashMap<>(options.size());
+public abstract class SlashCommandParameters implements Cloneable {
+    public static Map<String, DiscordOption> formatEventOptions(final List<OptionMapping> options) {
+        final Map<String, DiscordOption> formatOptions = new HashMap<>(options.size());
         for (final OptionMapping option : options) {
+            formatOptions.put(option.getName(), new RawDiscordOption(option));
+        }
+        return formatOptions;
+    }
+
+    public static Map<String, DiscordOption> formatOptions(final List<DiscordOption> options) {
+        final Map<String, DiscordOption> formatOptions = new HashMap<>(options.size());
+        for (final DiscordOption option : options) {
             formatOptions.put(option.getName(), option);
         }
         return formatOptions;
@@ -40,7 +50,7 @@ public abstract class SlashCommandParameters {
     private final SlashCommandModule commandModule;
     private final ChannelDb channelDb;
     private final UserDb userDb;
-    private final Map<String, OptionMapping> options;
+    private final Map<String, DiscordOption> options;
     private final String subCommandName;
 
     public GuildDb getGuildDb() {
@@ -85,7 +95,7 @@ public abstract class SlashCommandParameters {
         this.createFileAction(stream, name, options).queue();
     }
 
-    public Optional<OptionMapping> getOptionalMapping(final String optionName) {
+    public Optional<DiscordOption> getOptionalMapping(final String optionName) {
         return Optional.ofNullable(this.options.get(optionName));
     }
 
@@ -105,7 +115,7 @@ public abstract class SlashCommandParameters {
 
     public Optional<String> getOptionAsString(final Option<?> option) {
         return this.getOptionalMapping(option.getName())
-                .map(OptionMapping::getAsString);
+                .map(DiscordOption::getAsString);
     }
 
     public JDA getJda() {
@@ -140,5 +150,15 @@ public abstract class SlashCommandParameters {
                 this.userDb.getUser(),
                 builder
         );
+    }
+
+    @SneakyThrows
+    public SlashCommandParameters clone(final Map<String, DiscordOption> newOptions) {
+        final SlashCommandParameters commandParameters = (SlashCommandParameters) super.clone();
+
+        commandParameters.options.clear();
+        commandParameters.options.putAll(newOptions);
+
+        return commandParameters;
     }
 }

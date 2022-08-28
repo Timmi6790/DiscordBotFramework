@@ -5,10 +5,10 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandMo
 import de.timmi6790.discord_framework.module.modules.slashcommand.cause.CommandCause;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.action.CommandRestAction;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.action.CreateRestAction;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.utils.AttachmentOption;
 
 import java.io.InputStream;
@@ -20,7 +20,7 @@ public class StoredSlashCommandParameters extends SlashCommandParameters {
     private final boolean guildCommand;
 
     public StoredSlashCommandParameters(final JDA jda, final CommandCause commandCause, final SlashCommandModule commandModule,
-                                        final ChannelDb channelDb, final UserDb userDb, final Map<String, OptionMapping> options,
+                                        final ChannelDb channelDb, final UserDb userDb, final Map<String, DiscordOption> options,
                                         final String subCommandName, final boolean guildCommand) {
         super(
                 jda,

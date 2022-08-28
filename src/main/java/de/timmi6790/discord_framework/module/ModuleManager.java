@@ -114,6 +114,7 @@ public class ModuleManager {
         return moduleSort.sort();
     }
 
+    @SafeVarargs
     public final void registerModules(final Class<? extends AbstractModule>... moduleClasses) {
         for (final Class<? extends AbstractModule> moduleClass : moduleClasses) {
             this.registerModule(moduleClass);
@@ -162,7 +163,8 @@ public class ModuleManager {
                     .asSubclass(AbstractModule.class)
                     .getConstructor()
                     .newInstance();
-        } catch (final InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (final InstantiationException | IllegalAccessException | InvocationTargetException |
+                       NoSuchMethodException e) {
             log.error(e.getMessage(), e);
             Sentry.captureException(e);
             return false;

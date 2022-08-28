@@ -8,10 +8,10 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandMo
 import de.timmi6790.discord_framework.module.modules.slashcommand.cause.BaseCommandCause;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.StoredSlashCommandParameters;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import lombok.Data;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
 import java.util.Map;
 
@@ -40,7 +40,7 @@ public class CommandButtonAction implements ButtonAction {
 
     @Data
     private static class ParsedValues {
-        private final Map<String, OptionMapping> options;
+        private final Map<String, DiscordOption> options;
         private final boolean guildCommand;
         private final String subCommandName;
         private final long channelDiscordId;

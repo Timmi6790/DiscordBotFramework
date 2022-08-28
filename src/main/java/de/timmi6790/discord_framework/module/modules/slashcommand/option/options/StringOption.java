@@ -1,7 +1,7 @@
 package de.timmi6790.discord_framework.module.modules.slashcommand.option.options;
 
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 
 import java.util.Optional;
@@ -17,7 +17,7 @@ public class StringOption extends Option<String> {
     }
 
     @Override
-    public Optional<String> convertValue(final OptionMapping mapping) {
+    public Optional<String> convertValue(final DiscordOption mapping) {
         return Optional.of(mapping.getAsString());
     }
 }
