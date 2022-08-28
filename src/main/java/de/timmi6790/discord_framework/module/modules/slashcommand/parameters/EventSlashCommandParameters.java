@@ -10,7 +10,7 @@ import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.utils.AttachmentOption;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -53,8 +53,9 @@ public class EventSlashCommandParameters extends SlashCommandParameters {
     }
 
     @Override
-    public CommandRestAction createFileAction(final InputStream stream, final String name, final AttachmentOption... options) {
-        return new FileRestAction(this.getHook().sendFile(stream, name, options));
+    public CommandRestAction createFileAction(final InputStream stream, final String name) {
+        final FileUpload fileUpload = FileUpload.fromData(stream, name);
+        return new FileRestAction(this.getHook().sendFiles(fileUpload));
     }
 
     public InteractionHook getHook() {

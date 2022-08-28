@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 @RequiredArgsConstructor
 public class FileRestAction extends CommandRestAction {
-    private final WebhookMessageAction<Message> action;
+    private final WebhookMessageCreateAction<Message> action;
 
     @Override
     public CommandRestAction setActionRows(@NotNull final ItemComponent... rows) {

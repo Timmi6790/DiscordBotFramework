@@ -11,6 +11,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.result.Command
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -46,9 +47,11 @@ public class DataRequestCommand extends SlashCommand {
     @Override
     protected CommandResult onCommand(final SlashCommandParameters commandParameters) {
         final String userData = this.dsgvoModule.getUserData(commandParameters.getUserDb());
-        commandParameters.getUserTextChannel().sendFile(
-                userData.getBytes(StandardCharsets.UTF_8),
-                "Your-personal-data.json"
+        commandParameters.getUserTextChannel().sendFiles(
+                FileUpload.fromData(
+                        userData.getBytes(StandardCharsets.UTF_8),
+                        "Your-personal-data.json"
+                )
         ).queue();
 
         // Inform the user that his data is in his dms

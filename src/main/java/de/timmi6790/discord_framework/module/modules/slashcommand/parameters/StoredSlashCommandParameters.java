@@ -9,7 +9,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.opt
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.utils.AttachmentOption;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -56,7 +56,8 @@ public class StoredSlashCommandParameters extends SlashCommandParameters {
     }
 
     @Override
-    public CommandRestAction createFileAction(final InputStream stream, final String name, final AttachmentOption... options) {
-        return new CreateRestAction(this.getChannelDb().getChannel().sendFile(stream, name, options));
+    public CommandRestAction createFileAction(final InputStream stream, final String name) {
+        final FileUpload fileUpload = FileUpload.fromData(stream, name);
+        return new CreateRestAction(this.getChannelDb().getChannel().sendFiles(fileUpload));
     }
 }

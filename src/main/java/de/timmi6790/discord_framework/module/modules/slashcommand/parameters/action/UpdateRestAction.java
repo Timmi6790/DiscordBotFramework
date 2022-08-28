@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 @RequiredArgsConstructor
 public class UpdateRestAction extends CommandRestAction {
-    private final WebhookMessageUpdateAction<Message> action;
+    private final WebhookMessageEditAction<Message> action;
 
     @Override
     public JDA getJDA() {

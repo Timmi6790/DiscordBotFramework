@@ -4,10 +4,9 @@ import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,7 @@ import java.util.function.Consumer;
 
 @RequiredArgsConstructor
 public class CreateRestAction extends CommandRestAction {
-    private final MessageAction messageAction;
+    private final MessageCreateAction messageAction;
 
     @Override
     public JDA getJDA() {
@@ -48,7 +47,7 @@ public class CreateRestAction extends CommandRestAction {
 
     @Override
     public CommandRestAction setActionRows(@NotNull final ItemComponent... itemComponents) {
-        this.messageAction.setActionRows(ActionRow.of(itemComponents));
+        this.messageAction.setActionRow(itemComponents);
         return this;
     }
 }

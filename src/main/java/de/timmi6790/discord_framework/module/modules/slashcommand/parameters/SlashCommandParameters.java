@@ -20,7 +20,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.utils.AttachmentOption;
 
 import java.io.InputStream;
 import java.util.*;
@@ -69,7 +68,7 @@ public abstract class SlashCommandParameters implements Cloneable {
 
     public abstract CommandRestAction createMessageUpdateAction(final String message);
 
-    public abstract CommandRestAction createFileAction(final InputStream stream, final String name, final AttachmentOption... option);
+    public abstract CommandRestAction createFileAction(final InputStream stream, final String name);
 
     public CommandRestAction createMessageUpdateAction(final MultiEmbedBuilder builder) {
         return this.createMessageUpdateAction(builder.build());
@@ -91,8 +90,8 @@ public abstract class SlashCommandParameters implements Cloneable {
         this.createMessageUpdateAction(message).queue();
     }
 
-    public void sendFile(final InputStream stream, final String name, final AttachmentOption... options) {
-        this.createFileAction(stream, name, options).queue();
+    public void sendFile(final InputStream stream, final String name) {
+        this.createFileAction(stream, name).queue();
     }
 
     public Optional<DiscordOption> getOptionalMapping(final String optionName) {
