@@ -5,7 +5,6 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.SlashCommandMo
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.CommandOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
-import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
@@ -35,8 +34,7 @@ public class HelpSlashCommand extends SlashCommand {
 
         this.addProperties(
                 new CategoryProperty("Info"),
-                new SyntaxProperty("[command]"),
-                new AliasNamesProperty("h")
+                new SyntaxProperty("[command]")
         );
     }
 

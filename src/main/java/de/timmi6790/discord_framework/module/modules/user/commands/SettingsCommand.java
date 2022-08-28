@@ -9,7 +9,6 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.option.Option;
 import de.timmi6790.discord_framework.module.modules.slashcommand.option.options.StringOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.SlashCommandParameters;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
-import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.CategoryProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.SyntaxProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.result.BaseCommandResult;
@@ -41,8 +40,7 @@ public class SettingsCommand extends SlashCommand {
 
         this.addProperties(
                 new CategoryProperty("Info"),
-                new SyntaxProperty("[setting] [newValue]"),
-                new AliasNamesProperty("st", "setting")
+                new SyntaxProperty("[setting] [newValue]")
         );
 
         this.settingModule = settingModule;

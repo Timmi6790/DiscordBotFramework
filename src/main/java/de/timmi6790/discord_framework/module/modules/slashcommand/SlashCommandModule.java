@@ -20,7 +20,6 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.opt
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.StoredDiscordOption;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.AllowPrivateMessageProperty;
 import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.controll.RequiredDiscordUserPermsProperty;
-import de.timmi6790.discord_framework.module.modules.slashcommand.property.properties.info.AliasNamesProperty;
 import de.timmi6790.discord_framework.module.modules.user.UserDbModule;
 import de.timmi6790.discord_framework.utilities.commons.StringUtilities;
 import de.timmi6790.discord_framework.utilities.discord.DiscordEmotes;
@@ -233,20 +232,6 @@ public class SlashCommandModule extends AbstractModule {
         );
 
         this.commands.put(command.getName().toLowerCase(Locale.ENGLISH), command);
-        for (final String aliasName : command.getPropertyValueOrDefault(AliasNamesProperty.class, () -> new String[0])) {
-            final SlashCommand existingAliasName = this.commands.get(aliasName.toLowerCase(Locale.ENGLISH));
-            if (existingAliasName == null) {
-                this.commands.put(aliasName.toLowerCase(Locale.ENGLISH), command);
-            } else {
-                log.warn(
-                        "[{}] Tried to register an already existing alias name {} for {} that is already used for the {} command",
-                        module.getModuleName(),
-                        aliasName,
-                        command.getName(),
-                        existingAliasName
-                );
-            }
-        }
     }
 
     public Optional<SlashCommand> getCommand(final String commandName) {
