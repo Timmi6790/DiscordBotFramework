@@ -139,19 +139,9 @@ public class SlashCommandModule extends AbstractModule {
                 )
         );
 
-        final CommandListUpdateAction updateAction = this.getDiscord().getGuildById(757320630902194196L).updateCommands();
+        final CommandListUpdateAction updateAction = this.getDiscordBot().getBaseShard().updateCommands(); //  this.getDiscord().getGuildById(757320630902194196L).updateCommands();
 
-        final Set<String> seen = new HashSet<>();
         for (final SlashCommand slashCommand : this.commands.values()) {
-            // TODO: Temporary duplicate check
-            if (!seen.add(slashCommand.getName())) {
-                continue;
-            }
-
-            if (slashCommand.isRequiresPermission()) {
-                continue;
-            }
-
             final SlashCommandData slashCommandData = Commands.slash(slashCommand.getName().toLowerCase(Locale.ENGLISH), slashCommand.getDescription().isEmpty() ? "TEST COMMAND" : slashCommand.getDescription());
 
             final List<Option<?>> slashOptions = new ArrayList<>(slashCommand.getOptions());

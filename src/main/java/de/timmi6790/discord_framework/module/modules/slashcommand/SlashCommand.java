@@ -34,9 +34,7 @@ public abstract class SlashCommand {
     private final SlashCommandModule module;
     private final String name;
     private final String description;
-
-    private boolean requiresPermission = false;
-
+    
     private final List<Option<?>> options = new ArrayList<>();
 
     @Getter(AccessLevel.NONE)

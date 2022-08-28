@@ -173,8 +173,6 @@ public class SettingsCommand extends SlashCommand {
             super("setting", "Setting", OptionType.STRING);
 
             this.module = module;
-
-            this.addTypeOptions(module.getSettings().values());
         }
 
         @Override
