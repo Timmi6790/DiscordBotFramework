@@ -35,6 +35,12 @@ public class StoredSlashCommandParameters extends SlashCommandParameters {
         this.guildCommand = guildCommand;
     }
 
+    private StoredSlashCommandParameters(final StoredSlashCommandParameters slashCommandParameters, final Map<String, DiscordOption> options) {
+        super(slashCommandParameters, options);
+
+        this.guildCommand = slashCommandParameters.guildCommand;
+    }
+
     @Override
     public boolean isGuildCommand() {
         return this.guildCommand;
@@ -59,5 +65,10 @@ public class StoredSlashCommandParameters extends SlashCommandParameters {
     public CommandRestAction createFileAction(final InputStream stream, final String name) {
         final FileUpload fileUpload = FileUpload.fromData(stream, name);
         return new CreateRestAction(this.getChannelDb().getChannel().sendFiles(fileUpload));
+    }
+
+    @Override
+    public SlashCommandParameters clone(final Map<String, DiscordOption> newOptions) {
+        return new StoredSlashCommandParameters(this, newOptions);
     }
 }
