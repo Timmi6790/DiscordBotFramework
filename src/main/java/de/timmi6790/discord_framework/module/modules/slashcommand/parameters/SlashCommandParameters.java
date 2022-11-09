@@ -12,6 +12,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.opt
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import de.timmi6790.discord_framework.utilities.MultiEmbedBuilder;
 import de.timmi6790.discord_framework.utilities.discord.DiscordMessagesUtilities;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.JDA;
@@ -27,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Data
+@AllArgsConstructor
 public abstract class SlashCommandParameters implements Cloneable {
     public static Map<String, DiscordOption> formatEventOptions(final List<OptionMapping> options) {
         final Map<String, DiscordOption> formatOptions = new HashMap<>(options.size());
@@ -52,6 +54,16 @@ public abstract class SlashCommandParameters implements Cloneable {
     private final Map<String, DiscordOption> options;
     private final String subCommandName;
 
+    protected SlashCommandParameters(final SlashCommandParameters slashCommandParameters, final Map<String, DiscordOption> options) {
+        this.jda = slashCommandParameters.jda;
+        this.commandCause = slashCommandParameters.commandCause;
+        this.commandModule = slashCommandParameters.commandModule;
+        this.channelDb = slashCommandParameters.channelDb;
+        this.userDb = slashCommandParameters.userDb;
+        this.options = options;
+        this.subCommandName = slashCommandParameters.subCommandName;
+    }
+
     public GuildDb getGuildDb() {
         return this.channelDb.getGuildDb();
     }
@@ -69,6 +81,8 @@ public abstract class SlashCommandParameters implements Cloneable {
     public abstract CommandRestAction createMessageUpdateAction(final String message);
 
     public abstract CommandRestAction createFileAction(final InputStream stream, final String name);
+
+    public abstract SlashCommandParameters clone(final Map<String, DiscordOption> newOptions);
 
     public CommandRestAction createMessageUpdateAction(final MultiEmbedBuilder builder) {
         return this.createMessageUpdateAction(builder.build());
@@ -149,15 +163,5 @@ public abstract class SlashCommandParameters implements Cloneable {
                 this.userDb.getUser(),
                 builder
         );
-    }
-
-    @SneakyThrows
-    public SlashCommandParameters clone(final Map<String, DiscordOption> newOptions) {
-        final SlashCommandParameters commandParameters = (SlashCommandParameters) super.clone();
-
-        commandParameters.options.clear();
-        commandParameters.options.putAll(newOptions);
-
-        return commandParameters;
     }
 }

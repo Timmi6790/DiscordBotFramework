@@ -137,6 +137,7 @@ public class ChannelDbModule extends AbstractModule {
      * @return the channel db instance
      */
     public ChannelDb getOrCreatePrivateMessage(final long discordChannelId) {
-        return this.getOrCreate(discordChannelId, GuildDbModule.getPrivateMessageGuildId());
+        return this.getOrCreate(discordChannelId, GuildDbModule.getPrivateMessageGuildId())
+                .setPrivateChannel(true);
     }
 }

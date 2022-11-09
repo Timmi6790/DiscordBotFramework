@@ -6,6 +6,7 @@ import de.timmi6790.discord_framework.module.modules.slashcommand.cause.CommandC
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.action.CommandRestAction;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.action.FileRestAction;
 import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.action.UpdateRestAction;
+import de.timmi6790.discord_framework.module.modules.slashcommand.parameters.options.DiscordOption;
 import de.timmi6790.discord_framework.module.modules.user.UserDb;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -14,6 +15,7 @@ import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Map;
 
 public class EventSlashCommandParameters extends SlashCommandParameters {
     private final SlashCommandInteractionEvent event;
@@ -30,6 +32,12 @@ public class EventSlashCommandParameters extends SlashCommandParameters {
         );
 
         this.event = event;
+    }
+
+    private EventSlashCommandParameters(final EventSlashCommandParameters slashCommandParameters, final Map<String, DiscordOption> options) {
+        super(slashCommandParameters, options);
+
+        this.event = slashCommandParameters.event;
     }
 
     @Override
@@ -56,6 +64,11 @@ public class EventSlashCommandParameters extends SlashCommandParameters {
     public CommandRestAction createFileAction(final InputStream stream, final String name) {
         final FileUpload fileUpload = FileUpload.fromData(stream, name);
         return new FileRestAction(this.getHook().sendFiles(fileUpload));
+    }
+
+    @Override
+    public SlashCommandParameters clone(final Map<String, DiscordOption> newOptions) {
+        return new EventSlashCommandParameters(this, newOptions);
     }
 
     public InteractionHook getHook() {

@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 public class ChannelDb {
     private final long discordId;
     private final GuildDb guildDb;
+    private boolean privateChannel = false;
     private boolean disabled;
 
     @EqualsAndHashCode.Exclude
@@ -39,12 +40,17 @@ public class ChannelDb {
         this.discord = discord;
     }
 
+    ChannelDb setPrivateChannel(final boolean privateChannel) {
+        this.privateChannel = privateChannel;
+        return this;
+    }
+
     /**
      * Gets the corresponding discord channel for this instance. This might be retrieved if not cached
      *
      * @return the discord channel
      */
     public MessageChannel getChannel() {
-        return this.discord.getTextChannelById(this.discordId);
+        return this.privateChannel ? this.discord.getPrivateChannelById(this.discordId) : this.discord.getTextChannelById(this.discordId);
     }
 }
